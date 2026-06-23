@@ -1,0 +1,2982 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin 产品管理主线可控开放原型</title>
+  <style>
+    :root {
+      --side: 148px;
+      --drawer: 560px;
+      --annotation: 372px;
+      --blue: #3f6ff3;
+      --blue-soft: #eef4ff;
+      --green: #52c41a;
+      --green-soft: #f6ffed;
+      --orange: #faad14;
+      --orange-soft: #fffbe6;
+      --red: #ff4d4f;
+      --red-soft: #fff1f0;
+      --text: #1f2d3d;
+      --muted: #7a8799;
+      --line: #edf0f5;
+      --bg: #f5f7fb;
+      --side-bg: #001529;
+      --white: #fff;
+      --shadow: 0 12px 32px rgba(15, 35, 70, .16);
+      --active-drawer: 0px;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-size: 12px; }
+    body { overflow-x: hidden; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { width: calc(100vw - var(--annotation)); height: 100vh; display: grid; grid-template-columns: var(--side) minmax(960px, 1fr); overflow: auto; position: relative; z-index: 1; }
+    .side { background: var(--side-bg); color: rgba(255, 255, 255, .72); min-height: 100vh; position: sticky; top: 0; }
+    .logo { height: 56px; display: flex; align-items: center; gap: 6px; padding: 0 14px; color: #fff; font-weight: 700; }
+    .logo small { color: rgba(255, 255, 255, .66); font-weight: 500; }
+    .nav-group { padding: 10px 0 4px; }
+    .nav-title { height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: rgba(255, 255, 255, .72); }
+    .nav-item { width: 100%; height: 32px; border: 0; background: transparent; color: rgba(255, 255, 255, .66); text-align: left; padding: 0 22px; }
+    .nav-item.active { background: #315efb; color: #fff; }
+    .nav-item.sub { padding-left: 28px; }
+    .content { min-width: 0; padding: 0 18px 44px; }
+    .page-head { height: 76px; display: flex; align-items: center; justify-content: space-between; }
+    .page-title { display: flex; align-items: center; gap: 10px; }
+    .back { width: 28px; height: 28px; border: 0; background: transparent; color: #56616f; font-size: 18px; }
+    h1 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; letter-spacing: 0; }
+    h2 { margin: 0; font-size: 14px; line-height: 22px; font-weight: 600; letter-spacing: 0; }
+    h3 { margin: 0 0 12px; font-size: 13px; line-height: 20px; font-weight: 600; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.7; }
+    .crumb { margin-top: 3px; color: #a0a9b8; }
+    .crumb a { color: #7a8799; text-decoration: none; }
+    .head-icons { display: flex; gap: 10px; align-items: center; }
+    .round-icon { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #dfe5ef; background: #fff; color: #6b7686; }
+    .page-card { background: #fff; border: 1px solid var(--line); min-height: calc(100vh - 122px); }
+    .product-hero { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 14px; padding: 18px 20px 12px; align-items: start; border-bottom: 1px solid var(--line); }
+    .product-cover { width: 46px; height: 46px; border-radius: 2px; background:
+      linear-gradient(90deg, #111 4px, transparent 4px) 0 0 / 8px 8px,
+      linear-gradient(#111 4px, transparent 4px) 0 0 / 8px 8px,
+      #fff; border: 1px solid #d9dfe9; }
+    .product-name { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .meta-line { display: flex; flex-wrap: wrap; gap: 14px; color: #8b95a4; line-height: 22px; }
+    .range-summary { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+    .range-summary-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px; }
+    .range-summary.expanded .range-summary-text { white-space: normal; max-width: 680px; }
+    .hero-actions { display: flex; gap: 8px; align-items: center; }
+    .version-line { padding: 0 20px 14px 90px; display: flex; align-items: center; gap: 10px; color: #697386; }
+    .steps { margin: 0 20px 16px; height: 34px; background: #f3f6fb; display: grid; grid-template-columns: repeat(7, 1fr); align-items: center; }
+    .step { height: 34px; border: 0; background: transparent; color: #7b8798; display: flex; align-items: center; justify-content: center; gap: 6px; position: relative; }
+    .step::after { content: ""; position: absolute; right: -10px; width: 20px; height: 20px; border-top: 1px solid #cfd6e2; border-right: 1px solid #cfd6e2; transform: rotate(45deg); background: #f3f6fb; z-index: 0; }
+    .step:last-child::after { display: none; }
+    .step.active { color: var(--green); font-weight: 600; }
+    .check { width: 12px; height: 12px; border-radius: 3px; border: 1px solid currentColor; display: inline-grid; place-items: center; font-size: 9px; }
+    .section { padding: 0 20px 26px; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px; }
+    .info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 74px; row-gap: 16px; padding: 18px 34px 24px; }
+    .info-item { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; min-height: 22px; }
+    .info-label { color: #929baa; text-align: right; }
+    .info-value { color: #516071; min-width: 0; word-break: break-word; }
+    .image-list { display: flex; gap: 14px; }
+    .thumb { width: 42px; height: 42px; border: 1px solid #dfe5ef; background:
+      linear-gradient(90deg, #111 4px, transparent 4px) 0 0 / 7px 7px,
+      linear-gradient(#111 4px, transparent 4px) 0 0 / 7px 7px,
+      #fff; }
+    .test-box { border-top: 1px solid var(--line); padding: 18px 34px 8px; }
+    .test-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+    .inline-label { color: #929baa; }
+    .extension-box, .ota-box, .list-box { padding: 18px 20px 26px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { min-height: 30px; border: 1px solid #d9dfe9; background: #fff; color: #516071; border-radius: 2px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+    .btn.primary { background: #315efb; border-color: #315efb; color: #fff; }
+    .btn.danger { color: var(--red); border-color: #ffd6d7; background: #fff; }
+    .btn.link { border: 0; background: transparent; color: #315efb; padding: 0; min-height: 22px; }
+    .btn:disabled { opacity: .48; cursor: not-allowed; }
+    .tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 2px; background: #f2f4f8; color: #697386; margin-right: 6px; }
+    .tag.green { color: #52a218; background: #edf9e8; }
+    .tag.blue { color: #315efb; background: #eef4ff; }
+    .tag.orange { color: #b7791f; background: #fff7e6; }
+    .tag.red { color: #c92a2a; background: #fff1f0; }
+    .notice { border: 1px solid #e5eaf3; background: #f8fafc; color: #5d6878; padding: 10px 12px; line-height: 1.65; margin: 12px 0; }
+    .notice.success { border-color: #d9f7be; background: #f6ffed; color: #3f861e; }
+    .notice.warning { border-color: #ffe58f; background: #fffbe6; color: #8a5a00; }
+    .download-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0 12px; }
+    .download-card { border: 1px solid #e5eaf3; background: #fafbfc; padding: 10px; }
+    .download-card strong { display: block; margin-bottom: 5px; color: #39465a; }
+    .template-cols { border: 1px solid #edf0f5; background: #fff; padding: 10px 12px; line-height: 1.8; margin: 10px 0; }
+    .progress { height: 10px; background: #edf0f5; overflow: hidden; margin: 8px 0 6px; }
+    .progress-fill { height: 100%; width: 0; background: #315efb; transition: width .25s ease; }
+    .result-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
+    .result-card { border: 1px solid #edf0f5; background: #fafbfc; padding: 10px; }
+    .result-card strong { display: block; font-size: 18px; line-height: 24px; color: #1f2d3d; }
+    .filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: end; margin-bottom: 14px; }
+    .filters.compact { grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto; }
+    .field { min-width: 0; }
+    .field label { display: block; color: #707b8c; margin-bottom: 6px; }
+    .field .label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; color: #707b8c; }
+    .field .label-row label { margin-bottom: 0; }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid #d9dfe9; border-radius: 2px; min-height: 30px; padding: 6px 9px; background: #fff; color: #39465a; }
+    .field input[type="checkbox"] { width: 16px; height: 16px; min-height: 16px; padding: 0; flex: 0 0 auto; }
+    .field textarea { min-height: 74px; resize: vertical; }
+    .field .hint { display: block; color: #9aa4b2; margin-top: 5px; line-height: 1.5; }
+    .field .error-text { display: block; color: var(--red); margin-top: 5px; line-height: 1.5; }
+    .field input.invalid { border-color: var(--red); background: #fffafa; }
+    .field-inline { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 8px; }
+    .tip-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #d9dfe9; background: #fff; color: #315efb; padding: 0; font-weight: 600; line-height: 16px; display: inline-grid; place-items: center; cursor: pointer; }
+    .tip-open > .tip-icon, .tip-open > .label-row .tip-icon { border-color: #315efb; background: #eef4ff; }
+    .header-tip { margin-left: 5px; vertical-align: text-bottom; }
+    .version-rule { display: grid; grid-template-columns: 122px minmax(0, 1fr); gap: 8px; }
+    .app-version-field { position: relative; }
+    .app-version-popover { position: absolute; left: 0; top: 56px; width: 332px; z-index: 40; display: none; background: #fff; border: 1px solid #dfe5ef; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 12px; }
+    .app-version-popover.open, .app-version-field:hover .app-version-popover, .app-version-field:focus-within .app-version-popover, .app-version-field.tip-open .app-version-popover { display: block; }
+    .app-version-popover p { margin-bottom: 10px; color: #56616f; line-height: 1.65; }
+    .app-shot { border: 1px solid #e2e7f0; background: #f8fafc; width: 228px; margin: 0 auto; padding: 8px; color: #2d3848; }
+    .app-shot-head { text-align: center; font-weight: 600; padding: 4px 0 8px; border-bottom: 1px solid #e2e7f0; }
+    .app-shot-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 4px 4px; }
+    .app-shot-row span:last-child { color: #8b95a4; }
+    .readonly { min-height: 30px; border: 1px solid #e5eaf3; background: #f8fafc; border-radius: 2px; padding: 6px 9px; color: #56616f; }
+    .check-row { display: flex; gap: 14px; flex-wrap: wrap; min-height: 30px; align-items: center; }
+    .check-row label { display: inline-flex; align-items: center; gap: 6px; color: #516071; }
+    .check-row .sub { color: #9aa4b2; }
+    .multi-pick { border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; padding: 8px; }
+    .multi-picked { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; margin-bottom: 8px; }
+    .multi-empty { color: #9aa4b2; line-height: 22px; }
+    .multi-search { width: 100%; min-height: 30px; border: 1px solid #e4e9f2; border-radius: 2px; padding: 6px 9px; margin-bottom: 8px; color: #39465a; }
+    .multi-options { max-height: 148px; overflow: auto; display: grid; gap: 6px; }
+    .multi-options.grouped { max-height: 220px; }
+    .multi-group { border: 1px solid #edf0f5; background: #fbfcff; padding: 8px; display: grid; gap: 6px; }
+    .multi-group-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #516071; }
+    .multi-group-head strong { font-weight: 600; }
+    .multi-group-toggle { min-height: 24px; padding: 0 8px; }
+    .multi-group-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .multi-option { width: 100%; border: 1px solid #edf0f5; background: #f8fafc; color: #39465a; border-radius: 2px; padding: 7px 9px; text-align: left; }
+    .multi-option[aria-pressed="true"] { border-color: #315efb; background: #eef4ff; color: #315efb; }
+    .auth-radio-line { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+    .auth-radio-line label { display: inline-flex; align-items: center; gap: 6px; color: #516071; }
+    .required { color: var(--red); margin-right: 4px; }
+    .auth-specified-panel.hide { display: none; }
+    .auth-dc-tabs { display: flex; align-items: center; gap: 34px; min-height: 38px; border-bottom: 1px solid #edf0f5; margin-bottom: 10px; }
+    .auth-dc-tab { min-height: 36px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #516071; padding: 0 2px; }
+    .auth-dc-tab.active { color: #315efb; border-bottom-color: #315efb; }
+    .auth-selected-count { margin-left: auto; color: #9aa4b2; }
+    .auth-query { display: grid; grid-template-columns: 150px minmax(160px, 1fr) 94px auto; gap: 8px; align-items: center; margin: 10px 0; }
+    .auth-query input, .auth-query select { width: 100%; min-height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; padding: 6px 9px; background: #fff; color: #39465a; }
+    .auth-table-wrap { border: 1px solid #edf0f5; min-height: 318px; overflow: auto; }
+    .auth-empty { height: 204px; color: #9aa4b2; text-align: center; vertical-align: middle; }
+    .selector-box { border: 1px solid #dfe5ef; background: #fff; padding: 10px; }
+    .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; margin-bottom: 10px; }
+    .selected-chip { display: inline-flex; align-items: center; gap: 5px; min-height: 22px; padding: 0 7px; border: 1px solid #d9e5ff; background: #eef4ff; color: #315efb; border-radius: 2px; }
+    .selected-chip button { border: 0; background: transparent; color: #315efb; padding: 0; line-height: 1; }
+    .selector-tools { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 8px; margin-bottom: 8px; }
+    .selector-tools input, .selector-tools select { width: 100%; border: 1px solid #d9dfe9; border-radius: 2px; min-height: 30px; padding: 6px 9px; background: #fff; color: #39465a; }
+    .selector-table { max-height: 188px; overflow: auto; border: 1px solid #edf0f5; }
+    .selector-table table { table-layout: fixed; }
+    .selector-table th:first-child, .selector-table td:first-child { width: 36px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+    .form-grid.single-field { grid-template-columns: minmax(0, 1fr); }
+    .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .form-foot { border-top: 1px solid #edf0f5; margin-top: 18px; padding-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
+    .ota-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
+    .ota-steps .step.done { color: #315efb; font-weight: 600; }
+    .ota-steps .step.done::after { background: #f3f6fb; }
+    .ota-product-hero { grid-template-columns: 56px minmax(0, 1fr) auto; }
+    .ota-table-wrap { overflow-x: auto; border: 1px solid #edf0f5; border-bottom: 0; }
+    .ota-table-wrap table { min-width: 1320px; }
+    .ota-empty { min-height: 118px; display: grid; place-items: center; color: #9aa4b2; border-bottom: 1px solid #edf0f5; }
+    .ota-form-panel { padding: 4px 20px 24px; }
+    .subsection { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; }
+    .subsection:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+    .subsection-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+    .firmware-state-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
+    .firmware-state { border: 1px solid #e5eaf3; background: #fafbfc; padding: 10px; min-height: 64px; }
+    .firmware-state strong { display: block; color: #1f2d3d; margin-bottom: 6px; }
+    .firmware-state span { color: #7a8799; line-height: 1.55; }
+    .firmware-message { margin: 10px 0 0; }
+    .parse-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .parse-item { border: 1px solid #edf0f5; background: #fafbfc; padding: 8px 10px; min-height: 52px; }
+    .parse-item span { display: block; color: #8b95a4; margin-bottom: 4px; }
+    .parse-item strong { display: block; color: #39465a; word-break: break-word; }
+    .debug-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .debug-card { border: 1px solid #edf0f5; background: #fafbfc; padding: 12px; min-height: 86px; }
+    .debug-card strong { display: block; margin-bottom: 8px; color: #1f2d3d; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .summary-item { border: 1px solid #edf0f5; background: #fafbfc; padding: 10px; min-height: 58px; }
+    .summary-label { display: block; color: #8b95a4; margin-bottom: 5px; }
+    .summary-value { display: block; color: #39465a; font-weight: 600; word-break: break-word; }
+    .extension-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 16px; }
+    .extension-card { min-height: 86px; border: 1px solid #e5eaf3; background: #fff; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
+    .extension-card.active { border-color: #315efb; box-shadow: inset 0 0 0 1px #315efb; }
+    .extension-card strong { font-size: 13px; color: #1f2d3d; margin-bottom: 8px; }
+    .extension-card span { color: #8b95a4; }
+    .extension-card .btn { position: absolute; right: 10px; top: 10px; min-height: 24px; padding: 0 8px; }
+    .extension-detail-page-title { color: #1f2d3d; font-size: 16px; font-weight: 600; margin: 2px 0 10px; }
+    .extension-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #edf0f5; border-bottom: 0; padding: 12px 14px; background: #fff; }
+    .extension-detail-head select { width: min(260px, 42vw); border: 1px solid #d9dfe9; border-radius: 2px; min-height: 30px; padding: 6px 9px; background: #fff; color: #39465a; }
+    .extension-detail-title { font-size: 14px; font-weight: 600; color: #1f2d3d; }
+    .extension-detail-info { border: 1px solid #edf0f5; padding: 12px 14px; display: grid; gap: 8px; background: #fff; margin-bottom: 14px; }
+    .extension-detail-row { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 8px; }
+    .extension-detail-row span:first-child { color: #8b95a4; text-align: right; }
+    .strategy-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .strategy-card { border: 1px solid #edf0f5; background: #fafbfc; padding: 10px; min-height: 62px; }
+    .strategy-card span { display: block; color: #8b95a4; margin-bottom: 5px; }
+    .strategy-card strong { display: block; color: #1f2d3d; font-size: 15px; line-height: 22px; }
+    .strategy-table-wrap { border: 1px solid #edf0f5; overflow-x: auto; }
+    .strategy-table-wrap table { min-width: 960px; }
+    .impact-preview { border: 1px solid #d9f7be; background: #f6ffed; color: #3f861e; padding: 10px 12px; margin-top: 12px; line-height: 1.65; }
+    .status-tip { position: relative; display: inline-flex; margin-left: 5px; vertical-align: middle; }
+    .status-tip .tip-icon { flex: 0 0 auto; }
+    .status-tip-popover { display: none; position: absolute; top: 24px; left: -120px; width: 380px; z-index: 60; border: 1px solid #dfe5ef; background: #fff; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 12px; color: #56616f; }
+    .status-tip:hover .status-tip-popover, .status-tip:focus-within .status-tip-popover, .status-tip.tip-open .status-tip-popover { display: block; }
+    .status-tip-title { display: block; color: #1f2d3d; font-weight: 600; margin-bottom: 8px; }
+    .status-tip-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid #edf0f5; }
+    .status-tip-row:first-of-type { border-top: 0; }
+    .status-tip-row .tag { width: max-content; margin-right: 0; }
+    .inline-tip { position: relative; display: inline-flex; align-items: center; margin-left: 0; vertical-align: middle; }
+    .inline-tip-popover { display: none; position: absolute; top: 24px; left: -86px; width: 300px; z-index: 80; border: 1px solid #dfe5ef; background: #fff; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 10px 12px; color: #56616f; line-height: 1.65; }
+    .inline-tip:hover .inline-tip-popover, .inline-tip:focus-within .inline-tip-popover, .inline-tip.tip-open .inline-tip-popover { display: block; }
+    .hit-rule-note { border: 1px solid #e5eaf3; background: #fafbfc; color: #5d6878; padding: 10px 12px; line-height: 1.65; margin: 12px 0; }
+    .disabled-link { color: #b7c0cd; border-color: #edf0f5; pointer-events: none; }
+    .readonly { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+    .readonly > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .readonly .tag { flex: 0 0 auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border-bottom: 1px solid #edf0f5; padding: 10px 9px; text-align: left; vertical-align: top; word-break: break-word; }
+    th { background: #fafbfc; color: #707b8c; font-weight: 600; }
+    td .sub { display: block; color: #9aa4b2; margin-top: 3px; }
+    .table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; color: #8b95a4; }
+    body.drawer-open { --active-drawer: var(--drawer); }
+    body.drawer-open.drawer-wide { --active-drawer: min(920px, calc(100vw - var(--side) - var(--annotation))); }
+    .note-fab { min-height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; color: #516071; padding: 0 10px; }
+    .note-popover { position: fixed; right: 0; top: 0; bottom: 0; width: var(--annotation); overflow: auto; display: block; background: #fff; border-left: 1px solid #dfe5ef; box-shadow: -10px 0 28px rgba(15, 35, 70, .10); padding: 16px; z-index: 100170; }
+    body.notes-closed .note-popover { display: none; }
+    body.notes-closed .app { width: 100vw; }
+    body.notes-closed .drawer { right: 0; }
+    body.notes-closed .drawer-mask { right: 0; }
+    .note-popover h2 { margin-bottom: 6px; }
+    .note-popover p { font-size: 12px; }
+    .note-toolbar { position: sticky; top: -16px; z-index: 2; margin: -16px -16px 12px; padding: 14px 16px 12px; background: #fff; border-bottom: 1px solid #edf0f5; }
+    .note-toolbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .note-context-pill { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 2px; background: #eef4ff; color: #315efb; margin-top: 8px; }
+    .note-item { width: 100%; text-align: left; border: 1px solid #e5eaf3; background: #fff; padding: 11px 12px; margin-top: 10px; border-radius: 4px; }
+    .note-item.active { border-color: #facc15; background: #fffbe6; box-shadow: inset 3px 0 0 #facc15; }
+    .note-index, .anchor { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #facc15; color: #713f12; font-size: 11px; font-weight: 700; }
+    .anchor { margin-right: 6px; vertical-align: middle; }
+    body.notes-closed .anchor { display: none; }
+    .note-title { display: block; margin-top: 7px; color: #1f2d3d; font-weight: 600; }
+    .note-body { display: block; margin-top: 7px; color: #697386; line-height: 1.65; }
+    .note-section { display: block; margin-top: 7px; color: #39465a; font-weight: 600; }
+    .note-line { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 4px; margin-top: 4px; }
+    .note-line::before { content: "•"; color: #315efb; }
+    .note-loc { display: block; margin-top: 8px; color: #9aa4b2; }
+    .is-highlight { outline: 2px solid #facc15; outline-offset: 3px; }
+    .drawer-mask { position: fixed; inset: 0 var(--annotation) 0 0; background: rgba(15, 23, 42, .26); display: none; z-index: 100080; }
+    .drawer { position: fixed; top: 0; right: var(--annotation); width: var(--drawer); height: 100vh; background: #fff; border-left: 1px solid #dfe5ef; box-shadow: var(--shadow); display: none; flex-direction: column; z-index: 100090; }
+    .drawer.wide { width: min(920px, calc(100vw - var(--side) - var(--annotation))); }
+    .drawer.open, .drawer-mask.open { display: flex; }
+    .drawer-head { padding: 16px 18px; border-bottom: 1px solid #edf0f5; display: flex; justify-content: space-between; gap: 12px; }
+    .drawer-body { padding: 18px; overflow: auto; flex: 1; }
+    .drawer-foot { padding: 12px 18px; border-top: 1px solid #edf0f5; display: flex; justify-content: flex-end; gap: 8px; }
+    .modal-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, .32); display: none; align-items: center; justify-content: center; z-index: 100100; }
+    .modal-mask.open { display: flex; }
+    .modal { width: 460px; background: #fff; box-shadow: var(--shadow); }
+    .modal.import-modal { width: 560px; max-width: calc(100vw - 48px); }
+    .modal.version-modal { width: 560px; max-width: calc(100vw - 48px); }
+    .modal.version-state-modal { width: 520px; max-width: calc(100vw - 48px); }
+    .modal-head, .modal-foot { padding: 14px 16px; border-bottom: 1px solid #edf0f5; }
+    .modal-body { padding: 16px; max-height: calc(100vh - 190px); overflow: auto; }
+    .modal-foot { border-top: 1px solid #edf0f5; border-bottom: 0; display: flex; justify-content: flex-end; gap: 8px; }
+    .version-state-summary { color: #1f2d3d; line-height: 1.7; }
+    .version-state-detail { margin-top: 10px; color: #697386; line-height: 1.65; }
+    .import-status-line { display: flex; justify-content: space-between; gap: 12px; color: #5d6878; margin: 6px 0 8px; }
+    .hide { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <div class="logo">路特创新 <small>AIoT Platform</small></div>
+      <div class="nav-group">
+        <div class="nav-title">概览</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">智能产品 <span>⌃</span></div>
+        <button class="nav-item sub active" data-view="product">产品列表</button>
+        <button class="nav-item sub">消息推送</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">设备管理 <span>⌃</span></div>
+        <button class="nav-item sub">设备列表</button>
+        <button class="nav-item sub">固件管理</button>
+        <button class="nav-item sub">OTA</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">App <span>⌃</span></div>
+        <button class="nav-item sub">App列表</button>
+        <button class="nav-item sub">App升级</button>
+        <button class="nav-item sub">扩展程序管理</button>
+        <button class="nav-item sub" data-view="whitelist">白名单管理</button>
+        <button class="nav-item sub" data-view="tags">白名单标签组管理</button>
+        <button class="nav-item sub">日志文件</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">配置中心 <span>⌃</span></div>
+        <button class="nav-item sub">物模型池</button>
+        <button class="nav-item sub">产品模板</button>
+        <button class="nav-item sub">产品分类</button>
+        <button class="nav-item sub">多语言</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="page-head">
+        <div class="page-title">
+          <button class="back">‹</button>
+          <div>
+            <h1 id="pageTitle">智能产品</h1>
+            <div class="crumb" id="breadcrumb"><a>查看产品详情</a> / <a>产品列表</a> / <a>智能产品</a></div>
+          </div>
+        </div>
+        <div class="head-icons">
+          <button class="note-fab" id="toggleNotes">隐藏批注</button>
+          <button class="round-icon">?</button>
+          <button class="round-icon">⌂</button>
+          <button class="round-icon">⚙</button>
+        </div>
+      </header>
+
+      <section id="productView" class="page-card">
+        <div class="product-hero" id="productMain">
+          <div class="product-cover"></div>
+          <div>
+            <div class="product-name">
+              <h1 id="productName">12</h1>
+              <span class="tag blue">ROOT云</span>
+              <span class="tag green" id="productStatus">已上架</span>
+            </div>
+            <div class="meta-line">
+              <span>产品分类：Digital Thermome</span>
+              <span>产品型号：1</span>
+              <span>产品代码：--</span>
+              <span>产品ID：2054039271856459777</span>
+              <span>产品模板ID：1964863593208832002</span>
+              <span id="listingRangeSummary"></span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn" id="listingRangeBtn" data-open-drawer="listing">编辑上架范围</button>
+            <button class="btn danger" id="listingActionBtn" data-open-drawer="listing">下架产品</button>
+          </div>
+        </div>
+        <div class="version-line">
+          <span>功能版本：</span>
+          <select id="versionSelect">
+            <option value="listed">版本1 - 已发布</option>
+            <option value="dev">开发中版本 - 未上架</option>
+            <option value="native">原生面板产品 - 已发布</option>
+          </select>
+          <button class="btn">新建版本</button>
+        </div>
+
+        <div class="steps" id="productSteps">
+          <button class="step active" data-step="base"><span class="check">✓</span>基础信息</button>
+          <button class="step"><span class="check">✓</span>功能设计</button>
+          <button class="step" data-step="extension"><span class="check">✓</span>扩展程序</button>
+          <button class="step" data-step="firmware"><span class="check">✓</span>固件配置</button>
+          <button class="step" data-step="debug"><span class="check">✓</span>设备调试</button>
+          <button class="step"><span class="check">✓</span>配网引导</button>
+          <button class="step"><span class="check">✓</span>高级配置</button>
+        </div>
+
+        <div id="baseStep" class="section product-step">
+          <div class="section-head">
+            <h2>产品信息</h2>
+            <button class="btn">编辑产品信息</button>
+          </div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">产品ID：</span><span class="info-value">2054039271856459777</span></div>
+            <div class="info-item"><span class="info-label">产品状态：</span><span class="info-value"><span class="tag green" id="statusInline">已上架</span></span></div>
+            <div class="info-item"><span class="info-label">所属平台：</span><span class="info-value"><span class="tag blue">ROOT云</span></span></div>
+            <div class="info-item"><span class="info-label">产品名称：</span><span class="info-value" id="nameInline">12</span></div>
+            <div class="info-item"><span class="info-label">流程配网路由方式：</span><span class="info-value">原子化</span></div>
+            <div class="info-item"><span class="info-label">通讯方式：</span><span class="info-value">BLE</span></div>
+            <div class="info-item"><span class="info-label">创建用户：</span><span class="info-value">颜新星 jim.yan@rootglobal.net</span></div>
+            <div class="info-item"><span class="info-label">产品型号：</span><span class="info-value">1</span></div>
+            <div class="info-item"><span class="info-label">配网方式：</span><span class="info-value">蓝牙配网</span></div>
+            <div class="info-item"><span class="info-label">创建时间：</span><span class="info-value">2026-05-12 11:21:39</span></div>
+            <div class="info-item"><span class="info-label">支持频段：</span><span class="info-value">--</span></div>
+            <div class="info-item"><span class="info-label">配网交互方式：</span><span class="info-value">CONNECT_F0_F7</span></div>
+            <div class="info-item"><span class="info-label">原子化配网：</span><span class="info-value">支持</span></div>
+            <div class="info-item"><span class="info-label">设备是否可以编组：</span><span class="info-value">不支持</span></div>
+            <div class="info-item"><span class="info-label">绑定方式：</span><span class="info-value">弱绑定</span></div>
+            <div class="info-item"><span class="info-label">所属App：</span><span class="info-value">momcozy</span></div>
+            <div class="info-item"><span class="info-label">产品图片：</span><span class="info-value"><span class="image-list"><span><span class="thumb"></span><br>主图</span><span><span class="thumb"></span><br>列表图</span><span><span class="thumb"></span><br>原子化配网图</span></span></span></div>
+            <div class="info-item"><span class="info-label">产品类型：</span><span class="info-value">Digital Thermome</span></div>
+          </div>
+
+          <div class="test-box" id="testWhitelist">
+            <div class="section-head">
+              <div>
+                <h2><span class="anchor" data-note-anchor="dev-auth">1</span>测试白名单</h2>
+                <p>*仅白名单用户可在未上架的功能版本中添加设备以及体验最新的功能，当功能版本发布后，所有配置项将生效</p>
+              </div>
+            </div>
+            <div class="test-row">
+              <span class="inline-label">可见用户：</span>
+              <span id="visibleUserText">全部公司用户</span>
+              <button class="btn link" data-open-drawer="authList">编辑白名单用户</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="extensionStep" class="section product-step hide">
+          <div class="section-head">
+            <div>
+              <h2><span class="anchor" data-note-anchor="extension-main">2</span>扩展程序</h2>
+              <p>保留原有原生 / RN 选择；选择 RN 时展示已按关联产品迁入当前产品详情的产品模块扩展程序，并在产品上下文中管理版本和发布控制。</p>
+            </div>
+          </div>
+          <div class="extension-box" id="extensionBody"></div>
+        </div>
+
+        <div id="firmwareStep" class="section product-step hide">
+          <div class="section-head">
+            <div>
+              <h2><span class="anchor" data-note-anchor="firmware-tab">3</span>固件配置</h2>
+            </div>
+          </div>
+          <div class="extension-box" id="firmwareBody"></div>
+        </div>
+
+        <div id="debugStep" class="section product-step hide">
+          <div class="section-head">
+            <div>
+              <h2>设备调试</h2>
+            </div>
+            <button class="btn">添加测试设备</button>
+          </div>
+          <div class="debug-card-grid">
+            <div class="debug-card"><strong>蓝牙信息</strong><p>CONNECT_F0_F7；支持三元组。</p><button class="btn">查看协议脚本</button></div>
+            <div class="debug-card"><strong>协议转换</strong><p>当前未配置转换脚本。</p><button class="btn">查看协议脚本</button></div>
+            <div class="debug-card"><strong>测试设备</strong><p>用于开发期设备连通性验证。</p><button class="btn">添加测试设备</button></div>
+          </div>
+          <table>
+            <thead><tr><th>设备名称</th><th>状态</th><th>激活时间</th><th>最近上线时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>Pump-H Lab 01</td><td><span class="tag green">在线</span></td><td>2026-06-02 10:22</td><td>2026-06-09 09:16</td><td class="table-actions"><button class="btn">查看</button><button class="btn">解绑</button></td></tr>
+              <tr><td>Pump-H Lab 02</td><td><span class="tag orange">离线</span></td><td>2026-06-01 15:04</td><td>2026-06-07 18:42</td><td class="table-actions"><button class="btn">查看</button><button class="btn">解绑</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="otaView" class="page-card hide">
+        <div id="otaBody"></div>
+      </section>
+
+      <section id="whitelistView" class="page-card hide">
+        <div class="list-box" id="whitelistPanel">
+          <div class="section-head">
+            <div>
+              <h2><span class="anchor" data-note-anchor="whitelist-manage">1</span>白名单管理</h2>
+              <p>沿用 App > 白名单管理入口，用户类型调整为公司用户 / 外部用户。</p>
+            </div>
+            <div class="toolbar">
+              <button class="btn" data-open-drawer="addUser">添加用户</button>
+              <button class="btn" data-open-drawer="importUsers">批量导入</button>
+              <button class="btn" id="batchAuthorize">授权到产品</button>
+              <button class="btn danger" id="batchDelete">批量删除</button>
+            </div>
+          </div>
+          <div class="filters">
+            <div class="field"><label for="filterDc">数据中心</label><select id="filterDc"><option>全部</option><option>北美数据中心</option><option>欧洲数据中心</option></select></div>
+            <div class="field"><label for="filterType">用户类型</label><select id="filterType"><option>全部</option><option>公司用户</option><option>外部用户</option></select></div>
+            <div class="field"><label for="filterTag">标签组</label><select id="filterTag"><option>全部标签组</option><option>Seed NA 2026Q2</option><option>Internal QA</option></select></div>
+            <div class="field"><label for="filterKeyword">邮箱 / 昵称</label><input id="filterKeyword" placeholder="seed / user@example.com"></div>
+            <button class="btn" id="resetWhitelist">重置</button>
+          </div>
+          <table>
+            <thead><tr><th><input type="checkbox" id="selectPage"></th><th>用户</th><th>类型</th><th>数据中心</th><th>标签组</th><th>授权产品</th><th>操作</th></tr></thead>
+            <tbody id="whitelistRows"></tbody>
+          </table>
+          <div class="pager">
+            <span id="whitelistPagerText"></span>
+            <button class="btn" id="prevWhitelist">上一页</button>
+            <button class="btn" id="nextWhitelist">下一页</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tagsView" class="page-card hide">
+        <div class="list-box" id="tagsPanel">
+          <div class="section-head">
+            <div>
+              <h2><span class="anchor" data-note-anchor="tag-source">1</span>白名单标签组管理</h2>
+              <p>标签组仍由现有页面维护，产品详情授权和批量导入只引用该来源。</p>
+            </div>
+            <button class="btn primary">新建标签组</button>
+          </div>
+          <table>
+            <thead><tr><th>标签组 ID</th><th>标签组</th><th>用户数</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>WG-NA-2026Q2</td><td>Seed NA 2026Q2</td><td>82</td><td>北美外部种子用户</td><td><button class="btn">用户列表</button></td></tr>
+              <tr><td>WG-INTERNAL</td><td>Internal QA</td><td>18</td><td>公司用户分组</td><td><button class="btn">用户列表</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <aside class="note-popover" id="notesPanel" aria-label="原型批注">
+    <div class="note-toolbar">
+      <div class="note-toolbar-row">
+        <h2>原型批注</h2>
+        <button class="note-fab" id="collapseNotes" type="button">隐藏</button>
+      </div>
+      <p id="noteIntro">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</p>
+      <span class="note-context-pill" id="noteContext">产品详情批注</span>
+    </div>
+    <div id="noteList"></div>
+  </aside>
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div><h2 id="drawerTitle">抽屉</h2><p id="drawerDesc"></p></div>
+      <button class="btn link" id="closeDrawer">关闭</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot"><button class="btn" id="drawerCancel">取消</button><button class="btn primary" id="drawerSave">保存</button></div>
+  </aside>
+
+  <div class="modal-mask" id="deleteModal">
+    <div class="modal">
+      <div class="modal-head"><h2>确认删除白名单用户</h2></div>
+      <div class="modal-body" id="deleteModalBody"></div>
+      <div class="modal-foot"><button class="btn" id="cancelDelete">取消</button><button class="btn danger" id="confirmDelete">确认删除</button></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="importModal">
+    <div class="modal import-modal">
+      <div class="modal-head"><h2 id="importModalTitle">同步导入中</h2></div>
+      <div class="modal-body" id="importModalBody"></div>
+      <div class="modal-foot" id="importModalFoot"></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="extensionVersionModal">
+    <div class="modal version-modal">
+      <div class="modal-head"><h2>版本指定</h2></div>
+      <div class="modal-body">
+        <div class="form-grid single-field">
+          <div class="field">
+            <label>产品功能版本：</label>
+            <div class="check-row">
+              <label><input type="radio" name="extensionFunctionVersion" value="all" checked> 通用</label>
+              <label><input type="radio" name="extensionFunctionVersion" value="specified"> 指定版本</label>
+            </div>
+          </div>
+          <div class="field hide" id="extensionFunctionVersionField">
+            <label><span class="required">*</span>功能版本</label>
+            <select><option>版本1 - 已发布</option><option>开发中版本 - 未上架</option></select>
+          </div>
+          <div class="field">
+            <label>最小APP版本：</label>
+            <div class="check-row">
+              <label><input type="radio" name="extensionMinAppVersion" value="all" checked> 通用</label>
+              <label><input type="radio" name="extensionMinAppVersion" value="specified"> 指定版本</label>
+            </div>
+          </div>
+          <div class="field hide" id="extensionMinAppVersionField">
+            <label><span class="required">*</span>最小 APP 版本号</label>
+            <input placeholder="请输入最小APP版本号" value="5.2.0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" id="cancelExtensionVersion">取消</button><button class="btn primary" id="confirmExtensionVersion">确认</button></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="extensionPanelModeModal">
+    <div class="modal">
+      <div class="modal-head"><h2>编辑扩展程序配置</h2></div>
+      <div class="modal-body">
+        <div id="extension-panel-mode-modal" data-note-anchor="extension-panel-mode-modal">
+          <div class="form-grid single-field">
+            <div class="field">
+              <label>控制面板类型</label>
+              <div class="check-row">
+                <label><input type="radio" name="extensionPanelModeDraft" value="原生"> 原生</label>
+                <label><input type="radio" name="extensionPanelModeDraft" value="RN"> RN</label>
+              </div>
+              <span class="hint">保存后只更新控制面板类型，不保存下方扩展程序版本或 RN 版本发布配置。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn" id="cancelExtensionPanelMode">取消</button><button class="btn primary" id="confirmExtensionPanelMode">保存</button></div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="versionStateModal">
+    <div class="modal version-state-modal">
+      <div class="modal-head"><h2 id="versionStateModalTitle">版本状态唯一性校验</h2></div>
+      <div class="modal-body" id="versionStateModalBody"></div>
+      <div class="modal-foot" id="versionStateModalFoot"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+    const PAGE_SIZE = 3;
+
+    const state = {
+      view: "product",
+      product: "listed",
+      productStep: "base",
+      whitelistPage: 1,
+      deleteIds: [],
+      drawer: null,
+      notesOpen: true,
+      activeNoteId: "",
+      importType: null,
+      importStage: null,
+      importTimer: null,
+      selectedIds: new Set(["u1", "u2"]),
+      authorizeIds: [],
+      productAuthSelected: new Set(["u1", "u2", "u4"]),
+      newAuthProducts: new Set(["V3 Dev Pump", "Pump-H"]),
+      authVisibleMode: "all",
+      authDc: "北美数据中心",
+      authTag: "",
+      authKeyword: "",
+      authQueryField: "邮箱",
+      otaMode: "list",
+      otaStep: 1,
+      otaPublishMode: "publish",
+      firmwareMessage: "",
+      otaTaskMessage: "",
+      firmwareReleaseTargetId: null,
+      firmwareEditingId: null,
+      extensionPanelMode: null,
+      extensionPanelSaved: "",
+      extensionReleaseVersion: "1.1.0",
+      extensionReleaseMode: null,
+      lifecycleMessage: "",
+      releaseConfigIntent: null,
+      versionStateModalResolve: null,
+      activeModal: null,
+      rangeSummaryExpanded: false
+    };
+
+    const bootParams = new URLSearchParams(location.search);
+    if (["product", "whitelist", "tags"].includes(bootParams.get("view"))) state.view = bootParams.get("view");
+    if (["listed", "dev", "native"].includes(bootParams.get("product"))) state.product = bootParams.get("product");
+    const bootStep = bootParams.get("step");
+    if (bootStep === "2" || bootStep === "extension") state.productStep = "extension";
+    if (bootStep === "3" || bootStep === "firmware") state.productStep = "firmware";
+    if (bootStep === "4" || bootStep === "debug") state.productStep = "debug";
+
+    const products = {
+      dev: { name: "V3 Dev Pump", id: "2054039271856459777", status: "开发中", statusClass: "orange", panel: "RN", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"] },
+      listed: { name: "12", id: "2054039271856459777", status: "已上架", statusClass: "green", panel: "RN", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"] },
+      native: { name: "Cooker-N", id: "2054039271856460001", status: "已上架", statusClass: "green", panel: "原生", visible: "全部公司用户", listingMode: "full", listingRangeMode: "dc", listingRange: ["全部"] }
+    };
+
+    const authProducts = [
+      { name: "V3 Dev Pump", model: "PUMP-V3", id: "2054039271856459777", status: "开发中" },
+      { name: "Pump-H", model: "PUMP-H", id: "2054039271856459888", status: "已上架-全面放开" },
+      { name: "Bottle Warmer Pro", model: "BWP-2", id: "2054039271856459999", status: "已上架-部分放开" },
+      { name: "Cooker-N", model: "CKN-1", id: "2054039271856460001", status: "已上架" },
+      { name: "Scale Mini", model: "SCM-1", id: "2054039271856460012", status: "开发中" }
+    ];
+
+    let whitelistUsers = [
+      { id: "u1", email: "seed.user@example.com", nick: "Seed User NA", type: "外部用户", dc: "北美数据中心", tag: "Seed NA 2026Q2", products: ["V3 Dev Pump"] },
+      { id: "u2", email: "mother.panel@example.com", nick: "Panel Mother", type: "外部用户", dc: "北美数据中心", tag: "Seed NA 2026Q2", products: ["V3 Dev Pump"] },
+      { id: "u3", email: "qa.owner@company.com", nick: "QA Owner", type: "公司用户", dc: "北美数据中心", tag: "Internal QA", products: ["免授权"] },
+      { id: "u4", email: "seed.eu@example.com", nick: "Seed User EU", type: "外部用户", dc: "欧洲数据中心", tag: "Seed EU 2026Q2", products: ["V3 Dev Pump"] },
+      { id: "u5", email: "trial.new@example.com", nick: "", type: "外部用户", dc: "北美数据中心", tag: "Seed NA 2026Q2", products: [] }
+    ];
+
+    let extensionVersions = [
+      { version: "1.3.0", updatedAt: "2026-06-05 09:12:10", log: "开发中草稿，补充泵模式入口", status: "开发中", functionVersion: "开发中版本 - 未上架", minApp: "5.2.0" },
+      { version: "1.2.0", updatedAt: "2026-06-04 08:51:34", log: "白名单用户测试版本", status: "测试中", functionVersion: "版本1 - 已发布", minApp: "5.2.0" },
+      { version: "1.1.0", updatedAt: "2026-06-04 08:50:22", log: "自动发布中，第 3 / 5 天", status: "发布中", functionVersion: "版本1 - 已发布", minApp: "5.2.0" },
+      { version: "1.0.0", updatedAt: "2026-06-04 08:49:53", log: "被 1.1.0 发布覆盖，转为已停止", status: "已停止", functionVersion: "通用", minApp: "通用" },
+      { version: "0.9.8", updatedAt: "2026-05-28 11:20:16", log: "已停止，保留历史升级来源", status: "已停止", functionVersion: "版本1 - 已发布", minApp: "5.1.0" }
+    ];
+
+    let extensionReleaseConfigs = {
+      "1.1.0": { mode: "自动发布", rangeMode: "custom", range: "北美数据中心、欧洲数据中心", batchDays: "5", progress: "第 3 / 5 天，已开放 60%", effectiveAt: "立即生效", restartCount: 1, updatedAt: "2026-06-04 10:15" }
+    };
+
+    const productFunctionVersions = ["版本1 - 已发布", "开发中版本 - 未上架"];
+    const firmwareFilePattern = /^([^_]+)_([^_]+)_([0-9]+(?:\.[0-9]+)*)_([^_]+)_([^_]+)_([0-9]{8})\.(ufw|zip|bin)$/i;
+    const countryRegionGroups = [
+      { group: "北美洲", options: ["美国", "加拿大", "墨西哥"] },
+      { group: "欧洲", options: ["德国", "英国", "法国", "意大利", "西班牙", "荷兰"] },
+      { group: "亚洲", options: ["中国", "日本", "韩国", "新加坡", "泰国", "越南"] },
+      { group: "大洋洲", options: ["澳大利亚", "新西兰"] }
+    ];
+    const countryRegionOptions = countryRegionGroups.flatMap(group => group.options);
+    const firmwareTypeName = {
+      mcu: "MCU固件",
+      module: "模组固件"
+    };
+
+    function parseFirmwareFileName(filename) {
+      const cleanName = (filename || "").trim();
+      const match = cleanName.match(firmwareFilePattern);
+      if (!match) return null;
+      return {
+        fileName: cleanName,
+        company: match[1],
+        project: match[2],
+        firmwareVersion: match[3],
+        hardwareVersion: match[4],
+        checksum: match[5],
+        date: match[6],
+        format: match[7].toLowerCase()
+      };
+    }
+
+    let firmwareVersions = [
+      { id: "fw4", name: "Pump-H Main MCU", type: "MCU固件", version: "1.3.0", hardware: "M9P0", functionVersion: "开发中版本 - 未上架", status: "开发中", createdAt: "2026-06-08 11:20", log: "优化泵阀控制", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw3", name: "Pump-H Module", type: "模组固件", version: "0.9.8", hardware: "B2", functionVersion: "开发中版本 - 未上架", status: "测试中", createdAt: "2026-06-06 15:12", log: "模组连接稳定性验证", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw2", name: "Pump-H Main MCU", type: "MCU固件", version: "1.2.0", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "发布中", createdAt: "2026-06-03 10:00", log: "自动发布中，第 3 / 5 天", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw1", name: "Pump-H Main MCU", type: "MCU固件", version: "1.1.9", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "已发布", createdAt: "2026-05-30 09:30", log: "稳定版本", appRule: "版本等于", appVersion: "v 2.2.10" },
+      { id: "fw0", name: "Pump-H Module", type: "模组固件", version: "0.9.6", hardware: "B2", functionVersion: "版本1 - 已发布", status: "已停止", createdAt: "2026-05-18 13:40", log: "已停止，保留历史升级来源", appRule: "版本不低于", appVersion: "v 2.1.8" }
+    ];
+
+    let otaTasks = [
+      { id: "ota2", firmwareVersionId: "fw2", name: "Pump-H Main MCU 1.2.0 发布记录", firmwareName: "Pump-H Main MCU", firmwareType: "MCU固件", firmwareVersion: "1.2.0", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "发布中", publishMode: "自动发布", batchText: "5 天分批，开放覆盖度每天约增加 20%", upgradeMode: "提示升级", regions: ["北美数据中心", "欧洲数据中心"], appRule: "版本不低于", appVersion: "v 2.2.10", publishedAt: "2026-06-03 10:00", createdAt: "2026-06-02 16:20" },
+      { id: "ota1", firmwareVersionId: "fw1", name: "Pump-H Main MCU 1.1.9 发布记录", firmwareName: "Pump-H Main MCU", firmwareType: "MCU固件", firmwareVersion: "1.1.9", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "已发布", publishMode: "全面发布", batchText: "100%", upgradeMode: "强制升级", regions: ["中国数据中心", "亚太数据中心"], appRule: "版本等于", appVersion: "v 2.2.10", publishedAt: "2026-05-30 09:30", createdAt: "2026-05-29 18:02" }
+    ];
+
+    const notes = {
+      product: [
+        { id: "dev-auth", title: "测试白名单界面不变", body: "产品详情 > 基础信息 > 测试白名单沿用原界面。新增逻辑只发生在编辑选择时：标签组从单纯筛选变为筛选并全选中，切换标签组会累加选中用户。", loc: "产品详情 > 基础信息 > 测试白名单" },
+        { id: "versionSelect", title: "功能版本只切换演示状态", body: "功能版本下拉用于在原型中切换已发布、开发中和原生面板三类产品状态，方便验证测试白名单、上架范围、扩展程序和固件配置的条件显隐。", loc: "产品详情 > 功能版本" },
+        { id: "listingRangeBtn", title: "上架范围仍归属产品详情", body: "编辑上架范围或开发中产品上架都会进入同一个产品上架抽屉；本需求不新增独立 GTM 策略入口。", loc: "产品详情顶部操作" },
+        { id: "listingRangeBtn", title: "上架范围字段和联动", body: "字段包含上架方式、范围模式、范围项和生效时间。全面放开隐藏范围模式和范围项；部分放开按数据中心或国家/地区选择范围。国家/地区选项较多，使用按洲分类的可搜索点击式多选，支持点击单个国家/地区增删，也支持按洲批量选中或取消。保存缩小产品上架范围后，OTA 和 RN 发布范围中的自定义子范围按交集同步裁剪。", loc: "产品上架范围抽屉" }
+      ],
+      extension: [
+        { id: "extension-main", title: "产品模块迁入产品详情", body: "App > 扩展程序管理中业务类型为产品模块的扩展程序，按关联产品迁入对应产品详情 > 扩展程序；控制面板类型通过编辑弹窗保存，下方版本管理和发布配置由各自操作保存。", loc: "产品详情 > 扩展程序" },
+        { id: "extension-main", title: "扩展程序业务流程", body: "流程为进入产品详情扩展程序，查看控制面板类型，编辑原生/RN。选择RN后查看当前产品模块基本信息与版本表，对版本执行进入测试、发布、暂停发布、继续、修改发布配置或停止。", loc: "产品详情 > 扩展程序" },
+        { id: "extension-panel-mode", title: "控制面板类型展示态", body: "产品详情页内只展示当前控制面板类型和编辑入口，避免把该块误认为整页保存表单。点击编辑后在弹窗内切换原生 / RN。", loc: "产品详情 > 扩展程序 > 控制面板类型" },
+        { id: "extension-manage", title: "按关联产品展示产品模块", body: "产品详情不展示智能模块或其他产品的扩展程序；只展示归属当前产品的产品模块扩展程序。版本状态收敛为开发中、测试中、发布中、暂停发布、已发布和已停止；产品上下文由当前详情页继承，不提供扩展程序产品选择器；测试用户范围固定依赖产品白名单。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
+        { id: "extension-manage", title: "扩展程序字段定义", body: "基本信息字段只读：产品上下文、扩展程序名称、PanelCode、业务类型、面板类型。PanelCode 结构为 App缩写.产品类型.产品型号；存量示例 morn.breast-pump.v3，默认 App 缩写新生成值为 mom.breast-pump.v3。版本字段包含版本号、更新时间、更新日志、状态和操作；产品名称和产品ID由详情页承载，不在扩展程序块重复展示。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
+        { id: "versionStateModal", title: "版本状态唯一性弹窗", body: "进入测试或发布时，若版本号低于当前同状态候选版本，会在原型内弹窗阻断；若高版本会接替既有测试中、发布中或已发布版本，也使用原型内弹窗二次确认，确认后旧版本转为已停止。", loc: "产品详情 > 扩展程序 > 版本状态唯一性" },
+        { id: "extension-lifecycle", title: "扩展程序版本状态机", body: "开发中是进入分发前的准备态；测试中由产品白名单命中；发布中按批次逐步开放给线上用户；暂停发布不参与命中策略，可继续恢复发布或停止；已发布对所有线上用户可见；已停止只保留历史升级来源。命中时仅在测试中、发布中、已发布版本中按扩展程序版本号取最高版本。", loc: "产品详情 > 扩展程序 > 版本列表" }
+      ],
+      firmware: [
+        { id: "firmware-tab", title: "新增产品详情固件配置", body: "固件配置位于产品详情 > 扩展程序与设备调试之间。设备管理 > OTA 的发布配置能力按产品迁入此处，不再作为本原型的独立发布入口。", loc: "产品详情 > 固件配置" },
+        { id: "firmware-state", title: "固件配置业务流程", body: "流程为新建固件版本，生成开发中记录；进入测试后由白名单命中；点击发布并配置全面发布或自动发布。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布。", loc: "产品详情 > 固件配置" },
+        { id: "firmware-state", title: "固件版本字段定义", body: "固件版本字段包含固件名称、固件类型、固件版本、硬件版本、功能版本、APP版本号条件、状态、上传时间、发布日志和操作。新建时只选择功能版本、固件类型、上传文件、APP版本号条件和备注，文件解析字段只读。", loc: "产品详情 > 固件配置 > 固件版本" },
+        { id: "firmware-state", title: "测试中固件统一入口", body: "原设备调试页内的测试固件能力与固件版本管理中的测试中状态是同一业务对象，不再拆成独立测试固件表。测试中、发布中、已发布都是候选来源，并在共同筛选满足后按固件版本号取最高版本。", loc: "产品详情 > 固件配置 > 固件版本" },
+        { id: "firmware-state", title: "固件状态由行内操作流转", body: "开发中可进入测试或删除；测试中可停止或发布；发布中可暂停发布、停止或修改发布；暂停发布可继续或停止；已发布可修改发布配置或查看详情，已停止仅保留详情查看。暂停发布和已停止版本仅作为历史信息来源，不再匹配命中条件。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "versionStateModal", title: "版本状态唯一性弹窗", body: "进入测试或发布时，若版本号低于当前同固件类型的候选版本，会在原型内弹窗阻断；若高版本会接替既有测试中、发布中或已发布版本，也使用原型内弹窗二次确认，确认后旧版本转为已停止。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "firmware-state", title: "固件版本编辑边界", body: "固件版本创建后，功能版本、固件类型、APP 版本条件和文件名解析字段均不可在编辑中修改；列表编辑仅允许维护备注。若创建时配置填错，只能删除开发中固件版本后重新新建。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "firmware-state", title: "不在固件配置页跟踪 OTA 进度", body: "产品详情 > 固件配置只承接固件版本管理和发布配置，不展示 OTA 任务列表、命中设备数、成功升级数或失败率。进度追踪后续由独立监控面板承接。", loc: "产品详情 > 固件配置" },
+        { id: "firmware-state", title: "OTA 请求按类型独立决策", body: "设备 / App 请求 OTA 时按固件类型独立判断，MCU 只判断 MCU 固件，模组只判断模组固件。请求参数需要区分整体 OTA 和模块 OTA；测试中、发布中、已发布版本是命中候选，暂停发布和已停止不参与命中策略。", loc: "产品详情 > 固件配置" }
+      ],
+      ota: [
+        { id: "ota-upgrade", title: "OTA 已迁入固件配置", body: "本轮最新口径将 OTA 能力按产品迁入产品详情 > 固件配置；左侧设备管理 > OTA 在原型中不再作为新增能力验证入口。", loc: "产品详情 > 固件配置" }
+      ],
+      whitelist: [
+        { id: "whitelist-manage", title: "白名单管理承接授权", body: "沿用 App > 白名单管理，新增授权到具体产品，产品状态不影响授权关系；新增用户和批量导入时都可带授权产品。", loc: "App > 白名单管理" },
+        { id: "whitelist-manage", title: "白名单字段定义", body: "筛选字段为数据中心、用户类型、标签组、邮箱/昵称；列表展示用户、类型、数据中心、标签组、授权产品和操作。用户字段包含邮箱、昵称、类型、数据中心、标签组和授权产品，邮箱+数据中心唯一。", loc: "App > 白名单管理" },
+        { id: "whitelist-manage", title: "白名单业务流程", body: "流程为新增或导入白名单用户，校验邮箱和数据中心，保存用户与标签组，可选授权产品。列表支持单个/批量授权和删除；删除会移除维护记录并解除后续授权命中。", loc: "App > 白名单管理" },
+        { id: "filterDc", title: "列表筛选即时生效", body: "数据中心、用户类型、标签组和邮箱 / 昵称搜索共同过滤白名单列表，任一条件变化后回到第 1 页。重置按钮清空筛选条件。", loc: "白名单管理 > 筛选区" },
+        { id: "selectPage", title: "支持跨页选择", body: "表头复选框只选择当前页可见用户；翻页后已选用户保留在跨页选择集合中，批量授权和批量删除都作用于跨页已选用户。", loc: "白名单管理 > 表格选择" },
+        { id: "batchAuthorize", title: "批量授权只授权外部用户", body: "批量授权从已选用户进入授权到产品抽屉。公司用户由企业账号体系免授权，保存时只为外部用户追加产品授权关系。", loc: "白名单管理 > 授权到产品" },
+        { id: "batchDelete", title: "删除会解除授权关系", body: "单个删除和批量删除都会先二次确认；确认后白名单用户从维护列表移除，同时不再命中相关产品授权。", loc: "白名单管理 > 删除" }
+      ],
+      tags: [
+        { id: "tag-source", title: "标签组仍来自原页面", body: "标签组继续由 App > 白名单标签组管理维护，新增用户、批量导入和产品详情授权只引用它。", loc: "App > 白名单标签组管理" }
+      ],
+      listing: [
+        { id: "productMain", title: "上架范围不做独立 GTM 策略", body: "产品点击上架时配置全面放开或部分放开。全面放开隐藏范围；部分放开按国家 / 地区或数据中心选择范围。国家 / 地区选项较多，使用按洲分类的可搜索点击式多选，支持单个国家/地区增删和按洲批量选中或取消。", loc: "产品详情顶部上架操作" }
+      ],
+      addUser: [
+        { id: "drawer-add-user", title: "新增时可带授权产品", body: "新增白名单用户只按邮箱 + 数据中心唯一校验，昵称选填，不校验 App 注册状态；授权产品可选且可多选，授权关系不因产品状态变化自动失效。", loc: "白名单新增抽屉" },
+        { id: "drawer-add-user", title: "新增用户字段定义", body: "字段包含邮箱、昵称、用户类型、数据中心、标签组和授权产品。邮箱、用户类型、数据中心必填；昵称、标签组和授权产品可为空；授权产品通过搜索/筛选选择器维护。", loc: "白名单新增抽屉" },
+        { id: "productPicker", title: "授权产品选择器可扩展", body: "授权产品不使用平铺复选框。已选产品以标签展示，候选产品支持按产品名称 / 型号 / 产品 ID 搜索，并可按产品状态筛选后勾选。", loc: "新增白名单用户 > 授权产品" }
+      ],
+      importUsers: [
+        { id: "drawer-import", title: "导入前下载清单和模板", body: "批量导入抽屉只承载导入前准备：下载标签组列表、产品列表、xlsx 模板并上传文件。点击开始导入后，进入独立弹窗阶段。", loc: "批量导入抽屉" },
+        { id: "drawer-import", title: "模板列承载导入字段", body: "导入模板包含邮箱、类型、数据中心、标签组、授权产品列；抽屉不再重复提供标签组、数据中心或用户类型输入项。", loc: "批量导入 > 模板字段" },
+        { id: "drawer-import", title: "批量导入业务流程", body: "流程为下载标签组清单、下载产品清单、下载xlsx模板、上传文件、开始导入、展示不可逆进度弹窗、导入完成展示结果弹窗。失败列表可下载用于修正后再次导入。", loc: "批量导入" }
+      ],
+      importProgress: [
+        { id: "import-progress-modal", title: "导入中是独立阶段", body: "同步导入过程只在用户点击开始导入后作为弹窗出现，和导入前的下载模板、上传文件阶段分开；导入开始后不可返回导入前阶段。", loc: "同步导入弹窗" }
+      ],
+      importResult: [
+        { id: "import-result-modal", title: "导入结果弹窗展示", body: "导入完成后进入结果弹窗，展示总条数、成功条数、失败条数、失败列表，并提供失败结果下载。", loc: "导入结果弹窗" }
+      ],
+      authProduct: [
+        { id: "drawer-auth-product", title: "授权到产品", body: "从白名单管理选中用户后授权到具体产品，效果等价于原产品详情测试白名单中添加指定用户。", loc: "白名单管理 > 授权到产品" },
+        { id: "drawer-auth-product", title: "公司用户免授权", body: "授权保存时只为外部用户追加授权产品；公司用户保留在白名单维护列表中，但不需要逐个产品授权。", loc: "白名单管理 > 授权到产品" }
+      ],
+      otaForm: [
+        { id: "ota-gray-config", title: "行内发布配置并生效", body: "从固件版本行点击发布时，进入配置升级方式。发布方式仅支持全面发布和自动发布；自动发布配置时间分批。全面发布提交后进入已发布，自动发布提交后进入发布中。", loc: "固件版本行 > 配置升级方式" },
+        { id: "ota-gray-config", title: "OTA 发布配置字段定义", body: "字段包含发布名称、发布方式、升级方式、发布时间、发布范围和时间分批。发布范围默认同步当前产品上架范围，也可选择其中一部分（子集），即只在已上架范围内再挑一部分生效。", loc: "固件版本行 > 配置升级方式" }
+      ],
+      firmwareVersionAdd: [
+        { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
+        { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后固件版本默认进入开发中，后续发布从固件版本行操作流转。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
+        { id: "drawer-firmware-version-add", title: "固件文件命名校验", body: "固件文件支持 .ufw、.zip、.bin。文件名规则为：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期]，例如 Lute_M9_3.08_10_aabb_20240401.ufw；固件版本可为纯数字或点分数字。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
+        { id: "ota-version-name", title: "APP 版本号用于升级版本控制", body: "OTA 不提供独立白名单策略配置；测试中固件仍按产品白名单授权命中。APP 版本号条件用于控制固件升级适用的 App 版本，支持“版本不低于”和“版本等于”。用户可在 App > 关于 > 当前版本查看版本号。", loc: "固件配置 > 新建固件版本 > APP版本号" },
+        { id: "firmware-version-add", title: "保存后进入开发中", body: "固件版本新建后默认是开发中，属于进入分发前的准备态；测试中、发布中、暂停发布、已发布和已停止都通过固件版本行操作流转。", loc: "产品详情 > 固件配置 > 固件版本" }
+      ],
+      authList: [
+        { id: "drawer-auth", title: "测试白名单原界面", body: "保持产品详情 > 基础信息 > 测试白名单的原有编辑界面，只新增标签组选择时快捷勾选当前标签组用户。", loc: "测试白名单编辑抽屉" },
+        { id: "drawer-auth", title: "测试白名单字段定义", body: "字段保持真实页面：可见用户、数据中心页签、标签组、查询字段、关键字、候选用户表和分页。标签组是筛选并全选中的快捷动作，不是新增授权方式字段。", loc: "测试白名单编辑抽屉" },
+        { id: "authTagFilter", title: "标签组筛选并全选", body: "选择标签组时会筛选当前数据中心下的候选用户，并把当前筛选结果加入已选集合；切换标签组不会取消之前已选用户。", loc: "测试白名单编辑 > 标签组" },
+        { id: "authSelectVisible", title: "表头全选只作用于当前结果", body: "表头复选框只勾选或取消当前数据中心、标签组和查询条件下可见的候选用户，已选数量在页签右侧实时更新。", loc: "测试白名单编辑 > 用户表" }
+      ],
+      releaseConfig: [
+        { id: "drawer-release-config", title: "发布配置", body: "扩展程序发布配置由版本行操作进入。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布；发布中可暂停发布、继续或停止。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
+        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、时间分批、兼容性和生效时间。选择定时生效时必须填写定时生效时间。发布方式仅支持全面发布和自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
+        { id: "releaseMode", title: "发布方式", body: "全面发布一次开放到 100%，保存后版本进入已发布；自动发布按配置天数逐步提高开放覆盖度，例如 5 天时每天约增加 20%，开放覆盖度不等于实际用户命中或升级比例。", loc: "发布配置 > 发布方式" },
+        { id: "releaseRangeMode", title: "发布范围跟随产品上架范围", body: "RN 版本发布范围可同步当前产品上架范围，或只选择其中一部分（子集），也就是只在已上架范围内再挑一部分生效；国家/地区子集使用按洲分类的可搜索点击式多选。产品上架范围缩小时，已配置的 OTA / RN 子范围会按交集同步收缩。", loc: "发布配置 > 发布范围" }
+      ],
+      extensionVersionAdd: [
+        { id: "drawer-extension-version-add", title: "新增版本沿用原版本字段", body: "产品模块扩展程序迁入产品详情后，新增版本仍沿用原扩展程序详情页的版本级字段：PanelCode 自动带入，结构为 App缩写.产品类型.产品型号；Android / iOS 文件名和版本号由上传包自动回填；更新说明按当前真实页面作为必填。", loc: "产品详情 > 扩展程序 > 新增版本" }
+      ],
+      extensionVersion: [
+        { id: "extensionVersionModal", title: "版本指定按真实字段展开", body: "产品功能版本选择“指定版本”后展示功能版本下拉；最小 APP 版本选择“指定版本”后展示文本输入，而不是下拉选择。开发中、测试中、发布中、暂停发布、已发布和已停止版本均可查看版本指定；暂停发布和已停止版本不再参与命中。", loc: "产品详情 > 扩展程序 > 版本指定" }
+      ],
+      extensionPanelMode: [
+        { id: "extension-panel-mode-modal", title: "弹窗内编辑面板类型", body: "原生 / RN 选择在弹窗内保存。保存后只刷新控制面板类型及其下方内容显隐，不影响扩展程序版本或 RN 版本发布配置的数据。", loc: "产品详情 > 扩展程序 > 编辑扩展程序配置弹窗" }
+      ],
+      versionState: [
+        { id: "versionStateModal", title: "版本状态唯一性校验", body: "该弹窗用于承接进入测试或发布时的唯一性阻断和覆盖确认，不使用浏览器原生 alert / confirm。低版本会被阻断，高版本接替既有测试中、发布中或已发布版本时，用户确认后旧版本转为已停止。", loc: "版本状态唯一性弹窗" }
+      ],
+      deleteModal: [
+        { id: "deleteModal", title: "删除前二次确认", body: "删除白名单用户前展示影响人数和授权关系数量。确认后移除白名单维护记录，并解除该用户后续产品授权命中。", loc: "白名单管理 > 删除确认弹窗" }
+      ]
+    };
+
+    function render() {
+      renderChrome();
+      renderProduct();
+      if (state.view === "ota") renderOta();
+      renderWhitelist();
+      renderNotes();
+      wireTips();
+    }
+
+    function renderChrome() {
+      $$(".nav-item").forEach(btn => btn.classList.toggle("active", btn.dataset.view === state.view));
+      ["product", "whitelist", "tags"].forEach(view => $(`#${view}View`).classList.toggle("hide", state.view !== view));
+      $("#otaView")?.classList.add("hide");
+      const config = {
+        product: ["智能产品", "查看产品详情 / 产品列表 / 智能产品"],
+        whitelist: ["白名单管理", "白名单管理 / App"],
+        tags: ["白名单标签组管理", "白名单标签组管理 / App"]
+      }[state.view];
+      $("#pageTitle").textContent = config[0];
+      $("#breadcrumb").innerHTML = config[1].split(" / ").map(item => `<a>${item}</a>`).join(" / ");
+    }
+
+    function renderProduct() {
+      const product = products[state.product];
+      $("#productName").textContent = product.name;
+      $("#nameInline").textContent = product.name;
+      $("#productStatus").textContent = product.status;
+      $("#productStatus").className = `tag ${product.statusClass}`;
+      $("#statusInline").textContent = product.status;
+      $("#statusInline").className = `tag ${product.statusClass}`;
+      $("#visibleUserText").textContent = product.visible;
+      $("#listingRangeSummary").innerHTML = listingRangeSummaryHtml(product);
+      $("#toggleListingRangeSummary")?.addEventListener("click", () => {
+        state.rangeSummaryExpanded = !state.rangeSummaryExpanded;
+        renderProduct();
+      });
+      $("#listingActionBtn").textContent = product.status === "开发中" ? "上架产品" : "下架产品";
+      $("#listingRangeBtn").classList.toggle("hide", product.status === "开发中");
+      $$(".product-step").forEach(panel => panel.classList.add("hide"));
+      $(`#${state.productStep}Step`).classList.remove("hide");
+      $$("#productSteps .step").forEach(step => step.classList.toggle("active", step.dataset.step === state.productStep));
+      renderExtension();
+      renderFirmware();
+    }
+
+    function renderExtension() {
+      const product = products[state.product];
+      const panelMode = state.extensionPanelMode || product.panel;
+      const isRn = panelMode === "RN";
+      ensureReleaseVersion();
+      $("#extensionBody").innerHTML = `${extensionPanelModeHtml(panelMode)}${isRn ? extensionManageHtml(product) : extensionNativeHtml()}`;
+      wireExtensionMode();
+    }
+
+    function renderFirmware() {
+      if (!$("#firmwareBody")) return;
+      const releaseTarget = Boolean(state.firmwareReleaseTargetId);
+      $("#firmwareBody").innerHTML = state.otaMode === "form" ? otaFormHtml({ context: "firmware", releaseTarget }) : firmwareHomeHtml();
+      wireFirmware();
+      wireOta();
+    }
+
+    function renderOta() {
+      if (!$("#otaBody")) return;
+      $("#otaBody").innerHTML = state.otaMode === "form" ? otaFormHtml() : otaListHtml();
+      wireOta();
+    }
+
+    function otaProductHeroHtml() {
+      return `<div class="product-hero ota-product-hero" id="ota-original-page" data-note-anchor="ota-upgrade">
+        <div class="product-cover"></div>
+        <div>
+          <div class="product-name">
+            <h1>12</h1>
+            <span class="tag blue">ROOT云</span>
+            <span class="tag green">已上架</span>
+            <span class="tag">BLE</span>
+          </div>
+          <div class="meta-line">
+            <span>产品分类：Digital Thermome</span>
+            <span>产品型号：1</span>
+            <span>产品代码：--</span>
+            <span>产品ID：2054039271856459777</span>
+            <span>产品模板ID：1964863593208832002</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn">切换产品</button>
+        </div>
+      </div>`;
+    }
+
+    function firmwareHomeHtml() {
+      return firmwareVersionHtml();
+    }
+
+    const versionStatusTips = {
+      firmware: [
+        ["开发中", "新建后默认状态，进入分发前的准备态 / 草稿态。"],
+        ["测试中", "白名单公司用户和有产品授权的外部用户可见。"],
+        ["发布中", "版本按批次逐步开放给线上用户。"],
+        ["暂停发布", "版本已暂停发布，不再参与命中策略；可继续恢复发布或停止。"],
+        ["已发布", "版本对所有线上用户可见。"],
+        ["已停止", "保留已升级该版本设备的固件信息来源，不再参与命中。"]
+      ],
+      extension: [
+        ["开发中", "新建后默认状态，扩展程序版本进入分发前的准备态。"],
+        ["测试中", "白名单公司用户和已授权当前产品的外部用户可见。"],
+        ["发布中", "版本按批次逐步开放给线上用户。"],
+        ["暂停发布", "版本已暂停发布，不再参与命中策略；可继续恢复发布或停止。"],
+        ["已发布", "版本对所有线上用户可见。"],
+        ["已停止", "保留曾升级到该版本的历史来源，不再参与命中。"]
+      ]
+    };
+
+    const versionHitTips = {
+      firmware: "App 请求 OTA 时只取符合固件类型、APP 版本和发布范围条件的最新版本；测试中、发布中、已发布并行比较，取最高固件版本；暂停发布和已停止不参与命中策略。",
+      extension: "App 请求扩展程序时先按 PanelCode、功能版本、最小 App 版本、发布范围和用户可见范围筛选；测试中仅白名单公司用户和已授权当前产品的外部用户可见，发布中/已发布面向线上用户；测试中、发布中、已发布并行比较，取最高扩展程序版本；暂停发布和已停止不参与命中策略。"
+    };
+
+    function statusTipHtml(kind) {
+      const rows = versionStatusTips[kind].map(([status, text]) => `
+        <div class="status-tip-row"><span class="tag ${kind === "firmware" ? firmwareStatusClass(status) : extensionStatusClass(status)}">${status}</span><span>${text}</span></div>`).join("");
+      const title = kind === "firmware" ? "固件版本状态说明" : "扩展程序版本状态说明";
+      return `<span class="status-tip">
+        <button type="button" class="tip-icon" aria-label="${title}">?</button>
+        <span class="status-tip-popover"><span class="status-tip-title">${title}</span>${rows}</span>
+      </span>`;
+    }
+
+    function closeAllTips(except = null) {
+      $$(".tip-open").forEach(tip => {
+        if (tip !== except) tip.classList.remove("tip-open");
+      });
+      $$(".app-version-popover.open").forEach(popover => {
+        if (!except || !except.contains(popover)) popover.classList.remove("open");
+      });
+    }
+
+    function wireTips(root = document) {
+      root.querySelectorAll(".status-tip, .inline-tip, .app-version-field").forEach(tip => {
+        const button = tip.querySelector(".tip-icon");
+        if (!button || button.dataset.tipBound === "1") return;
+        button.dataset.tipBound = "1";
+        button.addEventListener("click", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          const willOpen = !tip.classList.contains("tip-open");
+          closeAllTips(tip);
+          tip.classList.toggle("tip-open", willOpen);
+          const appPopover = tip.querySelector(".app-version-popover");
+          if (appPopover) appPopover.classList.toggle("open", willOpen);
+        });
+      });
+      root.querySelectorAll(".status-tip-popover, .inline-tip-popover, .app-version-popover").forEach(popover => {
+        if (popover.dataset.tipBound === "1") return;
+        popover.dataset.tipBound = "1";
+        popover.addEventListener("click", event => event.stopPropagation());
+      });
+    }
+
+    function compareVersion(left, right) {
+      const a = String(left || "0").split(".").map(part => Number(part) || 0);
+      const b = String(right || "0").split(".").map(part => Number(part) || 0);
+      const max = Math.max(a.length, b.length);
+      for (let i = 0; i < max; i += 1) {
+        const diff = (a[i] || 0) - (b[i] || 0);
+        if (diff) return diff;
+      }
+      return 0;
+    }
+
+    function coverageImpact(list, item, nextStatus, kind) {
+      const activeStatuses = ["测试中", "发布中", "已发布"];
+      if (!activeStatuses.includes(nextStatus)) {
+        return "覆盖检测：该状态不参与版本命中，不会覆盖现有命中版本。";
+      }
+      const peers = list.filter(candidate => candidate !== item && activeStatuses.includes(candidate.status) && (kind === "firmware" ? candidate.type === item.type : true));
+      const lower = peers.filter(candidate => compareVersion(item.version, candidate.version) > 0);
+      const higher = peers.filter(candidate => compareVersion(candidate.version, item.version) > 0).sort((a, b) => compareVersion(b.version, a.version))[0];
+      if (higher) return `覆盖检测：${item.version}/${nextStatus} 不是当前最高候选版本，不会覆盖 ${higher.version}/${higher.status} 的命中。`;
+      if (!lower.length) return `覆盖检测：${item.version}/${nextStatus} 将成为当前最高候选版本，暂无被覆盖版本。`;
+      return `覆盖检测：${item.version}/${nextStatus} 将成为当前最高候选版本，会覆盖 ${lower.map(candidate => `${candidate.version}/${candidate.status}`).join("、")} 的命中。`;
+    }
+
+    function versionScopePeers(list, item, kind) {
+      return list.filter(candidate => candidate !== item && (kind === "firmware" ? candidate.type === item.type : true));
+    }
+
+    function transitionBlockReason(list, item, nextStatus, kind) {
+      const peers = versionScopePeers(list, item, kind);
+      if (nextStatus === "测试中") {
+        const currentTest = peers.find(candidate => candidate.status === "测试中");
+        if (currentTest && compareVersion(item.version, currentTest.version) <= 0) {
+          return `${item.version} 版本低于或等于当前测试中版本 ${currentTest.version}，无法进入测试。`;
+        }
+      }
+      if (nextStatus === "发布中") {
+        const currentRelease = peers
+          .filter(candidate => ["发布中", "已发布"].includes(candidate.status))
+          .sort((a, b) => compareVersion(b.version, a.version))[0];
+        if (currentRelease && compareVersion(item.version, currentRelease.version) <= 0) {
+          return `${item.version} 版本低于或等于当前发布中/已发布版本 ${currentRelease.version}，无法发布。`;
+        }
+      }
+      return "";
+    }
+
+    function openVersionStateModal(config) {
+      const mode = config.mode || "confirm";
+      state.activeModal = "versionState";
+      $("#versionStateModalTitle").textContent = config.title || "版本状态唯一性校验";
+      $("#versionStateModalBody").innerHTML = `
+        <div class="version-state-summary">${config.summary}</div>
+        ${config.detail ? `<div class="version-state-detail">${config.detail}</div>` : ""}
+      `;
+      $("#versionStateModalFoot").innerHTML = mode === "block"
+        ? `<button class="btn primary" id="versionStateModalOk">知道了</button>`
+        : `<button class="btn" id="versionStateModalCancel">取消</button><button class="btn primary" id="versionStateModalConfirm">确认覆盖并继续</button>`;
+      $("#versionStateModal").classList.add("open");
+      renderNotes();
+      return new Promise(resolve => {
+        state.versionStateModalResolve = resolve;
+        $("#versionStateModalOk")?.addEventListener("click", () => closeVersionStateModal(false));
+        $("#versionStateModalCancel")?.addEventListener("click", () => closeVersionStateModal(false));
+        $("#versionStateModalConfirm")?.addEventListener("click", () => closeVersionStateModal(true));
+      });
+    }
+
+    function closeVersionStateModal(result = false) {
+      $("#versionStateModal").classList.remove("open");
+      const resolve = state.versionStateModalResolve;
+      state.versionStateModalResolve = null;
+      state.activeModal = null;
+      renderNotes();
+      if (resolve) resolve(result);
+    }
+
+    async function confirmVersionOverride(list, item, nextStatus, kind) {
+      const reason = transitionBlockReason(list, item, nextStatus, kind);
+      if (reason) {
+        await openVersionStateModal({
+          mode: "block",
+          summary: reason,
+          detail: "请先停止或删除当前更高版本后，再操作该版本。"
+        });
+        return { ok: false, message: "" };
+      }
+      const peers = versionScopePeers(list, item, kind);
+      let overwritten = [];
+      if (nextStatus === "测试中") overwritten = peers.filter(candidate => candidate.status === "测试中");
+      if (nextStatus === "发布中") overwritten = peers.filter(candidate => ["发布中", "已发布"].includes(candidate.status));
+      if (!overwritten.length) return { ok: true, message: "" };
+      const overwrittenText = overwritten.map(candidate => `${candidate.version}/${candidate.status}`).join("、");
+      const accepted = await openVersionStateModal({
+        summary: `${item.version} 版本会覆盖 ${overwrittenText} 的状态。`,
+        detail: `确认后，被覆盖版本将转为已停止，不再参与命中策略。`
+      });
+      if (!accepted) return { ok: false, message: "" };
+      overwritten.forEach(candidate => {
+        candidate.status = "已停止";
+        candidate.log = `被 ${item.version} ${nextStatus === "测试中" ? "进入测试" : "发布"}覆盖，转为已停止`;
+        if (kind === "extension") delete extensionReleaseConfigs[candidate.version];
+        if (kind === "firmware") {
+          otaTasks.forEach(task => {
+            if (task.firmwareVersionId === candidate.id && ["发布中", "暂停发布"].includes(task.status)) task.status = "已停止";
+          });
+        }
+      });
+      return { ok: true, message: `状态覆盖：${overwrittenText} 已转为已停止。` };
+    }
+
+    function listingRangeSummaryHtml(product) {
+      const full = product.listingMode === "full" || product.listingRange?.includes("全部");
+      const values = full ? ["全部上架范围"] : (product.listingRange || []);
+      const needsCollapse = values.length > 3 || values.join("、").length > 24;
+      const shown = state.rangeSummaryExpanded || !needsCollapse ? values : values.slice(0, 3);
+      const text = full ? "上架范围：全部上架范围" : `上架范围：${shown.join("、")}${needsCollapse && !state.rangeSummaryExpanded ? ` 等 ${values.length} 项` : ""}`;
+      return `<span class="range-summary ${state.rangeSummaryExpanded ? "expanded" : ""}">
+        <span class="range-summary-text">${text}</span>
+        ${needsCollapse ? `<button type="button" class="btn link" id="toggleListingRangeSummary">${state.rangeSummaryExpanded ? "收起" : "展开"}</button>` : ""}
+      </span>`;
+    }
+
+    function firmwareStatusClass(status) {
+      if (status === "已发布") return "green";
+      if (status === "发布中") return "blue";
+      if (status === "测试中") return "orange";
+      if (status === "暂停发布") return "orange";
+      return "tag";
+    }
+
+    function firmwareStatusHint(status) {
+      if (status === "测试中") return "白名单公司用户 / 授权外部用户命中";
+      if (status === "发布中") return "按批次逐步开放给线上用户";
+      if (status === "暂停发布") return "不参与命中策略";
+      if (status === "已发布") return "所有线上用户命中";
+      if (status === "已停止") return "保留历史来源，不再命中";
+      return "";
+    }
+
+    function otaTaskStatusClass(status) {
+      if (status === "发布中") return "blue";
+      if (status === "已发布") return "green";
+      if (status === "已停止") return "tag";
+      if (status === "暂停发布") return "orange";
+      return "tag";
+    }
+
+    function otaTaskActionsHtml(task) {
+      if (task.status === "发布中") {
+        return `<button class="btn" data-ota-task-action="pause" data-task-id="${task.id}">暂停</button>`;
+      }
+      if (task.status === "暂停发布") {
+        return `<button class="btn primary" data-ota-task-action="resume" data-task-id="${task.id}">继续</button><button class="btn danger" data-ota-task-action="stop" data-task-id="${task.id}">停止</button>`;
+      }
+      return `<span class="sub">${task.status === "已发布" ? "发布完成记录" : "无可用操作"}</span>`;
+    }
+
+    function currentProductListingRangeOptions() {
+      const product = products[state.product];
+      if (!product || product.listingMode === "full" || product.listingRange?.includes("全部")) {
+        return product?.listingRangeMode === "country" ? countryRegionOptions : ["北美数据中心", "欧洲数据中心", "亚太数据中心", "中国数据中心"];
+      }
+      return product.listingRange?.length ? product.listingRange : ["北美数据中心", "欧洲数据中心"];
+    }
+
+    function currentProductListingRangeText() {
+      const product = products[state.product];
+      if (!product || product.listingMode === "full" || product.listingRange?.includes("全部")) return "全部上架范围";
+      return product.listingRange.join("、");
+    }
+
+    function normalizeRangeValue(value) {
+      const text = String(value || "").trim();
+      const aliases = {
+        "北美": "北美数据中心",
+        "欧洲": "欧洲数据中心",
+        "亚太": "亚太数据中心",
+        "中国": "中国数据中心",
+        "全部数据中心": "全部",
+        "全部上架范围": "全部"
+      };
+      return aliases[text] || text;
+    }
+
+    function normalizeRangeList(range) {
+      const parts = Array.isArray(range) ? range : String(range || "").split(/[、,，/]/);
+      return Array.from(new Set(parts.map(normalizeRangeValue).filter(Boolean)));
+    }
+
+    function sameRangeSet(a, b) {
+      const left = normalizeRangeList(a);
+      const right = normalizeRangeList(b);
+      return left.length === right.length && left.every(item => right.includes(item));
+    }
+
+    function clipRangeToCurrentListing(range, mode = "custom") {
+      const listingRange = currentProductListingRangeOptions();
+      const normalized = normalizeRangeList(range);
+      if (mode === "sync" || normalized.includes("全部")) return listingRange;
+      return normalized.filter(item => listingRange.includes(item));
+    }
+
+    function releaseRangeModeFromConfig(config = {}, referenceRange = currentProductListingRangeOptions()) {
+      const listingRange = referenceRange;
+      const normalized = normalizeRangeList(config.range);
+      if (config.rangeMode === "sync") return "sync";
+      if (config.rangeMode === "custom") return "custom";
+      if (!normalized.length || normalized.includes("全部") || sameRangeSet(normalized, listingRange)) return "sync";
+      return "custom";
+    }
+
+    function releaseRangeSummary(config = {}) {
+      const mode = releaseRangeModeFromConfig(config);
+      const range = clipRangeToCurrentListing(config.range, mode);
+      return mode === "sync" ? currentProductListingRangeText() : (range.length ? range.join("、") : "无有效范围，需重新配置");
+    }
+
+    function syncPublishRangesWithListingRange(previousListingRange = currentProductListingRangeOptions()) {
+      const listingRange = currentProductListingRangeOptions();
+      otaTasks.forEach(task => {
+        task.regions = clipRangeToCurrentListing(task.regions);
+      });
+      Object.values(extensionReleaseConfigs).forEach(config => {
+        const mode = releaseRangeModeFromConfig(config, previousListingRange);
+        config.rangeMode = mode;
+        config.range = (mode === "sync" ? listingRange : clipRangeToCurrentListing(config.range, mode)).join("、");
+      });
+    }
+
+    function selectedOtaRange() {
+      const mode = $("#otaRangeMode")?.value || "sync";
+      const listingRange = currentProductListingRangeOptions();
+      if (mode === "sync") return listingRange;
+      return selectedMultiValues("#otaRangeSelect");
+    }
+
+    function selectedMultiValues(selector) {
+      const picker = $(selector);
+      if (!picker) return [];
+      return Array.from(picker.querySelectorAll(".multi-option[aria-pressed='true']"))
+        .map(option => option.dataset.value)
+        .filter(Boolean);
+    }
+
+    function optionSelected(values, value, fallbackSelected = false) {
+      return values.includes(value) || (!values.length && fallbackSelected);
+    }
+
+    function flattenMultiOptions(options) {
+      if (!options.length) return [];
+      if (typeof options[0] === "string") return options;
+      return options.flatMap(group => group.options || []);
+    }
+
+    function groupedCountryOptionsFor(values) {
+      const allowed = new Set(values);
+      if (!values.length || !values.every(value => countryRegionOptions.includes(value))) return values;
+      return countryRegionGroups
+        .map(group => ({ group: group.group, options: group.options.filter(value => allowed.has(value)) }))
+        .filter(group => group.options.length);
+    }
+
+    function rangeOptionsHtml(id, options, selected = [], fallbackCount = 0) {
+      const flatOptions = flattenMultiOptions(options);
+      const grouped = Boolean(options.length && typeof options[0] !== "string");
+      const pickedValues = flatOptions.filter((value, index) => optionSelected(selected, value, index < fallbackCount));
+      const pickedHtml = pickedValues.length
+        ? pickedValues.map(value => `<span class="selected-chip">${value}</span>`).join("")
+        : `<span class="multi-empty">未选择</span>`;
+      const optionButton = (value, index) => {
+        const pressed = optionSelected(selected, value, index < fallbackCount);
+        return `<button type="button" class="multi-option" data-value="${value}" aria-pressed="${pressed ? "true" : "false"}">${value}</button>`;
+      };
+      let optionIndex = 0;
+      const optionsHtml = grouped
+        ? options.map(group => {
+          const groupOptions = group.options || [];
+          const groupHtml = groupOptions.map(value => optionButton(value, optionIndex++)).join("");
+          return `<div class="multi-group" data-group="${group.group}">
+            <div class="multi-group-head"><strong>${group.group}</strong><button type="button" class="btn multi-group-toggle" data-group-toggle="${group.group}">选中本洲</button></div>
+            <div class="multi-group-options">${groupHtml}</div>
+          </div>`;
+        }).join("")
+        : flatOptions.map((value, index) => optionButton(value, index)).join("");
+      return `<div class="multi-pick" id="${id}" data-multi-pick>
+        <div class="multi-picked" data-picked>${pickedHtml}</div>
+        <input class="multi-search" data-multi-search placeholder="搜索国家 / 地区">
+        <div class="multi-options ${grouped ? "grouped" : ""}">${optionsHtml}</div>
+      </div>`;
+    }
+
+    function refreshMultiPick(picker) {
+      if (!picker) return;
+      const values = selectedMultiValues(`#${picker.id}`);
+      const picked = picker.querySelector("[data-picked]");
+      if (picked) {
+        picked.innerHTML = values.length
+          ? values.map(value => `<span class="selected-chip">${value}</span>`).join("")
+          : `<span class="multi-empty">未选择</span>`;
+      }
+      picker.querySelectorAll(".multi-group").forEach(group => {
+        const options = Array.from(group.querySelectorAll(".multi-option"));
+        const allSelected = options.length > 0 && options.every(option => option.getAttribute("aria-pressed") === "true");
+        const toggle = group.querySelector("[data-group-toggle]");
+        if (toggle) toggle.textContent = allSelected ? "取消本洲" : "选中本洲";
+      });
+      picker.dispatchEvent(new CustomEvent("multi-change", { bubbles: true }));
+    }
+
+    function wireMultiPick(root = document) {
+      root.querySelectorAll("[data-multi-pick]").forEach(picker => {
+        if (picker.dataset.wired === "true") return;
+        picker.dataset.wired = "true";
+        picker.querySelector("[data-multi-search]")?.addEventListener("input", event => {
+          const keyword = event.target.value.trim().toLowerCase();
+          picker.querySelectorAll(".multi-option").forEach(option => {
+            option.classList.toggle("hide", Boolean(keyword) && !option.dataset.value.toLowerCase().includes(keyword));
+          });
+          picker.querySelectorAll(".multi-group").forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll(".multi-option")).filter(option => !option.classList.contains("hide"));
+            group.classList.toggle("hide", Boolean(keyword) && !visibleOptions.length);
+          });
+        });
+        picker.querySelectorAll("[data-group-toggle]").forEach(button => {
+          button.addEventListener("click", () => {
+            const group = button.closest(".multi-group");
+            const options = Array.from(group?.querySelectorAll(".multi-option") || []);
+            const allSelected = options.length > 0 && options.every(option => option.getAttribute("aria-pressed") === "true");
+            options.forEach(option => option.setAttribute("aria-pressed", allSelected ? "false" : "true"));
+            refreshMultiPick(picker);
+          });
+        });
+        picker.querySelectorAll(".multi-option").forEach(option => {
+          option.addEventListener("click", () => {
+            option.setAttribute("aria-pressed", option.getAttribute("aria-pressed") === "true" ? "false" : "true");
+            refreshMultiPick(picker);
+          });
+        });
+        refreshMultiPick(picker);
+      });
+    }
+
+    function createOtaTaskForFirmware(target) {
+      const range = selectedOtaRange();
+      const publishMode = $("#otaPublishPlan")?.value || "自动发布";
+      const batchDays = $("#otaBatchDays")?.value || "5";
+      const batchText = publishMode === "自动发布"
+        ? `${batchDays} 天分批，开放覆盖度每天约增加 ${Math.ceil(100 / Math.max(1, Number(batchDays) || 1))}%`
+        : "一次开放到 100%";
+      otaTasks.forEach(task => {
+        const sameFirmwareVersion = task.firmwareVersionId === target.id;
+        if (sameFirmwareVersion && ["发布中", "暂停发布"].includes(task.status)) {
+          task.status = "已停止";
+        }
+      });
+      otaTasks.unshift({
+        id: `ota${Date.now()}`,
+        firmwareVersionId: target.id,
+        name: `${target.name} ${target.version} 发布记录`,
+        firmwareName: target.name,
+        firmwareType: target.type,
+        firmwareVersion: target.version,
+        hardware: target.hardware,
+        functionVersion: target.functionVersion,
+        status: publishMode === "全面发布" ? "已发布" : "发布中",
+        publishMode,
+        batchText,
+        upgradeMode: $("#otaUpgradeMode")?.value || "提示升级",
+        regions: range.length ? range : currentProductListingRangeOptions(),
+        appRule: target.appRule || "版本不低于",
+        appVersion: target.appVersion || "v 2.2.10",
+        publishedAt: $("#otaPublishAt")?.value || "2026-06-05 10:00",
+        createdAt: "2026-06-11 10:20"
+      });
+    }
+
+    function firmwareActionsHtml(item) {
+      if (item.status === "开发中") return `<button class="btn primary" data-firmware-action="test" data-fw-id="${item.id}">进入测试</button><button class="btn" data-firmware-action="edit" data-fw-id="${item.id}">编辑</button><button class="btn danger" data-firmware-action="delete" data-fw-id="${item.id}">删除</button>`;
+      if (item.status === "测试中") return `<button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn primary" data-firmware-action="publish" data-fw-id="${item.id}">发布</button>`;
+      if (item.status === "发布中") return `<button class="btn" data-firmware-action="pause" data-fw-id="${item.id}">暂停发布</button><button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布</button>`;
+      if (item.status === "暂停发布") return `<button class="btn primary" data-firmware-action="resume" data-fw-id="${item.id}">继续</button><button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button>`;
+      if (item.status === "已发布") return `<button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布配置</button><button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
+      return `<button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
+    }
+
+    function firmwareVersionHtml() {
+      const counts = firmwareVersions.reduce((acc, item) => {
+        acc[item.status] = (acc[item.status] || 0) + 1;
+        return acc;
+      }, {});
+      const rows = firmwareVersions.map(item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.type}</td>
+          <td>${item.version}</td>
+          <td>${item.hardware}</td>
+          <td>${item.functionVersion}</td>
+          <td>${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</td>
+          <td><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span>${firmwareStatusHint(item.status) ? `<span class="sub">${firmwareStatusHint(item.status)}</span>` : ""}</td>
+          <td>${item.createdAt}</td>
+          <td>${item.log}</td>
+          <td class="table-actions">${firmwareActionsHtml(item)}</td>
+        </tr>`).join("");
+      return `<div class="subsection" id="firmware-state" data-note-anchor="firmware-state">
+        <div class="subsection-head">
+          <div><h3><span class="anchor" data-note-anchor="firmware-state">1</span>固件版本</h3></div>
+          <button class="btn primary" data-open-drawer="firmwareVersionAdd">新建固件版本</button>
+        </div>
+        <div class="firmware-state-flow">
+          <div class="firmware-state"><strong>开发中</strong><span>${counts["开发中"] || 0} 条</span></div>
+          <div class="firmware-state"><strong>测试中</strong><span>${counts["测试中"] || 0} 条</span></div>
+          <div class="firmware-state"><strong>发布中</strong><span>${counts["发布中"] || 0} 条</span></div>
+          <div class="firmware-state"><strong>暂停发布</strong><span>${counts["暂停发布"] || 0} 条 · 不参与命中</span></div>
+          <div class="firmware-state"><strong>已发布</strong><span>${counts["已发布"] || 0} 条</span></div>
+          <div class="firmware-state"><strong>已停止</strong><span>${counts["已停止"] || 0} 条</span></div>
+        </div>
+        ${state.firmwareMessage ? `<div class="notice success firmware-message">${state.firmwareMessage}</div>` : ""}
+        <div class="hit-rule-note">命中策略说明：${versionHitTips.firmware}</div>
+        <table>
+          <thead><tr><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>APP版本号</th><th>状态${statusTipHtml("firmware")}</th><th>上传时间</th><th>发布日志</th><th>操作</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }
+
+
+    function wireFirmware() {
+      $$(`[data-firmware-action]`).forEach(btn => btn.addEventListener("click", async () => {
+        const item = firmwareVersions.find(version => version.id === btn.dataset.fwId);
+        if (!item) return;
+        if (btn.dataset.firmwareAction === "test") {
+          const override = await confirmVersionOverride(firmwareVersions, item, "测试中", "firmware");
+          if (!override.ok) return;
+          const coverage = coverageImpact(firmwareVersions, item, "测试中", "firmware");
+          item.status = "测试中";
+          item.log = "进入测试";
+          state.firmwareMessage = `固件版本 ${item.version} 已进入测试中。${override.message}${coverage}`;
+        }
+        if (btn.dataset.firmwareAction === "edit") {
+          state.firmwareEditingId = item.id;
+          openDrawer("firmwareVersionEdit");
+          return;
+        }
+        if (btn.dataset.firmwareAction === "detail") {
+          state.firmwareEditingId = item.id;
+          openDrawer("firmwareVersionDetail");
+          return;
+        }
+        if (btn.dataset.firmwareAction === "delete") {
+          if (!confirm(`确定删除固件版本 ${item.version}？删除后如需调整配置，请重新新建固件版本。`)) return;
+          const index = firmwareVersions.findIndex(version => version.id === item.id);
+          if (index >= 0) firmwareVersions.splice(index, 1);
+          state.firmwareMessage = `固件版本 ${item.version} 已删除。`;
+          render();
+          return;
+        }
+        if (btn.dataset.firmwareAction === "stop") {
+          if (!confirm(`确定停止固件版本 ${item.version}？停止后不再匹配白名单或发布命中条件。`)) return;
+          item.status = "已停止";
+          item.log = "已停止";
+          otaTasks.forEach(task => {
+            if (task.firmwareVersionId === item.id && ["发布中", "暂停发布"].includes(task.status)) {
+              task.status = "已停止";
+            }
+          });
+          state.firmwareMessage = `固件版本 ${item.version} 已停止；该版本不再参与白名单或发布命中。${coverageImpact(firmwareVersions, item, "已停止", "firmware")}`;
+          render();
+          return;
+        }
+        if (btn.dataset.firmwareAction === "pause") {
+          item.status = "暂停发布";
+          item.log = "暂停发布";
+          state.firmwareMessage = `固件版本 ${item.version} 已暂停发布；该版本暂停期间不参与命中策略，可继续恢复发布或停止。${coverageImpact(firmwareVersions, item, "暂停发布", "firmware")}`;
+        }
+        if (btn.dataset.firmwareAction === "resume") {
+          const coverage = coverageImpact(firmwareVersions, item, "发布中", "firmware");
+          item.status = "发布中";
+          item.log = "继续发布";
+          state.firmwareMessage = `固件版本 ${item.version} 已继续发布。${coverage}`;
+        }
+        if (btn.dataset.firmwareAction === "publish") {
+          state.firmwareReleaseTargetId = item.id;
+          state.otaMode = "form";
+          state.otaStep = 2;
+          state.otaPublishMode = "publish";
+          state.firmwareMessage = `正在为固件版本 ${item.version} 配置发布。`;
+        }
+        render();
+      }));
+    }
+    function otaListHtml(options = {}) {
+      const isFirmware = options.context === "firmware";
+      const visibleTasks = otaTasks.filter(task => task.publishMode);
+      const rows = visibleTasks.map(task => `
+        <tr>
+          <td>${task.name}</td>
+          <td>${task.firmwareName}</td>
+          <td>${task.firmwareType}</td>
+          <td>${task.firmwareVersion}<span class="sub">APP版本号：${task.appRule} ${task.appVersion}</span></td>
+          <td>${task.hardware}</td>
+          <td>${task.functionVersion}</td>
+          <td><span class="tag ${otaTaskStatusClass(task.status)}">${task.status}</span></td>
+          <td>${task.publishMode}<span class="sub">${task.batchText}</span></td>
+          <td>${task.batchText}</td>
+          <td>${task.upgradeMode}</td>
+          <td>${task.regions.join("、") || "无有效范围，需重新配置"}</td>
+          <td>${task.publishedAt}</td>
+          <td>${task.createdAt}</td>
+          <td class="table-actions">${otaTaskActionsHtml(task)}</td>
+        </tr>`).join("");
+      return `${isFirmware ? "" : otaProductHeroHtml()}
+        <div class="ota-box" id="ota-list" data-note-anchor="${isFirmware ? "firmware-ota" : "ota-upgrade"}">
+          <div class="section-head">
+            <div>
+              <h2><span class="anchor" data-note-anchor="${isFirmware ? "firmware-ota" : "ota-upgrade"}">${isFirmware ? "2" : "1"}</span>${isFirmware ? "OTA 任务" : "OTA"}</h2>
+            </div>
+            ${isFirmware ? "" : `<button class="btn primary" data-ota-action="create">新增OTA任务</button>`}
+          </div>
+          <div class="filters compact">
+            <div class="field"><label>固件类型</label><select><option>全部</option><option>MCU固件</option><option>模组固件</option></select></div>
+            <div class="field"><label>功能版本</label><select><option>全部</option><option>版本1 - 已发布</option><option>版本2 - 开发中</option></select></div>
+            <div class="field"><label>发布状态</label><select><option>全部</option><option>发布中</option><option>暂停发布</option><option>已停止</option><option>已发布</option></select></div>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+          </div>
+          ${state.otaTaskMessage ? `<div class="notice success firmware-message">${state.otaTaskMessage}</div>` : ""}
+          <div class="ota-table-wrap">
+            <table>
+              <thead><tr><th>任务名称</th><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>状态</th><th>发布方式</th><th>发布进度</th><th>升级方式</th><th>发布范围</th><th>发布时间</th><th>创建时间</th><th>操作</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="pager"><span>共 ${visibleTasks.length} 条</span><button class="btn" disabled>‹</button><button class="btn primary">1</button><button class="btn" disabled>›</button><select><option>10条/页</option></select></div>
+        </div>`;
+    }
+
+    function otaStepsHtml() {
+      return `<div class="steps ota-steps">
+        <button class="step ${state.otaStep === 1 ? "active" : "done"}" data-ota-step="1"><span class="check">✓</span>确认升级固件</button>
+        <button class="step ${state.otaStep === 2 ? "active" : ""}" data-ota-step="2"><span class="check">✓</span>配置升级方式</button>
+      </div>`;
+    }
+
+    function otaFormHtml(options = {}) {
+      const isFirmware = options.context === "firmware";
+      const isReleaseTarget = Boolean(options.releaseTarget);
+      return `${isFirmware ? "" : otaProductHeroHtml()}
+        <div class="ota-form-panel" id="ota-form" data-note-anchor="ota-form">
+          ${isReleaseTarget ? "" : otaStepsHtml()}
+          ${isReleaseTarget ? otaPublishStepHtml({ releaseTarget: true }) : (state.otaStep === 1 ? otaFirmwareStepHtml() : otaPublishStepHtml())}
+        </div>`;
+    }
+
+    function otaFirmwareStepHtml() {
+      return `<div class="subsection">
+        <div class="form-grid">
+          <div class="field"><label>产品类别：</label><input value="Digital Thermome"></div>
+          <div class="field"><label>产品型号：</label><input value="1"></div>
+          <div class="field"><label>固件类型：</label><select><option>请选择固件类型</option><option selected>MCU固件</option><option>模组固件</option></select></div>
+          <div class="field"><label>选择固件：</label><select><option>请选择固件</option><option selected>Pump-H Main MCU / FW 1.2.0</option></select></div>
+          <div class="field app-version-field" id="ota-version-name" data-note-anchor="ota-version-name">
+            <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="otaAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
+            <div class="version-rule"><select><option selected>版本不低于</option><option>版本等于</option></select><input value="v 2.2.10"></div>
+            <div class="app-version-popover" id="otaAppVersionPopover">
+              <p>平台用户可在 App 的“关于”页面查看当前版本号。</p>
+              <div class="app-shot">
+                <div class="app-shot-head">关于</div>
+                <div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label>固件版本：</label><input value="1.2.0" disabled><span class="hint">选择固件后自动生成</span></div>
+          <div class="field"><label>硬件版本：</label><input value="M9P0" disabled><span class="hint">选择固件后自动生成</span></div>
+          <div class="field"><label>功能版本：</label><input value="版本1 - 已发布" disabled><span class="hint">选择固件后自动生成</span></div>
+        </div>
+        <div class="form-foot"><button class="btn" data-ota-action="cancel">取消</button><button class="btn primary" data-ota-action="next">下一步</button></div>
+      </div>`;
+    }
+
+    function firmwareVersionAddHtml() {
+      const functionOptions = productFunctionVersions.map(version => `<option ${version === "开发中版本 - 未上架" ? "selected" : ""}>${version}</option>`).join("");
+      return `<div id="drawer-firmware-version-add" data-note-anchor="drawer-firmware-version-add">
+        <div class="form-grid">
+          <div class="field"><label>功能版本</label><select id="firmwareAddFunctionVersion">${functionOptions}</select><span class="hint">选项引用产品详情 - 智能产品中的功能版本。</span></div>
+          <div class="field"><label>固件类型</label><select id="firmwareAddType"><option value="mcu" selected>MCU固件</option><option value="module">模组固件</option></select></div>
+          <div class="field"><label>上传固件文件</label><input id="firmwareAddFile" type="file" accept=".ufw,.zip,.bin"><span class="hint">支持 .ufw、.zip、.bin。示例：Lute_M9_3.08_10_aabb_20240401.ufw</span><span class="error-text hide" id="firmwareAddFileError"></span></div>
+          <div class="field"><label>产品</label><div class="readonly value-only">12 / 型号 1 / ID 2054039271856459777</div><span class="hint">继承当前产品详情上下文。</span></div>
+          <div class="parse-grid">
+            <div class="parse-item"><span>公司</span><strong id="firmwareAddCompanyText">--</strong></div>
+            <div class="parse-item"><span>项目</span><strong id="firmwareAddProjectText">--</strong></div>
+            <div class="parse-item"><span>固件版本</span><strong id="firmwareAddVersionText">--</strong></div>
+            <div class="parse-item"><span>硬件版本</span><strong id="firmwareAddHardwareText">--</strong></div>
+            <div class="parse-item"><span>校验码</span><strong id="firmwareAddChecksumText">--</strong></div>
+            <div class="parse-item"><span>日期</span><strong id="firmwareAddDateText">--</strong></div>
+            <div class="parse-item"><span>文件格式</span><strong id="firmwareAddFormatText">--</strong></div>
+            <div class="parse-item"><span>固件名称</span><strong id="firmwareAddNameText">--</strong></div>
+            <div class="parse-item"><span>初始状态</span><strong>开发中</strong></div>
+          </div>
+          <div class="field app-version-field" data-note-anchor="ota-version-name">
+            <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareAddAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
+            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div>
+            <div class="app-version-popover" id="firmwareAddAppVersionPopover">
+              <p>平台用户可在 App 的“关于”页面查看当前版本号。</p>
+              <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
+            </div>
+          </div>
+          <div class="field"><label>备注</label><textarea id="firmwareAddRemark" placeholder="填写固件说明或变更摘要">优化泵阀控制</textarea></div>
+        </div>
+      </div>`;
+    }
+
+    function firmwareVersionEditHtml(readonly = false) {
+      const item = firmwareVersions.find(version => version.id === state.firmwareEditingId) || firmwareVersions[0];
+      return `<div id="drawer-firmware-version-edit" data-note-anchor="firmware-state">
+        <div class="form-grid">
+          <div class="field"><label>固件名称</label><div class="readonly value-only">${item.name}</div></div>
+          <div class="field"><label>固件类型</label><div class="readonly value-only">${item.type}</div></div>
+          <div class="field"><label>固件版本</label><div class="readonly value-only">${item.version}</div></div>
+          <div class="field"><label>硬件版本</label><div class="readonly value-only">${item.hardware}</div></div>
+          <div class="field"><label>状态</label><div class="readonly value-only"><span>${item.status}</span><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span></div></div>
+          <div class="field"><label>上传时间</label><div class="readonly value-only">${item.createdAt}</div></div>
+          <div class="field"><label>功能版本</label><div class="readonly value-only">${item.functionVersion}</div></div>
+          <div class="field app-version-field" data-note-anchor="ota-version-name">
+            <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareEditAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
+            <div class="readonly value-only">${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</div>
+            <div class="app-version-popover" id="firmwareEditAppVersionPopover">
+              <p>平台用户可在 App 的“关于”页面查看当前版本号。</p>
+              <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
+            </div>
+          </div>
+          <div class="field"><label>备注</label>${readonly ? `<div class="readonly value-only">${item.log}</div>` : `<textarea id="firmwareEditRemark">${item.log}</textarea>`}</div>
+          ${item.packageName ? `<div class="field"><label>固件文件</label><div class="readonly value-only">${item.packageName}</div></div>` : ""}
+        </div>
+      </div>`;
+    }
+
+    function otaPublishStepHtml(options = {}) {
+      const isReleaseTarget = Boolean(options.releaseTarget);
+      const target = firmwareVersions.find(item => item.id === state.firmwareReleaseTargetId);
+      const listingRangeText = currentProductListingRangeText();
+      const listingRangeOptions = currentProductListingRangeOptions();
+      const listingRangePickerOptions = groupedCountryOptionsFor(listingRangeOptions);
+      return `<div class="subsection" id="ota-gray-config" data-note-anchor="ota-gray-config">
+        ${isReleaseTarget && target ? `<div class="notice">当前固件：${target.name} / ${target.version}。全面发布提交后进入已发布；自动发布提交后进入发布中，开放覆盖度达到 100% 后转为已发布。</div>` : ""}
+        <div class="form-grid">
+          <div class="field"><label>发布名称</label><input value="${target ? `${target.name} ${target.version}` : "Pump-H FW 1.2.0"} 发布"></div>
+          <div class="field"><label>发布方式</label><select id="otaPublishPlan"><option>全面发布</option><option selected>自动发布</option></select><span class="hint">全面发布会按当前上架范围直接开放给所有线上用户，保存后版本进入已发布；自动发布会按批次逐步开放，保存后版本进入发布中。</span></div>
+          <div class="field"><label>升级方式</label><select id="otaUpgradeMode"><option>提示升级</option><option>强制升级</option></select></div>
+          <div class="field"><label>发布时间</label><input id="otaPublishAt" value="2026-06-05 10:00"></div>
+          <div class="field"><label>发布范围</label><select id="otaRangeMode"><option value="sync">同步上架范围</option><option value="custom">选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。</span></div>
+          <div class="field hide" id="otaRangeSubset"><label>范围子集</label>${rangeOptionsHtml("otaRangeSelect", listingRangePickerOptions, [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
+          <div class="field" id="otaBatchDaysField"><label>时间分批</label><input id="otaBatchDays" value="5" inputmode="numeric"><span class="hint">例如 5 天时，开放覆盖度每天约增加 20%，第 5 天达到 100%。开放覆盖度不是实际命中或升级比例。</span></div>
+        </div>
+        <div class="form-foot"><button class="btn" data-ota-action="cancel">取消</button>${isReleaseTarget ? "" : `<button class="btn" data-ota-action="prev">上一步</button>`}<button class="btn primary" data-ota-action="submit">提交</button></div>
+      </div>`;
+    }
+
+    function wireOta() {
+      wireMultiPick();
+      const syncOtaRangeMode = () => {
+        const custom = $("#otaRangeMode")?.value === "custom";
+        $("#otaRangeSubset")?.classList.toggle("hide", !custom);
+      };
+      const syncOtaPublishPlan = () => {
+        const auto = $("#otaPublishPlan")?.value === "自动发布";
+        $("#otaBatchDaysField")?.classList.toggle("hide", !auto);
+      };
+      $("#otaRangeMode")?.addEventListener("change", syncOtaRangeMode);
+      syncOtaRangeMode();
+      $("#otaPublishPlan")?.addEventListener("change", syncOtaPublishPlan);
+      syncOtaPublishPlan();
+      $$("[data-ota-task-action]").forEach(btn => btn.addEventListener("click", () => {
+        const task = otaTasks.find(item => item.id === btn.dataset.taskId);
+        if (!task) return;
+        const action = btn.dataset.otaTaskAction;
+        if (action === "pause" && task.status === "发布中") {
+          task.status = "暂停发布";
+          state.otaTaskMessage = `${task.name} 已暂停；固件版本状态不回退，继续执行时沿用当前任务配置和已计算命中。`;
+        }
+        if (action === "resume" && task.status === "暂停发布") {
+          task.status = "发布中";
+          state.otaTaskMessage = `${task.name} 已继续发布；继续执行不重新计算命中，修改发布配置才会生成新记录。`;
+        }
+        if (action === "stop" && task.status === "暂停发布") {
+          task.status = "已停止";
+          state.otaTaskMessage = `${task.name} 已停止；停止任务不会新建固件版本。`;
+        }
+        render();
+      }));
+      $$("[data-ota-action]").forEach(btn => btn.addEventListener("click", async () => {
+        const action = btn.dataset.otaAction;
+        if (action === "create" || action === "edit") {
+          state.firmwareReleaseTargetId = null;
+          state.otaMode = "form";
+          state.otaStep = 1;
+        }
+        if (action === "cancel") {
+          state.firmwareReleaseTargetId = null;
+          state.otaMode = "list";
+          state.otaStep = 1;
+        }
+        if (action === "next") state.otaStep = 2;
+        if (action === "prev") state.otaStep = 1;
+        if (action === "submit") {
+          const target = firmwareVersions.find(item => item.id === state.firmwareReleaseTargetId);
+          if (state.view === "product" && state.productStep === "firmware" && target) {
+            if (($("#otaRangeMode")?.value || "sync") === "custom" && !selectedOtaRange().length) {
+              alert("请至少选择一个发布范围。");
+              return;
+            }
+            const publishMode = $("#otaPublishPlan")?.value || "自动发布";
+            const nextStatus = publishMode === "全面发布" ? "已发布" : "发布中";
+            const override = await confirmVersionOverride(firmwareVersions, target, "发布中", "firmware");
+            if (!override.ok) return;
+            const coverage = coverageImpact(firmwareVersions, target, nextStatus, "firmware");
+            createOtaTaskForFirmware(target);
+            target.status = nextStatus;
+            target.log = publishMode === "自动发布" ? `自动发布：${$("#otaBatchDays")?.value || "5"} 天分批` : "全面发布：已发布";
+            state.firmwareMessage = `固件版本 ${target.version} 已提交发布配置，版本进入${nextStatus}。${override.message}${coverage}`;
+            state.otaTaskMessage = `${target.version} 发布配置已提交。`;
+            state.firmwareReleaseTargetId = null;
+            state.otaMode = "list";
+            state.otaStep = 1;
+            render();
+            return;
+          }
+          alert("固件 OTA 配置已提交。");
+          state.otaMode = "list";
+          state.otaStep = 1;
+        }
+        render();
+      }));
+      $$("[data-ota-step]").forEach(step => step.addEventListener("click", () => {
+        state.otaStep = Number(step.dataset.otaStep);
+        render();
+      }));
+    }
+
+    function extensionPanelModeHtml(panelMode) {
+      return `
+        <div class="subsection" id="extension-panel-mode">
+          <div class="form-grid">
+            <div class="field">
+              <label>控制面板类型</label>
+              <div class="readonly"><span>${panelMode}</span><span class="tag ${panelMode === "RN" ? "blue" : ""}">${panelMode === "RN" ? "动态面板" : "App 内置"}</span></div>
+            </div>
+            <div class="field">
+              <label>操作</label>
+              <button class="btn" id="editExtensionPanelMode">编辑</button>
+            </div>
+          </div>
+          ${state.extensionPanelSaved ? `<div class="notice success">${state.extensionPanelSaved}</div>` : ""}
+        </div>`;
+    }
+
+    function extensionNativeHtml() {
+      return `
+        <div class="subsection" id="extension-native">
+          <div class="notice">原生控制面板使用 App 内置能力，当前页不展示 RN 扩展程序版本和版本发布控制。</div>
+        </div>`;
+    }
+
+    function extensionVersionLabel(versionNo) {
+      const match = extensionVersions.find(item => item.version === versionNo);
+      return match ? `${match.version} / ${match.status}` : versionNo;
+    }
+
+    function extensionStatusClass(status) {
+      if (status === "已发布") return "green";
+      if (status === "发布中") return "blue";
+      if (status === "测试中") return "blue";
+      if (status === "开发中" || status === "暂停发布") return "orange";
+      return "";
+    }
+
+    function fullExtensionVersions() {
+      return extensionVersions.filter(item => item.status === "已发布");
+    }
+
+    function testableExtensionVersions() {
+      return extensionVersions.filter(item => ["测试中", "发布中"].includes(item.status));
+    }
+
+    function releasedExtensionVersions() {
+      return extensionVersions.filter(item => ["发布中", "已发布"].includes(item.status));
+    }
+
+    function ensureReleaseVersion() {
+      if (extensionVersions.some(item => item.version === state.extensionReleaseVersion)) {
+        return;
+      }
+      const released = releasedExtensionVersions();
+      state.extensionReleaseVersion = released[0]?.version || extensionVersions[0]?.version || "";
+    }
+
+    function extensionVersionOptionsHtml(selected, options = {}) {
+      const versions = options.onlyFull
+        ? fullExtensionVersions()
+        : options.onlyTestable
+        ? testableExtensionVersions()
+        : extensionVersions;
+      if (!versions.length) {
+        const emptyText = options.onlyFull ? "暂无已发布版本" : options.onlyTestable ? "暂无测试中或发布中版本" : "暂无版本";
+        return `<option value="" disabled>${emptyText}</option>`;
+      }
+      return versions.map(item => `<option value="${item.version}" ${item.version === selected ? "selected" : ""}>${item.version} / ${item.status}</option>`).join("");
+    }
+
+    function releaseConfigSummaryHtml(versionNo) {
+      const versionItem = extensionVersions.find(item => item.version === versionNo);
+      if (versionItem?.status === "已停止") return `<span class="sub">发布控制：已停止，仅保留历史升级来源，不再参与命中</span>`;
+      const config = extensionReleaseConfigs[versionNo];
+      if (!config) return `<span class="sub">发布控制：未配置</span>`;
+      const restartText = config.restartCount > 1 ? ` / 命中范围已重启 ${config.restartCount - 1} 次` : "";
+      const mode = normalizeReleaseMode(config.mode);
+      const batchText = config.batchDays ? ` / ${config.batchDays} 天分批` : "";
+      const progressText = config.progress ? ` / ${config.progress}` : "";
+      const effectiveText = config.effectiveAt === "定时生效" ? ` / 定时生效：${config.effectiveTime || "未配置"}` : "";
+      return `<span class="sub">发布控制：${mode} / ${releaseRangeSummary(config)}${batchText}${progressText}${effectiveText}${restartText}</span>`;
+    }
+
+    function normalizeReleaseMode(mode) {
+      return mode === "全面发布" ? "全面发布" : "自动发布";
+    }
+
+    function invalidateVersionStrategies(versionNo) {
+      delete extensionReleaseConfigs[versionNo];
+    }
+
+    function extensionVersionActionsHtml(item) {
+      const versionButton = `<button class="btn" data-open-extension-version data-version="${item.version}">版本指定</button>`;
+      if (item.status === "开发中") {
+        return `${versionButton}<button class="btn primary" data-extension-version-action="test" data-version="${item.version}">进入测试</button><button class="btn danger" data-extension-version-action="delete" data-version="${item.version}">删除</button>`;
+      }
+      if (item.status === "测试中") {
+        return `${versionButton}<button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button><button class="btn primary" data-extension-version-action="configure" data-version="${item.version}">发布</button>`;
+      }
+      if (item.status === "发布中") {
+        return `${versionButton}<button class="btn" data-extension-version-action="pause" data-version="${item.version}">暂停发布</button><button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button><button class="btn" data-extension-version-action="configure" data-version="${item.version}">修改发布</button>`;
+      }
+      if (item.status === "暂停发布") {
+        return `${versionButton}<button class="btn primary" data-extension-version-action="resume" data-version="${item.version}">继续</button><button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button>`;
+      }
+      if (item.status === "已发布") {
+        return `${versionButton}<button class="btn" data-extension-version-action="configure" data-version="${item.version}">修改发布配置</button>`;
+      }
+      if (item.status === "已停止") {
+        return `${versionButton}<button class="btn" disabled>已停止</button>`;
+      }
+      return versionButton;
+    }
+
+    function extensionManageHtml(product) {
+      return `
+        <div class="subsection" id="extension-manage" data-note-anchor="extension-manage">
+          <div class="subsection-head">
+            <div>
+              <h3><span class="anchor" data-note-anchor="extension-manage">3</span>扩展程序管理</h3>
+              <p>展示已按关联产品迁入当前产品详情的产品模块扩展程序。</p>
+            </div>
+            <button class="btn primary" data-open-drawer="extensionVersionAdd">新增版本</button>
+          </div>
+          <div class="extension-detail-head">
+            <span class="extension-detail-title">扩展程序基本信息</span>
+            <span class="tag blue">当前产品模块</span>
+          </div>
+          <div class="extension-detail-info">
+            <div class="extension-detail-row"><span>扩展程序名称：</span><strong>V3</strong></div>
+            <div class="extension-detail-row"><span>PanelCode：</span><strong>morn.breast-pump.v3</strong></div>
+            <div class="extension-detail-row"><span>业务类型：</span><strong>产品模块</strong></div>
+            <div class="extension-detail-row"><span>面板类型：</span><strong>RN</strong></div>
+          </div>
+          ${state.lifecycleMessage ? `<div class="notice success">${state.lifecycleMessage}</div>` : ""}
+          <div class="hit-rule-note">命中策略说明：${versionHitTips.extension}</div>
+          <table data-note-anchor="extension-lifecycle">
+            <thead><tr><th>版本</th><th>更新时间</th><th>更新日志</th><th>状态${statusTipHtml("extension")}</th><th>操作</th></tr></thead>
+            <tbody>
+              ${extensionVersions.map(item => `
+                <tr>
+                  <td>${item.version}<span class="sub">功能版本：${item.functionVersion} / 最小 App：${item.minApp}</span>${releaseConfigSummaryHtml(item.version)}</td>
+                  <td>${item.updatedAt}</td>
+                  <td>${item.log}</td>
+                  <td><span class="tag ${extensionStatusClass(item.status)}">${item.status}</span></td>
+                  <td class="table-actions">${extensionVersionActionsHtml(item)}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+          <div class="pager"><span>共 ${extensionVersions.length} 条</span><button class="btn" disabled>‹</button><button class="btn primary">1</button><button class="btn" disabled>›</button><select><option>10条/页</option></select></div>
+        </div>`;
+    }
+
+    function releaseConfigDrawerHtml() {
+      const version = state.extensionReleaseVersion || extensionVersions[0]?.version || "";
+      const item = extensionVersions.find(versionItem => versionItem.version === version);
+      const existing = extensionReleaseConfigs[version] || {};
+      const listingRangeText = currentProductListingRangeText();
+      const listingRangeOptions = currentProductListingRangeOptions();
+      const listingRangePickerOptions = groupedCountryOptionsFor(listingRangeOptions);
+      const normalizedRangeMode = releaseRangeModeFromConfig(existing);
+      const releaseRangeValues = clipRangeToCurrentListing(existing.range, normalizedRangeMode);
+      const data = {
+        mode: normalizeReleaseMode(existing.mode),
+        rangeMode: normalizedRangeMode,
+        range: releaseRangeValues,
+        batchDays: existing.batchDays || "5",
+        effectiveAt: existing.effectiveAt || "立即生效",
+        effectiveTime: existing.effectiveTime || "2026-06-05 10:00",
+        restartCount: existing.restartCount || 0
+      };
+      const product = products[state.product];
+      const isReleased = ["发布中", "暂停发布", "已发布"].includes(item?.status);
+      return `<div id="drawer-release-config" data-note-anchor="drawer-release-config">
+        <div class="form-grid">
+          <div class="field"><label>版本</label><div class="readonly"><span>${item ? item.version : version}</span><span class="tag ${extensionStatusClass(item?.status)}">${item?.status || "未选择"}</span></div></div>
+          <div class="field"><label>PanelCode</label><div class="readonly"><span>morn.breast-pump.v3</span><span class="tag blue">产品模块</span></div></div>
+          <div class="field"><label>当前产品</label><div class="readonly"><span>${product.name} / ${product.id}</span><span class="tag green">${product.status}</span></div></div>
+          <div class="field"><label>发布方式</label><select id="releaseMode"><option ${data.mode === "全面发布" ? "selected" : ""}>全面发布</option><option ${data.mode === "自动发布" ? "selected" : ""}>自动发布</option></select><span class="hint">全面发布会按当前上架范围直接开放给所有线上用户，保存后版本进入已发布；自动发布会按批次逐步开放，保存后版本进入发布中。</span></div>
+          <div class="field"><label for="releaseRangeMode">发布范围</label><select id="releaseRangeMode"><option value="sync" ${data.rangeMode === "sync" ? "selected" : ""}>同步上架范围</option><option value="custom" ${data.rangeMode === "custom" ? "selected" : ""}>选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。</span></div>
+          <div class="field ${data.rangeMode === "custom" ? "" : "hide"}" id="releaseRangeSubset"><label>范围子集</label>${rangeOptionsHtml("releaseRangeSelect", listingRangePickerOptions, data.rangeMode === "custom" ? data.range : [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
+          <div class="field" id="releaseBatchDaysField"><label>时间分批</label><input id="releaseBatchDays" value="${data.batchDays}" inputmode="numeric"><span class="hint">例如 5 天时，开放覆盖度每天约增加 20%，第 5 天达到 100%。开放覆盖度不是实际用户命中或升级比例。</span></div>
+          <div class="field"><label>兼容性</label><div class="readonly"><span>App 5.2+，iOS / Android 文件均可用</span><span class="tag green">通过</span></div></div>
+          <div class="field"><label>生效时间</label><select id="releaseEffectiveAt"><option ${data.effectiveAt !== "定时生效" ? "selected" : ""}>立即生效</option><option ${data.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>
+          <div class="field ${data.effectiveAt === "定时生效" ? "" : "hide"}" id="releaseEffectiveTimeField"><label>定时生效时间</label><input id="releaseEffectiveTime" value="${data.effectiveTime}" placeholder="YYYY-MM-DD HH:mm"><span class="hint">选择定时生效时必填，到达该时间后发布配置开始生效。</span></div>
+        </div>
+        <div class="impact-preview">影响预览：保存后配置按生效时间执行${isReleased ? "，并重新计算该版本的发布命中范围。" : "。"}全面发布进入已发布；自动发布进入发布中，开放覆盖度达到 100% 后转为已发布。</div>
+      </div>`;
+    }
+
+    function wireExtensionMode() {
+      $("#editExtensionPanelMode")?.addEventListener("click", openExtensionPanelModeModal);
+      const select = $("#extensionRegionMode");
+      if (!select) return;
+      const sync = () => {
+        $$("[data-region-panel]").forEach(panel => panel.classList.toggle("hide", panel.dataset.regionPanel !== select.value));
+      };
+      select.addEventListener("change", sync);
+      sync();
+    }
+
+    function filteredWhitelist() {
+      const dc = $("#filterDc")?.value || "全部";
+      const type = $("#filterType")?.value || "全部";
+      const tag = $("#filterTag")?.value || "全部标签组";
+      const keyword = ($("#filterKeyword")?.value || "").trim().toLowerCase();
+      return whitelistUsers.filter(user => {
+        if (dc !== "全部" && user.dc !== dc) return false;
+        if (type !== "全部" && user.type !== type) return false;
+        if (tag !== "全部标签组" && user.tag !== tag) return false;
+        if (keyword && !`${user.email} ${user.nick}`.toLowerCase().includes(keyword)) return false;
+        return true;
+      });
+    }
+
+    function renderWhitelist() {
+      if (!$("#whitelistRows")) return;
+      const list = filteredWhitelist();
+      const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+      state.whitelistPage = Math.min(state.whitelistPage, pages);
+      const start = (state.whitelistPage - 1) * PAGE_SIZE;
+      const rows = list.slice(start, start + PAGE_SIZE);
+      $("#whitelistRows").innerHTML = rows.map(user => `
+        <tr>
+          <td><input type="checkbox" data-select-user="${user.id}" ${state.selectedIds.has(user.id) ? "checked" : ""}></td>
+          <td>${user.email}<span class="sub">${user.nick || "昵称未填写"}</span></td>
+          <td><span class="tag ${user.type === "公司用户" ? "blue" : "green"}">${user.type}</span></td>
+          <td>${user.dc}</td>
+          <td>${user.tag}</td>
+          <td>${user.products.join("、") || "暂无授权"}</td>
+          <td class="table-actions"><button class="btn" data-auth-one="${user.id}">授权</button><button class="btn danger" data-delete-one="${user.id}">删除</button></td>
+        </tr>`).join("");
+      $("#whitelistPagerText").textContent = `共 ${list.length} 条，当前 ${state.whitelistPage} / ${pages} 页，跨页已选 ${state.selectedIds.size} 人`;
+      $("#prevWhitelist").disabled = state.whitelistPage <= 1;
+      $("#nextWhitelist").disabled = state.whitelistPage >= pages;
+      $("#selectPage").checked = rows.length > 0 && rows.every(user => state.selectedIds.has(user.id));
+      $$("[data-select-user]").forEach(input => input.addEventListener("change", () => {
+        input.checked ? state.selectedIds.add(input.dataset.selectUser) : state.selectedIds.delete(input.dataset.selectUser);
+        renderWhitelist();
+      }));
+      $$("[data-auth-one]").forEach(btn => btn.addEventListener("click", () => {
+        state.authorizeIds = [btn.dataset.authOne];
+        openDrawer("authProduct");
+      }));
+      $$("[data-delete-one]").forEach(btn => btn.addEventListener("click", () => openDelete([btn.dataset.deleteOne])));
+    }
+
+    function renderNotes() {
+      const key = state.importStage
+        ? `import${state.importStage[0].toUpperCase()}${state.importStage.slice(1)}`
+        : state.activeModal || state.drawer || (state.view === "product" && state.productStep === "extension"
+          ? "extension"
+          : state.view === "product" && state.productStep === "firmware" && state.otaMode === "form"
+          ? "otaForm"
+          : state.view === "product" && state.productStep === "firmware"
+          ? "firmware"
+          : state.view);
+      const list = notes[key] || [];
+      const context = noteContextLabel(key);
+      const visible = list.some(note => note.id === state.activeNoteId) ? state.activeNoteId : list[0]?.id || "";
+      state.activeNoteId = visible;
+      $("#noteIntro").textContent = state.importStage
+        ? "当前弹窗批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
+        : state.activeModal
+        ? "当前弹窗批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
+        : state.drawer
+        ? "当前抽屉批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
+        : "当前页面批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。";
+      $("#noteContext").textContent = context;
+      $("#noteList").innerHTML = list.map((note, index) => `
+        <button class="note-item ${note.id === state.activeNoteId ? "active" : ""}" data-note-target="${note.id}">
+          <span class="note-index">${index + 1}</span>
+          <span class="note-title">${escapeHtml(note.title)}</span>
+          <span class="note-body">${renderNoteBody(note.body)}</span>
+          <span class="note-loc">关联位置：${escapeHtml(note.loc)}</span>
+        </button>`).join("");
+      $$("[data-note-target]").forEach(btn => btn.addEventListener("click", () => {
+        state.activeNoteId = btn.dataset.noteTarget;
+        renderNotes();
+        highlight(btn.dataset.noteTarget);
+      }));
+    }
+
+    function noteContextLabel(key) {
+      const labels = {
+        product: "产品详情批注",
+        extension: "产品详情 > 扩展程序批注",
+        firmware: "产品详情 > 固件配置批注",
+        whitelist: "App > 白名单管理批注",
+        tags: "App > 白名单标签组批注",
+        listing: "产品上架范围抽屉批注",
+        addUser: "新增白名单用户抽屉批注",
+        importUsers: "批量导入抽屉批注",
+        importProgress: "同步导入弹窗批注",
+        importResult: "导入结果弹窗批注",
+        authProduct: "授权到产品抽屉批注",
+        authList: "产品测试白名单抽屉批注",
+        otaForm: "固件发布配置批注",
+        firmwareVersionAdd: "新建固件版本抽屉批注",
+        releaseConfig: "扩展程序发布配置抽屉批注",
+        extensionVersionAdd: "新增扩展程序版本抽屉批注",
+        extensionVersion: "版本指定弹窗批注",
+        extensionPanelMode: "控制面板类型弹窗批注",
+        versionState: "版本状态唯一性弹窗批注",
+        deleteModal: "删除确认弹窗批注"
+      };
+      return labels[key] || "原型批注";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderNoteBody(body) {
+      return String(body || "")
+        .split(/[；;。]/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+          const section = line.match(/^(触发条件|系统响应|校验规则|按钮状态|异常处理|PRD 边界|流程|字段|命中规则|发布方式|范围规则|状态规则)：(.+)$/);
+          if (section) return `<span class="note-section">${escapeHtml(section[1])}</span><span class="note-line">${escapeHtml(section[2])}</span>`;
+          return `<span class="note-line">${escapeHtml(line)}</span>`;
+        })
+        .join("");
+    }
+
+    function setNotesOpen(open) {
+      state.notesOpen = open;
+      document.body.classList.toggle("notes-closed", !open);
+      $("#toggleNotes").textContent = open ? "隐藏批注" : "查看批注";
+      $("#collapseNotes").textContent = "隐藏";
+      renderNotes();
+    }
+
+    function highlight(id) {
+      const target = document.querySelector(`[data-note-anchor="${id}"], #${id}`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      $$(".is-highlight").forEach(el => el.classList.remove("is-highlight"));
+      const box = target.closest(".subsection, .page-card, .drawer-body, .test-box, .extension-box, .list-box, .product-hero") || target;
+      box.classList.add("is-highlight");
+      setTimeout(() => box.classList.remove("is-highlight"), 1600);
+    }
+
+    function openDrawer(type) {
+      state.drawer = type;
+      if (!["firmwareVersionEdit", "firmwareVersionDetail"].includes(type)) {
+        state.firmwareEditingId = null;
+      }
+      if (type === "authList") {
+        const productName = products[state.product].name;
+        state.productAuthSelected = new Set(whitelistUsers.filter(user => user.products.includes(productName)).map(user => user.id));
+        state.authVisibleMode = products[state.product].visible === "全部公司用户" ? "all" : "specified";
+        state.authDc = "北美数据中心";
+        state.authTag = "";
+        state.authKeyword = "";
+        state.authQueryField = "邮箱";
+      }
+      if (type === "addUser") {
+        state.newAuthProducts = new Set(["V3 Dev Pump", "Pump-H"]);
+      }
+      setNotesOpen(state.notesOpen);
+      const configs = {
+        addUser: ["新增白名单用户", "", addUserHtml()],
+        importUsers: ["批量导入白名单用户", "上传 xlsx 后同步导入；模板中的授权产品列可为空。", importHtml()],
+        authProduct: ["授权到产品", "", authProductHtml()],
+        listing: ["产品上架 / 上架范围", "GTM 上架不做独立策略页，收敛到产品详情上架操作。", listingHtml()],
+        authList: ["编辑白名单用户", "", authHtml()],
+        firmwareVersionAdd: ["新建固件版本", "选择功能版本、固件类型并上传固件文件；版本和硬件版本由文件名解析。", firmwareVersionAddHtml()],
+        firmwareVersionEdit: ["编辑固件版本", "仅维护备注；功能版本、固件类型、APP 版本号配置和解析字段填错需删除后重新新建。", firmwareVersionEditHtml(false)],
+        firmwareVersionDetail: ["固件版本详情", "查看当前固件版本的基础信息、版本控制条件和文件解析结果。", firmwareVersionEditHtml(true)],
+        extensionVersionAdd: ["新增版本", "产品模块扩展程序迁入产品详情后，在当前产品上下文内新增版本。", extensionVersionAddHtml()],
+        releaseConfig: [state.releaseConfigIntent === "edit" ? "修改发布配置" : "发布配置", "保存后立即生效；全面发布进入已发布，自动发布进入发布中。", releaseConfigDrawerHtml()]
+      };
+      if (!configs[type]) return;
+      const [title, desc, html] = configs[type];
+      $("#drawerTitle").textContent = title;
+      $("#drawerDesc").textContent = desc;
+      $("#drawerDesc").classList.toggle("hide", !desc);
+      $("#drawerBody").innerHTML = html;
+      $("#drawerSave").textContent = type === "importUsers" ? "开始导入" : type === "releaseConfig" ? "保存并生效" : type === "authList" ? "确定" : "保存";
+      $("#drawerSave").classList.toggle("hide", ["firmwareVersionDetail"].includes(type));
+      $("#drawerCancel").textContent = ["firmwareVersionDetail"].includes(type) ? "关闭" : "取消";
+      $("#drawer").classList.toggle("wide", type === "authList");
+      document.body.classList.add("drawer-open");
+      document.body.classList.toggle("drawer-wide", type === "authList");
+      $("#drawer").classList.add("open");
+      $("#drawerMask").classList.add("open");
+      renderNotes();
+      wireDrawer(type);
+    }
+
+    function closeDrawer() {
+      state.drawer = null;
+      state.extensionReleaseMode = null;
+      $("#drawer").classList.remove("wide");
+      document.body.classList.remove("drawer-open", "drawer-wide");
+      $("#drawer").classList.remove("open");
+      $("#drawerMask").classList.remove("open");
+      $("#drawerSave").textContent = "保存";
+      $("#drawerSave").classList.remove("hide");
+      $("#drawerCancel").textContent = "取消";
+      renderNotes();
+    }
+
+    function productOptionsHtml(selected = "V3 Dev Pump") {
+      return authProducts.map(product => `<option value="${product.name}" ${product.name === selected ? "selected" : ""}>${product.name} / ${product.model} / ${product.status}</option>`).join("");
+    }
+
+    function extensionVersionAddHtml() {
+      return `<div id="drawer-extension-version-add" data-note-anchor="drawer-extension-version-add">
+        <div class="form-grid">
+          <div class="field"><label>PanelCode</label><input value="morn.breast-pump.v3" disabled></div>
+          <div class="field"><label>Android面板</label><button class="btn">选择文件</button><span class="hint">示例：Lute_Air1_1.2.0_android.zip</span></div>
+          <div class="field"><label><span class="required">*</span>Android文件名</label><input id="extensionAndroidFile" value="Lute_Air1_1.2.0_android.zip" disabled></div>
+          <div class="field"><label>IOS面板</label><button class="btn">选择文件</button><span class="hint">示例：Lute_Air1_1.2.0_ios.zip</span></div>
+          <div class="field"><label><span class="required">*</span>IOS文件名</label><input id="extensionIosFile" value="Lute_Air1_1.2.0_ios.zip" disabled></div>
+          <div class="field"><label><span class="required">*</span>版本号</label><input id="extensionVersionNo" value="1.3.0" disabled></div>
+          <div class="field" style="grid-column: 1 / -1;"><label><span class="required">*</span>更新说明</label><textarea id="extensionUpdateLog">修复控制面板加载状态和按钮反馈。</textarea></div>
+        </div>
+      </div>`;
+    }
+
+    function productPickerHtml() {
+      return `<div class="selector-box" id="productPicker">
+        <div class="selected-tags" id="selectedProductTags"></div>
+        <div class="selector-tools">
+          <input id="productSearch" placeholder="产品名称 / 型号 / 产品ID">
+          <select id="productStatusFilter">
+            <option>全部状态</option>
+            <option>开发中</option>
+            <option>已上架</option>
+          </select>
+        </div>
+        <div class="selector-table">
+          <table>
+            <thead><tr><th></th><th>产品</th><th>产品型号</th><th>产品状态</th></tr></thead>
+            <tbody id="productPickerRows"></tbody>
+          </table>
+        </div>
+      </div>`;
+    }
+
+    function filteredAuthProducts() {
+      const keyword = ($("#productSearch")?.value || "").trim().toLowerCase();
+      const status = $("#productStatusFilter")?.value || "全部状态";
+      return authProducts.filter(product => {
+        const haystack = `${product.name} ${product.model} ${product.id}`.toLowerCase();
+        if (keyword && !haystack.includes(keyword)) return false;
+        if (status === "开发中" && product.status !== "开发中") return false;
+        if (status === "已上架" && !product.status.includes("已上架")) return false;
+        return true;
+      });
+    }
+
+    function renderProductPicker() {
+      if (!$("#productPickerRows")) return;
+      const selected = Array.from(state.newAuthProducts);
+      $("#selectedProductTags").innerHTML = selected.length
+        ? selected.map(name => `<span class="selected-chip">${name}<button type="button" data-remove-new-product="${name}">×</button></span>`).join("")
+        : `<span class="sub">未选择授权产品</span>`;
+      $("#productPickerRows").innerHTML = filteredAuthProducts().map(product => `
+        <tr>
+          <td><input type="checkbox" data-pick-product="${product.name}" ${state.newAuthProducts.has(product.name) ? "checked" : ""}></td>
+          <td>${product.name}<span class="sub">${product.id}</span></td>
+          <td>${product.model}</td>
+          <td>${product.status}</td>
+        </tr>`).join("") || `<tr><td colspan="4">无匹配产品</td></tr>`;
+      $$("[data-pick-product]").forEach(input => input.addEventListener("change", () => {
+        input.checked ? state.newAuthProducts.add(input.dataset.pickProduct) : state.newAuthProducts.delete(input.dataset.pickProduct);
+        renderProductPicker();
+      }));
+      $$("[data-remove-new-product]").forEach(btn => btn.addEventListener("click", () => {
+        state.newAuthProducts.delete(btn.dataset.removeNewProduct);
+        renderProductPicker();
+      }));
+    }
+
+    function addUserHtml() {
+      return `<div id="drawer-add-user" data-note-anchor="drawer-add-user">
+        <div class="form-grid">
+          <div class="field"><label>邮箱</label><input id="newEmail" value="new.seed@example.com"></div>
+          <div class="field"><label>昵称（选填）</label><input id="newNick" placeholder="可留空"></div>
+          <div class="field"><label>用户类型</label><select id="newType"><option>外部用户</option><option>公司用户</option></select></div>
+          <div class="field"><label>数据中心</label><select id="newDc"><option>北美数据中心</option><option>亚太数据中心</option><option>欧洲数据中心</option><option>中国数据中心</option></select></div>
+          <div class="field"><label>标签组</label><select id="newTag"><option>Seed NA 2026Q2</option><option>Internal QA</option></select></div>
+        </div>
+        <div class="field">
+          <label>授权产品（可选，多选）</label>
+          ${productPickerHtml()}
+        </div>
+      </div>`;
+    }
+
+    function importHtml(mode = "plain") {
+      return `<div id="drawer-import" data-note-anchor="drawer-import">
+        <div class="download-grid">
+          <div class="download-card"><strong>标签组列表下载</strong><p>列：标签组名称、标签组 ID</p><button class="btn">下载标签组列表</button></div>
+          <div class="download-card"><strong>产品列表下载</strong><p>列：产品名称、产品型号、产品 ID、产品状态</p><button class="btn">下载产品列表</button></div>
+          <div class="download-card"><strong>白名单导入模板</strong><p>xlsx，含内置下拉选择项</p><button class="btn">下载模板</button></div>
+        </div>
+        <div class="template-cols">
+          <div>邮箱（type: email，导入时校验格式）</div>
+          <div>类型（type: select：公司用户、外部用户）</div>
+          <div>数据中心（type: select：北美、亚太、欧洲、中国数据中心）</div>
+          <div>标签组（type: text，填写标签组 ID，非必填）</div>
+          <div>授权产品（type: text，非必填，多个产品以英文逗号分隔）</div>
+        </div>
+        <div class="form-grid single-field">
+          <div class="field"><label>上传文件</label><input type="file"></div>
+        </div>
+      </div>`;
+    }
+
+    function authProductHtml() {
+      const ids = state.authorizeIds.length ? state.authorizeIds : Array.from(state.selectedIds);
+      const users = whitelistUsers.filter(user => ids.includes(user.id));
+      return `<div id="drawer-auth-product" data-note-anchor="drawer-auth-product">
+        <div class="form-grid">
+          <div class="field"><label>授权产品</label><select id="authProductTarget">${productOptionsHtml()}</select></div>
+          <div class="field"><label>选中用户</label><div class="readonly">${users.length} 人</div></div>
+        </div>
+        <table>
+          <thead><tr><th>用户</th><th>类型</th><th>数据中心</th><th>标签组</th></tr></thead>
+          <tbody>${users.map(user => `<tr><td>${user.email}<span class="sub">${user.nick || "昵称未填写"}</span></td><td>${user.type}</td><td>${user.dc}</td><td>${user.tag}</td></tr>`).join("") || `<tr><td colspan="4">请先在白名单列表中选择用户。</td></tr>`}</tbody>
+        </table>
+      </div>`;
+    }
+
+    function listingHtml() {
+      const product = products[state.product];
+      const isDev = product.status === "开发中";
+      const mode = product.listingMode || "partial";
+      const rangeMode = product.listingRangeMode || "dc";
+      const range = product.listingRange || [];
+      const checked = value => range.includes(value) ? "checked" : "";
+      return `<div id="productMain">
+        <div class="form-grid">
+          <div class="field"><label>当前产品状态</label><div class="readonly">${product.status}</div></div>
+          <div class="field"><label for="listingMode">上架方式</label><select id="listingMode"><option value="partial" ${mode === "partial" ? "selected" : ""}>${isDev ? "部分放开" : "编辑部分放开范围"}</option><option value="full" ${mode === "full" ? "selected" : ""}>全面放开</option></select></div>
+          <div class="field" id="rangeModeField"><label for="rangeMode">范围模式</label><select id="rangeMode"><option value="dc" ${rangeMode === "dc" ? "selected" : ""}>数据中心</option><option value="country" ${rangeMode === "country" ? "selected" : ""}>国家 / 地区</option></select></div>
+          <div class="field"><label>生效时间</label><select><option>立即生效</option><option>定时生效</option></select></div>
+        </div>
+        <div class="notice" id="listingExplain">部分放开时需要选择国家 / 地区或数据中心；全面放开不再展示范围选择。</div>
+        <div class="check-row" id="dcRange"><label><input type="checkbox" value="北美数据中心" ${checked("北美数据中心")}> 北美数据中心</label><label><input type="checkbox" value="欧洲数据中心" ${checked("欧洲数据中心")}> 欧洲数据中心</label><label><input type="checkbox" value="亚太数据中心" ${checked("亚太数据中心")}> 亚太数据中心</label><label><input type="checkbox" value="中国数据中心" ${checked("中国数据中心")}> 中国数据中心</label></div>
+        <div class="field hide" id="countryRange"><label>国家 / 地区</label>${rangeOptionsHtml("countryRangeSelect", countryRegionGroups, range, 2)}<span class="hint">按洲分类；可点击“选中本洲”批量选择，也可点击单个国家 / 地区增删。</span></div>
+      </div>`;
+    }
+
+    function authHtml() {
+      const mode = state.authVisibleMode;
+      return `<div id="drawer-auth" data-note-anchor="drawer-auth">
+        <div class="auth-radio-line">
+          <span class="inline-label"><span class="required">*</span>可见用户：</span>
+          <label><input type="radio" name="authVisibleMode" value="all" ${mode === "all" ? "checked" : ""}> 全部公司用户</label>
+          <label><input type="radio" name="authVisibleMode" value="specified" ${mode === "specified" ? "checked" : ""}> 指定白名单用户 <span class="inline-tip"><button type="button" class="tip-icon" aria-label="公司用户默认授权该产品">?</button><span class="inline-tip-popover">公司用户默认授权该产品；此处仅用于选择需要指定授权的外部白名单用户。</span></span></label>
+        </div>
+        <div class="auth-specified-panel ${mode === "specified" ? "" : "hide"}" id="authSpecifiedPanel">
+          <div class="auth-dc-tabs">
+            ${["测试数据", "北美数据中心", "亚太数据中心", "欧洲数据中心", "中国数据中心"].map(dc => `<button class="auth-dc-tab ${state.authDc === dc ? "active" : ""}" data-auth-dc="${dc}">${dc}</button>`).join("")}
+            <span class="auth-selected-count" id="authSelectedCount">已选择 0</span>
+          </div>
+          <div class="auth-query">
+            <select id="authTagFilter">
+              <option value="">标签组</option>
+              <option value="Seed NA 2026Q2">Seed NA 2026Q2</option>
+              <option value="Seed EU 2026Q2">Seed EU 2026Q2</option>
+              <option value="Internal QA">Internal QA</option>
+            </select>
+            <input id="authKeyword" placeholder="请输入..." value="${state.authKeyword}">
+            <select id="authQueryField">
+              <option ${state.authQueryField === "邮箱" ? "selected" : ""}>邮箱</option>
+              <option ${state.authQueryField === "用户账号" ? "selected" : ""}>用户账号</option>
+              <option ${state.authQueryField === "手机" ? "selected" : ""}>手机</option>
+            </select>
+            <button class="btn primary" id="authQueryBtn">查询</button>
+          </div>
+          <div class="auth-table-wrap">
+            <table>
+              <thead><tr><th><input type="checkbox" id="authSelectVisible"></th><th>用户账号</th><th>用户类型</th><th>标签组</th><th>昵称</th><th>邮箱</th><th>手机</th></tr></thead>
+              <tbody id="authCandidateRows"></tbody>
+            </table>
+          </div>
+          <div class="pager"><span id="authPagerText">共 0 条</span><button class="btn" disabled>‹</button><button class="btn primary">1</button><button class="btn" disabled>›</button><select><option>10条/页</option></select></div>
+        </div>
+      </div>`;
+    }
+
+    function authAccount(user) {
+      return user.email.split("@")[0];
+    }
+
+    function authPhone(user) {
+      return {
+        u1: "188****0901",
+        u2: "188****0902",
+        u3: "188****0903",
+        u4: "188****0904",
+        u5: "188****0905"
+      }[user.id] || "--";
+    }
+
+    function authVisibleUsers() {
+      const tag = $("#authTagFilter")?.value ?? state.authTag;
+      const keyword = ($("#authKeyword")?.value ?? state.authKeyword).trim().toLowerCase();
+      const field = $("#authQueryField")?.value ?? state.authQueryField;
+      return whitelistUsers.filter(user => {
+        if (state.authDc !== "测试数据" && user.dc !== state.authDc) return false;
+        if (state.authDc === "测试数据") return false;
+        if (tag && user.tag !== tag) return false;
+        if (!keyword) return true;
+        const source = field === "用户账号" ? authAccount(user) : field === "手机" ? authPhone(user) : user.email;
+        return source.toLowerCase().includes(keyword);
+      });
+    }
+
+    function renderAuthCandidates() {
+      if (!$("#authCandidateRows")) return;
+      $$("[name='authVisibleMode']").forEach(input => { input.checked = input.value === state.authVisibleMode; });
+      $("#authSpecifiedPanel").classList.toggle("hide", state.authVisibleMode !== "specified");
+      const rows = authVisibleUsers();
+      $("[data-auth-dc].active")?.classList.remove("active");
+      $(`[data-auth-dc="${state.authDc}"]`)?.classList.add("active");
+      $("#authSelectedCount").textContent = `已选择 ${state.productAuthSelected.size}`;
+      $("#authPagerText").textContent = `共 ${rows.length} 条`;
+      $("#authCandidateRows").innerHTML = rows.length ? rows.map(user => `
+        <tr>
+          <td><input type="checkbox" data-auth-candidate="${user.id}" ${state.productAuthSelected.has(user.id) ? "checked" : ""}></td>
+          <td>${authAccount(user)}</td>
+          <td>${user.type}</td>
+          <td>${user.tag}</td>
+          <td>${user.nick || "--"}</td>
+          <td>${user.email}</td>
+          <td>${authPhone(user)}</td>
+        </tr>`).join("") : `<tr><td colspan="7" class="auth-empty">暂无数据</td></tr>`;
+      $("#authSelectVisible").checked = rows.length > 0 && rows.every(user => state.productAuthSelected.has(user.id));
+      $$("[data-auth-candidate]").forEach(input => input.addEventListener("change", () => {
+        input.checked ? state.productAuthSelected.add(input.dataset.authCandidate) : state.productAuthSelected.delete(input.dataset.authCandidate);
+        renderAuthCandidates();
+      }));
+    }
+
+    function wireDrawer(type) {
+      if (type === "addUser") {
+        renderProductPicker();
+        $("#productSearch").addEventListener("input", renderProductPicker);
+        $("#productStatusFilter").addEventListener("change", renderProductPicker);
+      }
+      if (type === "listing") {
+        wireMultiPick();
+        const syncListingRange = () => {
+          const full = $("#listingMode")?.value === "full";
+          const rangeMode = $("#rangeMode")?.value || "dc";
+          $("#rangeModeField")?.classList.toggle("hide", full);
+          $("#dcRange")?.classList.toggle("hide", full || rangeMode !== "dc");
+          $("#countryRange")?.classList.toggle("hide", full || rangeMode !== "country");
+          const explain = $("#listingExplain");
+          if (explain) {
+            explain.textContent = full
+              ? "全面放开后不再配置范围。"
+              : rangeMode === "country"
+              ? "国家 / 地区模式下，仅配置国家 / 地区范围。"
+              : "数据中心模式下，仅配置数据中心范围。";
+          }
+          const inputs = Array.from($("#dcRange")?.querySelectorAll("input[type='checkbox']") || []);
+          if (!full && rangeMode === "dc" && inputs.length && !inputs.some(input => input.checked)) {
+            inputs.slice(0, 2).forEach(input => { input.checked = true; });
+          }
+          const countryPicker = $("#countryRangeSelect");
+          if (!full && rangeMode === "country" && countryPicker && !selectedMultiValues("#countryRangeSelect").length) {
+            countryPicker.querySelectorAll(".multi-option").forEach((option, index) => {
+              option.setAttribute("aria-pressed", index < 2 ? "true" : "false");
+            });
+            refreshMultiPick(countryPicker);
+          }
+        };
+        $("#listingMode")?.addEventListener("change", syncListingRange);
+        $("#rangeMode")?.addEventListener("change", syncListingRange);
+        syncListingRange();
+      }
+      if (type === "authList") {
+        const addVisible = () => {
+          state.authTag = $("#authTagFilter").value;
+          if (state.authVisibleMode === "specified" && state.authTag) {
+            authVisibleUsers().forEach(user => state.productAuthSelected.add(user.id));
+          }
+          renderAuthCandidates();
+        };
+        $$("[name='authVisibleMode']").forEach(input => input.addEventListener("change", () => {
+          state.authVisibleMode = input.value;
+          renderAuthCandidates();
+        }));
+        $$("[data-auth-dc]").forEach(btn => btn.addEventListener("click", () => {
+          state.authDc = btn.dataset.authDc;
+          renderAuthCandidates();
+        }));
+        $("#authTagFilter").addEventListener("change", addVisible);
+        $("#authKeyword").addEventListener("input", () => {
+          state.authKeyword = $("#authKeyword").value;
+          renderAuthCandidates();
+        });
+        $("#authQueryField").addEventListener("change", () => {
+          state.authQueryField = $("#authQueryField").value;
+          renderAuthCandidates();
+        });
+        $("#authQueryBtn").addEventListener("click", renderAuthCandidates);
+        $("#authSelectVisible").addEventListener("change", () => {
+          authVisibleUsers().forEach(user => $("#authSelectVisible").checked ? state.productAuthSelected.add(user.id) : state.productAuthSelected.delete(user.id));
+          renderAuthCandidates();
+        });
+        renderAuthCandidates();
+      }
+      if (type === "firmwareVersionAdd") {
+        const syncFirmwareAdd = () => {
+          const fileInput = $("#firmwareAddFile");
+          const fileName = fileInput?.files?.[0]?.name || "";
+          const parsed = parseFirmwareFileName(fileName);
+          const typeText = firmwareTypeName[$("#firmwareAddType")?.value || "mcu"];
+          const values = parsed || {
+            company: "--",
+            project: "--",
+            firmwareVersion: "--",
+            hardwareVersion: "--",
+            checksum: "--",
+            date: "--",
+            format: "--"
+          };
+          if ($("#firmwareAddCompanyText")) $("#firmwareAddCompanyText").textContent = values.company;
+          if ($("#firmwareAddProjectText")) $("#firmwareAddProjectText").textContent = values.project;
+          if ($("#firmwareAddVersionText")) $("#firmwareAddVersionText").textContent = values.firmwareVersion;
+          if ($("#firmwareAddHardwareText")) $("#firmwareAddHardwareText").textContent = values.hardwareVersion;
+          if ($("#firmwareAddChecksumText")) $("#firmwareAddChecksumText").textContent = values.checksum;
+          if ($("#firmwareAddDateText")) $("#firmwareAddDateText").textContent = values.date;
+          if ($("#firmwareAddFormatText")) $("#firmwareAddFormatText").textContent = values.format;
+          if ($("#firmwareAddNameText")) $("#firmwareAddNameText").textContent = parsed ? `${parsed.project} ${typeText}` : "--";
+          const error = $("#firmwareAddFileError");
+          if (error) {
+            error.textContent = fileName && !parsed ? "文件名需符合 [公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期].ufw/.zip/.bin" : "";
+            error.classList.toggle("hide", !error.textContent);
+          }
+          fileInput?.classList.toggle("invalid", Boolean(fileName && !parsed));
+        };
+        $("#firmwareAddFile")?.addEventListener("change", syncFirmwareAdd);
+        $("#firmwareAddType")?.addEventListener("change", syncFirmwareAdd);
+        syncFirmwareAdd();
+      }
+      if (type === "releaseConfig") {
+        wireMultiPick();
+        const syncReleaseMode = () => {
+          const auto = $("#releaseMode")?.value === "自动发布";
+          $("#releaseBatchDaysField")?.classList.toggle("hide", !auto);
+        };
+        const syncReleaseRangeMode = () => {
+          const custom = $("#releaseRangeMode")?.value === "custom";
+          $("#releaseRangeSubset")?.classList.toggle("hide", !custom);
+        };
+        const syncReleaseEffectiveAt = () => {
+          const timed = $("#releaseEffectiveAt")?.value === "定时生效";
+          $("#releaseEffectiveTimeField")?.classList.toggle("hide", !timed);
+        };
+        $("#releaseMode")?.addEventListener("change", syncReleaseMode);
+        syncReleaseMode();
+        $("#releaseRangeMode")?.addEventListener("change", syncReleaseRangeMode);
+        syncReleaseRangeMode();
+        $("#releaseEffectiveAt")?.addEventListener("change", syncReleaseEffectiveAt);
+        syncReleaseEffectiveAt();
+      }
+      $("#drawerSave").onclick = async () => {
+        if (type === "importUsers") {
+          openImportProgress(type);
+          return;
+        }
+        if (type === "addUser") {
+          const email = $("#newEmail").value.trim();
+          const dc = $("#newDc").value;
+          if (whitelistUsers.some(user => user.email === email && user.dc === dc)) {
+            alert("同一邮箱在同一数据中心已存在。");
+            return;
+          }
+          const newProducts = $("#newType").value === "公司用户"
+            ? ["免授权"]
+            : Array.from(state.newAuthProducts);
+          whitelistUsers.push({ id: `u${Date.now()}`, email, nick: $("#newNick").value.trim(), type: $("#newType").value, dc, tag: $("#newTag").value, products: newProducts });
+        }
+        if (type === "authProduct") {
+          const ids = state.authorizeIds.length ? state.authorizeIds : Array.from(state.selectedIds);
+          const targetProduct = $("#authProductTarget").value;
+          whitelistUsers.forEach(user => {
+            if (ids.includes(user.id) && user.type === "外部用户" && !user.products.includes(targetProduct)) user.products.push(targetProduct);
+          });
+          state.authorizeIds = [];
+        }
+        if (type === "authList") {
+          const productName = products[state.product].name;
+          products[state.product].visible = state.authVisibleMode === "all"
+            ? "全部公司用户"
+            : `指定白名单用户（${state.productAuthSelected.size}）`;
+          whitelistUsers.forEach(user => {
+            const hasProduct = user.products.includes(productName);
+            if (state.productAuthSelected.has(user.id) && !hasProduct) user.products.push(productName);
+            if (state.authVisibleMode === "specified" && !state.productAuthSelected.has(user.id) && hasProduct) {
+              user.products = user.products.filter(name => name !== productName);
+            }
+          });
+        }
+        if (type === "listing") {
+          const product = products[state.product];
+          const previousListingRange = currentProductListingRangeOptions();
+          const mode = $("#listingMode").value;
+          product.listingMode = mode;
+          if (mode === "full") {
+            product.listingRangeMode = "dc";
+            product.listingRange = ["全部"];
+          } else {
+            const rangeMode = $("#rangeMode").value;
+            const range = rangeMode === "country"
+              ? selectedMultiValues("#countryRangeSelect")
+              : Array.from($("#dcRange").querySelectorAll("input[type='checkbox']"))
+                .filter(input => input.checked)
+                .map(input => input.value);
+            if (!range.length) {
+              alert("请至少选择一个上架范围。");
+              return;
+            }
+            product.listingRangeMode = rangeMode;
+            product.listingRange = range;
+          }
+          if (state.product === "dev") {
+            product.status = "已上架";
+            product.statusClass = "green";
+          }
+          state.rangeSummaryExpanded = false;
+          syncPublishRangesWithListingRange(previousListingRange);
+          state.firmwareMessage = "产品上架范围已保存；OTA 和 RN 扩展发布范围已按新的上架范围同步收缩。";
+          state.lifecycleMessage = "产品上架范围已保存；RN 版本发布配置的发布范围已按新的上架范围同步收缩。";
+        }
+        if (type === "firmwareVersionAdd") {
+          const fileName = $("#firmwareAddFile")?.files?.[0]?.name || "";
+          const parsed = parseFirmwareFileName(fileName);
+          const firmwareType = firmwareTypeName[$("#firmwareAddType")?.value || "mcu"];
+          if (!parsed) {
+            alert("请上传符合命名规则的固件文件。");
+            return;
+          }
+          if (firmwareVersions.some(item => item.version === parsed.firmwareVersion && item.type === firmwareType)) {
+            alert("该固件类型下已存在相同固件版本。");
+            return;
+          }
+          firmwareVersions.unshift({
+            id: `fw${Date.now()}`,
+            name: `${parsed.project} ${firmwareType}`,
+            type: firmwareType,
+            version: parsed.firmwareVersion,
+            hardware: parsed.hardwareVersion,
+            functionVersion: $("#firmwareAddFunctionVersion").value,
+            status: "开发中",
+            createdAt: "2026-06-09 11:30",
+            log: $("#firmwareAddRemark").value.trim() || "新建固件版本",
+            appRule: $("#firmwareAddAppRule").value,
+            appVersion: $("#firmwareAddAppVersion").value.trim(),
+            packageName: parsed.fileName,
+            company: parsed.company,
+            project: parsed.project,
+            checksum: parsed.checksum,
+            packageDate: parsed.date,
+            packageFormat: parsed.format
+          });
+          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建，当前状态为开发中。覆盖检测：开发中版本不参与命中，不覆盖现有版本。`;
+        }
+        if (type === "firmwareVersionEdit") {
+          const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
+          if (item) {
+            item.log = $("#firmwareEditRemark").value.trim() || item.log;
+            state.firmwareMessage = `固件版本 ${item.version} 的备注已保存。`;
+          }
+        }
+        if (type === "extensionVersionAdd") {
+          const versionNo = $("#extensionVersionNo").value.trim();
+          if (!versionNo || !$("#extensionUpdateLog").value.trim()) {
+            alert("请补充版本号和更新说明。");
+            return;
+          }
+          if (!extensionVersions.some(item => item.version === versionNo)) {
+            extensionVersions.unshift({
+              version: versionNo,
+              updatedAt: "2026-06-05 14:20",
+              log: $("#extensionUpdateLog").value.trim(),
+              status: "开发中",
+              functionVersion: "通用",
+              minApp: "通用"
+            });
+            state.lifecycleMessage = `版本 ${versionNo} 已新增为开发中，属于进入分发前的准备态。覆盖检测：开发中版本不参与命中，不覆盖现有版本。`;
+          }
+        }
+        if (type === "releaseConfig") {
+          const version = state.extensionReleaseVersion;
+          const versionItem = extensionVersions.find(item => item.version === version);
+          if (!versionItem) {
+            alert("请先选择需要上架或修改配置的 RN 版本。");
+            return;
+          }
+          const rangeMode = $("#releaseRangeMode").value;
+          const range = rangeMode === "sync"
+            ? currentProductListingRangeOptions()
+            : selectedMultiValues("#releaseRangeSelect");
+          if (!range.length) {
+            alert("请至少选择一个发布范围。");
+            return;
+          }
+          const wasReleased = ["发布中", "暂停发布", "已发布"].includes(versionItem.status);
+          const existing = extensionReleaseConfigs[version] || {};
+          const releaseMode = $("#releaseMode").value;
+          const nextStatus = releaseMode === "全面发布" ? "已发布" : "发布中";
+          const batchDays = $("#releaseBatchDays")?.value?.trim() || "5";
+          const effectiveAt = $("#releaseEffectiveAt")?.value || "立即生效";
+          const effectiveTime = $("#releaseEffectiveTime")?.value?.trim() || "";
+          if (effectiveAt === "定时生效" && !effectiveTime) {
+            alert("请配置定时生效时间。");
+            return;
+          }
+          const override = await confirmVersionOverride(extensionVersions, versionItem, "发布中", "extension");
+          if (!override.ok) return;
+          const coverage = coverageImpact(extensionVersions, versionItem, nextStatus, "extension");
+          extensionReleaseConfigs[version] = {
+            mode: releaseMode,
+            rangeMode,
+            range: range.join("、"),
+            batchDays: releaseMode === "自动发布" ? batchDays : "",
+            progress: releaseMode === "自动发布" ? `第 1 / ${batchDays} 天，开放覆盖度 ${Math.ceil(100 / Math.max(1, Number(batchDays) || 1))}%` : "100%",
+            effectiveAt,
+            effectiveTime: effectiveAt === "定时生效" ? effectiveTime : "",
+            restartCount: wasReleased ? (existing.restartCount || 1) + 1 : 1,
+            updatedAt: "2026-06-05 17:20"
+          };
+          versionItem.status = nextStatus;
+          versionItem.updatedAt = "2026-06-05 17:20";
+          versionItem.log = `${releaseMode}配置已保存`;
+          state.extensionReleaseVersion = version;
+          state.extensionReleaseMode = null;
+          state.releaseConfigIntent = null;
+          state.lifecycleMessage = wasReleased
+            ? `已保存 ${version} 的发布配置，并重新计算发布命中范围。${override.message}${coverage}`
+            : `已保存 ${version} 的发布配置，版本状态已更新为${nextStatus}。${override.message}${coverage}`;
+        }
+        closeDrawer();
+        render();
+      };
+    }
+
+    function openDelete(ids) {
+      state.deleteIds = ids;
+      state.activeModal = "deleteModal";
+      const users = whitelistUsers.filter(user => ids.includes(user.id));
+      const productCount = users.reduce((sum, user) => sum + user.products.filter(name => name !== "免授权").length, 0);
+      $("#deleteModalBody").innerHTML = `<p>将删除 ${users.length} 位白名单用户。删除后不再命中相关产品白名单授权，历史授权快照保留用于追溯。</p><div class="notice warning">影响产品授权 ${productCount} 条；公司用户记录只移除白名单维护记录，不删除企业账号。</div>`;
+      $("#deleteModal").classList.add("open");
+      renderNotes();
+    }
+
+    function closeDelete() { $("#deleteModal").classList.remove("open"); state.deleteIds = []; state.activeModal = null; renderNotes(); }
+
+    function openImportProgress(type) {
+      clearTimeout(state.importTimer);
+      state.importType = type;
+      state.importStage = "progress";
+      $("#importModalTitle").textContent = "同步导入中";
+      $("#importModalBody").innerHTML = `
+        <div id="import-progress-modal" data-note-anchor="import-progress-modal">
+          <div class="import-status-line"><span>正在解析 xlsx 文件并写入白名单</span><span id="importProgressText">0%</span></div>
+          <div class="progress"><div class="progress-fill" id="importProgressFill"></div></div>
+        </div>`;
+      $("#importModalFoot").innerHTML = `<button class="btn primary" id="importModalPrimary" disabled>查看导入结果</button>`;
+      $("#importModal").classList.add("open");
+      renderNotes();
+      state.importTimer = setTimeout(() => {
+        const fill = $("#importProgressFill");
+        const text = $("#importProgressText");
+        const primary = $("#importModalPrimary");
+        if (fill) fill.style.width = "100%";
+        if (text) text.textContent = "100% · 同步导入完成";
+        if (primary) {
+          primary.disabled = false;
+          primary.onclick = showImportResult;
+        }
+      }, 700);
+    }
+
+    function showImportResult() {
+      clearTimeout(state.importTimer);
+      state.importStage = "result";
+      $("#importModalTitle").textContent = "导入结果";
+      $("#importModalBody").innerHTML = `
+        <div id="import-result-modal" data-note-anchor="import-result-modal">
+          <div class="result-grid">
+            <div class="result-card"><span>总条数</span><strong>100</strong></div>
+            <div class="result-card"><span>成功条数</span><strong>92</strong></div>
+            <div class="result-card"><span>失败条数</span><strong>8</strong></div>
+          </div>
+          <table>
+            <thead><tr><th>行号</th><th>邮箱</th><th>失败原因</th></tr></thead>
+            <tbody>
+              <tr><td>18</td><td>bad-email</td><td>邮箱格式错误</td></tr>
+              <tr><td>31</td><td>seed.user@example.com</td><td>同一数据中心重复</td></tr>
+              <tr><td>47</td><td>trial@example.com</td><td>授权产品不存在</td></tr>
+            </tbody>
+          </table>
+        </div>`;
+      $("#importModalFoot").innerHTML = `<button class="btn">下载失败结果</button><button class="btn" id="importAgain">重新导入</button><button class="btn primary" id="finishImport">完成</button>`;
+      $("#importAgain").onclick = closeImportModal;
+      $("#finishImport").onclick = finishImport;
+      renderNotes();
+    }
+
+    function finishImport() {
+      if (state.importType === "importUsers") {
+        const target = whitelistUsers.find(user => user.id === "u5");
+        if (target && !target.products.includes("Pump-H")) target.products.push("Pump-H");
+      }
+      closeImportModal();
+      closeDrawer();
+      render();
+    }
+
+    function closeImportModal() {
+      clearTimeout(state.importTimer);
+      state.importType = null;
+      state.importStage = null;
+      $("#importModal").classList.remove("open");
+      renderNotes();
+    }
+
+    function openExtensionVersionModal() {
+      state.activeModal = "extensionVersion";
+      $("#extensionVersionModal").classList.add("open");
+      syncExtensionVersionModal();
+      renderNotes();
+    }
+
+    function closeExtensionVersionModal() {
+      state.activeModal = null;
+      $("#extensionVersionModal").classList.remove("open");
+      renderNotes();
+    }
+
+    function syncExtensionVersionModal() {
+      const functionSpecified = $("[name='extensionFunctionVersion']:checked")?.value === "specified";
+      const appSpecified = $("[name='extensionMinAppVersion']:checked")?.value === "specified";
+      $("#extensionFunctionVersionField")?.classList.toggle("hide", !functionSpecified);
+      $("#extensionMinAppVersionField")?.classList.toggle("hide", !appSpecified);
+    }
+
+    function openExtensionPanelModeModal() {
+      const product = products[state.product];
+      const current = state.extensionPanelMode || product.panel;
+      $$("[name='extensionPanelModeDraft']").forEach(input => {
+        input.checked = input.value === current;
+      });
+      state.activeModal = "extensionPanelMode";
+      $("#extensionPanelModeModal").classList.add("open");
+      renderNotes();
+    }
+
+    function closeExtensionPanelModeModal() {
+      state.activeModal = null;
+      $("#extensionPanelModeModal").classList.remove("open");
+      renderNotes();
+    }
+
+    function confirmExtensionPanelMode() {
+      const product = products[state.product];
+      const selected = $("[name='extensionPanelModeDraft']:checked")?.value || product.panel;
+      product.panel = selected;
+      state.extensionPanelMode = selected;
+      state.extensionPanelSaved = `控制面板类型已保存为 ${selected}。`;
+      closeExtensionPanelModeModal();
+      render();
+    }
+
+    $$(".nav-item[data-view]").forEach(btn => btn.addEventListener("click", () => { state.view = btn.dataset.view; closeDrawer(); render(); }));
+    $$("#productSteps .step[data-step]").forEach(step => step.addEventListener("click", () => { state.productStep = step.dataset.step; render(); }));
+    $("#versionSelect").addEventListener("change", event => {
+      state.product = event.target.value;
+      state.extensionPanelMode = null;
+      state.extensionPanelSaved = "";
+      render();
+    });
+      document.addEventListener("click", async event => {
+      if (!event.target.closest(".status-tip, .inline-tip, .app-version-field")) closeAllTips();
+      const opener = event.target.closest("[data-open-drawer]");
+      if (opener) {
+        openDrawer(opener.dataset.openDrawer);
+      }
+      const versionOpener = event.target.closest("[data-open-extension-version]");
+      if (versionOpener) {
+        state.extensionReleaseVersion = versionOpener.dataset.version || state.extensionReleaseVersion;
+        openExtensionVersionModal();
+      }
+      const versionAction = event.target.closest("[data-extension-version-action]");
+      if (versionAction) {
+        const item = extensionVersions.find(version => version.version === versionAction.dataset.version);
+        if (!item) return;
+        if (versionAction.dataset.extensionVersionAction === "test") {
+          const override = await confirmVersionOverride(extensionVersions, item, "测试中", "extension");
+          if (!override.ok) return;
+          const coverage = coverageImpact(extensionVersions, item, "测试中", "extension");
+          item.status = "测试中";
+          item.updatedAt = "2026-06-05 17:10";
+          item.log = "进入测试";
+          state.lifecycleMessage = `版本 ${item.version} 已进入测试中；白名单公司用户和已授权当前产品的外部用户可见。${override.message}${coverage}`;
+          render();
+          return;
+        }
+        if (versionAction.dataset.extensionVersionAction === "delete") {
+          if (!confirm(`确定删除扩展程序版本 ${item.version}？开发中版本删除后如需调整配置，请重新新建版本。`)) return;
+          const index = extensionVersions.findIndex(version => version.version === item.version);
+          if (index >= 0) extensionVersions.splice(index, 1);
+          delete extensionReleaseConfigs[item.version];
+          state.lifecycleMessage = `开发中版本 ${item.version} 已删除。`;
+          render();
+          return;
+        }
+        if (versionAction.dataset.extensionVersionAction === "stop") {
+          if (!confirm(`确定停止扩展程序版本 ${item.version}？停止后该版本仅作为历史升级来源保留，不再参与命中。`)) return;
+          item.status = "已停止";
+          item.updatedAt = "2026-06-05 17:30";
+          item.log = "版本已停止，保留历史升级来源";
+          invalidateVersionStrategies(item.version);
+          state.lifecycleMessage = `版本 ${item.version} 已停止；仅作为已升级该版本的扩展程序来源保留，不再参与白名单或发布命中。${coverageImpact(extensionVersions, item, "已停止", "extension")}`;
+          render();
+          return;
+        }
+        if (versionAction.dataset.extensionVersionAction === "pause") {
+          item.status = "暂停发布";
+          item.updatedAt = "2026-06-05 17:30";
+          item.log = "暂停发布，不参与命中策略";
+          state.lifecycleMessage = `版本 ${item.version} 已暂停发布；该版本暂停期间不参与命中策略，可继续恢复发布或停止。${coverageImpact(extensionVersions, item, "暂停发布", "extension")}`;
+          render();
+          return;
+        }
+        if (versionAction.dataset.extensionVersionAction === "resume") {
+          const coverage = coverageImpact(extensionVersions, item, "发布中", "extension");
+          item.status = "发布中";
+          item.updatedAt = "2026-06-05 17:30";
+          item.log = "继续发布";
+          state.lifecycleMessage = `版本 ${item.version} 已继续发布。${coverage}`;
+          render();
+          return;
+        }
+        if (versionAction.dataset.extensionVersionAction === "configure") {
+          state.extensionReleaseVersion = item.version;
+          state.extensionReleaseMode = "publish";
+          state.releaseConfigIntent = ["发布中", "暂停发布", "已发布"].includes(item.status) ? "edit" : "list";
+          setTimeout(() => {
+            openDrawer("releaseConfig");
+          }, 0);
+        }
+      }
+    });
+    $("#toggleNotes").addEventListener("click", () => setNotesOpen(!state.notesOpen));
+    $("#collapseNotes").addEventListener("click", () => setNotesOpen(false));
+    $("#closeDrawer").addEventListener("click", closeDrawer);
+    $("#drawerCancel").addEventListener("click", closeDrawer);
+    $("#drawerMask").addEventListener("click", closeDrawer);
+    $("#prevWhitelist").addEventListener("click", () => { state.whitelistPage -= 1; renderWhitelist(); });
+    $("#nextWhitelist").addEventListener("click", () => { state.whitelistPage += 1; renderWhitelist(); });
+    $("#resetWhitelist").addEventListener("click", () => { $("#filterDc").value = "全部"; $("#filterType").value = "全部"; $("#filterTag").value = "全部标签组"; $("#filterKeyword").value = ""; state.whitelistPage = 1; renderWhitelist(); });
+    ["#filterDc", "#filterType", "#filterTag", "#filterKeyword"].forEach(selector => $(selector).addEventListener("input", () => { state.whitelistPage = 1; renderWhitelist(); }));
+    $("#selectPage").addEventListener("change", () => {
+      const rows = filteredWhitelist().slice((state.whitelistPage - 1) * PAGE_SIZE, state.whitelistPage * PAGE_SIZE);
+      rows.forEach(user => $("#selectPage").checked ? state.selectedIds.add(user.id) : state.selectedIds.delete(user.id));
+      renderWhitelist();
+    });
+    $("#batchDelete").addEventListener("click", () => {
+      if (!state.selectedIds.size) return alert("请先勾选需要删除的白名单用户。");
+      openDelete(Array.from(state.selectedIds));
+    });
+    $("#batchAuthorize").addEventListener("click", () => {
+      if (!state.selectedIds.size) return alert("请先勾选需要授权的白名单用户。");
+      state.authorizeIds = Array.from(state.selectedIds);
+      openDrawer("authProduct");
+    });
+    $("#cancelDelete").addEventListener("click", closeDelete);
+    $("#confirmDelete").addEventListener("click", () => {
+      whitelistUsers = whitelistUsers.filter(user => !state.deleteIds.includes(user.id));
+      state.deleteIds.forEach(id => state.selectedIds.delete(id));
+      closeDelete();
+      render();
+    });
+    $("#deleteModal").addEventListener("click", event => { if (event.target === $("#deleteModal")) closeDelete(); });
+    $("#importModal").addEventListener("click", event => {
+      if (event.target === $("#importModal") && state.importStage !== "progress") closeImportModal();
+    });
+    $("#cancelExtensionVersion").addEventListener("click", closeExtensionVersionModal);
+    $("#confirmExtensionVersion").addEventListener("click", closeExtensionVersionModal);
+    $$("[name='extensionFunctionVersion'], [name='extensionMinAppVersion']").forEach(input => input.addEventListener("change", syncExtensionVersionModal));
+    $("#extensionVersionModal").addEventListener("click", event => {
+      if (event.target === $("#extensionVersionModal")) closeExtensionVersionModal();
+    });
+    $("#cancelExtensionPanelMode").addEventListener("click", closeExtensionPanelModeModal);
+    $("#confirmExtensionPanelMode").addEventListener("click", confirmExtensionPanelMode);
+    $("#extensionPanelModeModal").addEventListener("click", event => {
+      if (event.target === $("#extensionPanelModeModal")) closeExtensionPanelModeModal();
+    });
+    $("#versionStateModal").addEventListener("click", event => {
+      if (event.target === $("#versionStateModal")) closeVersionStateModal(false);
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>配置中心 - 音源管理</title>
+  <style>
+    :root {
+      --primary: #4372ff;
+      --primary-dark: #2f5fd8;
+      --primary-soft: #ecf3ff;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --danger: #f56c6c;
+      --info: #909399;
+      --aside: #001529;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #303133;
+      --regular: #606266;
+      --secondary: #909399;
+      --border: #dcdfe6;
+      --border-light: #e4e7ed;
+      --header: #fafafa;
+      --radius: 4px;
+      --shadow: 0 6px 18px rgba(31, 45, 61, .08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 1180px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 208px minmax(0, 1fr);
+    }
+
+    .prototype-toolbar {
+      min-height: 40px;
+      padding: 6px 16px;
+      background: #fff9e8;
+      border-bottom: 1px solid #f2d27a;
+      color: #8a5a00;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .prototype-toolbar-title {
+      font-weight: 600;
+    }
+
+    body.annotation-open .prototype-toolbar {
+      display: none;
+    }
+
+    body.annotation-open .app {
+      grid-template-columns: 208px minmax(0, 1fr) 410px;
+    }
+
+    .sidebar {
+      background: var(--aside);
+      color: rgba(255, 255, 255, .72);
+      min-height: 100vh;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #91d126, #4372ff);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .menu-section {
+      padding: 18px 20px 6px;
+      color: rgba(255, 255, 255, .42);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      color: rgba(255, 255, 255, .72);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      white-space: nowrap;
+    }
+
+    .menu-item.active {
+      color: #fff;
+      background: rgba(67, 114, 255, .18);
+      border-left-color: var(--primary);
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 54px;
+      background: var(--panel);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 12px;
+    }
+
+    .global-title {
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .breadcrumb {
+      color: var(--secondary);
+      font-size: 12px;
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--regular);
+      font-size: 13px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 16px 24px 28px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel,
+    .product-card,
+    .subpage-shell {
+      background: var(--panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+    }
+
+    .page-head {
+      background: var(--panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .page-head h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .page-subtitle {
+      color: var(--regular);
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .module-tabs {
+      background: var(--panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      display: flex;
+      gap: 26px;
+      min-height: 48px;
+      align-items: center;
+    }
+
+    .module-tab {
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--regular);
+      padding: 14px 0 12px;
+    }
+
+    .module-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .view {
+      display: none;
+      gap: 12px;
+    }
+
+    .view.active {
+      display: grid;
+    }
+
+    .toolbar {
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      display: grid;
+      gap: 14px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .category-filter-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label,
+    .check-label {
+      color: var(--regular);
+      font-size: 13px;
+    }
+
+    .readonly-value {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 7px 0;
+      color: var(--text);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 34px;
+      padding: 7px 10px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
+    }
+
+    .required-mark {
+      color: var(--danger);
+      margin-right: 3px;
+    }
+
+    .optional-mark {
+      margin-left: 6px;
+      color: var(--secondary);
+      font-size: 12px;
+    }
+
+    .actions,
+    .toolbar-actions,
+    .batch-bar,
+    .inline-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--regular);
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn.danger {
+      color: #fff;
+      background: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .btn.link {
+      min-height: auto;
+      padding: 0;
+      border: 0;
+      color: var(--primary);
+      background: transparent;
+    }
+
+    .btn.subtle {
+      border-color: transparent;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .tag-manager {
+      border-top: 1px solid var(--border-light);
+      padding-top: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .tag-title {
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .tag-list,
+    .product-checks,
+    .checkbox-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-chip,
+    .tag,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag-chip {
+      background: #f4f6f8;
+      border: 1px solid var(--border-light);
+      color: var(--regular);
+    }
+
+    .tag-chip.disabled {
+      opacity: .56;
+      cursor: not-allowed;
+    }
+
+    .tag-chip input:disabled {
+      cursor: not-allowed;
+    }
+
+    .tag-chip button {
+      border: 0;
+      background: transparent;
+      color: var(--secondary);
+      padding: 0;
+      line-height: 1;
+    }
+
+    .tag.local,
+    .status-pill.local {
+      color: #1f7a3a;
+      background: #edf8e9;
+    }
+
+    .tag.online,
+    .status-pill.online {
+      color: #9a5d00;
+      background: #fff5df;
+    }
+
+    .tag.category {
+      color: #315dcc;
+      background: var(--primary-soft);
+    }
+
+    .tag.gray {
+      color: var(--regular);
+      background: #f4f6f8;
+    }
+
+    .tag.published {
+      color: #1f7a3a;
+      background: #edf8e9;
+    }
+
+    .tag.draft {
+      color: #8a5a00;
+      background: #fff4d6;
+    }
+
+    .tag.disabled {
+      color: #7f8792;
+      background: #f1f2f5;
+    }
+
+    .batch-bar {
+      min-height: 42px;
+      padding: 9px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      justify-content: space-between;
+    }
+
+    .batch-meta {
+      color: var(--regular);
+      font-size: 13px;
+    }
+
+    .panel {
+      min-width: 0;
+    }
+
+    .panel-head {
+      min-height: 54px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-light);
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .panel-meta {
+      color: var(--secondary);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--border-light);
+      padding: 12px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--regular);
+      font-weight: 500;
+      background: var(--header);
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #fcfdff;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+    }
+
+    .muted {
+      color: var(--secondary);
+    }
+
+    .stack {
+      display: grid;
+      gap: 4px;
+    }
+
+    .resource-url {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--regular);
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--secondary);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .category-list {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .category-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .category-item.active {
+      border-color: var(--primary);
+      background: #f8fbff;
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+
+    .category-name-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .category-desc {
+      min-height: 21px;
+      color: var(--regular);
+      font-size: 13px;
+    }
+
+    .category-products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .detail-summary {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kv {
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      min-width: 0;
+    }
+
+    .kv-label {
+      color: var(--secondary);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .kv-value {
+      min-height: 21px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .association-bar {
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 180px 280px auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .language-table table {
+      min-width: 1960px;
+    }
+
+    .language-cell {
+      min-width: 170px;
+      display: grid;
+      gap: 4px;
+      color: var(--regular);
+      font-size: 12px;
+    }
+
+    .language-cell strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .language-cell span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-card {
+      overflow: hidden;
+    }
+
+    .product-summary {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .product-image {
+      width: 72px;
+      height: 72px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #e6f3ff, #bcd2ff);
+      border: 1px solid var(--border-light);
+    }
+
+    .product-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .product-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .product-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: var(--regular);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .detail-tabs {
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      padding: 0 20px;
+      gap: 30px;
+      min-height: 46px;
+      align-items: center;
+    }
+
+    .detail-tab {
+      color: var(--regular);
+      padding: 14px 0 12px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .detail-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .subpage-head {
+      min-height: 52px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .subpage-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--regular);
+    }
+
+    .read-only-stamp {
+      color: #8a5a00;
+      background: #fff4d6;
+      border: 1px solid #f3d38b;
+      padding: 5px 10px;
+      border-radius: var(--radius);
+      font-size: 12px;
+    }
+
+    .drawer-mask,
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+      z-index: 20;
+    }
+
+    body.drawer-open .drawer-mask,
+    body.modal-open .modal-mask {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 560px;
+      max-width: 96vw;
+      height: 100vh;
+      background: #fff;
+      z-index: 30;
+      transform: translateX(100%);
+      transition: transform .2s ease;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      box-shadow: var(--shadow);
+    }
+
+    body.drawer-open .drawer {
+      transform: translateX(0);
+    }
+
+    .drawer-head,
+    .drawer-foot {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .drawer-foot {
+      border-top: 1px solid var(--border-light);
+      border-bottom: 0;
+      justify-content: flex-end;
+    }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .drawer-body {
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      border: 0;
+      background: transparent;
+      color: var(--secondary);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .form-section {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-section-title {
+      font-weight: 600;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .resource-mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mode-option {
+      min-height: 72px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+    }
+
+    .mode-option.active {
+      border-color: var(--primary);
+      background: #f8fbff;
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+
+    .mode-title {
+      font-weight: 600;
+    }
+
+    .mode-desc {
+      color: var(--secondary);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 520px;
+      max-width: calc(100vw - 40px);
+      max-height: calc(100vh - 48px);
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transform: translate(-50%, -48%) scale(.98);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 40;
+      transition: opacity .18s ease, transform .18s ease;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+
+    body.modal-open .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .modal-head,
+    .modal-foot {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-foot {
+      border-top: 1px solid var(--border-light);
+      border-bottom: 0;
+      justify-content: flex-end;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    #importModal {
+      width: 640px;
+    }
+
+    .notice {
+      padding: 10px 12px;
+      border: 1px solid #f3d38b;
+      background: #fff9e8;
+      color: #8a5a00;
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+
+    .import-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .upload-box {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      background: #fbfcff;
+    }
+
+    .upload-meta {
+      color: var(--secondary);
+      font-size: 12px;
+    }
+
+    .import-result {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      background: #fbfcff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #audioImportFailureWrap {
+      max-height: min(260px, 30vh);
+      border: 1px solid var(--border-light);
+      background: #fff;
+    }
+
+    #audioImportFailureWrap table {
+      min-width: 560px;
+    }
+
+    #audioImportFailureWrap th:first-child {
+      width: 160px;
+    }
+
+    #categoryImportFailureWrap {
+      max-height: min(260px, 30vh);
+      border: 1px solid var(--border-light);
+      background: #fff;
+    }
+
+    #categoryImportFailureWrap table {
+      min-width: 560px;
+    }
+
+    #categoryImportFailureWrap th:first-child {
+      width: 160px;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #edf1f7;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      background: var(--primary);
+      transition: width .2s ease;
+    }
+
+    .result-summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--regular);
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      z-index: 80;
+      transform: translate(-50%, -18px);
+      padding: 10px 14px;
+      min-width: 160px;
+      text-align: center;
+      border-radius: var(--radius);
+      background: #f0f9eb;
+      border: 1px solid #c2e7b0;
+      color: #2f7d32;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .18s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .toast.error {
+      background: #fef0f0;
+      border-color: #fbc4c4;
+      color: #a94442;
+    }
+
+    .prototype-annotation-panel {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      max-height: 100vh;
+      background: #fff;
+      border-left: 1px solid #f2d27a;
+      box-shadow: -4px 0 12px rgba(31, 45, 61, .05);
+      z-index: 2;
+      display: none;
+      overflow: hidden;
+    }
+
+    body.annotation-open .prototype-annotation-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .prototype-annotation-head {
+      padding: 12px;
+      border-bottom: 1px solid #f6df9e;
+      background: #fff9e8;
+    }
+
+    .prototype-annotation-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .prototype-annotation-caption {
+      margin-top: 6px;
+      color: #8a5a00;
+      font-size: 12px;
+    }
+
+    .prototype-annotation-list {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+    }
+
+    .prototype-note-card {
+      border: 1px solid var(--border-light);
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 10px;
+      text-align: left;
+    }
+
+    .prototype-note-card.active {
+      border-color: #e6a23c;
+      background: #fffaf0;
+    }
+
+    .prototype-note-number,
+    .prototype-note-anchor {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid #d58b00;
+      background: #f5b12c;
+      color: #fff;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .prototype-note-copy p {
+      margin: 4px 0;
+      color: var(--regular);
+      font-size: 12px;
+    }
+
+    .prototype-note-copy span {
+      color: var(--secondary);
+      font-size: 12px;
+    }
+
+    .prototype-note-host {
+      position: relative;
+    }
+
+    .prototype-note-anchor {
+      position: absolute;
+      top: -9px;
+      right: -9px;
+      z-index: 5;
+      padding: 0;
+    }
+
+    .prototype-note-target-active {
+      outline: 2px solid #f5b12c;
+      outline-offset: 2px;
+    }
+
+    .prototype-annotation-toggle {
+      background: #fff9e8;
+      border-color: #f2d27a;
+      color: #8a5a00;
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-toolbar" id="prototypeToolbar">
+    <span class="prototype-toolbar-title">原型批注面板</span>
+    <button class="btn prototype-annotation-toggle" id="openPrototypeAnnotations" type="button">展开批注</button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">IoT</span><span>IoT Admin</span></div>
+      <a class="menu-item" href="#">概览</a>
+      <div class="menu-section">智能产品</div>
+      <a class="menu-item" href="#" id="productListMenu">产品列表</a>
+      <a class="menu-item" href="#">消息推送</a>
+      <div class="menu-section">设备管理</div>
+      <a class="menu-item" href="#">设备列表</a>
+      <a class="menu-item" href="#">固件管理</a>
+      <a class="menu-item" href="#">OTA</a>
+      <div class="menu-section">App</div>
+      <a class="menu-item" href="#">App列表</a>
+      <a class="menu-item" href="#">App升级</a>
+      <div class="menu-section">配置中心</div>
+      <a class="menu-item" href="#">物模型池</a>
+      <a class="menu-item" href="#">产品模板</a>
+      <a class="menu-item" href="#">产品分类</a>
+      <a class="menu-item active" href="#" id="audioManagementMenu" data-prototype-note-target="main-entry">音源管理</a>
+      <a class="menu-item" href="#">多语言</a>
+      <a class="menu-item" href="#">系统配置</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <div class="global-title">音源管理</div>
+          <div class="breadcrumb">配置中心 / 音源管理</div>
+        </div>
+        <div class="user-pill"><span class="avatar">PM</span><span>平台管理员</span></div>
+      </header>
+
+      <section class="content">
+        <section class="page-head" id="configPageHead">
+          <div>
+            <h1>音源管理</h1>
+            <div class="page-subtitle">按音源、类别、产品三层模型维护平台音源资源。</div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="openImportBtn">导入音源</button>
+            <button class="btn primary" id="openAudioBtn">新增音源</button>
+          </div>
+        </section>
+
+        <nav class="module-tabs" id="moduleTabs" aria-label="音源管理模块">
+          <button class="module-tab active" data-view="libraryView" type="button">音源库</button>
+          <button class="module-tab" data-view="categoryView" type="button">音源类别</button>
+        </nav>
+
+        <section class="view active" id="libraryView">
+          <div class="toolbar" data-prototype-note-target="source-layer">
+            <div class="filter-grid">
+              <div class="field">
+                <label for="filterAudioId">音源 ID</label>
+                <input id="filterAudioId" placeholder="输入音源 id" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="filterCategory">归属类别</label>
+                <select id="filterCategory"></select>
+              </div>
+              <div class="field">
+                <label for="filterTag">音源标签</label>
+                <select id="filterTag"></select>
+              </div>
+              <div class="field">
+                <label for="filterType">音源类型</label>
+                <select id="filterType">
+                  <option value="">全部类型</option>
+                  <option value="local">本地</option>
+                  <option value="online">在线</option>
+                </select>
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn" id="resetFiltersBtn">重置</button>
+                <button class="btn primary" id="searchBtn">查询</button>
+              </div>
+            </div>
+
+            <div class="tag-manager">
+              <div>
+                <div class="tag-title">音源标签</div>
+                <div class="tag-list" id="tagManagerList"></div>
+              </div>
+              <div class="field">
+                <label for="newTagInput">新增标签</label>
+                <div class="inline-actions">
+                  <input id="newTagInput" placeholder="输入标签名称" autocomplete="off">
+                  <button class="btn" id="addTagBtn" type="button">新增</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="batch-bar" data-prototype-note-target="batch-actions">
+            <div class="batch-meta" id="selectedMeta">已选择 0 个音源</div>
+            <div class="actions">
+              <button class="btn" id="batchTagsBtn" disabled>批量配置标签</button>
+              <button class="btn" id="batchCategoryBtn" disabled>批量配置归属类别</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">音源库</div>
+                <div class="panel-meta" id="audioListMeta">共 0 条</div>
+              </div>
+              <div class="actions">
+                <button class="btn" id="selectAllVisibleBtn">选择当前页</button>
+                <button class="btn" id="clearSelectionBtn">清空选择</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:44px;"></th>
+                    <th>音源 ID</th>
+                    <th>音源类型</th>
+                    <th>在线资源 / 上传信息</th>
+                    <th>归属类别</th>
+                    <th>音源标签</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="audioRows"></tbody>
+              </table>
+              <div class="empty hidden" id="audioEmpty">暂无匹配音源</div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="categoryView">
+          <div class="toolbar">
+            <div class="category-filter-grid">
+              <div class="field">
+                <label for="categorySearch">类别名称</label>
+                <input id="categorySearch" placeholder="输入类别名称" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="productAuthFilter">授权产品</label>
+                <select id="productAuthFilter"></select>
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn" id="resetCategoryFilterBtn">重置</button>
+                <button class="btn primary" id="openCategoryBtn">新增类别</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">音源类别</div>
+                  <div class="panel-meta" id="categoryListMeta">共 0 个类别</div>
+                </div>
+              </div>
+              <div class="category-list" id="categoryList"></div>
+            </section>
+
+            <section class="panel" data-prototype-note-target="category-independent">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title" id="categoryDetailTitle">类别详情</div>
+                  <div class="panel-meta" id="categoryDetailMeta">选择左侧类别查看配置</div>
+                </div>
+                <div class="actions">
+                  <button class="btn" id="exportCategoryConfigBtn" data-prototype-note-target="category-export-import">导出配置表</button>
+                  <button class="btn" id="uploadCategoryConfigBtn">上传覆盖</button>
+                  <input class="hidden" id="categoryConfigImportInput" type="file" accept=".csv">
+                  <button class="btn" id="editCategoryBtn">编辑类别</button>
+                  <button class="btn" id="copyCategoryBtn" data-prototype-note-target="category-copy">复制类别</button>
+                  <button class="btn danger" id="deleteCategoryBtn">删除类别</button>
+                </div>
+              </div>
+              <div class="detail-summary">
+                <div class="kv-grid">
+                  <div class="kv">
+                    <div class="kv-label">类别名称</div>
+                    <div class="kv-value" id="detailCategoryName">--</div>
+                  </div>
+                  <div class="kv">
+                    <div class="kv-label">类别描述</div>
+                    <div class="kv-value" id="detailCategoryDesc">--</div>
+                  </div>
+                  <div class="kv">
+                    <div class="kv-label">授权产品</div>
+                    <div class="kv-value" id="detailCategoryProducts">--</div>
+                  </div>
+                </div>
+              </div>
+              <div class="association-bar">
+                <div class="field">
+                  <label for="associateTagFilter">音源标签</label>
+                  <select id="associateTagFilter"></select>
+                </div>
+                <div class="field">
+                  <label for="associateAudioSelect">关联音源 ID</label>
+                  <select id="associateAudioSelect"></select>
+                </div>
+                <button class="btn primary" id="associateAudioBtn">关联音源</button>
+                <div class="muted">同一音源 ID 可以出现在多个类别中；类别内的多语言配置相互独立。可导出表格编辑后上传覆盖当前类别多语言配置。</div>
+              </div>
+              <div class="table-wrap language-table">
+                <table>
+                  <thead id="categoryConfigHead"></thead>
+                  <tbody id="categoryConfigRows"></tbody>
+                </table>
+                <div class="empty hidden" id="categoryConfigEmpty">当前类别还没有关联音源</div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="productView" data-prototype-note-target="product-readonly">
+          <section class="product-card">
+            <div class="product-summary">
+              <div class="product-image"></div>
+              <div>
+                <div class="product-title-row">
+                  <div class="product-name">WN08 睡眠音响</div>
+                  <span class="tag published">已上架</span>
+                </div>
+                <div class="product-meta">
+                  <span>产品分类：Sleep Audio</span>
+                  <span>产品型号：WN08</span>
+                  <span>产品ID：2054039271856459778</span>
+                  <span>功能版本：版本1 - 已发布</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn">新建版本</button>
+                <button class="btn">下架产品</button>
+              </div>
+            </div>
+            <nav class="detail-tabs" aria-label="产品详情步骤">
+              <span class="detail-tab">基础信息</span>
+              <span class="detail-tab">功能设计</span>
+              <span class="detail-tab">扩展程序</span>
+              <span class="detail-tab">设备调试</span>
+              <span class="detail-tab">配网引导</span>
+              <span class="detail-tab active">高级配置</span>
+            </nav>
+          </section>
+
+          <section class="subpage-shell">
+            <div class="subpage-head">
+              <div class="subpage-title">
+                <button class="btn">返回</button>
+                <span>高级配置 /</span>
+                <strong>音源管理</strong>
+              </div>
+              <span class="read-only-stamp">查看已配置音源</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>音源 ID</th>
+                    <th>归属类别</th>
+                    <th>音源资源</th>
+                    <th>在线 URL</th>
+                    <th>多语言配置</th>
+                    <th>授权来源</th>
+                  </tr>
+                </thead>
+                <tbody id="productRows"></tbody>
+              </table>
+              <div class="empty hidden" id="productEmpty">当前产品暂无已配置音源</div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <aside class="prototype-annotation-panel" id="prototypeAnnotationPanel" aria-label="原型批注">
+      <div class="prototype-annotation-head">
+        <div class="prototype-annotation-title">
+          <span>原型批注</span>
+          <button class="btn" id="closePrototypeAnnotations" type="button">收起</button>
+        </div>
+        <div class="prototype-annotation-caption">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</div>
+      </div>
+      <div class="prototype-annotation-list" id="prototypeAnnotationList"></div>
+    </aside>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="drawer" id="mainDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-title" id="drawerTitle">抽屉</div>
+      <button class="icon-btn" id="closeDrawer" aria-label="关闭">×</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot" id="drawerFoot"></div>
+  </aside>
+
+  <div class="modal-mask" id="modalMask"></div>
+  <section class="modal" id="confirmModal" aria-hidden="true">
+    <div class="modal-head">
+      <div class="modal-title" id="confirmTitle">确认</div>
+      <button class="icon-btn" data-close-modal aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>取消</button>
+      <button class="btn danger" id="confirmActionBtn">确认</button>
+    </div>
+  </section>
+
+  <section class="modal" id="importModal" aria-hidden="true">
+    <div class="modal-head">
+      <div class="modal-title">导入音源</div>
+      <button class="icon-btn" data-close-modal aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice">导入模板中的音源 ID 列必须按文本处理，避免 `00` 被表格软件转成 `0`。</div>
+      <div class="import-actions">
+        <button class="btn subtle" id="downloadImportTemplateBtn" type="button">下载导入模板</button>
+        <span class="muted">模板包含音源 ID、类型、归属类别、标签、在线资源字段。</span>
+      </div>
+      <div class="upload-box">
+        <div class="field">
+          <label for="importFileInput"><span class="required-mark">*</span>上传导入文件</label>
+          <input id="importFileInput" type="file" accept=".csv">
+        </div>
+        <div class="upload-meta" id="importFileName">未选择文件</div>
+      </div>
+      <div class="import-result hidden" id="audioImportStatus">
+        <div class="result-summary">
+          <strong id="audioImportProgressText">等待导入</strong>
+          <span id="audioImportSummary">总条数 0 / 成功 0 / 失败 0</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="audioImportProgressFill"></div>
+        </div>
+        <div class="table-wrap hidden" id="audioImportFailureWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>音源 ID</th>
+                <th>失败原因</th>
+              </tr>
+            </thead>
+            <tbody id="audioImportFailureRows"></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button class="btn" id="downloadAudioImportFailureBtn" disabled>下载失败列表</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>取消</button>
+      <button class="btn primary" id="simulateImportBtn">上传并模拟导入</button>
+    </div>
+  </section>
+
+  <section class="modal" id="categoryImportResultModal" aria-hidden="true">
+    <div class="modal-head">
+      <div class="modal-title">上传覆盖结果</div>
+      <button class="icon-btn" data-close-modal aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-result hidden" id="categoryImportStatus">
+        <div class="result-summary">
+          <strong id="categoryImportProgressText">等待导入</strong>
+          <span id="categoryImportSummary">总导入数 0 / 成功 0 / 失败 0</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="categoryImportProgressFill"></div>
+        </div>
+        <div class="table-wrap hidden" id="categoryImportFailureWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>音源 ID</th>
+                <th>失败原因</th>
+              </tr>
+            </thead>
+            <tbody id="categoryImportFailureRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="downloadCategoryFailureBtn" disabled>下载失败明细</button>
+      <button class="btn primary" data-close-modal>关闭</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const languageOptions = {
+      en: "英文（默认）",
+      fr: "法语",
+      de: "德语",
+      es: "西班牙语",
+      it: "意大利语",
+      ar: "阿拉伯语",
+      pt: "葡萄牙语",
+      zh: "中文",
+      zhHant: "繁体中文",
+      vi: "越南语",
+      id: "印尼语",
+      th: "泰语",
+      ms: "马来语",
+      ja: "日语",
+      ru: "俄语",
+      fil: "菲律宾语"
+    };
+    const languageCodes = Object.keys(languageOptions);
+
+    const products = [
+      { id: "2054039271856459778", model: "WN08", name: "WN08 睡眠音响" },
+      { id: "2054039271856459779", model: "BM04", name: "BM04 助眠灯" },
+      { id: "2054039271856459777", model: "BM08", name: "BM08 音乐灯" }
+    ];
+    const currentProductModel = "WN08";
+
+    let tags = ["助眠", "自然声", "提示音", "白噪音", "冥想"];
+    let audioSources = [
+      { id: "00", type: "local", source: "", categoryIds: ["cat-sleep", "cat-nature"], tags: ["助眠", "白噪音"], updated: "2026-06-08 10:20" },
+      { id: "33", type: "online", source: "https://cdn.example.com/audio/wn08/soft-rain.mp3", categoryIds: ["cat-sleep", "cat-nature"], tags: ["自然声"], updated: "2026-06-08 09:42" },
+      { id: "0", type: "local", source: "", categoryIds: ["cat-alert"], tags: ["提示音"], updated: "2026-06-07 18:11" },
+      { id: "7", type: "local", source: "", categoryIds: ["cat-alert"], tags: ["提示音"], updated: "2026-06-07 18:08" },
+      { id: "691d1e0580873df5045be021", type: "online", source: "https://cdn.example.com/audio/bm08/ocean-drift.mp3", categoryIds: ["cat-nature"], tags: ["自然声", "冥想"], updated: "2026-06-06 14:35" }
+    ];
+
+    let categories = [
+      {
+        id: "cat-sleep",
+        name: "助眠场景",
+        desc: "睡前播放的基础音源集合",
+        products: ["WN08"],
+        audioIds: ["00", "33"],
+        configs: {
+          "00": {
+            en: { name: "White Noise", image: "https://cdn.example.com/images/cover-white-noise-en.png", asset: "" },
+            zh: { name: "白噪音", image: "https://cdn.example.com/images/cover-white-noise-zh.png", asset: "" },
+            fr: { name: "Bruit blanc", image: "", asset: "" }
+          },
+          "33": {
+            en: { name: "Soft Rain", image: "https://cdn.example.com/images/cover-soft-rain-en.png", asset: "https://cdn.example.com/audio/wn08/soft-rain.mp3" },
+            zh: { name: "轻柔雨声", image: "https://cdn.example.com/images/cover-soft-rain-zh.png", asset: "https://cdn.example.com/audio/wn08/soft-rain.mp3" }
+          }
+        }
+      },
+      {
+        id: "cat-nature",
+        name: "自然声合集",
+        desc: "自然环境音源",
+        products: ["BM08"],
+        audioIds: ["33", "691d1e0580873df5045be021", "00"],
+        configs: {
+          "33": {
+            en: { name: "Rain in Forest", image: "https://cdn.example.com/images/cover-forest-rain-en.png", asset: "https://cdn.example.com/audio/wn08/soft-rain.mp3" },
+            zh: { name: "森林雨声", image: "https://cdn.example.com/images/cover-forest-rain-zh.png", asset: "https://cdn.example.com/audio/wn08/soft-rain.mp3" }
+          },
+          "691d1e0580873df5045be021": {
+            en: { name: "Ocean Drift", image: "https://cdn.example.com/images/cover-ocean-drift-en.png", asset: "https://cdn.example.com/audio/bm08/ocean-drift.mp3" },
+            zh: { name: "海浪漂流", image: "https://cdn.example.com/images/cover-ocean-drift-zh.png", asset: "https://cdn.example.com/audio/bm08/ocean-drift.mp3" }
+          },
+          "00": {
+            en: { name: "Quiet Air", image: "https://cdn.example.com/images/cover-quiet-air-en.png", asset: "" },
+            zh: { name: "静音空气", image: "https://cdn.example.com/images/cover-quiet-air-zh.png", asset: "" }
+          }
+        }
+      },
+      {
+        id: "cat-alert",
+        name: "提示音包",
+        desc: "设备提示、完成和异常提醒",
+        products: ["BM04"],
+        audioIds: ["0", "7"],
+        configs: {
+          "0": {
+            en: { name: "Complete Beep", image: "https://cdn.example.com/images/cover-complete-en.png", asset: "" },
+            zh: { name: "完成提示", image: "https://cdn.example.com/images/cover-complete-zh.png", asset: "" }
+          },
+          "7": {
+            en: { name: "Night Breeze", image: "https://cdn.example.com/images/cover-night-breeze-en.png", asset: "" },
+            zh: { name: "夜风提示", image: "https://cdn.example.com/images/cover-night-breeze-zh.png", asset: "" }
+          }
+        }
+      }
+    ];
+
+    let activeView = "libraryView";
+    let filteredAudio = [...audioSources];
+    let selectedAudioIds = new Set();
+    let activeCategoryId = "cat-sleep";
+    let associateTagFilter = "";
+    let activeDrawer = null;
+    let editingAudioId = null;
+    let editingCategoryId = null;
+    let editingLanguageContext = null;
+    let pendingDeleteAudioId = null;
+    let deleteConfirmStep = 1;
+    let categoryImportFailures = [];
+    let audioImportFailures = [];
+    let annotationPanelOpen = false;
+
+    const prototypeNotes = [
+      {
+        id: "entry",
+        target: "main-entry",
+        title: "主入口迁移到配置中心",
+        body: "最新三层模式下，新增和维护音源不再发生在产品详情内，而是在配置中心统一管理。",
+        loc: "配置中心 / 音源管理"
+      },
+      {
+        id: "source-layer",
+        target: "source-layer",
+        title: "音源库只维护基础音源",
+        body: "音源库保存 id、本地或在线资源、一个或多个归属类别和标签。类别里的多语言名称和图片在音源类别详情中维护。",
+        loc: "音源库筛选区"
+      },
+      {
+        id: "batch",
+        target: "batch-actions",
+        title: "批量标签和批量类别独立",
+        body: "批量配置音源标签和批量配置归属类别是两个动作，不互相触发，也不合并成一个批量整理流程。",
+        loc: "音源库批量操作"
+      },
+      {
+        id: "category-independent",
+        target: "category-independent",
+        title: "类别内配置相互独立",
+        body: "同一个音源 id 可以关联到多个类别；不同类别下的名称和图片配置互不影响。音源 URL 按音源 id 在音源库维护。",
+        loc: "音源类别详情"
+      },
+      {
+        id: "category-export-import",
+        target: "category-export-import",
+        title: "类别配置导出 / 上传",
+        body: "音源类别支持导出关联 id 列表和多语言配置，用户线下编辑表格后上传，覆盖当前类别下同 id 的多语言内容。",
+        loc: "类别详情操作区"
+      },
+      {
+        id: "exclusive-product",
+        target: "exclusive-product",
+        title: "授权产品互斥",
+        body: "同一个产品只能授权给一个音源类别；某产品被一个类别授权后，其他类别编辑时不可再选择该产品。",
+        loc: "类别编辑抽屉"
+      },
+      {
+        id: "copy",
+        target: "category-copy",
+        title: "复制类别范围",
+        body: "复制类别会复制类别名称（加“ 副本”）、描述、关联 id 和多语言配置。授权产品是否复制未在需求中明确，原型暂不复制。",
+        loc: "复制类别按钮"
+      },
+      {
+        id: "readonly",
+        target: "product-readonly",
+        title: "产品详情只读查看",
+        body: "产品详情高级配置的音源管理用于查看当前产品已配置资源，不提供新增、导入、批量配置和类别维护。",
+        loc: "产品详情查看页"
+      }
+    ];
+
+    const el = (id) => document.getElementById(id);
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[char]));
+    const todayString = () => new Date().toISOString().slice(0, 16).replace("T", " ");
+    const categoryById = (id) => categories.find((item) => item.id === id);
+    const audioById = (id) => audioSources.find((item) => item.id === id);
+    const productByModel = (model) => products.find((item) => item.model === model);
+    const categoryProductOwner = (model, currentCategoryId = "") =>
+      categories.find((item) => item.id !== currentCategoryId && item.products.includes(model));
+
+    function audioCategoryIds(audio = {}) {
+      const source = audio || {};
+      if (Array.isArray(source.categoryIds)) return source.categoryIds.filter(Boolean);
+      return source.categoryId ? [source.categoryId] : [];
+    }
+
+    function setAudioCategoryIds(audio, ids) {
+      audio.categoryIds = Array.from(new Set(ids.filter(Boolean)));
+      delete audio.categoryId;
+    }
+
+    function syncCategoryAssociations(audioId, categoryIds, { removeMissing = true } = {}) {
+      const uniqueIds = Array.from(new Set(categoryIds.filter(Boolean)));
+      const audio = audioById(audioId);
+      if (audio) setAudioCategoryIds(audio, uniqueIds);
+      categories.forEach((category) => {
+        if (uniqueIds.includes(category.id)) {
+          if (!category.audioIds.includes(audioId)) category.audioIds.push(audioId);
+          languageCodes.forEach((code) => normalizeConfig(category, audioId, code));
+        } else if (removeMissing) {
+          category.audioIds = category.audioIds.filter((id) => id !== audioId);
+          if (category.configs) delete category.configs[audioId];
+        }
+      });
+    }
+
+    function normalizeConfig(category, audioId, lang) {
+      category.configs ||= {};
+      category.configs[audioId] ||= {};
+      category.configs[audioId][lang] ||= { name: "", image: "", asset: "" };
+      return category.configs[audioId][lang];
+    }
+
+    function categoryName(id) {
+      return categoryById(id)?.name || "未归属";
+    }
+
+    function selectedIds() {
+      return Array.from(selectedAudioIds);
+    }
+
+    function showToast(message, type = "success") {
+      const toast = el("toast");
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function renderOptions() {
+      const categoryOptions = [
+        `<option value="">全部类别</option>`,
+        `<option value="__none__">未归属类别</option>`,
+        ...categories.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`)
+      ].join("");
+      el("filterCategory").innerHTML = categoryOptions;
+      const formCategoryOptions = [
+        `<option value="">不设置归属类别</option>`,
+        ...categories.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`)
+      ].join("");
+      const tagOptions = [
+        `<option value="">全部标签</option>`,
+        `<option value="__none__">无标签</option>`,
+        ...tags.map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`)
+      ].join("");
+      el("filterTag").innerHTML = tagOptions;
+      el("productAuthFilter").innerHTML = [
+        `<option value="">全部产品</option>`,
+        ...products.map((item) => `<option value="${escapeHtml(item.model)}">${escapeHtml(item.model)}</option>`)
+      ].join("");
+      return { formCategoryOptions };
+    }
+
+    function renderTagManager() {
+      el("tagManagerList").innerHTML = tags.map((tag) => `
+        <span class="tag-chip">
+          <span>${escapeHtml(tag)}</span>
+          <button type="button" data-delete-tag="${escapeHtml(tag)}" aria-label="删除${escapeHtml(tag)}">×</button>
+        </span>
+      `).join("");
+    }
+
+    function getAudioFilters() {
+      return {
+        id: el("filterAudioId").value.trim(),
+        category: el("filterCategory").value,
+        tag: el("filterTag").value,
+        type: el("filterType").value
+      };
+    }
+
+    function applyAudioFilters() {
+      const filters = getAudioFilters();
+      filteredAudio = audioSources.filter((item) => {
+        const itemCategoryIds = audioCategoryIds(item);
+        const categoryHit = !filters.category ||
+          (filters.category === "__none__" ? !itemCategoryIds.length : itemCategoryIds.includes(filters.category));
+        const tagHit = !filters.tag ||
+          (filters.tag === "__none__" ? !item.tags.length : item.tags.includes(filters.tag));
+        return (!filters.id || item.id.includes(filters.id)) &&
+          categoryHit &&
+          tagHit &&
+          (!filters.type || item.type === filters.type);
+      });
+      selectedAudioIds = new Set(selectedIds().filter((id) => filteredAudio.some((item) => item.id === id)));
+      renderAudioRows();
+      updateBatchState();
+    }
+
+    function renderAudioRows() {
+      el("audioListMeta").textContent = `共 ${filteredAudio.length} 条`;
+      el("audioEmpty").classList.toggle("hidden", filteredAudio.length > 0);
+      el("audioRows").innerHTML = filteredAudio.map((item) => {
+        const checked = selectedAudioIds.has(item.id) ? "checked" : "";
+        const tagHtml = item.tags.length
+          ? item.tags.map((tag) => `<span class="tag gray">${escapeHtml(tag)}</span>`).join("")
+          : `<span class="muted">--</span>`;
+        const categoryIds = audioCategoryIds(item);
+        const categoryHtml = categoryIds.length
+          ? categoryIds.map((id) => `<span class="tag category">${escapeHtml(categoryName(id))}</span>`).join("")
+          : `<span class="muted">未归属</span>`;
+        return `
+          <tr>
+            <td><input type="checkbox" class="row-check" data-id="${escapeHtml(item.id)}" ${checked} aria-label="选择 ${escapeHtml(item.id)}"></td>
+            <td><span class="mono">${escapeHtml(item.id)}</span></td>
+            <td><span class="tag ${item.type === "online" ? "online" : "local"}">${item.type === "online" ? "在线" : "本地"}</span></td>
+            <td><div class="resource-url" title="${escapeHtml(item.source || "")}">${item.source ? escapeHtml(item.source) : "--"}</div></td>
+            <td><div class="inline-actions">${categoryHtml}</div></td>
+            <td><div class="inline-actions">${tagHtml}</div></td>
+            <td>${escapeHtml(item.updated)}</td>
+            <td>
+              <div class="inline-actions">
+                <button class="btn link" data-edit-audio="${escapeHtml(item.id)}">编辑</button>
+                <button class="btn link" data-delete-audio="${escapeHtml(item.id)}">删除</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function updateBatchState() {
+      const count = selectedAudioIds.size;
+      el("selectedMeta").textContent = `已选择 ${count} 个音源`;
+      el("batchTagsBtn").disabled = count === 0;
+      el("batchCategoryBtn").disabled = count === 0;
+    }
+
+    function renderCategoryList() {
+      const keyword = el("categorySearch").value.trim().toLowerCase();
+      const product = el("productAuthFilter").value;
+      const list = categories.filter((item) =>
+        (!keyword || item.name.toLowerCase().includes(keyword)) &&
+        (!product || item.products.includes(product))
+      );
+      el("categoryListMeta").textContent = `共 ${list.length} 个类别`;
+      if (!list.some((item) => item.id === activeCategoryId) && list[0]) {
+        activeCategoryId = list[0].id;
+      }
+      el("categoryList").innerHTML = list.map((item) => `
+        <button class="category-item ${item.id === activeCategoryId ? "active" : ""}" data-category-id="${escapeHtml(item.id)}" type="button">
+          <span class="category-name-row">
+            <span>${escapeHtml(item.name)}</span>
+            <span class="tag gray">${item.audioIds.length} 个音源</span>
+          </span>
+          <span class="category-desc">${escapeHtml(item.desc || "无描述")}</span>
+          <span class="category-products">
+            ${item.products.length ? item.products.map((model) => `<span class="tag category">${escapeHtml(model)}</span>`).join("") : `<span class="muted">未授权产品</span>`}
+          </span>
+        </button>
+      `).join("") || `<div class="empty">暂无匹配类别</div>`;
+      renderCategoryDetail();
+    }
+
+    function renderCategoryDetail() {
+      const category = categoryById(activeCategoryId);
+      const disabled = !category;
+      ["exportCategoryConfigBtn", "uploadCategoryConfigBtn", "editCategoryBtn", "copyCategoryBtn", "deleteCategoryBtn", "associateAudioBtn"].forEach((id) => {
+        el(id).disabled = disabled;
+      });
+      if (!category) {
+        el("categoryDetailTitle").textContent = "类别详情";
+        el("categoryDetailMeta").textContent = "选择左侧类别查看配置";
+        el("detailCategoryName").textContent = "--";
+        el("detailCategoryDesc").textContent = "--";
+        el("detailCategoryProducts").textContent = "--";
+        el("categoryConfigHead").innerHTML = "";
+        el("categoryConfigRows").innerHTML = "";
+        el("categoryConfigEmpty").classList.remove("hidden");
+        return;
+      }
+      el("categoryDetailTitle").textContent = category.name;
+      el("categoryDetailMeta").textContent = `已关联 ${category.audioIds.length} 个音源 ID`;
+      el("detailCategoryName").textContent = category.name;
+      el("detailCategoryDesc").textContent = category.desc || "无描述";
+      el("detailCategoryProducts").textContent = category.products.length ? category.products.join("、") : "未授权产品";
+      if (associateTagFilter && associateTagFilter !== "__none__" && !tags.includes(associateTagFilter)) {
+        associateTagFilter = "";
+      }
+      el("associateTagFilter").innerHTML = [
+        `<option value="">全部标签</option>`,
+        `<option value="__none__">无标签</option>`,
+        ...tags.map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`)
+      ].join("");
+      el("associateTagFilter").value = associateTagFilter;
+      const available = audioSources
+        .filter((audio) => !category.audioIds.includes(audio.id))
+        .filter((audio) => !associateTagFilter ||
+          (associateTagFilter === "__none__" ? !audio.tags.length : audio.tags.includes(associateTagFilter)));
+      el("associateAudioSelect").innerHTML = available.length
+        ? available.map((audio) => {
+          const tagText = audio.tags.length ? `（${audio.tags.join("、")}）` : "（无标签）";
+          return `<option value="${escapeHtml(audio.id)}">${escapeHtml(audio.id)} ${escapeHtml(tagText)}</option>`;
+        }).join("")
+        : `<option value="">暂无匹配音源</option>`;
+      renderCategoryConfigTable(category);
+    }
+
+    function renderCategoryConfigTable(category) {
+      el("categoryConfigEmpty").classList.toggle("hidden", category.audioIds.length > 0);
+      el("categoryConfigHead").innerHTML = `
+        <tr>
+          <th>音源 ID</th>
+          <th>音源标签</th>
+          ${languageCodes.map((code) => `<th>${escapeHtml(languageOptions[code])}</th>`).join("")}
+        </tr>
+      `;
+      el("categoryConfigRows").innerHTML = category.audioIds.map((audioId) => {
+        const audio = audioById(audioId);
+        const tagHtml = audio?.tags.length
+          ? audio.tags.map((tag) => `<span class="tag gray">${escapeHtml(tag)}</span>`).join("")
+          : `<span class="muted">--</span>`;
+        const cells = languageCodes.map((code) => {
+          const config = normalizeConfig(category, audioId, code);
+          return `
+            <td>
+              <div class="language-cell">
+                <strong title="${escapeHtml(config.name || "")}">${escapeHtml(config.name || "未配置名称")}</strong>
+                <span title="${escapeHtml(config.image || "")}">图：${escapeHtml(config.image || "--")}</span>
+                <button class="btn link" data-edit-lang="${escapeHtml(category.id)}" data-audio-id="${escapeHtml(audioId)}" data-lang="${escapeHtml(code)}">编辑</button>
+              </div>
+            </td>
+          `;
+        }).join("");
+        return `
+          <tr>
+            <td><span class="mono">${escapeHtml(audioId)}</span></td>
+            <td><div class="inline-actions">${tagHtml}</div></td>
+            ${cells}
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderProductRows() {
+      const rows = [];
+      categories
+        .filter((category) => category.products.includes(currentProductModel))
+        .forEach((category) => {
+          category.audioIds.forEach((audioId) => {
+            const audio = audioById(audioId);
+            if (!audio) return;
+            const configuredCount = languageCodes.filter((code) => {
+              const cfg = normalizeConfig(category, audioId, code);
+              return cfg.name && cfg.image;
+            }).length;
+            const sample = normalizeConfig(category, audioId, "zh");
+            rows.push({
+              category,
+              audio,
+              configuredCount,
+              sample
+            });
+          });
+        });
+      el("productEmpty").classList.toggle("hidden", rows.length > 0);
+      el("productRows").innerHTML = rows.map(({ category, audio, configuredCount, sample }) => `
+        <tr>
+          <td><span class="mono">${escapeHtml(audio.id)}</span></td>
+          <td><span class="tag category">${escapeHtml(category.name)}</span></td>
+          <td><span class="tag ${audio.type === "online" ? "online" : "local"}">${audio.type === "online" ? "在线" : "本地"}</span></td>
+          <td><div class="resource-url" title="${escapeHtml(audio.source || "")}">${escapeHtml(audio.source || "--")}</div></td>
+          <td>
+            <div class="stack">
+              <span>${configuredCount}/${languageCodes.length}</span>
+              <span class="muted">中文：${escapeHtml(sample.name || "未配置")}</span>
+            </div>
+          </td>
+          <td>${escapeHtml(category.name)} / 授权 ${escapeHtml(currentProductModel)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAll() {
+      const categoryValue = el("filterCategory").value;
+      const tagValue = el("filterTag").value;
+      renderOptions();
+      el("filterCategory").value = categoryValue;
+      el("filterTag").value = tagValue;
+      renderTagManager();
+      applyAudioFilters();
+      renderCategoryList();
+      renderProductRows();
+      renderPrototypeAnnotations();
+    }
+
+    function drawerShell(title, body, foot) {
+      el("drawerTitle").textContent = title;
+      el("drawerBody").innerHTML = body;
+      el("drawerFoot").innerHTML = foot;
+      document.body.classList.add("drawer-open");
+      el("mainDrawer").setAttribute("aria-hidden", "false");
+      renderPrototypeAnnotations();
+    }
+
+    function closeDrawer() {
+      document.body.classList.remove("drawer-open");
+      el("mainDrawer").setAttribute("aria-hidden", "true");
+      activeDrawer = null;
+      editingAudioId = null;
+      editingCategoryId = null;
+      editingLanguageContext = null;
+      renderPrototypeAnnotations();
+    }
+
+    function openAudioDrawer(audio = null) {
+      activeDrawer = "audio";
+      editingAudioId = audio?.id || null;
+      const selectedTags = new Set(audio?.tags || []);
+      const selectedCategories = new Set(audioCategoryIds(audio));
+      renderOptions();
+      drawerShell(
+        audio ? "编辑音源" : "新增音源",
+        `
+          <section class="form-section">
+            <div class="form-section-title">基础信息</div>
+            <div class="form-grid">
+              <div class="field">
+                <label ${audio ? "" : "for=\"audioIdInput\""}><span class="required-mark">*</span>音源 id</label>
+                ${audio
+                  ? `<div class="readonly-value mono" id="audioIdReadonly">${escapeHtml(audio.id)}</div>`
+                  : `<input id="audioIdInput" value="" placeholder="1～32 位字符串" autocomplete="off">`
+                }
+              </div>
+            </div>
+          </section>
+          <section class="form-section">
+            <div class="form-section-title">归属类别<span class="optional-mark">选填，可多选</span></div>
+            <div class="checkbox-grid" id="audioCategoryChecks">
+              ${categories.map((category) => `
+                <label class="tag-chip">
+                  <input type="checkbox" value="${escapeHtml(category.id)}" ${selectedCategories.has(category.id) ? "checked" : ""}>
+                  <span>${escapeHtml(category.name)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </section>
+          <section class="form-section" data-prototype-note-target="tech-pending">
+            <div class="form-section-title"><span class="required-mark">*</span>音源资源</div>
+            <div class="resource-mode">
+              <button class="mode-option ${audio?.type !== "online" ? "active" : ""}" type="button" data-set-type="local">
+                <div class="mode-title">本地</div>
+                <div class="mode-desc">不要求 URL 或音频文件</div>
+              </button>
+              <button class="mode-option ${audio?.type === "online" ? "active" : ""}" type="button" data-set-type="online">
+                <div class="mode-title">在线</div>
+                <div class="mode-desc">URL 或上传文件信息由技术方案确定</div>
+              </button>
+            </div>
+            <input type="hidden" id="audioTypeInput" value="${escapeHtml(audio?.type || "local")}">
+            <div class="field ${audio?.type === "online" ? "" : "hidden"}" id="audioSourceField">
+              <label for="audioSourceInput"><span class="required-mark">*</span>在线音源资源</label>
+              <textarea id="audioSourceInput" placeholder="输入音源 URL 或上传文件信息">${escapeHtml(audio?.source || "")}</textarea>
+            </div>
+          </section>
+          <section class="form-section">
+            <div class="form-section-title">音源标签<span class="optional-mark">选填</span></div>
+            <div class="checkbox-grid" id="audioTagChecks">
+              ${tags.map((tag) => `
+                <label class="tag-chip">
+                  <input type="checkbox" value="${escapeHtml(tag)}" ${selectedTags.has(tag) ? "checked" : ""}>
+                  <span>${escapeHtml(tag)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </section>
+        `,
+        `<button class="btn" id="cancelDrawerBtn">取消</button><button class="btn primary" id="saveAudioBtn">保存</button>`
+      );
+    }
+
+    function saveAudio() {
+      const id = editingAudioId || el("audioIdInput").value.trim();
+      const type = el("audioTypeInput").value;
+      const source = el("audioSourceInput")?.value.trim() || "";
+      if (!id) return showToast("音源 id 不能为空", "error");
+      if (id.length > 32) return showToast("音源 id 不能超过 32 位", "error");
+      if (!["local", "online"].includes(type)) return showToast("音源资源不能为空", "error");
+      if (!editingAudioId && audioSources.some((item) => item.id === id)) {
+        return showToast("音源 id 已存在", "error");
+      }
+      if (type === "online" && !source) {
+        return showToast("在线音源需要 URL 或上传文件信息", "error");
+      }
+      const selectedTagsInDrawer = Array.from(document.querySelectorAll("#audioTagChecks input:checked")).map((input) => input.value);
+      const selectedCategoriesInDrawer = Array.from(document.querySelectorAll("#audioCategoryChecks input:checked")).map((input) => input.value);
+      const data = {
+        id,
+        type,
+        source,
+        categoryIds: selectedCategoriesInDrawer,
+        tags: selectedTagsInDrawer,
+        updated: todayString()
+      };
+      if (editingAudioId) {
+        const index = audioSources.findIndex((item) => item.id === editingAudioId);
+        audioSources[index] = data;
+      } else {
+        audioSources.unshift(data);
+      }
+      syncCategoryAssociations(data.id, data.categoryIds);
+      closeDrawer();
+      renderAll();
+      showToast("音源已保存");
+    }
+
+    function openCategoryDrawer(category = null) {
+      activeDrawer = "category";
+      editingCategoryId = category?.id || null;
+      const selectedProducts = new Set(category?.products || []);
+      drawerShell(
+        category ? "编辑音源类别" : "新增音源类别",
+        `
+          <section class="form-section">
+            <div class="form-section-title">类别信息</div>
+            <div class="field">
+              <label for="categoryNameInput"><span class="required-mark">*</span>类别名称</label>
+              <input id="categoryNameInput" value="${escapeHtml(category?.name || "")}" placeholder="输入类别名称" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="categoryDescInput">类别描述<span class="optional-mark">选填</span></label>
+              <textarea id="categoryDescInput" placeholder="输入类别描述">${escapeHtml(category?.desc || "")}</textarea>
+            </div>
+          </section>
+          <section class="form-section">
+            <div class="form-section-title">授权产品<span class="optional-mark">选填</span></div>
+            <div class="notice" data-prototype-note-target="exclusive-product">同一产品只能授权给一个音源类别；已授权给其他类别的产品在这里不可选。</div>
+            <div class="product-checks" id="categoryProductChecks">
+              ${products.map((product) => {
+                const owner = categoryProductOwner(product.model, editingCategoryId);
+                const checked = selectedProducts.has(product.model);
+                const disabled = !!owner;
+                return `
+                  <label class="tag-chip ${disabled ? "disabled" : ""}">
+                    <input type="checkbox" value="${escapeHtml(product.model)}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
+                    <span>${escapeHtml(product.model)} - ${escapeHtml(product.name)}</span>
+                    ${disabled ? `<span class="muted">已授权给${escapeHtml(owner.name)}</span>` : ""}
+                  </label>
+                `;
+              }).join("")}
+            </div>
+          </section>
+        `,
+        `<button class="btn" id="cancelDrawerBtn">取消</button><button class="btn primary" id="saveCategoryBtn">保存</button>`
+      );
+    }
+
+    function saveCategory() {
+      const name = el("categoryNameInput").value.trim();
+      if (!name) return showToast("类别名称不能为空", "error");
+      const productsSelected = Array.from(document.querySelectorAll("#categoryProductChecks input:checked")).map((input) => input.value);
+      const conflictProduct = productsSelected.find((model) => categoryProductOwner(model, editingCategoryId));
+      if (conflictProduct) {
+        return showToast(`${conflictProduct} 已授权给其他类别`, "error");
+      }
+      if (editingCategoryId) {
+        const category = categoryById(editingCategoryId);
+        category.name = name;
+        category.desc = el("categoryDescInput").value.trim();
+        category.products = productsSelected;
+      } else {
+        const newCategory = {
+          id: `cat-${Date.now()}`,
+          name,
+          desc: el("categoryDescInput").value.trim(),
+          products: productsSelected,
+          audioIds: [],
+          configs: {}
+        };
+        categories.unshift(newCategory);
+        activeCategoryId = newCategory.id;
+      }
+      closeDrawer();
+      renderAll();
+      showToast("类别已保存");
+    }
+
+    function openLanguageDrawer(categoryId, audioId, lang) {
+      const category = categoryById(categoryId);
+      const config = normalizeConfig(category, audioId, lang);
+      activeDrawer = "language";
+      editingLanguageContext = { categoryId, audioId, lang };
+      drawerShell(
+        "编辑语言配置",
+        `
+          <section class="form-section">
+            <div class="form-section-title">配置对象</div>
+            <div class="kv-grid" style="grid-template-columns:1fr;">
+              <div class="kv">
+                <div class="kv-label">音源类别</div>
+                <div class="kv-value">${escapeHtml(category.name)}</div>
+              </div>
+              <div class="kv">
+                <div class="kv-label">音源 ID</div>
+                <div class="kv-value mono">${escapeHtml(audioId)}</div>
+              </div>
+              <div class="kv">
+                <div class="kv-label">语言</div>
+                <div class="kv-value">${escapeHtml(languageOptions[lang])}</div>
+              </div>
+            </div>
+          </section>
+          <section class="form-section" data-prototype-note-target="language-edit">
+            <div class="form-section-title">多语言内容</div>
+            <div class="notice">多语言内容只维护音源名称和图片；音源 URL 与音源 id 绑定，在音源库中维护。</div>
+            <div class="field">
+              <label for="langNameInput">音源名称</label>
+              <input id="langNameInput" value="${escapeHtml(config.name)}" placeholder="输入该语言音源名称" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="langImageInput">音源图片</label>
+              <input id="langImageInput" value="${escapeHtml(config.image)}" placeholder="输入图片 URL；附件上传由技术方案提供控件" autocomplete="off">
+            </div>
+          </section>
+        `,
+        `<button class="btn" id="cancelDrawerBtn">取消</button><button class="btn primary" id="saveLanguageBtn">保存</button>`
+      );
+    }
+
+    function saveLanguageConfig() {
+      const { categoryId, audioId, lang } = editingLanguageContext;
+      const category = categoryById(categoryId);
+      const previous = normalizeConfig(category, audioId, lang);
+      category.configs[audioId] ||= {};
+      category.configs[audioId][lang] = {
+        ...previous,
+        name: el("langNameInput").value.trim(),
+        image: el("langImageInput").value.trim()
+      };
+      closeDrawer();
+      renderAll();
+      showToast("语言配置已保存");
+    }
+
+    function downloadCsv(filename, rows) {
+      const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function categoryConfigHeader() {
+      return [
+        "音源ID",
+        "音源标签",
+        ...languageCodes.flatMap((code) => [
+          `${languageOptions[code]}名称`,
+          `${languageOptions[code]}图片URL`
+        ])
+      ];
+    }
+
+    function categoryConfigRows(category) {
+      return category.audioIds.map((audioId) => {
+        const audio = audioById(audioId);
+        return [
+          audioId,
+          audio?.tags.join("|") || "",
+          ...languageCodes.flatMap((code) => {
+            const config = normalizeConfig(category, audioId, code);
+            return [config.name, config.image];
+          })
+        ];
+      });
+    }
+
+    function exportActiveCategoryConfig() {
+      const category = categoryById(activeCategoryId);
+      if (!category) return showToast("请先选择音源类别", "error");
+      const filename = `audio-category-${category.name.replace(/[\\/:*?"<>|]/g, "-")}-multilingual.csv`;
+      downloadCsv(filename, [categoryConfigHeader(), ...categoryConfigRows(category)]);
+      showToast("已生成类别配置表");
+    }
+
+    function uploadActiveCategoryConfig() {
+      if (!categoryById(activeCategoryId)) return showToast("请先选择音源类别", "error");
+      el("categoryConfigImportInput").value = "";
+      el("categoryConfigImportInput").click();
+    }
+
+    function splitCsvLine(line) {
+      const values = [];
+      let current = "";
+      let inQuotes = false;
+      for (let index = 0; index < line.length; index += 1) {
+        const char = line[index];
+        const next = line[index + 1];
+        if (char === '"' && inQuotes && next === '"') {
+          current += '"';
+          index += 1;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          values.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+      return values;
+    }
+
+    function headerIndex(header, labels) {
+      return labels.map((label) => header.indexOf(label)).find((index) => index >= 0) ?? -1;
+    }
+
+    function isUrlOrEmpty(value) {
+      return !value || /^https?:\/\//i.test(value);
+    }
+
+    function parseCategoryConfigCsv(text) {
+      const lines = text.split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
+      if (lines.length < 2) return [];
+      const header = splitCsvLine(lines[0]);
+      const idIndex = headerIndex(header, ["音源ID", "audio_id"]);
+      return lines.slice(1).map((line) => {
+        const values = splitCsvLine(line);
+        const row = { audioId: values[idIndex] || "", configs: {} };
+        languageCodes.forEach((code) => {
+          const nameIndex = headerIndex(header, [`${languageOptions[code]}名称`, `${code}_name`]);
+          const imageIndex = headerIndex(header, [`${languageOptions[code]}图片URL`, `${code}_image`]);
+          row.configs[code] = {
+            name: values[nameIndex] || "",
+            image: values[imageIndex] || ""
+          };
+        });
+        return row;
+      });
+    }
+
+    function setCategoryImportProgress(percent, text) {
+      el("categoryImportStatus").classList.remove("hidden");
+      el("categoryImportProgressFill").style.width = `${percent}%`;
+      el("categoryImportProgressText").textContent = text;
+    }
+
+    function renderCategoryImportResult(result) {
+      categoryImportFailures = result.failures;
+      el("categoryImportSummary").textContent = `总导入数 ${result.total} / 成功 ${result.success} / 失败 ${result.failures.length}`;
+      el("categoryImportFailureWrap").classList.toggle("hidden", result.failures.length === 0);
+      el("downloadCategoryFailureBtn").disabled = result.failures.length === 0;
+      el("categoryImportFailureRows").innerHTML = result.failures.map((item) => `
+        <tr>
+          <td><span class="mono">${escapeHtml(item.audioId || "--")}</span></td>
+          <td>${escapeHtml(item.reason)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function resetCategoryImportResult() {
+      categoryImportFailures = [];
+      el("categoryImportStatus").classList.add("hidden");
+      el("categoryImportProgressFill").style.width = "0";
+      el("categoryImportProgressText").textContent = "等待导入";
+      el("categoryImportSummary").textContent = "总导入数 0 / 成功 0 / 失败 0";
+      el("categoryImportFailureWrap").classList.add("hidden");
+      el("downloadCategoryFailureBtn").disabled = true;
+      el("categoryImportFailureRows").innerHTML = "";
+    }
+
+    function applyCategoryConfigRows(category, rows, fileName) {
+      const result = { total: rows.length, success: 0, failures: [] };
+      rows.forEach((row) => {
+        if (!row.audioId) {
+          result.failures.push({ audioId: "", reason: "缺少音源ID" });
+          return;
+        }
+        if (!category.audioIds.includes(row.audioId)) {
+          result.failures.push({ audioId: row.audioId, reason: "该音源ID未关联到当前类别" });
+          return;
+        }
+        const invalidFields = [];
+        languageCodes.forEach((code) => {
+          const config = row.configs[code] || {};
+          if (!isUrlOrEmpty(config.image)) invalidFields.push(`${languageOptions[code]}图片URL不是 URL`);
+        });
+        if (invalidFields.length) {
+          result.failures.push({
+            audioId: row.audioId,
+            reason: `${invalidFields.join("；")}；批量上传覆盖的图片字段只支持 URL，图片附件上传请在单条语言编辑界面处理`
+          });
+          return;
+        }
+        category.configs ||= {};
+        category.configs[row.audioId] ||= {};
+        languageCodes.forEach((code) => {
+          category.configs[row.audioId][code] = row.configs[code] || { name: "", image: "", asset: "" };
+        });
+        result.success += 1;
+      });
+      renderAll();
+      setCategoryImportProgress(100, "导入完成");
+      renderCategoryImportResult(result);
+      showToast(`已从 ${fileName} 导入 ${result.success}/${result.total} 条`);
+    }
+
+    function handleCategoryConfigImport() {
+      const category = categoryById(activeCategoryId);
+      const file = el("categoryConfigImportInput").files[0];
+      if (!category || !file) return;
+      resetCategoryImportResult();
+      openModal("categoryImportResultModal");
+      setCategoryImportProgress(12, "读取文件中");
+      if (!/\.csv$/i.test(file.name)) {
+        setCategoryImportProgress(100, "导入完成");
+        renderCategoryImportResult({
+          total: 1,
+          success: 0,
+          failures: [{ audioId: "--", reason: "原型仅支持上传 CSV 配置表；Excel 解析由技术方案实现" }]
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCategoryImportProgress(68, "校验 URL 并覆盖配置");
+        applyCategoryConfigRows(category, parseCategoryConfigCsv(reader.result || ""), file.name);
+      };
+      reader.onerror = () => {
+        setCategoryImportProgress(100, "导入失败");
+        renderCategoryImportResult({
+          total: 1,
+          success: 0,
+          failures: [{ audioId: "--", reason: "文件读取失败，请重新上传" }]
+        });
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadCategoryImportFailures() {
+      if (!categoryImportFailures.length) return;
+      downloadCsv("audio-category-import-failures.csv", [
+        ["音源ID", "失败原因"],
+        ...categoryImportFailures.map((item) => [item.audioId || "--", item.reason])
+      ]);
+    }
+
+    function openBatchDrawer(type) {
+      activeDrawer = type === "tags" ? "batchTags" : "batchCategory";
+      const body = type === "tags"
+        ? `
+          <section class="form-section">
+            <div class="form-section-title">批量配置标签</div>
+            <div class="notice">本操作只更新已选音源的标签，不会变更归属类别。</div>
+            <div class="checkbox-grid" id="batchTagChecks">
+              ${tags.map((tag) => `
+                <label class="tag-chip"><input type="checkbox" value="${escapeHtml(tag)}"><span>${escapeHtml(tag)}</span></label>
+              `).join("")}
+            </div>
+          </section>
+        `
+        : `
+          <section class="form-section">
+            <div class="form-section-title">批量配置归属类别</div>
+            <div class="notice">本操作只更新已选音源的归属类别，不会变更标签。</div>
+            <div class="field">
+              <label>归属类别<span class="optional-mark">可多选；不选则清空归属类别</span></label>
+              <div class="checkbox-grid" id="batchCategoryChecks">
+                ${categories.map((category) => `
+                  <label class="tag-chip"><input type="checkbox" value="${escapeHtml(category.id)}"><span>${escapeHtml(category.name)}</span></label>
+                `).join("")}
+              </div>
+            </div>
+          </section>
+        `;
+      drawerShell(
+        type === "tags" ? "批量配置标签" : "批量配置归属类别",
+        body,
+        `<button class="btn" id="cancelDrawerBtn">取消</button><button class="btn primary" id="saveBatchBtn">保存</button>`
+      );
+    }
+
+    function saveBatch() {
+      const ids = selectedIds();
+      if (activeDrawer === "batchTags") {
+        const selectedTagsForBatch = Array.from(document.querySelectorAll("#batchTagChecks input:checked")).map((input) => input.value);
+        audioSources.forEach((audio) => {
+          if (selectedAudioIds.has(audio.id)) audio.tags = selectedTagsForBatch;
+        });
+        showToast(`已批量配置 ${ids.length} 个音源的标签`);
+      }
+      if (activeDrawer === "batchCategory") {
+        const categoryIds = Array.from(document.querySelectorAll("#batchCategoryChecks input:checked")).map((input) => input.value);
+        audioSources.forEach((audio) => {
+          if (selectedAudioIds.has(audio.id)) {
+            setAudioCategoryIds(audio, categoryIds);
+            syncCategoryAssociations(audio.id, categoryIds);
+          }
+        });
+        showToast(`已批量配置 ${ids.length} 个音源的归属类别`);
+      }
+      closeDrawer();
+      renderAll();
+    }
+
+    function openConfirmDelete(audioId) {
+      pendingDeleteAudioId = audioId;
+      deleteConfirmStep = 1;
+      openModal("confirmModal");
+      renderDeleteConfirm();
+    }
+
+    function renderDeleteConfirm() {
+      el("confirmTitle").textContent = deleteConfirmStep === 1 ? "删除音源确认" : "二次确认删除";
+      el("confirmBody").innerHTML = deleteConfirmStep === 1
+        ? `<div class="notice">即将删除音源 <span class="mono">${escapeHtml(pendingDeleteAudioId)}</span>。删除后可能影响已关联类别，请继续确认。</div>`
+        : `<div class="notice">这是第二次确认。确认后将删除音源 <span class="mono">${escapeHtml(pendingDeleteAudioId)}</span> 及原型中的类别关联。</div>`;
+      el("confirmActionBtn").textContent = deleteConfirmStep === 1 ? "继续确认" : "二次确认删除";
+    }
+
+    function confirmDeleteAudio() {
+      if (deleteConfirmStep === 1) {
+        deleteConfirmStep = 2;
+        renderDeleteConfirm();
+        return;
+      }
+      audioSources = audioSources.filter((item) => item.id !== pendingDeleteAudioId);
+      categories.forEach((category) => {
+        category.audioIds = category.audioIds.filter((id) => id !== pendingDeleteAudioId);
+        if (category.configs) delete category.configs[pendingDeleteAudioId];
+      });
+      selectedAudioIds.delete(pendingDeleteAudioId);
+      closeModal();
+      renderAll();
+      showToast("音源已删除");
+    }
+
+    function copyActiveCategory() {
+      const category = categoryById(activeCategoryId);
+      if (!category) return;
+      const clone = JSON.parse(JSON.stringify(category));
+      clone.id = `cat-copy-${Date.now()}`;
+      clone.name = `${category.name} 副本`;
+      clone.products = [];
+      categories.unshift(clone);
+      activeCategoryId = clone.id;
+      renderAll();
+      showToast("类别已复制，授权产品未复制");
+    }
+
+    function deleteActiveCategory() {
+      const category = categoryById(activeCategoryId);
+      if (!category) return;
+      categories = categories.filter((item) => item.id !== activeCategoryId);
+      audioSources.forEach((audio) => {
+        setAudioCategoryIds(audio, audioCategoryIds(audio).filter((id) => id !== activeCategoryId));
+      });
+      activeCategoryId = categories[0]?.id || "";
+      renderAll();
+      showToast("类别已删除");
+    }
+
+    function associateAudioToCategory() {
+      const category = categoryById(activeCategoryId);
+      const audioId = el("associateAudioSelect").value;
+      if (!category || !audioId) return showToast("暂无可关联音源", "error");
+      if (!category.audioIds.includes(audioId)) category.audioIds.push(audioId);
+      const audio = audioById(audioId);
+      if (audio) setAudioCategoryIds(audio, [...audioCategoryIds(audio), category.id]);
+      languageCodes.forEach((code) => normalizeConfig(category, audioId, code));
+      renderAll();
+      showToast("音源已关联到类别");
+    }
+
+    function addTag() {
+      const value = el("newTagInput").value.trim();
+      if (!value) return showToast("标签名称不能为空", "error");
+      if (tags.includes(value)) return showToast("标签已存在", "error");
+      tags.push(value);
+      el("newTagInput").value = "";
+      renderAll();
+      showToast("标签已新增");
+    }
+
+    function deleteTag(tag) {
+      const inUse = audioSources.some((audio) => audio.tags.includes(tag));
+      if (inUse) return showToast("已有音源使用该标签，不能删除", "error");
+      tags = tags.filter((item) => item !== tag);
+      renderAll();
+      showToast("标签已删除");
+    }
+
+    const importTemplateRows = [
+      { id: "10", type: "本地", categoryNames: "助眠场景", tags: "助眠,白噪音", source: "" },
+      { id: "11", type: "在线", categoryNames: "自然声合集", tags: "自然声", source: "https://cdn.example.com/audio/wn08/forest.mp3" }
+    ];
+
+    function csvCell(value) {
+      const text = String(value ?? "");
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function downloadImportTemplate() {
+      const header = ["音源ID", "音源类型", "归属类别", "音源标签", "在线资源URL"];
+      const rows = importTemplateRows.map((row) => [row.id, row.type, row.categoryNames, row.tags, row.source]);
+      const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "audio-resource-import-template.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast("导入模板已下载");
+    }
+
+    function updateImportFileState() {
+      const file = el("importFileInput").files[0];
+      el("importFileName").textContent = file ? `${file.name} · ${Math.max(1, Math.ceil(file.size / 1024))} KB` : "未选择文件";
+    }
+
+    function normalizeAudioType(value) {
+      const text = String(value || "").trim().toLowerCase();
+      if (["本地", "local"].includes(text)) return "local";
+      if (["在线", "online"].includes(text)) return "online";
+      return "";
+    }
+
+    function splitImportList(value) {
+      return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+    }
+
+    function parseImportCsv(text) {
+      const lines = text.split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) return [];
+      const header = splitCsvLine(lines[0]);
+      const hasHeader = header.some((item) => ["音源ID", "audio_id"].includes(item));
+      const dataLines = hasHeader ? lines.slice(1) : lines;
+      const indexOf = (labels, fallback) => {
+        const matched = labels.map((label) => header.indexOf(label)).find((index) => index >= 0);
+        return matched ?? fallback;
+      };
+      const idIndex = indexOf(["音源ID", "audio_id"], 0);
+      const typeIndex = indexOf(["音源类型", "type"], 1);
+      const categoryIndex = indexOf(["归属类别", "category_names"], 2);
+      const tagIndex = indexOf(["音源标签", "tags"], 3);
+      const sourceIndex = indexOf(["在线资源URL", "source"], 4);
+      return dataLines.map((line) => {
+        const values = splitCsvLine(line);
+        return {
+          id: values[idIndex] || "",
+          type: values[typeIndex] || "",
+          categoryNames: values[categoryIndex] || "",
+          tags: values[tagIndex] || "",
+          source: values[sourceIndex] || ""
+        };
+      });
+    }
+
+    function applyImportRows(rows, fileName) {
+      const seenIds = new Set();
+      const result = { total: rows.length, success: 0, failures: [] };
+      rows.forEach(({ id, type = "local", categoryNames = "", tags: tagValue = "", source = "" }) => {
+        const audioId = String(id || "").trim();
+        const normalizedType = normalizeAudioType(type);
+        const categoryNamesList = splitImportList(categoryNames);
+        const tagList = splitImportList(tagValue);
+        const failureReasons = [];
+        if (!audioId) failureReasons.push("音源ID必填");
+        if (audioId.length > 32) failureReasons.push("音源ID不能超过 32 位");
+        if (audioId && audioSources.some((audio) => audio.id === audioId)) failureReasons.push("音源ID已存在");
+        if (audioId && seenIds.has(audioId)) failureReasons.push("导入文件内音源ID重复");
+        if (!normalizedType) failureReasons.push("音源类型必须为本地或在线");
+        if (normalizedType === "online" && !source.trim()) failureReasons.push("在线音源必须填写在线资源URL");
+        if (normalizedType === "online" && !isUrlOrEmpty(source.trim())) failureReasons.push("在线资源URL不是有效 URL");
+        const invalidCategories = categoryNamesList.filter((name) => !categories.some((item) => item.name === name));
+        if (invalidCategories.length) failureReasons.push(`归属类别不存在：${invalidCategories.join("、")}；导入时不支持新增类别`);
+        const invalidTags = tagList.filter((tag) => !tags.includes(tag));
+        if (invalidTags.length) failureReasons.push(`音源标签不存在：${invalidTags.join("、")}；导入时不支持新增标签`);
+        if (failureReasons.length) {
+          result.failures.push({ audioId: audioId || "--", reason: failureReasons.join("；") });
+          if (audioId) seenIds.add(audioId);
+          return;
+        }
+        seenIds.add(audioId);
+        const categoryIds = categoryNamesList.map((name) => categories.find((item) => item.name === name)?.id).filter(Boolean);
+        audioSources.push({
+          id: audioId,
+          type: normalizedType,
+          source: normalizedType === "online" ? source.trim() : "",
+          categoryIds,
+          tags: tagList,
+          updated: todayString()
+        });
+        categoryIds.forEach((categoryId) => {
+          const category = categoryById(categoryId);
+          if (category && !category.audioIds.includes(audioId)) category.audioIds.push(audioId);
+        });
+        result.success += 1;
+      });
+      renderAll();
+      setAudioImportProgress(100, "导入完成");
+      renderAudioImportResult(result);
+      showToast(`已从 ${fileName} 导入 ${result.success}/${result.total} 条`);
+    }
+
+    function setAudioImportProgress(percent, text) {
+      el("audioImportStatus").classList.remove("hidden");
+      el("audioImportProgressFill").style.width = `${percent}%`;
+      el("audioImportProgressText").textContent = text;
+    }
+
+    function renderAudioImportResult(result) {
+      audioImportFailures = result.failures;
+      el("audioImportSummary").textContent = `总条数 ${result.total} / 成功 ${result.success} / 失败 ${result.failures.length}`;
+      el("audioImportFailureWrap").classList.toggle("hidden", result.failures.length === 0);
+      el("downloadAudioImportFailureBtn").disabled = result.failures.length === 0;
+      el("audioImportFailureRows").innerHTML = result.failures.map((item) => `
+        <tr>
+          <td><span class="mono">${escapeHtml(item.audioId || "--")}</span></td>
+          <td>${escapeHtml(item.reason)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function resetAudioImportResult() {
+      audioImportFailures = [];
+      el("audioImportStatus").classList.add("hidden");
+      el("audioImportProgressFill").style.width = "0";
+      el("audioImportProgressText").textContent = "等待导入";
+      el("audioImportSummary").textContent = "总条数 0 / 成功 0 / 失败 0";
+      el("audioImportFailureWrap").classList.add("hidden");
+      el("downloadAudioImportFailureBtn").disabled = true;
+      el("audioImportFailureRows").innerHTML = "";
+    }
+
+    function downloadAudioImportFailures() {
+      if (!audioImportFailures.length) return;
+      downloadCsv("audio-resource-import-failures.csv", [
+        ["音源ID", "失败原因"],
+        ...audioImportFailures.map((item) => [item.audioId || "--", item.reason])
+      ]);
+    }
+
+    function simulateImport() {
+      const file = el("importFileInput").files[0];
+      if (!file) return showToast("请先上传导入文件", "error");
+      if (/\.csv$/i.test(file.name)) {
+        setAudioImportProgress(12, "读取文件中");
+        const reader = new FileReader();
+        reader.onload = () => {
+          setAudioImportProgress(62, "校验导入数据");
+          applyImportRows(parseImportCsv(reader.result || ""), file.name);
+        };
+        reader.onerror = () => {
+          setAudioImportProgress(100, "导入失败");
+          renderAudioImportResult({
+            total: 1,
+            success: 0,
+            failures: [{ audioId: "--", reason: "文件读取失败，请重新上传" }]
+          });
+        };
+        reader.readAsText(file);
+        return;
+      }
+      setAudioImportProgress(100, "导入失败");
+      renderAudioImportResult({
+        total: 1,
+        success: 0,
+        failures: [{ audioId: "--", reason: "原型仅支持上传 CSV 导入文件" }]
+      });
+    }
+
+    function openModal(id) {
+      document.body.classList.add("modal-open");
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.classList.toggle("active", modal.id === id);
+        modal.setAttribute("aria-hidden", modal.id === id ? "false" : "true");
+      });
+      if (id === "importModal") {
+        el("importFileInput").value = "";
+        updateImportFileState();
+        resetAudioImportResult();
+      }
+    }
+
+    function closeModal() {
+      document.body.classList.remove("modal-open");
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+      });
+      pendingDeleteAudioId = null;
+      deleteConfirmStep = 1;
+    }
+
+    function setActiveView(viewId) {
+      activeView = viewId;
+      const isProductView = viewId === "productView";
+      document.querySelectorAll(".module-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.view === viewId);
+      });
+      document.querySelectorAll(".view").forEach((view) => {
+        view.classList.toggle("active", view.id === viewId);
+      });
+      el("moduleTabs").classList.toggle("hidden", isProductView);
+      el("configPageHead").classList.toggle("hidden", isProductView);
+      el("audioManagementMenu").classList.toggle("active", !isProductView);
+      el("productListMenu").classList.toggle("active", isProductView);
+      document.querySelector(".global-title").textContent = isProductView ? "智能产品" : "音源管理";
+      document.querySelector(".breadcrumb").textContent = isProductView
+        ? "查看产品详情 / 产品列表 / 智能产品"
+        : "配置中心 / 音源管理";
+      renderPrototypeAnnotations();
+    }
+
+    function prototypeNoteTarget(note) {
+      return document.querySelector(`[data-prototype-note-target="${note.target}"]`);
+    }
+
+    function clearPrototypeAnnotationAnchors() {
+      document.querySelectorAll(".prototype-note-anchor").forEach((anchor) => anchor.remove());
+      document.querySelectorAll(".prototype-note-host").forEach((target) => target.classList.remove("prototype-note-host"));
+      document.querySelectorAll(".prototype-note-target-active").forEach((target) => target.classList.remove("prototype-note-target-active"));
+    }
+
+    function renderPrototypeAnnotations() {
+      const list = el("prototypeAnnotationList");
+      if (!list) return;
+      clearPrototypeAnnotationAnchors();
+      if (!annotationPanelOpen) return;
+      list.innerHTML = prototypeNotes.map((note, index) => `
+        <button class="prototype-note-card" type="button" data-note-id="${escapeHtml(note.id)}">
+          <span class="prototype-note-number">${index + 1}</span>
+          <span class="prototype-note-copy">
+            <strong>${escapeHtml(note.title)}</strong>
+            <p>${escapeHtml(note.body)}</p>
+            <span>关联位置：${escapeHtml(note.loc)}</span>
+          </span>
+        </button>
+      `).join("");
+      prototypeNotes.forEach((note, index) => {
+        const target = prototypeNoteTarget(note);
+        if (!target || target.offsetParent === null) return;
+        target.classList.add("prototype-note-host");
+        const anchor = document.createElement("button");
+        anchor.type = "button";
+        anchor.className = "prototype-note-anchor";
+        anchor.textContent = String(index + 1);
+        anchor.addEventListener("click", () => focusPrototypeNote(note.id));
+        target.append(anchor);
+      });
+      document.querySelectorAll(".prototype-note-card").forEach((card) => {
+        card.addEventListener("click", () => focusPrototypeNote(card.dataset.noteId));
+      });
+    }
+
+    function setPrototypeAnnotationsOpen(open) {
+      annotationPanelOpen = open;
+      document.body.classList.toggle("annotation-open", open);
+      renderPrototypeAnnotations();
+    }
+
+    function focusPrototypeNote(id) {
+      const note = prototypeNotes.find((item) => item.id === id);
+      const target = note && prototypeNoteTarget(note);
+      if (!target) return;
+      document.querySelectorAll(".prototype-note-card").forEach((card) => {
+        card.classList.toggle("active", card.dataset.noteId === id);
+      });
+      target.classList.add("prototype-note-target-active");
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => target.classList.remove("prototype-note-target-active"), 1500);
+    }
+
+    document.querySelectorAll(".module-tab").forEach((tab) => {
+      tab.addEventListener("click", () => setActiveView(tab.dataset.view));
+    });
+    el("audioManagementMenu").addEventListener("click", (event) => {
+      event.preventDefault();
+      setActiveView("libraryView");
+    });
+    el("productListMenu").addEventListener("click", (event) => {
+      event.preventDefault();
+      setActiveView("productView");
+    });
+
+    el("searchBtn").addEventListener("click", applyAudioFilters);
+    el("resetFiltersBtn").addEventListener("click", () => {
+      ["filterAudioId", "filterCategory", "filterTag", "filterType"].forEach((id) => el(id).value = "");
+      applyAudioFilters();
+    });
+    ["filterCategory", "filterTag", "filterType"].forEach((id) => {
+      el(id).addEventListener("change", applyAudioFilters);
+    });
+    el("filterAudioId").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") applyAudioFilters();
+    });
+
+    el("tagManagerList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-delete-tag]");
+      if (button) deleteTag(button.dataset.deleteTag);
+    });
+    el("addTagBtn").addEventListener("click", addTag);
+    el("newTagInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addTag();
+      }
+    });
+
+    el("audioRows").addEventListener("change", (event) => {
+      const checkbox = event.target.closest(".row-check");
+      if (!checkbox) return;
+      checkbox.checked ? selectedAudioIds.add(checkbox.dataset.id) : selectedAudioIds.delete(checkbox.dataset.id);
+      updateBatchState();
+    });
+    el("audioRows").addEventListener("click", (event) => {
+      const edit = event.target.closest("[data-edit-audio]");
+      const del = event.target.closest("[data-delete-audio]");
+      if (edit) openAudioDrawer(audioById(edit.dataset.editAudio));
+      if (del) openConfirmDelete(del.dataset.deleteAudio);
+    });
+    el("selectAllVisibleBtn").addEventListener("click", () => {
+      filteredAudio.forEach((audio) => selectedAudioIds.add(audio.id));
+      renderAudioRows();
+      updateBatchState();
+    });
+    el("clearSelectionBtn").addEventListener("click", () => {
+      selectedAudioIds.clear();
+      renderAudioRows();
+      updateBatchState();
+    });
+    el("batchTagsBtn").addEventListener("click", () => openBatchDrawer("tags"));
+    el("batchCategoryBtn").addEventListener("click", () => openBatchDrawer("category"));
+    el("openAudioBtn").addEventListener("click", () => openAudioDrawer());
+    el("openImportBtn").addEventListener("click", () => openModal("importModal"));
+
+    el("categorySearch").addEventListener("input", renderCategoryList);
+    el("productAuthFilter").addEventListener("change", renderCategoryList);
+    el("resetCategoryFilterBtn").addEventListener("click", () => {
+      el("categorySearch").value = "";
+      el("productAuthFilter").value = "";
+      renderCategoryList();
+    });
+    el("openCategoryBtn").addEventListener("click", () => openCategoryDrawer());
+    el("categoryList").addEventListener("click", (event) => {
+      const item = event.target.closest("[data-category-id]");
+      if (!item) return;
+      activeCategoryId = item.dataset.categoryId;
+      associateTagFilter = "";
+      renderCategoryList();
+    });
+    el("editCategoryBtn").addEventListener("click", () => openCategoryDrawer(categoryById(activeCategoryId)));
+    el("copyCategoryBtn").addEventListener("click", copyActiveCategory);
+    el("deleteCategoryBtn").addEventListener("click", deleteActiveCategory);
+    el("exportCategoryConfigBtn").addEventListener("click", exportActiveCategoryConfig);
+    el("uploadCategoryConfigBtn").addEventListener("click", uploadActiveCategoryConfig);
+    el("categoryConfigImportInput").addEventListener("change", handleCategoryConfigImport);
+    el("downloadCategoryFailureBtn").addEventListener("click", downloadCategoryImportFailures);
+    el("associateTagFilter").addEventListener("change", () => {
+      associateTagFilter = el("associateTagFilter").value;
+      renderCategoryDetail();
+    });
+    el("associateAudioBtn").addEventListener("click", associateAudioToCategory);
+    el("categoryConfigRows").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-edit-lang]");
+      if (!button) return;
+      openLanguageDrawer(button.dataset.editLang, button.dataset.audioId, button.dataset.lang);
+    });
+
+    el("drawerMask").addEventListener("click", closeDrawer);
+    el("closeDrawer").addEventListener("click", closeDrawer);
+    el("drawerFoot").addEventListener("click", (event) => {
+      if (event.target.id === "cancelDrawerBtn") closeDrawer();
+      if (event.target.id === "saveAudioBtn") saveAudio();
+      if (event.target.id === "saveCategoryBtn") saveCategory();
+      if (event.target.id === "saveLanguageBtn") saveLanguageConfig();
+      if (event.target.id === "saveBatchBtn") saveBatch();
+    });
+    el("drawerBody").addEventListener("click", (event) => {
+      const mode = event.target.closest("[data-set-type]");
+      if (!mode) return;
+      el("audioTypeInput").value = mode.dataset.setType;
+      document.querySelectorAll("[data-set-type]").forEach((node) => node.classList.toggle("active", node === mode));
+      el("audioSourceField").classList.toggle("hidden", mode.dataset.setType !== "online");
+    });
+
+    el("modalMask").addEventListener("click", closeModal);
+    document.querySelectorAll("[data-close-modal]").forEach((button) => button.addEventListener("click", closeModal));
+    el("confirmActionBtn").addEventListener("click", confirmDeleteAudio);
+    el("downloadImportTemplateBtn").addEventListener("click", downloadImportTemplate);
+    el("importFileInput").addEventListener("change", updateImportFileState);
+    el("simulateImportBtn").addEventListener("click", simulateImport);
+    el("downloadAudioImportFailureBtn").addEventListener("click", downloadAudioImportFailures);
+
+    el("openPrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(true));
+    el("closePrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(false));
+
+    renderAll();
+  </script>
+</body>
+</html>

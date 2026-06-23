@@ -1,0 +1,2041 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin 审计日志原型</title>
+  <style>
+    :root {
+      --blue: #4372ff;
+      --blue-dark: #2b6bd9;
+      --blue-weak: #ecf5ff;
+      --blue-line: #e0ecff;
+      --green: #67c23a;
+      --green-weak: #f0f9eb;
+      --orange: #e6a23c;
+      --orange-weak: #fff7e6;
+      --red: #f56c6c;
+      --red-weak: #fef0f0;
+      --nav: #001529;
+      --nav-2: #000f1e;
+      --bg: #f9f9f9;
+      --panel: #ffffff;
+      --line: #ebeef5;
+      --line-light: #e4e7ed;
+      --line-strong: #dcdfe6;
+      --text-primary: #303133;
+      --text: #606266;
+      --muted: #909399;
+      --placeholder: #a8abb2;
+      --shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, Inter, sans-serif;
+      font-size: 16px;
+      line-height: 24px;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    select {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 208px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--nav);
+      color: #d5deea;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
+    }
+
+    .brand-logo {
+      width: 150px;
+      height: auto;
+      display: block;
+    }
+
+    .menu {
+      padding: 12px 8px 18px;
+      overflow: auto;
+    }
+
+    .menu-block {
+      margin-bottom: 14px;
+    }
+
+    .menu-title,
+    .menu-item {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-radius: 4px;
+      padding: 0 16px;
+      color: #aebbc9;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .menu-title::before,
+    .menu-item::before {
+      content: "";
+      width: 24px;
+      height: 24px;
+      flex: 0 0 auto;
+      border: 2px solid currentColor;
+      border-radius: 4px;
+      opacity: 0.9;
+    }
+
+    .menu-block:nth-child(1) .menu-title::before {
+      border-radius: 50%;
+    }
+
+    .menu-title {
+      color: #edf4ff;
+      font-weight: 500;
+    }
+
+    .menu-item {
+      margin-left: 36px;
+      min-height: 50px;
+      color: #aeb7c4;
+      border: 0;
+      width: calc(100% - 36px);
+      background: transparent;
+      text-align: left;
+    }
+
+    .menu-item.active {
+      margin: 8px 0;
+      width: 100%;
+      min-height: 50px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 600;
+    }
+
+    .menu-dark {
+      margin: 10px -4px;
+      padding: 8px 4px 10px;
+      background: var(--nav-2);
+    }
+
+    .main {
+      min-width: 0;
+      height: 100vh;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 54px;
+      flex: 0 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: #fff;
+      box-shadow: rgba(0, 0, 0, 0.06) 0 -1px 0 0 inset;
+    }
+
+    .title-stack {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .title-stack strong {
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .crumbs {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 22px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .top-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--blue);
+      background: var(--blue-weak);
+      border: 1px solid var(--blue-line);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line-light);
+      border-radius: 4px;
+    }
+
+    .filter-panel {
+      padding: 16px 16px 4px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(156px, 200px));
+      gap: 12px 16px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 21px;
+      font-weight: 400;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      padding: 0 11px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      font-size: 14px;
+      line-height: 32px;
+    }
+
+    input::placeholder {
+      color: var(--placeholder);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px var(--blue-weak);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      height: 32px;
+    }
+
+    .button {
+      height: 32px;
+      padding: 0 15px;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      color: var(--text);
+      background: #fff;
+      font-size: 14px;
+      line-height: 30px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .button.primary {
+      border-color: var(--blue);
+      color: #fff;
+      background: var(--blue);
+    }
+
+    .button.primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .button.text {
+      height: auto;
+      padding: 0;
+      border: 0;
+      color: var(--blue);
+      background: transparent;
+      line-height: 22px;
+      font-weight: 400;
+    }
+
+    .button.danger-text {
+      height: auto;
+      padding: 0;
+      border: 0;
+      color: var(--red);
+      background: transparent;
+      line-height: 22px;
+      font-weight: 400;
+    }
+
+    .download-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .download-row .button {
+      min-width: 132px;
+      text-align: center;
+    }
+
+    .meta-row {
+      min-height: 52px;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .table-panel {
+      margin-top: 16px;
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      min-height: 52px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .table-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .table-title strong {
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
+    }
+
+    .table-title span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .table-scroll {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1400px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      min-height: 48px;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      text-align: left;
+      vertical-align: middle;
+      background: #fff;
+    }
+
+    th {
+      color: var(--muted);
+      background: #fafafa;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    td {
+      line-height: 21px;
+    }
+
+    .sticky-op {
+      position: sticky;
+      right: 0;
+      z-index: 2;
+      box-shadow: -1px 0 0 var(--line);
+    }
+
+    th.sticky-op {
+      z-index: 3;
+      background: #fafafa;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 20px;
+      color: var(--text);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .resource-stack {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .resource-stack strong {
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 21px;
+      font-weight: 500;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line-strong);
+      color: var(--muted);
+      background: #f4f4f5;
+      font-size: 12px;
+      line-height: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.success {
+      color: var(--green);
+      background: var(--green-weak);
+      border-color: #e1f3d8;
+    }
+
+    .tag.warning {
+      color: var(--orange);
+      background: var(--orange-weak);
+      border-color: #faecd8;
+    }
+
+    .tag.danger {
+      color: var(--red);
+      background: var(--red-weak);
+      border-color: #fde2e2;
+    }
+
+    .tag.primary {
+      color: var(--blue);
+      background: var(--blue-weak);
+      border-color: var(--blue-line);
+    }
+
+    .tag.dark {
+      color: #fff;
+      background: #4b5563;
+      border-color: #4b5563;
+    }
+
+    .pagination {
+      min-height: 64px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .page-btn.active {
+      color: #fff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    .empty {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.28);
+      display: none;
+      justify-content: flex-end;
+    }
+
+    .drawer-mask.open {
+      display: flex;
+    }
+
+    .drawer {
+      width: min(720px, 100vw);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .drawer-header {
+      height: 56px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      flex: 0 0 auto;
+    }
+
+    .drawer-title {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .drawer-title strong {
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .drawer-title span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 18px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 32px;
+    }
+
+    .drawer-tabs {
+      height: 40px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+      flex: 0 0 auto;
+    }
+
+    .tab-btn {
+      height: 40px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--text);
+      background: transparent;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 500;
+    }
+
+    .drawer-body {
+      flex: 1 1 auto;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    .drawer-footer {
+      height: 64px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      flex: 0 0 auto;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 22px;
+      font-weight: 500;
+    }
+
+    .kv-grid {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+
+    .kv-label,
+    .kv-value {
+      min-height: 42px;
+      padding: 10px 12px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 21px;
+      word-break: break-word;
+    }
+
+    .kv-label {
+      color: var(--muted);
+      background: #fafafa;
+      font-weight: 500;
+    }
+
+    .kv-value {
+      color: var(--text);
+      background: #fff;
+    }
+
+    .diff-table,
+    .mini-table {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      font-size: 14px;
+    }
+
+    .diff-table th,
+    .diff-table td,
+    .mini-table th,
+    .mini-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .diff-table th,
+    .mini-table th {
+      background: #fafafa;
+    }
+
+    .diff-table td.changed {
+      color: var(--blue);
+      background: var(--blue-weak);
+    }
+
+    .code-box {
+      margin: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fafafa;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 20px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .file-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .file-row {
+      min-height: 56px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    .file-meta {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .file-meta strong {
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 21px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-meta span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      top: 72px;
+      z-index: 50;
+      min-width: 240px;
+      max-width: min(420px, calc(100vw - 48px));
+      padding: 10px 14px;
+      border-radius: 4px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--line-light);
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      line-height: 21px;
+      display: none;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .toast.success {
+      border-color: #e1f3d8;
+      color: var(--green);
+      background: var(--green-weak);
+    }
+
+    .toast.error {
+      border-color: #fde2e2;
+      color: var(--red);
+      background: var(--red-weak);
+    }
+
+    @media (max-width: 1180px) {
+      .filter-grid {
+        grid-template-columns: repeat(3, minmax(156px, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 64px minmax(0, 1fr);
+      }
+
+      .brand {
+        padding: 0 12px;
+      }
+
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        object-position: left center;
+      }
+
+      .menu-title span,
+      .menu-item span {
+        display: none;
+      }
+
+      .menu-title,
+      .menu-item,
+      .menu-item.active {
+        width: 48px;
+        margin-left: 0;
+        padding: 0 12px;
+        justify-content: center;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .filter-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .table-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        padding: 0 12px;
+      }
+
+      .top-actions {
+        gap: 6px;
+      }
+
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-actions {
+        justify-content: flex-start;
+      }
+
+      .drawer {
+        width: 100vw;
+      }
+
+      .kv-grid {
+        grid-template-columns: 96px minmax(0, 1fr);
+      }
+
+      .file-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-logo" src="assets/luteos-logo.svg" alt="LuteOS">
+      </div>
+      <nav class="menu" aria-label="IoT Admin">
+        <div class="menu-block">
+          <div class="menu-title"><span>概览</span></div>
+          <button class="menu-item"><span>首页</span></button>
+        </div>
+        <div class="menu-block">
+          <div class="menu-title"><span>智能产品</span></div>
+          <button class="menu-item"><span>产品列表</span></button>
+          <button class="menu-item"><span>产品配置</span></button>
+        </div>
+        <div class="menu-block">
+          <div class="menu-title"><span>配置中心</span></div>
+          <button class="menu-item"><span>白名单管理</span></button>
+          <button class="menu-item"><span>导出记录</span></button>
+        </div>
+        <div class="menu-block menu-dark">
+          <div class="menu-title"><span>系统管理</span></div>
+          <button class="menu-item"><span>用户权限</span></button>
+          <button class="menu-item active"><span>审计日志</span></button>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="title-stack">
+          <div class="crumbs">系统管理 / 审计日志</div>
+          <strong>审计日志</strong>
+        </div>
+        <div class="top-actions" aria-label="顶部操作">
+          <span class="top-dot">?</span>
+          <span class="top-dot">铃</span>
+          <span class="top-dot">审</span>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="panel filter-panel" aria-label="筛选条件">
+          <div class="filter-grid">
+            <div class="field">
+              <label for="dateFrom">开始时间</label>
+              <input id="dateFrom" type="datetime-local" value="2026-06-10T00:00">
+            </div>
+            <div class="field">
+              <label for="dateTo">结束时间</label>
+              <input id="dateTo" type="datetime-local" value="2026-06-10T23:59">
+            </div>
+            <div class="field">
+              <label for="actorFilter">主体</label>
+              <input id="actorFilter" type="text" placeholder="user">
+            </div>
+            <div class="field">
+              <label for="serialFilter">业务流水号</label>
+              <input id="serialFilter" type="text" placeholder="AUD-20260519">
+            </div>
+            <div class="field">
+              <label for="snapshotFilter">uid / 姓名快照</label>
+              <input id="snapshotFilter" type="text" placeholder="UID / 姓名">
+            </div>
+            <div class="field">
+              <label for="categoryFilter">分类</label>
+              <select id="categoryFilter">
+                <option value="">全部</option>
+                <option value="AUTH">AUTH</option>
+                <option value="DML">DML</option>
+                <option value="EXPORT">EXPORT</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="actionFilter">操作类型</label>
+              <select id="actionFilter">
+                <option value="">全部</option>
+                <option value="LOGIN">登录</option>
+                <option value="LOGOUT">登出</option>
+                <option value="INSERT">新增</option>
+                <option value="UPDATE">修改</option>
+                <option value="DELETE">删除</option>
+                <option value="EXPORT">导出</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="modeFilter">操作方式</label>
+              <select id="modeFilter">
+                <option value="">全部</option>
+                <option value="SINGLE">单体操作</option>
+                <option value="BATCH">批量操作</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="tableFilter">表名</label>
+              <select id="tableFilter">
+                <option value="">全部</option>
+                <option value="t_iot_product">t_iot_product</option>
+                <option value="t_iot_product_i18n">t_iot_product_i18n</option>
+                <option value="t_device">t_device</option>
+                <option value="t_config_i18n">t_config_i18n</option>
+                <option value="t_whitelist">t_whitelist</option>
+                <option value="t_app_version">t_app_version</option>
+                <option value="-">-</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="resourceFilter">业务主键</label>
+              <input id="resourceFilter" type="text" placeholder="输入 product id / device id / 其他ID">
+            </div>
+            <div class="field">
+              <label for="objectNameFilter">对象名称</label>
+              <input id="objectNameFilter" type="text" placeholder="精确或前缀搜索">
+            </div>
+            <div class="field">
+              <label for="resultFilter">结果</label>
+              <select id="resultFilter">
+                <option value="">全部</option>
+                <option value="SUCCESS">成功</option>
+                <option value="FAIL">失败</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ipFilter">IP</label>
+              <input id="ipFilter" type="text" placeholder="10.24">
+            </div>
+            <div class="field">
+              <label for="traceFilter">traceId</label>
+              <input id="traceFilter" type="text" placeholder="trace-">
+            </div>
+            <div class="filter-actions">
+              <button class="button primary" id="queryBtn" type="button">查询</button>
+              <button class="button" id="resetBtn" type="button">重置</button>
+            </div>
+          </div>
+          <div class="meta-row">
+            <span>当前筛选结果：<strong id="filteredCount">0</strong></span>
+          </div>
+        </section>
+
+        <section class="panel table-panel" aria-label="审计日志列表">
+          <div class="table-toolbar">
+            <div class="table-title">
+              <strong>审计日志列表</strong>
+              <span id="tableSummary">按操作时间倒序</span>
+            </div>
+            <span class="tag primary">审计日志不支持导出</span>
+          </div>
+          <div class="table-scroll">
+            <table id="auditTable">
+              <thead>
+                <tr>
+                  <th class="nowrap">操作时间</th>
+                  <th class="nowrap">业务流水号</th>
+                  <th class="nowrap">主体</th>
+                  <th class="nowrap">uid / 姓名快照</th>
+                  <th class="nowrap">分类</th>
+                  <th class="nowrap">操作类型</th>
+                  <th class="nowrap">操作方式</th>
+                  <th class="nowrap">表名</th>
+                  <th>业务主键</th>
+                  <th class="nowrap">对象名称</th>
+                  <th class="nowrap">结果</th>
+                  <th class="nowrap">IP</th>
+                  <th class="nowrap">traceId</th>
+                  <th class="nowrap sticky-op">操作</th>
+                </tr>
+              </thead>
+              <tbody id="auditTbody"></tbody>
+            </table>
+            <div id="emptyState" class="empty" hidden>暂无匹配的审计日志</div>
+          </div>
+          <div class="pagination">
+            <span id="pageInfo">共 0 条</span>
+            <button class="page-btn" id="prevPage" type="button">‹</button>
+            <button class="page-btn active" id="pageOne" type="button">1</button>
+            <button class="page-btn" id="nextPage" type="button">›</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask" aria-hidden="true">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <strong id="drawerTitle">审计详情</strong>
+          <span id="drawerSubTitle"></span>
+        </div>
+        <button class="close-btn" id="closeDrawer" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="drawer-tabs" id="drawerTabs"></div>
+      <div class="drawer-body" id="drawerBody"></div>
+      <div class="drawer-footer">
+        <button class="button" id="closeDrawerFooter" type="button">关闭</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const pageSize = 8;
+    const currentUser = {
+      uid: "UID-90001",
+      name: "审*",
+      account: "audit***@luteos.com",
+      ip: "10.24.*.*"
+    };
+
+    const labelMap = {
+      LOGIN: "登录",
+      LOGOUT: "登出",
+      INSERT: "新增",
+      UPDATE: "修改",
+      DELETE: "删除",
+      EXPORT: "导出"
+    };
+
+    const resultMap = {
+      SUCCESS: "成功",
+      FAIL: "失败"
+    };
+
+    const modeMap = {
+      SINGLE: "单体操作",
+      BATCH: "批量操作"
+    };
+
+    const tabs = [
+      { id: "basic", label: "基本信息" },
+      { id: "actor", label: "操作主体" },
+      { id: "context", label: "请求上下文" },
+      { id: "object", label: "操作对象" },
+      { id: "changes", label: "变更明细" },
+      { id: "batch", label: "批量信息" },
+      { id: "export", label: "导出信息" }
+    ];
+
+    let logs = [
+      {
+        serial: "AUD-20260610-0006",
+        time: "2026-06-10 17:42:18",
+        category: "EXPORT",
+        action: "EXPORT",
+        operationMode: "SINGLE",
+        module: "智能产品",
+        resourceType: "PRODUCT",
+        resourceId: "EXP-20260610-002",
+        tableName: "-",
+        resourceName: "产品列表导出",
+        objectIds: [
+          { type: "PRODUCT_ID", label: "Product ID", value: "EXP-20260610-002" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-10427",
+        actorName: "李*",
+        account: "li***@luteos.com",
+        channel: "MAIN",
+        ip: "10.21.*.*",
+        traceId: "trace-export-006",
+        requestUri: "/api/iot/products/export",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 2410,
+        summary: "导出产品列表",
+        exportInfo: { condition: "数据中心=亚太；状态=已启用；创建时间=2026-01-01 至 2026-06-10", rows: 86, columns: "产品ID、产品名称、品类、状态、创建时间", fileName: "product_list_20260610.xlsx", size: "74 KB", generatedAt: "2026-06-10 17:42:21" },
+        details: [],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { region: "APAC", status: "enabled", exportFields: ["productId", "productName", "status"] },
+        resultSnapshot: { rows: 86, fileName: "product_list_20260610.xlsx" }
+      },
+      {
+        serial: "AUD-20260610-0009",
+        time: "2026-06-10 17:18:42",
+        category: "DML",
+        action: "UPDATE",
+        operationMode: "BATCH",
+        batchId: "BATCH-IMP-UPD-20260610-01",
+        module: "智能产品",
+        resourceType: "PRODUCT",
+        resourceId: "IMPORT-PRODUCT-20260610-01",
+        tableName: "t_iot_product",
+        resourceName: "产品状态批量导入更新",
+        objectIds: [
+          { type: "PRODUCT_ID", label: "Product ID", value: "2042155626574495701-2042155626574542" },
+          { type: "OTHER_ID", label: "导入任务 ID", value: "IMPORT-PRODUCT-20260610-01" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-18324",
+        actorName: "王*",
+        account: "wang***@luteos.com",
+        channel: "MAIN",
+        ip: "10.24.*.*",
+        traceId: "trace-batch-update-009",
+        requestUri: "/api/iot/products/import-update",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 3188,
+        summary: "平台批量导入更新产品状态",
+        details: [
+          { table: "t_iot_product", type: "UPDATE", key: "BATCH-IMP-UPD-20260610-01", before: "多对象逐行值", after: "status 按导入文件更新", rows: 42 }
+        ],
+        batchInfo: {
+          batchId: "BATCH-IMP-UPD-20260610-01",
+          scope: "产品 ID：2042155626574495701-2042155626574542",
+          totalRows: 45,
+          successRows: 42,
+          failRows: 3,
+          targetValue: "按导入文件逐行更新 status、ownerUid",
+          fileName: "product_update_20260610.xlsx",
+          beforeCsv: { fileName: "product_update_before.csv", rows: [["t_iot_product", "UPDATE", "2042155626574495701", "status", "draft"], ["t_iot_product", "UPDATE", "2042155626574495702", "ownerUid", "UID-10001"]] },
+          afterCsv: { fileName: "product_update_after.csv", rows: [["t_iot_product", "UPDATE", "2042155626574495701", "status", "enabled"], ["t_iot_product", "UPDATE", "2042155626574495702", "ownerUid", "UID-18324"]] },
+          rowResults: [
+            { row: 2, key: "2042155626574495701", result: "成功", reason: "-" },
+            { row: 3, key: "2042155626574495702", result: "成功", reason: "-" },
+            { row: 7, key: "2042155626574495706", result: "失败", reason: "产品不存在" }
+          ]
+        },
+        changes: [
+          { field: "status", label: "产品状态", before: "按行记录", after: "按导入文件更新", changed: true },
+          { field: "ownerUid", label: "负责人 uid", before: "按行记录", after: "按导入文件更新", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { fileName: "product_update_20260610.xlsx", fields: ["productId", "status", "ownerUid"] },
+        resultSnapshot: { totalRows: 45, successRows: 42, failRows: 3 }
+      },
+      {
+        serial: "AUD-20260610-0008",
+        time: "2026-06-10 16:38:25",
+        category: "DML",
+        action: "DELETE",
+        operationMode: "BATCH",
+        batchId: "BATCH-DEL-20260610-02",
+        module: "配置中心",
+        resourceType: "WHITE_LIST",
+        resourceId: "WL-BATCH-20260610-02",
+        tableName: "t_whitelist",
+        resourceName: "测试白名单批量删除",
+        objectIds: [
+          { type: "OTHER_ID", label: "白名单 ID", value: "WL-10280 至 WL-10291" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-72109",
+        actorName: "赵*",
+        account: "zhao***@luteos.com",
+        channel: "MAIN",
+        ip: "10.23.*.*",
+        traceId: "trace-batch-delete-008",
+        requestUri: "/api/config/whitelist/batch-delete",
+        method: "DELETE",
+        result: "SUCCESS",
+        duration: 924,
+        summary: "平台批量删除白名单记录",
+        details: [
+          { table: "t_whitelist", type: "DELETE", key: "WL-BATCH-20260610-02", before: "status=enabled; type=test_account", after: "-", rows: 12 }
+        ],
+        batchInfo: {
+          batchId: "BATCH-DEL-20260610-02",
+          scope: "白名单 ID：WL-10280 至 WL-10291；类型=test_account",
+          totalRows: 12,
+          successRows: 12,
+          failRows: 0,
+          targetValue: "统一目标值：删除 / removed=true",
+          fileName: "-",
+          beforeCsv: { fileName: "whitelist_delete_before.csv", rows: [["t_whitelist", "DELETE", "WL-10280", "status", "enabled"], ["t_whitelist", "DELETE", "WL-10281", "type", "test_account"]] },
+          afterCsv: { fileName: "whitelist_delete_after.csv", rows: [["t_whitelist", "DELETE", "WL-10280", "status", "-"], ["t_whitelist", "DELETE", "WL-10281", "removed", "true"]] },
+          rowResults: [
+            { row: 1, key: "WL-10280", result: "成功", reason: "-" },
+            { row: 2, key: "WL-10281", result: "成功", reason: "-" },
+            { row: 3, key: "WL-10282", result: "成功", reason: "-" }
+          ]
+        },
+        changes: [
+          { field: "removed", label: "删除标记", before: "false", after: "true", changed: true },
+          { field: "status", label: "状态", before: "启用", after: "已删除", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { ids: ["WL-10280", "WL-10281", "WL-10282"], target: "delete" },
+        resultSnapshot: { totalRows: 12, successRows: 12, failRows: 0 }
+      },
+      {
+        serial: "AUD-20260610-0007",
+        time: "2026-06-10 15:05:31",
+        category: "DML",
+        action: "INSERT",
+        operationMode: "BATCH",
+        batchId: "BATCH-IMP-INS-20260610-01",
+        module: "智能产品",
+        resourceType: "PRODUCT",
+        resourceId: "IMPORT-PRODUCT-20260610-02",
+        tableName: "t_iot_product",
+        resourceName: "产品批量导入新增",
+        objectIds: [
+          { type: "PRODUCT_ID", label: "Product ID", value: "SKU-AP-8801 至 SKU-AP-8839" },
+          { type: "OTHER_ID", label: "导入任务 ID", value: "IMPORT-PRODUCT-20260610-02" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-10427",
+        actorName: "李*",
+        account: "li***@luteos.com",
+        channel: "MAIN",
+        ip: "10.21.*.*",
+        traceId: "trace-batch-insert-007",
+        requestUri: "/api/iot/products/import-create",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 2742,
+        summary: "平台批量导入新增产品",
+        details: [
+          { table: "t_iot_product", type: "INSERT", key: "BATCH-IMP-INS-20260610-01", before: "-", after: "按导入文件新增产品", rows: 38 }
+        ],
+        batchInfo: {
+          batchId: "BATCH-IMP-INS-20260610-01",
+          scope: "导入文件 product_create_20260610.xlsx 第 2-40 行",
+          totalRows: 39,
+          successRows: 38,
+          failRows: 1,
+          targetValue: "新增产品基础信息、品类、默认状态=draft",
+          fileName: "product_create_20260610.xlsx",
+          beforeCsv: { fileName: "product_create_before.csv", rows: [["t_iot_product", "INSERT", "SKU-AP-8801", "productCode", "-"], ["t_iot_product", "INSERT", "SKU-AP-8802", "status", "-"]] },
+          afterCsv: { fileName: "product_create_after.csv", rows: [["t_iot_product", "INSERT", "SKU-AP-8801", "productCode", "SKU-AP-8801"], ["t_iot_product", "INSERT", "SKU-AP-8802", "status", "draft"]] },
+          rowResults: [
+            { row: 2, key: "SKU-AP-8801", result: "成功", reason: "-" },
+            { row: 3, key: "SKU-AP-8802", result: "成功", reason: "-" },
+            { row: 8, key: "SKU-AP-8807", result: "失败", reason: "产品编码重复" }
+          ]
+        },
+        changes: [
+          { field: "productCode", label: "产品编码", before: "-", after: "按导入文件新增", changed: true },
+          { field: "status", label: "产品状态", before: "-", after: "草稿", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { fileName: "product_create_20260610.xlsx", defaultStatus: "draft" },
+        resultSnapshot: { totalRows: 39, successRows: 38, failRows: 1 }
+      },
+      {
+        serial: "AUD-20260610-0005",
+        time: "2026-06-10 16:08:03",
+        category: "DML",
+        action: "DELETE",
+        operationMode: "SINGLE",
+        module: "配置中心",
+        resourceType: "WHITE_LIST",
+        resourceId: "WL-10284",
+        tableName: "t_whitelist",
+        resourceName: "测试账号白名单",
+        objectIds: [
+          { type: "OTHER_ID", label: "白名单 ID", value: "WL-10284" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-72109",
+        actorName: "赵*",
+        account: "zhao***@luteos.com",
+        channel: "MAIN",
+        ip: "10.23.*.*",
+        traceId: "trace-delete-005",
+        requestUri: "/api/config/whitelist/WL-10284",
+        method: "DELETE",
+        result: "SUCCESS",
+        duration: 428,
+        summary: "删除白名单记录",
+        details: [
+          { table: "t_whitelist", type: "DELETE", key: "WL-10284", before: "status=enabled; type=test_account", after: "-", rows: 1 }
+        ],
+        changes: [
+          { field: "id", label: "白名单 ID", before: "WL-10284", after: "-", changed: true },
+          { field: "status", label: "状态", before: "启用", after: "已删除", changed: true },
+          { field: "ownerEmail", label: "账号邮箱", before: "qa***@luteos.com", after: "-", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { whitelistId: "WL-10284" },
+        resultSnapshot: { deleted: true }
+      },
+      {
+        serial: "AUD-20260610-0004",
+        time: "2026-06-10 14:26:50",
+        category: "AUTH",
+        action: "LOGOUT",
+        operationMode: "SINGLE",
+        module: "认证中心",
+        resourceType: "ACCOUNT",
+        resourceId: "UID-18324",
+        tableName: "-",
+        resourceName: "后台登出",
+        objectIds: [
+          { type: "OTHER_ID", label: "用户 uid", value: "UID-18324" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-18324",
+        actorName: "王*",
+        account: "wang***@luteos.com",
+        channel: "MAIN",
+        ip: "10.24.*.*",
+        traceId: "trace-auth-logout-004",
+        requestUri: "/api/auth/logout",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 118,
+        summary: "用户主动登出",
+        details: [],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { uid: "UID-18324" },
+        resultSnapshot: { success: true }
+      },
+      {
+        serial: "AUD-20260610-0003",
+        time: "2026-06-10 11:52:27",
+        category: "DML",
+        action: "INSERT",
+        operationMode: "SINGLE",
+        module: "App管理",
+        resourceType: "APP_VERSION",
+        resourceId: "APP-VER-20260610-03",
+        tableName: "t_app_version",
+        resourceName: "App 版本 6.8.0",
+        objectIds: [
+          { type: "OTHER_ID", label: "App 版本 ID", value: "APP-VER-20260610-03" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-10427",
+        actorName: "李*",
+        account: "li***@luteos.com",
+        channel: "MAIN",
+        ip: "10.21.*.*",
+        traceId: "trace-insert-003",
+        requestUri: "/api/app/versions",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 512,
+        summary: "新增 App 版本",
+        details: [
+          { table: "t_app_version", type: "INSERT", key: "APP-VER-20260610-03", before: "-", after: "version=6.8.0; status=draft", rows: 1 }
+        ],
+        changes: [
+          { field: "version", label: "版本号", before: "-", after: "6.8.0", changed: true },
+          { field: "status", label: "状态", before: "-", after: "草稿", changed: true },
+          { field: "creator", label: "创建人", before: "-", after: "李*", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { version: "6.8.0", creatorName: "李*", token: "[REDACTED]" },
+        resultSnapshot: { id: "APP-VER-20260610-03", status: "draft" }
+      },
+      {
+        serial: "AUD-20260610-0002",
+        time: "2026-06-10 10:02:05",
+        category: "DML",
+        action: "UPDATE",
+        operationMode: "SINGLE",
+        module: "智能产品",
+        resourceType: "PRODUCT",
+        resourceId: "2042155626574495745",
+        tableName: "t_iot_product",
+        resourceName: "LuteOS Air Purifier Pro",
+        objectIds: [
+          { type: "PRODUCT_ID", label: "Product ID", value: "2042155626574495745" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-18324",
+        actorName: "王*",
+        account: "wang***@luteos.com",
+        channel: "MAIN",
+        ip: "10.24.*.*",
+        traceId: "trace-product-002",
+        requestUri: "/api/iot/products/2042155626574495745",
+        method: "PUT",
+        result: "SUCCESS",
+        duration: 386,
+        summary: "修改产品信息",
+        details: [
+          { table: "t_iot_product", type: "UPDATE", key: "2042155626574495745", before: "status=draft", after: "status=enabled", rows: 1 }
+        ],
+        changes: [
+          { field: "status", label: "产品状态", before: "草稿", after: "已启用", changed: true },
+          { field: "ownerName", label: "负责人姓名", before: "王*", after: "王*", changed: false },
+          { field: "ownerEmail", label: "负责人邮箱", before: "wang***@luteos.com", after: "wang***@luteos.com", changed: false }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { productName: "LuteOS Air Purifier Pro", ownerName: "王*", ownerEmail: "wang***@luteos.com", token: "[REDACTED]" },
+        resultSnapshot: { productId: "2042155626574495745", status: "enabled" }
+      },
+      {
+        serial: "AUD-20260610-0010",
+        time: "2026-06-10 10:02:06",
+        category: "DML",
+        action: "UPDATE",
+        operationMode: "SINGLE",
+        module: "智能产品",
+        resourceType: "PRODUCT_I18N",
+        resourceId: "2042155626574495745:zh-CN",
+        tableName: "t_iot_product_i18n",
+        resourceName: "LuteOS Air Purifier Pro",
+        objectIds: [
+          { type: "PRODUCT_ID", label: "Product ID", value: "2042155626574495745" },
+          { type: "OTHER_ID", label: "语言", value: "zh-CN" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-18324",
+        actorName: "王*",
+        account: "wang***@luteos.com",
+        channel: "MAIN",
+        ip: "10.24.*.*",
+        traceId: "trace-product-002",
+        requestUri: "/api/iot/products/2042155626574495745",
+        method: "PUT",
+        result: "SUCCESS",
+        duration: 391,
+        summary: "修改产品多语言名称",
+        details: [
+          { table: "t_iot_product_i18n", type: "UPDATE", key: "2042155626574495745:zh-CN", before: "name=空气净化器 Pro", after: "name=LuteOS Air Purifier Pro", rows: 1 }
+        ],
+        changes: [
+          { field: "productName", label: "产品名称", before: "空气净化器 Pro", after: "LuteOS Air Purifier Pro", changed: true }
+        ],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { productName: "LuteOS Air Purifier Pro", lang: "zh-CN", token: "[REDACTED]" },
+        resultSnapshot: { productId: "2042155626574495745", lang: "zh-CN" }
+      },
+      {
+        serial: "AUD-20260610-0001",
+        time: "2026-06-10 09:11:03",
+        category: "AUTH",
+        action: "LOGIN",
+        operationMode: "SINGLE",
+        module: "认证中心",
+        resourceType: "ACCOUNT",
+        resourceId: "UID-18324",
+        tableName: "-",
+        resourceName: "后台登录",
+        objectIds: [
+          { type: "OTHER_ID", label: "用户 uid", value: "UID-18324" }
+        ],
+        actorType: "USER",
+        actor: "user",
+        actorUid: "UID-18324",
+        actorName: "王*",
+        account: "wang***@luteos.com",
+        channel: "MAIN",
+        ip: "10.24.*.*",
+        traceId: "trace-auth-login-001",
+        requestUri: "/api/auth/login",
+        method: "POST",
+        result: "SUCCESS",
+        duration: 215,
+        summary: "登录成功",
+        details: [],
+        userAgent: "Chrome 124 / macOS",
+        requestSnapshot: { account: "wang***@luteos.com", password: "[REDACTED]" },
+        resultSnapshot: { uid: "UID-18324", authChannel: "MAIN" }
+      }
+    ];
+
+    logs.sort((a, b) => new Date(b.time.replace(" ", "T")).getTime() - new Date(a.time.replace(" ", "T")).getTime());
+
+    let filteredLogs = [...logs];
+    let currentPage = 1;
+    let activeTab = "basic";
+    let selectedLog = null;
+
+    const byId = (id) => document.getElementById(id);
+
+    function parseTime(value) {
+      return new Date(value.replace(" ", "T")).getTime();
+    }
+
+    function getFilterValues() {
+      return {
+        from: byId("dateFrom").value,
+        to: byId("dateTo").value,
+        actor: byId("actorFilter").value.trim().toLowerCase(),
+        serial: byId("serialFilter").value.trim().toLowerCase(),
+        snapshot: byId("snapshotFilter").value.trim().toLowerCase(),
+        action: byId("actionFilter").value,
+        mode: byId("modeFilter").value,
+        category: byId("categoryFilter").value,
+        tableName: byId("tableFilter").value,
+        resource: byId("resourceFilter").value.trim().toLowerCase(),
+        objectName: byId("objectNameFilter").value.trim().toLowerCase(),
+        result: byId("resultFilter").value,
+        ip: byId("ipFilter").value.trim().toLowerCase(),
+        traceId: byId("traceFilter").value.trim().toLowerCase()
+      };
+    }
+
+    function applyFilters() {
+      const f = getFilterValues();
+      const fromTs = f.from ? new Date(f.from).getTime() : Number.NEGATIVE_INFINITY;
+      const toTs = f.to ? new Date(f.to).getTime() : Number.POSITIVE_INFINITY;
+
+      filteredLogs = logs.filter((log) => {
+        const ts = parseTime(log.time);
+        const snapshotText = [log.actorUid, log.actorName].join(" ").toLowerCase();
+        const objectIdText = [log.resourceId, ...(log.objectIds || []).map((item) => item.value)].join(" ").toLowerCase();
+        const objectName = String(log.resourceName || "").toLowerCase();
+        return ts >= fromTs &&
+          ts <= toTs &&
+          (!f.actor || log.actor.toLowerCase().includes(f.actor)) &&
+          (!f.serial || log.serial.toLowerCase().includes(f.serial)) &&
+          (!f.snapshot || snapshotText.includes(f.snapshot)) &&
+          (!f.action || log.action === f.action) &&
+          (!f.mode || log.operationMode === f.mode) &&
+          (!f.category || log.category === f.category) &&
+          (!f.tableName || log.tableName === f.tableName) &&
+          (!f.resource || objectIdText.includes(f.resource)) &&
+          (!f.objectName || objectName === f.objectName || objectName.startsWith(f.objectName)) &&
+          (!f.result || log.result === f.result) &&
+          (!f.ip || log.ip.toLowerCase().includes(f.ip)) &&
+          (!f.traceId || log.traceId.toLowerCase().includes(f.traceId));
+      });
+
+      currentPage = 1;
+      renderTable();
+      showToast("查询完成", "success");
+    }
+
+    function resetFilters() {
+      byId("dateFrom").value = "2026-06-10T00:00";
+      byId("dateTo").value = "2026-06-10T23:59";
+      ["actorFilter", "serialFilter", "snapshotFilter", "resourceFilter", "objectNameFilter", "ipFilter", "traceFilter"].forEach((id) => byId(id).value = "");
+      ["actionFilter", "modeFilter", "categoryFilter", "tableFilter", "resultFilter"].forEach((id) => byId(id).value = "");
+      filteredLogs = [...logs];
+      currentPage = 1;
+      renderTable();
+      showToast("已重置筛选条件", "success");
+    }
+
+    function resultTag(result) {
+      if (result === "SUCCESS") return "success";
+      if (result === "FAIL") return "danger";
+      return "warning";
+    }
+
+    function categoryTag(category) {
+      if (category === "AUTH") return "primary";
+      if (category === "EXPORT") return "warning";
+      if (category === "DML") return "primary";
+      return "";
+    }
+
+    function actorLabel(log) {
+      if (log.actorType === "UNKNOWN") return '<span class="tag">unknown</span>';
+      return '<span class="tag primary">user</span>';
+    }
+
+    function renderTable() {
+      const tbody = byId("auditTbody");
+      const empty = byId("emptyState");
+      const table = byId("auditTable");
+      const total = filteredLogs.length;
+      const maxPage = Math.max(1, Math.ceil(total / pageSize));
+      currentPage = Math.min(currentPage, maxPage);
+      const start = (currentPage - 1) * pageSize;
+      const pageRows = filteredLogs.slice(start, start + pageSize);
+
+      tbody.innerHTML = pageRows.map((log) => `
+        <tr>
+          <td class="nowrap">${log.time}</td>
+          <td class="mono nowrap">${log.serial}</td>
+          <td>${actorLabel(log)}</td>
+          <td>
+            <div class="resource-stack">
+              <strong>${log.actorUid}</strong>
+              <span class="muted">${log.actorName || "-"}</span>
+            </div>
+          </td>
+          <td><span class="tag ${categoryTag(log.category)}">${log.category}</span></td>
+          <td class="nowrap">${labelMap[log.action] || log.action}</td>
+          <td class="nowrap">${modeMap[log.operationMode] || log.operationMode || "-"}</td>
+          <td class="mono nowrap">${log.tableName || "-"}</td>
+          <td>
+            <div class="resource-stack">
+              <strong>${log.resourceId}</strong>
+              <span class="muted">${log.resourceType}</span>
+            </div>
+          </td>
+          <td class="nowrap">${log.resourceName || "-"}</td>
+          <td><span class="tag ${resultTag(log.result)}">${resultMap[log.result] || log.result}</span></td>
+          <td class="nowrap">${log.ip}</td>
+          <td class="mono nowrap">${log.traceId}</td>
+          <td class="sticky-op"><button class="button text" type="button" data-serial="${log.serial}">查看</button></td>
+        </tr>
+      `).join("");
+
+      table.hidden = total === 0;
+      empty.hidden = total !== 0;
+      byId("filteredCount").textContent = total;
+      byId("tableSummary").textContent = `按操作时间倒序，当前第 ${currentPage} / ${maxPage} 页`;
+      byId("pageInfo").textContent = `共 ${total} 条`;
+      byId("pageOne").textContent = String(currentPage);
+      byId("prevPage").disabled = currentPage === 1;
+      byId("nextPage").disabled = currentPage === maxPage;
+
+      tbody.querySelectorAll("[data-serial]").forEach((btn) => {
+        btn.addEventListener("click", () => openDrawer(btn.dataset.serial));
+      });
+    }
+
+    function openDrawer(serial, preferredTab = "basic") {
+      selectedLog = logs.find((item) => item.serial === serial);
+      if (!selectedLog) return;
+      activeTab = tabs.some((tab) => tab.id === preferredTab) ? preferredTab : "basic";
+      renderDrawer();
+      byId("drawerMask").classList.add("open");
+      byId("drawerMask").setAttribute("aria-hidden", "false");
+    }
+
+    function closeDrawer() {
+      byId("drawerMask").classList.remove("open");
+      byId("drawerMask").setAttribute("aria-hidden", "true");
+      selectedLog = null;
+    }
+
+    function renderTabs() {
+      byId("drawerTabs").innerHTML = tabs.map((tab) => `
+        <button class="tab-btn ${activeTab === tab.id ? "active" : ""}" type="button" data-tab="${tab.id}">${tab.label}</button>
+      `).join("");
+      byId("drawerTabs").querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeTab = btn.dataset.tab;
+          renderDrawer();
+        });
+      });
+    }
+
+    function renderDrawer() {
+      if (!selectedLog) return;
+      byId("drawerTitle").textContent = `${labelMap[selectedLog.action] || selectedLog.action} - ${selectedLog.resourceName}`;
+      byId("drawerSubTitle").textContent = `${selectedLog.serial} / ${selectedLog.traceId}`;
+      renderTabs();
+      const content = {
+        basic: renderBasic,
+        actor: renderActor,
+        context: renderContext,
+        object: renderObject,
+        changes: renderChanges,
+        batch: renderBatch,
+        export: renderExport
+      }[activeTab]();
+      byId("drawerBody").innerHTML = content;
+      byId("drawerBody").querySelectorAll("[data-csv]").forEach((btn) => {
+        btn.addEventListener("click", () => downloadBatchCsv(btn.dataset.csv));
+      });
+    }
+
+    function kv(rows) {
+      return `<div class="kv-grid">${rows.map(([label, value]) => `
+        <div class="kv-label">${label}</div>
+        <div class="kv-value">${value ?? "-"}</div>
+      `).join("")}</div>`;
+    }
+
+    function renderBasic() {
+      return `
+        <section class="section">
+          <h3 class="section-title">基本信息</h3>
+          ${kv([
+            ["审计流水号", selectedLog.serial],
+            ["traceId", `<span class="mono">${selectedLog.traceId}</span>`],
+            ["审计分类", `<span class="tag ${categoryTag(selectedLog.category)}">${selectedLog.category}</span>`],
+            ["操作动作", labelMap[selectedLog.action] || selectedLog.action],
+            ["操作方式", modeMap[selectedLog.operationMode] || selectedLog.operationMode || "-"],
+            ["批次 ID", selectedLog.batchId || "-"],
+            ["操作时间", selectedLog.time],
+            ["操作结果", `<span class="tag ${resultTag(selectedLog.result)}">${resultMap[selectedLog.result] || selectedLog.result}</span>`],
+            ["错误码", selectedLog.errorCode || "-"],
+            ["错误信息", selectedLog.errorMsg || "-"],
+            ["耗时", `${selectedLog.duration || 0} ms`],
+            ["摘要", selectedLog.summary]
+          ])}
+        </section>
+      `;
+    }
+
+    function renderActor() {
+      return `
+        <section class="section">
+          <h3 class="section-title">操作主体</h3>
+          ${kv([
+            ["主体类型", selectedLog.actorType],
+            ["操作主体", selectedLog.actor],
+            ["用户 uid", selectedLog.actorUid],
+            ["姓名快照", selectedLog.actorName],
+            ["账号标识", selectedLog.account],
+            ["认证渠道", selectedLog.channel]
+          ])}
+        </section>
+      `;
+    }
+
+    function renderContext() {
+      return `
+        <section class="section">
+          <h3 class="section-title">请求上下文</h3>
+          ${kv([
+            ["HTTP 方法", selectedLog.method],
+            ["请求 URI", `<span class="mono">${selectedLog.requestUri}</span>`],
+            ["客户端 IP", selectedLog.ip],
+            ["User-Agent", selectedLog.userAgent || "-"],
+            ["请求摘要", `<pre class="code-box">${escapeHtml(JSON.stringify(selectedLog.requestSnapshot || {}, null, 2))}</pre>`],
+            ["返回摘要", `<pre class="code-box">${escapeHtml(JSON.stringify(selectedLog.resultSnapshot || {}, null, 2))}</pre>`]
+          ])}
+        </section>
+      `;
+    }
+
+    function renderObject() {
+      const objectIds = selectedLog.objectIds || [];
+      const valueByType = (type) => {
+        const match = objectIds.find((item) => item.type === type);
+        return match ? match.value : "-";
+      };
+      const otherIds = objectIds
+        .filter((item) => item.type === "OTHER_ID")
+        .map((item) => item.label === "其他 ID" ? item.value : `${item.label}: ${item.value}`)
+        .join("；") || "-";
+
+      return `
+        <section class="section">
+          <h3 class="section-title">操作对象</h3>
+          ${kv([
+            ["表名", selectedLog.tableName || "-"],
+            ["模块", selectedLog.module],
+            ["资源类型", selectedLog.resourceType],
+            ["业务主键", selectedLog.resourceId],
+            ["业务对象", selectedLog.resourceName],
+            ["Product ID", valueByType("PRODUCT_ID")],
+            ["Device ID", valueByType("DEVICE_ID")],
+            ["其他 ID", otherIds]
+          ])}
+        </section>
+      `;
+    }
+
+    function renderChanges() {
+      const changes = selectedLog.changes || [];
+      const details = selectedLog.details || [];
+      const diff = changes.length ? `
+        <table class="diff-table">
+          <thead><tr><th>字段</th><th>变更前</th><th>变更后</th></tr></thead>
+          <tbody>
+            ${changes.map((item) => `
+              <tr>
+                <td>${item.label}</td>
+                <td>${item.before ?? "-"}</td>
+                <td class="${item.changed ? "changed" : ""}">${item.after ?? "-"}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : `<div class="empty">当前日志无单体变更前后数据</div>`;
+
+      const detailTable = details.length ? `
+        <table class="mini-table">
+          <thead><tr><th>表 / 资源</th><th>类型</th><th>业务键</th><th>变更前</th><th>变更后</th><th>行数</th></tr></thead>
+          <tbody>
+            ${details.map((item) => `
+              <tr>
+                <td>${item.table}</td>
+                <td>${item.type}</td>
+                <td>${item.key}</td>
+                <td>${item.before}</td>
+                <td>${item.after}</td>
+                <td>${item.rows}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : "";
+
+      return `
+        <section class="section">
+          <h3 class="section-title">字段差异</h3>
+          ${diff}
+        </section>
+        <section class="section">
+          <h3 class="section-title">明细记录</h3>
+          ${detailTable || `<div class="empty">当前日志无数据库变更明细</div>`}
+        </section>
+      `;
+    }
+
+    function renderBatch() {
+      const info = selectedLog.batchInfo;
+      if (!info) {
+        return `<div class="empty">当前日志不是平台批量动作</div>`;
+      }
+
+      const rowTable = (info.rowResults || []).length ? `
+        <table class="mini-table">
+          <thead><tr><th>行号</th><th>业务键</th><th>结果</th><th>原因</th></tr></thead>
+          <tbody>
+            ${info.rowResults.map((item) => `
+              <tr>
+                <td>${item.row}</td>
+                <td>${item.key}</td>
+                <td>${item.result}</td>
+                <td>${item.reason}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : `<div class="empty">当前批次暂无逐行结果</div>`;
+
+      return `
+        <section class="section">
+          <h3 class="section-title">批量信息</h3>
+          ${kv([
+            ["操作方式", modeMap[selectedLog.operationMode] || selectedLog.operationMode],
+            ["批次 ID", info.batchId],
+            ["对象范围", info.scope],
+            ["总行数", info.totalRows],
+            ["成功行数", info.successRows],
+            ["失败行数", info.failRows],
+            ["统一目标值", info.targetValue],
+            ["导入文件名", info.fileName],
+            ["变更前 CSV", info.beforeCsv?.fileName || "-"],
+            ["变更后 CSV", info.afterCsv?.fileName || "-"]
+          ])}
+          <div class="download-row">
+            <button class="button" type="button" data-csv="before">变更前 CSV</button>
+            <button class="button" type="button" data-csv="after">变更后 CSV</button>
+          </div>
+        </section>
+        <section class="section">
+          <h3 class="section-title">逐行结果</h3>
+          ${rowTable}
+        </section>
+      `;
+    }
+
+    function csvEscape(value) {
+      return '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    }
+
+    function buildCsv(file, kind) {
+      const header = kind === "before"
+        ? ["表/资源", "类型", "业务键", "变更字段", "变更前值"]
+        : ["表/资源", "类型", "业务键", "变更字段", "变更后值"];
+      const rows = file?.rows || [];
+      return [header, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+    }
+
+    function downloadBatchCsv(kind) {
+      const info = selectedLog?.batchInfo;
+      const file = kind === "before" ? info?.beforeCsv : info?.afterCsv;
+      if (!file) {
+        showToast("当前批量记录暂无 CSV 文件", "danger");
+        return;
+      }
+      const blob = new Blob(["\ufeff" + buildCsv(file, kind)], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast(`${kind === "before" ? "变更前" : "变更后"} CSV 已生成`, "success");
+    }
+
+    function renderExport() {
+      const info = selectedLog.exportInfo;
+      if (!info) {
+        return `<div class="empty">当前日志不是导出数据行为</div>`;
+      }
+      return `
+        <section class="section">
+          <h3 class="section-title">导出信息</h3>
+          ${kv([
+            ["导出条件", info.condition],
+            ["导出行数", info.rows],
+            ["字段范围", info.columns],
+            ["文件名", info.fileName],
+            ["文件大小", info.size],
+            ["生成时间", info.generatedAt]
+          ])}
+        </section>
+      `;
+    }
+
+    function showToast(message, type) {
+      const toast = byId("toast");
+      toast.textContent = message;
+      toast.className = `toast show ${type || ""}`;
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.className = "toast";
+      }, 2200);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    byId("queryBtn").addEventListener("click", applyFilters);
+    byId("resetBtn").addEventListener("click", resetFilters);
+    byId("prevPage").addEventListener("click", () => {
+      currentPage = Math.max(1, currentPage - 1);
+      renderTable();
+    });
+    byId("nextPage").addEventListener("click", () => {
+      const maxPage = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+      currentPage = Math.min(maxPage, currentPage + 1);
+      renderTable();
+    });
+    byId("closeDrawer").addEventListener("click", closeDrawer);
+    byId("closeDrawerFooter").addEventListener("click", closeDrawer);
+    byId("drawerMask").addEventListener("click", (event) => {
+      if (event.target === byId("drawerMask")) closeDrawer();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeDrawer();
+    });
+
+    renderTable();
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialSerial = initialParams.get("serial");
+    const initialTab = initialParams.get("tab") || "basic";
+    if (initialSerial) {
+      openDrawer(initialSerial, initialTab);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Prototypes</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --accent: #2563eb;
+      --accent-soft: #e8f0ff;
+      --shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 48px 0 64px;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      display: flex;
+      min-height: 156px;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .path {
+      align-self: flex-start;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 5px 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      main {
+        width: min(100% - 24px, 1120px);
+        padding-top: 32px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .card {
+        min-height: 132px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Interactive Prototypes</h1>
+      <p class="lead">集中访问已整理为静态页面的交互式原型。每个原型保留独立路径，便于直接分享和浏览。</p>
+    </header>
+
+    <section class="grid" aria-label="Prototype list">
+      <a class="card" href="prototypes/controlled-release-strategy/">
+        <div>
+          <p class="title">IoT Admin 产品管理主线可控开放原型</p>
+          <p class="meta">产品管理主线、白名单、扩展程序、固件配置等流程。</p>
+        </div>
+        <span class="path">/prototypes/controlled-release-strategy/</span>
+      </a>
+
+      <a class="card" href="prototypes/iot-admin-audit-log/">
+        <div>
+          <p class="title">IoT Admin 审计日志原型</p>
+          <p class="meta">审计日志列表、详情、筛选与对象追踪体验。</p>
+        </div>
+        <span class="path">/prototypes/iot-admin-audit-log/</span>
+      </a>
+
+      <a class="card" href="prototypes/platform-audio-resource-pool/">
+        <div>
+          <p class="title">配置中心 - 音源管理</p>
+          <p class="meta">音源资源池、产品配置和管理流程。</p>
+        </div>
+        <span class="path">/prototypes/platform-audio-resource-pool/</span>
+      </a>
+
+      <a class="card" href="prototypes/device-assistant-cloud-config/">
+        <div>
+          <p class="title">IoT Admin 设备助手云端配置原型</p>
+          <p class="meta">设备助手云端配置、新手指导与高级配置。</p>
+        </div>
+        <span class="path">/prototypes/device-assistant-cloud-config/</span>
+      </a>
+
+      <a class="card" href="prototypes/platform-2026-h2-plan-report/">
+        <div>
+          <p class="title">平台组2026年下半年整体规划</p>
+          <p class="meta">平台组规划的交互式演示页面。</p>
+        </div>
+        <span class="path">/prototypes/platform-2026-h2-plan-report/</span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
