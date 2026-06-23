@@ -1287,6 +1287,9 @@
   <script>
     const languages = ["英文（默认）", "法语", "德语", "西班牙语", "意大利语", "阿拉伯语", "葡萄牙语", "中文", "繁体中文", "越南语", "印尼语", "泰语", "马来语", "日语", "俄语", "菲律宾语"];
     const EXISTING_STEP_LIMIT = 10;
+    const BLE_SINGLE_STEP = "单步骤配网";
+    const BLE_MULTI_STEP = "多步骤配网";
+    const BLE_SUB_ENTRIES = [BLE_SINGLE_STEP, BLE_MULTI_STEP];
 
     const productMeta = {
       wifi: {
@@ -1384,7 +1387,7 @@
     const state = {
       productType: "wifi",
       entry: "AP配网",
-      subEntry: "新版入口",
+      subEntry: BLE_SINGLE_STEP,
       scenario: "current",
       language: "英文（默认）",
       targetConfigs: {
@@ -1406,16 +1409,16 @@
           title: "目标入口范围",
           location: "配网引导 > 入口按钮组",
           trigger: "产品进入配网引导页时展示。",
-          response: "入口按钮组保持现状。Wi-Fi 仅扫码配网追加扩展字段；BLE 仅蓝牙配网 + 旧版入口追加扩展字段。",
-          rules: ["不新增独立多步骤配网入口。", "AP配网、SmartConfig配网、蓝牙配网 + 新版入口、蓝牙扫码配对均不新增本期扩展字段。"]
+          response: "入口按钮组保持现状。Wi-Fi 仅扫码配网追加扩展字段；BLE 仅蓝牙配网 + 多步骤配网追加扩展字段。",
+          rules: ["不新增一级独立多步骤配网入口。", "AP配网、SmartConfig配网、蓝牙配网 + 单步骤配网、蓝牙扫码配对均不新增本期扩展字段。"]
         },
         {
           id: "2",
           title: "BLE 子入口展示规则",
           location: "配网引导 > BLE 子入口",
-          trigger: "用户选择 BLE 产品下的蓝牙配网。",
-          response: "继续展示新版入口 / 旧版入口；仅旧版入口展示本期扩展字段。",
-          rules: ["新版入口保持原字段和校验。", "蓝牙扫码配对不新增本期扩展字段。"]
+          trigger: "用户选择 BLE 产品下的蓝牙配网或蓝牙扫码配对。",
+          response: "继续展示子入口，名称调整为单步骤配网 / 多步骤配网；仅蓝牙配网 + 多步骤配网展示本期扩展字段。",
+          rules: ["单步骤配网保持原字段和校验。", "蓝牙扫码配对不新增本期扩展字段。"]
         },
         {
           id: "3",
@@ -1431,7 +1434,7 @@
           location: "配网引导 > 步骤详情",
           trigger: "当前语言下目标配置路径已有配置。",
           response: "按现有样例展示纵向步骤列表和描述表，并在目标路径中回显辅助文案选中能力、引导文案和子步骤。",
-          rules: ["不新增统计摘要面板。", "Wi-Fi 扫码配网与 BLE 蓝牙配网 + 旧版入口使用同一套扩展字段回显规则。"]
+          rules: ["不新增统计摘要面板。", "Wi-Fi 扫码配网与 BLE 蓝牙配网 + 多步骤配网使用同一套扩展字段回显规则。"]
         },
         {
           id: "5",
@@ -1445,7 +1448,7 @@
           id: "12",
           title: "非目标入口保护",
           location: "配网引导 > 非目标入口",
-          trigger: "用户切回 AP配网、SmartConfig配网、蓝牙配网 + 新版入口或蓝牙扫码配对。",
+          trigger: "用户切回 AP配网、SmartConfig配网、蓝牙配网 + 单步骤配网或蓝牙扫码配对。",
           response: "非目标入口字段、校验、查看态和子入口逻辑保持不变。",
           rules: ["本需求只在两个目标配置路径追加扩展字段。"]
         }
@@ -1506,11 +1509,15 @@
 
     function isTargetEntry() {
       return (state.productType === "wifi" && state.entry === "扫码配网")
-        || (state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === "旧版入口");
+        || (state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === BLE_MULTI_STEP);
     }
 
-    function isBleNewEntry() {
-      return state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === "新版入口";
+    function hasBleSubEntries() {
+      return state.productType === "ble" && (state.entry === "蓝牙配网" || state.entry === "蓝牙扫码配对");
+    }
+
+    function isBleSingleStepEntry() {
+      return hasBleSubEntries() && state.subEntry === BLE_SINGLE_STEP;
     }
 
     function activeProduct() {
@@ -1526,17 +1533,17 @@
         state.entry = "扫码配网";
       } else {
         state.entry = "蓝牙配网";
-        state.subEntry = "旧版入口";
+        state.subEntry = BLE_MULTI_STEP;
       }
       state.scenario = activeTargetSteps() ? "target-filled" : "target-empty";
     }
 
     function drawerTitle() {
       if (state.drawerIsTarget) {
-        return state.productType === "wifi" ? "编辑扫码配网" : "编辑蓝牙配网-旧版入口";
+        return state.productType === "wifi" ? "编辑扫码配网" : `编辑蓝牙配网-${BLE_MULTI_STEP}`;
       }
-      if (isBleNewEntry()) return "编辑配网引导";
-      if (state.productType === "ble" && state.entry === "蓝牙配网") return `编辑蓝牙配网-${state.subEntry}`;
+      if (isBleSingleStepEntry()) return "编辑配网引导";
+      if (hasBleSubEntries()) return `编辑${state.entry}-${state.subEntry}`;
       return `编辑${state.entry}`;
     }
 
@@ -1571,9 +1578,9 @@
         btn.textContent = entry;
         btn.addEventListener("click", () => {
           state.entry = entry;
-          if (state.productType === "ble" && entry === "蓝牙配网") state.subEntry = "新版入口";
+          if (state.productType === "ble" && (entry === "蓝牙配网" || entry === "蓝牙扫码配对")) state.subEntry = BLE_SINGLE_STEP;
           state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : (entry === activeProduct().defaultEntry ? "current" : "non-target");
-          setAnnotation(state.productType === "ble" && entry === "蓝牙配网" ? "2" : (isTargetEntry() ? "4" : "12"));
+          setAnnotation(hasBleSubEntries() ? "2" : (isTargetEntry() ? "4" : "12"));
           renderAll();
         });
         group.appendChild(btn);
@@ -1581,15 +1588,15 @@
 
       const sub = el("subEntryArea");
       sub.innerHTML = "";
-      if (state.productType === "ble" && state.entry === "蓝牙配网") {
-        ["新版入口", "旧版入口"].forEach((item) => {
+      if (hasBleSubEntries()) {
+        BLE_SUB_ENTRIES.forEach((item) => {
           const btn = document.createElement("button");
           btn.className = "seg-button" + (state.subEntry === item ? " active" : "");
           btn.textContent = item;
           btn.addEventListener("click", () => {
             state.subEntry = item;
             state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : "non-target";
-            setAnnotation(item === "旧版入口" ? "4" : "12");
+            setAnnotation(isTargetEntry() ? "4" : "12");
             renderAll();
           });
           sub.appendChild(btn);
@@ -1633,7 +1640,7 @@
         }
       } else if (state.productType === "wifi" && state.entry === "AP配网") {
         view.innerHTML = renderSteps(currentGuideSteps, false);
-      } else if (state.productType === "ble" && state.entry === "蓝牙配网") {
+      } else if (hasBleSubEntries()) {
         view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
       } else {
         view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
@@ -1716,7 +1723,7 @@
       }
 
       const form = el("drawerForm");
-      form.classList.toggle("simple-guide", isBleNewEntry() && !state.drawerIsTarget);
+      form.classList.toggle("simple-guide", isBleSingleStepEntry() && !state.drawerIsTarget);
       form.innerHTML = state.drawerSteps.map((step, index) => renderFormStep(step, index)).join("");
       wireFormEvents();
       wireAnchors();
@@ -1736,7 +1743,7 @@
 
     function renderFormStep(step, index) {
       const showExtensions = state.drawerIsTarget;
-      const simpleBleGuide = isBleNewEntry() && !state.drawerIsTarget;
+      const simpleBleGuide = isBleSingleStepEntry() && !state.drawerIsTarget;
       const showOptionalLegacyFields = !simpleBleGuide;
       const active = index === state.activeDrawerStep;
       const display = active ? "" : "display:none";
@@ -1937,7 +1944,7 @@
       el("stateChips").innerHTML = [
         state.productType === "wifi" ? "Wi-Fi 样例" : "BLE 样例",
         state.entry,
-        state.productType === "ble" && state.entry === "蓝牙配网" ? state.subEntry : "",
+        hasBleSubEntries() ? state.subEntry : "",
         state.language,
         state.drawerOpen ? "编辑抽屉" : "查看态"
       ].filter(Boolean).map(text => `<span class="state-chip">${text}</span>`).join("");
@@ -2005,7 +2012,7 @@
     el("switchProductButton").addEventListener("click", () => {
       state.productType = state.productType === "wifi" ? "ble" : "wifi";
       state.entry = activeProduct().defaultEntry;
-      state.subEntry = "新版入口";
+      state.subEntry = BLE_SINGLE_STEP;
       state.scenario = "current";
       state.language = "英文（默认）";
       state.drawerOpen = false;
@@ -2022,7 +2029,7 @@
       if (value === "current") {
         state.scenario = "current";
         state.entry = activeProduct().defaultEntry;
-        state.subEntry = "新版入口";
+        state.subEntry = BLE_SINGLE_STEP;
         state.language = "英文（默认）";
         setAnnotation("12");
       }
@@ -2047,7 +2054,7 @@
           state.entry = "SmartConfig配网";
         } else {
           state.entry = "蓝牙配网";
-          state.subEntry = "新版入口";
+          state.subEntry = BLE_SINGLE_STEP;
         }
         setAnnotation("12");
       }
