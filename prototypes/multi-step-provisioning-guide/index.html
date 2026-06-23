@@ -406,7 +406,7 @@
     .top-line {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: var(--gap-16);
       margin-bottom: 12px;
     }
@@ -442,24 +442,6 @@
       border-color: var(--el-color-primary);
       color: #fff;
       z-index: 1;
-    }
-
-    .scenario-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--el-text-color-secondary);
-      font-size: 13px;
-    }
-
-    .scenario-bar select {
-      height: 32px;
-      width: 176px;
-      border: 1px solid var(--el-border-color);
-      border-radius: var(--radius);
-      padding: 0 10px;
-      background: #fff;
-      color: var(--el-text-color-regular);
     }
 
     .sub-entry {
@@ -1007,6 +989,57 @@
       font-size: 12px;
     }
 
+    .annotation-controls {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fbfcff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .annotation-controls-title {
+      color: var(--el-text-color-primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .annotation-control-row {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .annotation-control-row select {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+    }
+
+    .annotation-button {
+      height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .annotation-button:hover {
+      border-color: var(--el-color-primary);
+      color: var(--el-color-primary);
+    }
+
     .annotation-list {
       overflow: auto;
       padding: 14px;
@@ -1155,7 +1188,6 @@
                   <span class="tag tag-info" id="productTypeTag">Wi-Fi 设备</span>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
-                  <button class="button" id="switchProductButton">切换为 BLE 样例</button>
                   <button class="button success">上架产品</button>
                 </div>
               </div>
@@ -1181,16 +1213,6 @@
               <div class="config-area">
                 <div class="top-line">
                   <div class="button-group anchored" data-anchor="1" id="networkEntryGroup"></div>
-                  <div class="scenario-bar">
-                    <span>场景</span>
-                    <select id="scenarioSelect">
-                      <option value="current">当前入口样例</option>
-                      <option value="target-empty">目标入口未配置</option>
-                      <option value="target-filled">目标入口已配置</option>
-                      <option value="non-target">非目标入口对照</option>
-                      <option value="validation">校验错误</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div class="sub-entry anchored" data-anchor="2" id="subEntryArea"></div>
@@ -1239,6 +1261,23 @@
       <div class="annotation-header">
         <h1>原型批注</h1>
         <p>点击左侧锚点或批注卡片，可高亮对应位置。抽屉打开时批注自动聚焦字段和校验规则。</p>
+        <div class="annotation-controls" aria-label="原型控制">
+          <div class="annotation-controls-title">原型控制</div>
+          <div class="annotation-control-row">
+            <span>样例产品</span>
+            <button class="annotation-button" id="switchProductButton">切换为 BLE 样例</button>
+          </div>
+          <label class="annotation-control-row">
+            <span>演示场景</span>
+            <select id="scenarioSelect">
+              <option value="current">当前入口样例</option>
+              <option value="target-empty">目标入口未配置</option>
+              <option value="target-filled">目标入口已配置</option>
+              <option value="non-target">非目标入口对照</option>
+              <option value="validation">校验错误</option>
+            </select>
+          </label>
+        </div>
         <div class="state-chip-row" id="stateChips"></div>
       </div>
       <div class="annotation-list" id="annotationList"></div>
@@ -1456,7 +1495,7 @@
           id: "11",
           title: "保存失败定位",
           location: "编辑抽屉 > 校验错误",
-          trigger: "必填项缺失后点击确定。",
+          trigger: "必填项缺失后点击保存。",
           response: "显示字段级错误，保留用户输入，右侧批注切换到错误说明。",
           rules: ["错误需要定位到具体步骤、子步骤和字段。"]
         }
