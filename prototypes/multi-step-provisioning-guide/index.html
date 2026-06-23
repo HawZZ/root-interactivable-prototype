@@ -882,6 +882,19 @@
       margin-bottom: 14px;
     }
 
+    .form-row.anchored {
+      grid-template-columns: 24px 148px minmax(0, 1fr);
+      column-gap: 10px;
+    }
+
+    .form-row.anchored > .form-label {
+      grid-column: 2;
+    }
+
+    .form-row.anchored > .form-control {
+      grid-column: 3;
+    }
+
     .form-label {
       min-height: 32px;
       line-height: 32px;
@@ -998,6 +1011,10 @@
       min-height: 32px;
     }
 
+    .switch-row span {
+      white-space: nowrap;
+    }
+
     .switch {
       width: 42px;
       height: 22px;
@@ -1065,9 +1082,11 @@
     }
 
     .form-row.anchored > .anchor {
-      position: absolute;
-      left: -28px;
-      top: 5px;
+      position: static;
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+      justify-self: center;
       margin-left: 0;
     }
 
