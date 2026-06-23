@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>云端多步骤配网引导入口原型</title>
+  <link rel="icon" href="data:,">
+  <title>云端多步骤配网引导扩展字段原型</title>
   <style>
     :root {
       --app-aside-bg-color: #001529;
@@ -1177,8 +1178,9 @@
                     <span>场景</span>
                     <select id="scenarioSelect">
                       <option value="current">当前入口样例</option>
-                      <option value="multi-empty">多步骤未配置</option>
-                      <option value="multi-filled">多步骤已配置</option>
+                      <option value="target-empty">目标入口未配置</option>
+                      <option value="target-filled">目标入口已配置</option>
+                      <option value="non-target">非目标入口对照</option>
                       <option value="validation">校验错误</option>
                     </select>
                   </div>
@@ -1201,9 +1203,9 @@
               </div>
 
               <div class="drawer-mask" id="drawerMask">
-                <aside class="drawer" role="dialog" aria-modal="true" aria-label="编辑多步骤配网">
+                <aside class="drawer" role="dialog" aria-modal="true" aria-label="编辑配网引导">
                   <div class="drawer-header">
-                    <div class="drawer-title">编辑多步骤配网</div>
+                    <div class="drawer-title">编辑扫码配网</div>
                     <button class="drawer-close" id="closeDrawerButton" aria-label="关闭">×</button>
                   </div>
                   <div class="drawer-body">
@@ -1238,7 +1240,7 @@
 
   <script>
     const languages = ["英文（默认）", "法语", "德语", "西班牙语", "意大利语", "阿拉伯语", "葡萄牙语", "中文", "繁体中文", "越南语", "印尼语", "泰语", "马来语", "日语", "俄语", "菲律宾语"];
-    const MAX_STEPS = 5;
+    const EXISTING_STEP_LIMIT = 10;
 
     const productMeta = {
       wifi: {
@@ -1249,7 +1251,7 @@
         model: "test-leo2-neo",
         id: "2060272111821791234",
         templateId: "2055184914953273345",
-        entries: ["AP配网", "SmartConfig配网", "扫码配网", "多步骤配网"],
+        entries: ["AP配网", "SmartConfig配网", "扫码配网"],
         defaultEntry: "AP配网"
       },
       ble: {
@@ -1260,7 +1262,7 @@
         model: "V300",
         id: "2063886410419023874",
         templateId: "2055184914953273345",
-        entries: ["蓝牙配网", "蓝牙扫码配对", "多步骤配网"],
+        entries: ["蓝牙配网", "蓝牙扫码配对"],
         defaultEntry: "蓝牙配网"
       }
     };
@@ -1280,7 +1282,7 @@
       }
     ];
 
-    const multiStepSeed = [
+    const extensionSeed = [
       {
         image: "ble-reset-step.png",
         copy: "请长按设备按键 5 秒，直到指示灯开始闪烁。",
@@ -1336,15 +1338,17 @@
     const state = {
       productType: "wifi",
       entry: "AP配网",
+      subEntry: "新版入口",
       scenario: "current",
       language: "英文（默认）",
-      multiConfigs: {
+      targetConfigs: {
         wifi: {},
         ble: {}
       },
       drawerOpen: false,
+      drawerIsTarget: false,
       activeDrawerStep: 0,
-      drawerSteps: clone(multiStepSeed),
+      drawerSteps: clone(extensionSeed),
       errors: {},
       activeAnnotation: "1"
     };
@@ -1353,51 +1357,51 @@
       page: [
         {
           id: "1",
-          title: "新增多步骤配网入口",
+          title: "目标入口范围",
           location: "配网引导 > 入口按钮组",
           trigger: "产品进入配网引导页时展示。",
-          response: "Wi-Fi 入口顺序为 AP配网 / SmartConfig配网 / 扫码配网 / 多步骤配网；BLE 入口顺序为 蓝牙配网 / 蓝牙扫码配对 / 多步骤配网。",
-          rules: ["多步骤配网固定在入口区末尾。", "其他入口字段、查看态、编辑态和校验均不变化。"]
+          response: "入口按钮组保持现状。Wi-Fi 仅扫码配网追加扩展字段；BLE 仅蓝牙配网 + 旧版入口追加扩展字段。",
+          rules: ["不新增独立多步骤配网入口。", "AP配网、SmartConfig配网、蓝牙配网 + 新版入口、蓝牙扫码配对均不新增本期扩展字段。"]
         },
         {
           id: "2",
           title: "BLE 子入口展示规则",
           location: "配网引导 > BLE 子入口",
-          trigger: "用户选择 BLE 产品下的多步骤配网。",
-          response: "隐藏新版入口 / 旧版入口；切回蓝牙配网时恢复原有子入口。",
-          rules: ["多步骤配网是入口级能力，不属于蓝牙配网的新旧入口子项。"]
+          trigger: "用户选择 BLE 产品下的蓝牙配网。",
+          response: "继续展示新版入口 / 旧版入口；仅旧版入口展示本期扩展字段。",
+          rules: ["新版入口保持原字段和校验。", "蓝牙扫码配对不新增本期扩展字段。"]
         },
         {
           id: "3",
           title: "复用多语言页签",
           location: "配网引导 > 语言页签",
           trigger: "用户切换语言。",
-          response: "按当前语言加载多步骤配网配置；未配置语言显示未配置。",
+          response: "按当前语言加载目标配置路径的配置；未配置语言显示未配置。",
           rules: ["语言列表沿用当前页面。", "各语言独立保存，不覆盖其他语言。"]
         },
         {
           id: "4",
-          title: "查看态复用现有样例",
+          title: "目标入口查看态扩展字段回显",
           location: "配网引导 > 步骤详情",
-          trigger: "当前语言下已有多步骤配网配置。",
-          response: "按现有样例展示纵向步骤列表和描述表，字段空值显示 --。",
-          rules: ["不新增统计摘要面板。", "Wi-Fi 与 BLE 使用同一套查看态规则。"]
+          trigger: "当前语言下目标配置路径已有配置。",
+          response: "按现有样例展示纵向步骤列表和描述表，并在目标路径中回显辅助文案选中能力、引导文案和子步骤。",
+          rules: ["不新增统计摘要面板。", "Wi-Fi 扫码配网与 BLE 蓝牙配网 + 旧版入口使用同一套扩展字段回显规则。"]
         },
         {
           id: "5",
           title: "编辑入口",
           location: "配网引导 > 编辑按钮",
           trigger: "点击编辑。",
-          response: "打开编辑多步骤配网抽屉，并回填当前语言配置。",
-          rules: ["未配置语言进入空表单，默认至少 1 个步骤。"]
+          response: "打开当前配置路径的编辑抽屉，并回填当前语言配置。",
+          rules: ["目标路径展示扩展字段。", "非目标入口打开旧字段抽屉，不展示扩展字段。", "未配置语言进入空表单，默认至少 1 个步骤。"]
         },
         {
           id: "12",
-          title: "旧入口保护",
-          location: "配网引导 > 旧入口",
-          trigger: "用户切回 AP配网、SmartConfig配网、扫码配网或蓝牙旧入口。",
-          response: "旧入口字段、校验、查看态和子入口逻辑保持不变。",
-          rules: ["本需求不在旧入口内追加字段。"]
+          title: "非目标入口保护",
+          location: "配网引导 > 非目标入口",
+          trigger: "用户切回 AP配网、SmartConfig配网、蓝牙配网 + 新版入口或蓝牙扫码配对。",
+          response: "非目标入口字段、校验、查看态和子入口逻辑保持不变。",
+          rules: ["本需求只在两个目标配置路径追加扩展字段。"]
         }
       ],
       drawer: [
@@ -1407,7 +1411,7 @@
           location: "编辑抽屉 > 步骤配置",
           trigger: "打开编辑抽屉。",
           response: "按步骤维护配网引导图、配网文案、辅助文案、按钮文案等字段。",
-          rules: ["配网引导图必填。", "配网文案必填。", "多步骤配网最多 5 个步骤。", "新增至步骤 5 后隐藏新增步骤按钮。"]
+          rules: ["配网引导图必填。", "配网文案必填。", "步骤数量同步现有入口限制，本需求不新增最大 5 步限制。"]
         },
         {
           id: "7",
@@ -1454,16 +1458,35 @@
 
     const el = (id) => document.getElementById(id);
 
-    function isMultiEntry() {
-      return state.entry === "多步骤配网";
+    function isTargetEntry() {
+      return (state.productType === "wifi" && state.entry === "扫码配网")
+        || (state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === "旧版入口");
     }
 
     function activeProduct() {
       return productMeta[state.productType];
     }
 
-    function activeMultiSteps() {
-      return state.multiConfigs[state.productType][state.language] || null;
+    function activeTargetSteps() {
+      return state.targetConfigs[state.productType][state.language] || null;
+    }
+
+    function setTargetPath() {
+      if (state.productType === "wifi") {
+        state.entry = "扫码配网";
+      } else {
+        state.entry = "蓝牙配网";
+        state.subEntry = "旧版入口";
+      }
+      state.scenario = activeTargetSteps() ? "target-filled" : "target-empty";
+    }
+
+    function drawerTitle() {
+      if (state.drawerIsTarget) {
+        return state.productType === "wifi" ? "编辑扫码配网" : "编辑蓝牙配网-旧版入口";
+      }
+      if (state.productType === "ble" && state.entry === "蓝牙配网") return `编辑蓝牙配网-${state.subEntry}`;
+      return `编辑${state.entry}`;
     }
 
     function syncScenarioSelect() {
@@ -1497,8 +1520,9 @@
         btn.textContent = entry;
         btn.addEventListener("click", () => {
           state.entry = entry;
-          state.scenario = entry === "多步骤配网" ? (activeMultiSteps() ? "multi-filled" : "multi-empty") : "current";
-          setAnnotation(entry === "多步骤配网" && state.productType === "ble" ? "2" : "1");
+          if (state.productType === "ble" && entry === "蓝牙配网") state.subEntry = "新版入口";
+          state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : (entry === activeProduct().defaultEntry ? "current" : "non-target");
+          setAnnotation(state.productType === "ble" && entry === "蓝牙配网" ? "2" : (isTargetEntry() ? "4" : "12"));
           renderAll();
         });
         group.appendChild(btn);
@@ -1507,10 +1531,16 @@
       const sub = el("subEntryArea");
       sub.innerHTML = "";
       if (state.productType === "ble" && state.entry === "蓝牙配网") {
-        ["新版入口", "旧版入口"].forEach((item, index) => {
+        ["新版入口", "旧版入口"].forEach((item) => {
           const btn = document.createElement("button");
-          btn.className = "seg-button" + (index === 0 ? " active" : "");
+          btn.className = "seg-button" + (state.subEntry === item ? " active" : "");
           btn.textContent = item;
+          btn.addEventListener("click", () => {
+            state.subEntry = item;
+            state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : "non-target";
+            setAnnotation(item === "旧版入口" ? "4" : "12");
+            renderAll();
+          });
           sub.appendChild(btn);
         });
         const qr = document.createElement("div");
@@ -1531,7 +1561,7 @@
         btn.className = lang === state.language ? "active" : "";
         btn.addEventListener("click", () => {
           state.language = lang;
-          state.scenario = isMultiEntry() ? (activeMultiSteps() ? "multi-filled" : "multi-empty") : "current";
+          state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : state.scenario;
           setAnnotation("3");
           renderAll();
         });
@@ -1543,8 +1573,8 @@
       const view = el("contentView");
       const editButton = el("editButton");
       editButton.style.display = "inline-flex";
-      if (isMultiEntry()) {
-        const steps = activeMultiSteps();
+      if (isTargetEntry()) {
+        const steps = activeTargetSteps();
         if (!steps) {
           view.innerHTML = `<div class="steps-view anchored" data-anchor="4"><div class="empty-state">未配置</div></div>`;
         } else {
@@ -1603,6 +1633,10 @@
       const mask = el("drawerMask");
       mask.classList.toggle("open", state.drawerOpen);
       if (!state.drawerOpen) return;
+      const title = drawerTitle();
+      const drawer = document.querySelector(".drawer");
+      document.querySelector(".drawer-title").textContent = title;
+      drawer.setAttribute("aria-label", title);
 
       const nav = el("drawerStepNav");
       nav.innerHTML = "";
@@ -1617,11 +1651,11 @@
         });
         nav.appendChild(btn);
       });
-      if (state.drawerSteps.length < MAX_STEPS) {
+      if (state.drawerSteps.length < EXISTING_STEP_LIMIT) {
         const add = document.createElement("button");
         add.textContent = "+ 新增步骤";
         add.addEventListener("click", () => {
-          if (state.drawerSteps.length >= MAX_STEPS) return;
+          if (state.drawerSteps.length >= EXISTING_STEP_LIMIT) return;
           state.drawerSteps.push(emptyStep());
           state.activeDrawerStep = state.drawerSteps.length - 1;
           setAnnotation("6");
@@ -1649,10 +1683,11 @@
     }
 
     function renderFormStep(step, index) {
+      const showExtensions = state.drawerIsTarget;
       const active = index === state.activeDrawerStep;
       const display = active ? "" : "display:none";
-      const guideHasError = hasError(index, "guideText") || hasError(index, "guideSub");
-      const subForms = step.guideEnabled ? `
+      const guideHasError = showExtensions && (hasError(index, "guideText") || hasError(index, "guideSub"));
+      const subForms = showExtensions && step.guideEnabled ? `
         <div class="form-row anchored" data-anchor="9">
           <div class="form-label">子步骤</div>
           <div class="form-control">
@@ -1692,7 +1727,7 @@
                 <div class="helper-text">${step.helper.length} / 300</div>
               </div>
             </div>
-            <div class="form-row anchored" data-anchor="7">
+            ${showExtensions ? `<div class="form-row anchored" data-anchor="7">
               <div class="form-label">辅助文案支持选中能力</div>
               <div class="form-control">
                 <div class="switch-row">
@@ -1700,7 +1735,7 @@
                   <span>${step.selectable ? "启用：App 页面内二次确认" : "未启用"}</span>
                 </div>
               </div>
-            </div>
+            </div>` : ""}
             <div class="form-row">
               <div class="form-label">按钮文案</div>
               <div class="form-control">
@@ -1708,7 +1743,7 @@
                 <div class="helper-text">${step.button.length} / 30</div>
               </div>
             </div>
-            <div class="form-row anchored ${guideHasError ? "has-error" : ""}" data-anchor="8">
+            ${showExtensions ? `<div class="form-row anchored ${guideHasError ? "has-error" : ""}" data-anchor="8">
               <div class="form-label ${step.guideEnabled ? "required" : ""}">引导文案</div>
               <div class="form-control">
                 <div class="switch-row">
@@ -1718,7 +1753,7 @@
                 <div class="helper-text">${step.guideEnabled ? "启用后必填，与辅助文案支持选中能力互相独立。" : "未启用时不填写、不保存该字段。"}</div>
                 <div class="error-text">${errorText(index, "guideText") || errorText(index, "guideSub")}</div>
               </div>
-            </div>
+            </div>` : ""}
             ${subForms}
           </div>
         </section>
@@ -1800,7 +1835,7 @@
       state.drawerSteps.forEach((step, index) => {
         if (!step.image) errors[errorKey(index, "image")] = "请上传配网引导图";
         if (!step.copy.trim()) errors[errorKey(index, "copy")] = "请输入配网文案";
-        if (step.guideEnabled) {
+        if (state.drawerIsTarget && step.guideEnabled) {
           if (!step.guideText.trim()) errors[errorKey(index, "guideText")] = "请输入引导文案";
           if (!step.subSteps.length) errors[errorKey(index, "guideSub")] = "请至少新增 1 个子步骤";
           step.subSteps.forEach((sub, subIndex) => {
@@ -1809,8 +1844,8 @@
           });
         }
       });
-      if (state.drawerSteps.length > MAX_STEPS) {
-        errors["stepLimit"] = `多步骤配网最多支持 ${MAX_STEPS} 个步骤`;
+      if (state.drawerSteps.length > EXISTING_STEP_LIMIT) {
+        errors["stepLimit"] = `步骤数量不可超过现有入口限制（${EXISTING_STEP_LIMIT} 步）`;
       }
       state.errors = errors;
       return Object.keys(errors).length === 0;
@@ -1836,9 +1871,10 @@
       el("stateChips").innerHTML = [
         state.productType === "wifi" ? "Wi-Fi 样例" : "BLE 样例",
         state.entry,
+        state.productType === "ble" && state.entry === "蓝牙配网" ? state.subEntry : "",
         state.language,
         state.drawerOpen ? "编辑抽屉" : "查看态"
-      ].map(text => `<span class="state-chip">${text}</span>`).join("");
+      ].filter(Boolean).map(text => `<span class="state-chip">${text}</span>`).join("");
     }
 
     function wireAnchors() {
@@ -1903,39 +1939,57 @@
     el("switchProductButton").addEventListener("click", () => {
       state.productType = state.productType === "wifi" ? "ble" : "wifi";
       state.entry = activeProduct().defaultEntry;
+      state.subEntry = "新版入口";
       state.scenario = "current";
       state.language = "英文（默认）";
       state.drawerOpen = false;
+      state.drawerIsTarget = false;
       setAnnotation("1");
       renderAll();
     });
 
     el("scenarioSelect").addEventListener("change", (event) => {
       const value = event.target.value;
+      state.drawerOpen = false;
+      state.drawerIsTarget = false;
+      state.errors = {};
       if (value === "current") {
         state.scenario = "current";
         state.entry = activeProduct().defaultEntry;
+        state.subEntry = "新版入口";
         state.language = "英文（默认）";
         setAnnotation("12");
       }
-      if (value === "multi-empty") {
-        state.scenario = "multi-empty";
-        state.entry = "多步骤配网";
+      if (value === "target-empty") {
+        setTargetPath();
+        state.scenario = "target-empty";
         state.language = "英文（默认）";
-        delete state.multiConfigs[state.productType][state.language];
-        setAnnotation(state.productType === "ble" ? "2" : "1");
+        delete state.targetConfigs[state.productType][state.language];
+        setAnnotation(state.productType === "ble" ? "2" : "4");
       }
-      if (value === "multi-filled") {
-        state.scenario = "multi-filled";
-        state.entry = "多步骤配网";
+      if (value === "target-filled") {
+        setTargetPath();
+        state.scenario = "target-filled";
         state.language = "英文（默认）";
-        state.multiConfigs[state.productType][state.language] = clone(multiStepSeed);
+        state.targetConfigs[state.productType][state.language] = clone(extensionSeed);
         setAnnotation("4");
       }
+      if (value === "non-target") {
+        state.scenario = "non-target";
+        state.language = "英文（默认）";
+        if (state.productType === "wifi") {
+          state.entry = "SmartConfig配网";
+        } else {
+          state.entry = "蓝牙配网";
+          state.subEntry = "新版入口";
+        }
+        setAnnotation("12");
+      }
       if (value === "validation") {
+        setTargetPath();
         state.scenario = "validation";
-        state.entry = "多步骤配网";
         state.drawerOpen = true;
+        state.drawerIsTarget = true;
         state.drawerSteps = [emptyStep()];
         state.activeDrawerStep = 0;
         state.errors = {};
@@ -1949,12 +2003,11 @@
     });
 
     el("editButton").addEventListener("click", () => {
-      if (!isMultiEntry()) {
-        state.entry = "多步骤配网";
-        state.scenario = activeMultiSteps() ? "multi-filled" : "multi-empty";
-      }
+      state.drawerIsTarget = isTargetEntry();
       state.drawerOpen = true;
-      state.drawerSteps = activeMultiSteps() ? clone(activeMultiSteps()) : [emptyStep()];
+      state.drawerSteps = state.drawerIsTarget
+        ? (activeTargetSteps() ? clone(activeTargetSteps()) : [emptyStep()])
+        : (state.productType === "wifi" && state.entry === "AP配网" ? clone(currentGuideSteps) : [emptyStep()]);
       state.activeDrawerStep = 0;
       state.errors = {};
       setAnnotation("6");
@@ -1963,6 +2016,7 @@
 
     el("closeDrawerButton").addEventListener("click", () => {
       state.drawerOpen = false;
+      state.drawerIsTarget = false;
       state.errors = {};
       setAnnotation("5");
       renderAll();
@@ -1970,6 +2024,7 @@
 
     el("cancelButton").addEventListener("click", () => {
       state.drawerOpen = false;
+      state.drawerIsTarget = false;
       state.errors = {};
       setAnnotation("10");
       renderAll();
@@ -1981,11 +2036,15 @@
         renderAll();
         return;
       }
+      const savedTarget = state.drawerIsTarget;
       state.drawerOpen = false;
-      state.multiConfigs[state.productType][state.language] = clone(state.drawerSteps);
-      state.scenario = "multi-filled";
+      if (savedTarget) {
+        state.targetConfigs[state.productType][state.language] = clone(state.drawerSteps);
+        state.scenario = "target-filled";
+      }
+      state.drawerIsTarget = false;
       state.errors = {};
-      setAnnotation("4");
+      setAnnotation(savedTarget ? "4" : "12");
       renderAll();
       showToast();
     });
