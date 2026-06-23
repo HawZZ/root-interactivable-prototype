@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>云端多步骤配网引导入口原型</title>
+  <style>
+    :root {
+      --app-aside-bg-color: #001529;
+      --app-aside-bg-active: #0b2a4a;
+      --app-bg-color: #f9f9f9;
+      --el-bg-color: #ffffff;
+      --el-color-primary: #4372ff;
+      --el-color-primary-dark-2: #2b6bd9;
+      --el-color-primary-light-7: #e0ecff;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-success: #67c23a;
+      --el-color-warning: #e6a23c;
+      --el-color-danger: #f56c6c;
+      --el-color-info: #909399;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --table-head-bg: #fafafa;
+      --radius: 4px;
+      --gap-8: 8px;
+      --gap-12: 12px;
+      --gap-16: 16px;
+      --gap-24: 24px;
+      --aside-width: 208px;
+      --header-height: 54px;
+      --annotation-width: 380px;
+      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #eef1f6;
+      color: var(--el-text-color-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button { cursor: pointer; }
+
+    .prototype-shell {
+      height: 100vh;
+      min-height: 720px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--annotation-width);
+      gap: 0;
+      background: #eef1f6;
+    }
+
+    .product-pane {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    .product-canvas {
+      width: 1440px;
+      min-height: calc(100vh - 32px);
+      margin: 0 auto;
+      background: var(--app-bg-color);
+      display: grid;
+      grid-template-columns: var(--aside-width) minmax(0, 1fr);
+      border: 1px solid #d8dde8;
+      box-shadow: 0 8px 24px rgba(0, 21, 41, .08);
+      position: relative;
+    }
+
+    .aside {
+      background: var(--app-aside-bg-color);
+      color: rgba(255, 255, 255, .72);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      background: #85b436;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      line-height: 18px;
+    }
+
+    .brand-subtitle {
+      color: rgba(255,255,255,.52);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .menu {
+      padding: 8px 0 24px;
+    }
+
+    .menu-group-title,
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      white-space: nowrap;
+    }
+
+    .menu-group-title {
+      height: 36px;
+      margin-top: 8px;
+      color: rgba(255,255,255,.38);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      height: 42px;
+      border-left: 3px solid transparent;
+      color: rgba(255,255,255,.76);
+    }
+
+    .menu-item.active {
+      background: var(--app-aside-bg-active);
+      border-left-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .menu-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .75;
+      flex: 0 0 auto;
+    }
+
+    .app-main {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: var(--header-height) minmax(0, 1fr);
+    }
+
+    .header {
+      height: var(--header-height);
+      background: var(--el-bg-color);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: var(--gap-16);
+    }
+
+    .breadcrumb {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 22px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .breadcrumb strong {
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+    }
+
+    .userbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 24px;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .summary-card,
+    .detail-card {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+    }
+
+    .summary-card {
+      padding: 16px 20px;
+      margin-bottom: 0;
+    }
+
+    .summary-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap-16);
+      margin-bottom: 12px;
+    }
+
+    .product-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .summary-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tag-success {
+      background: #f0f9eb;
+      color: #529b2e;
+      border-color: #d1edc4;
+    }
+
+    .tag-info {
+      background: #f4f4f5;
+      color: #73767a;
+      border-color: #e9e9eb;
+    }
+
+    .tag-warning {
+      background: #fdf6ec;
+      color: #b88230;
+      border-color: #faecd8;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px 24px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .summary-grid span {
+      color: var(--el-text-color-secondary);
+      margin-right: 4px;
+    }
+
+    .button {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      border-color: var(--el-color-primary);
+      color: var(--el-color-primary);
+    }
+
+    .button.primary {
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .button.success {
+      color: var(--el-color-success);
+      border-color: #b3e19d;
+      background: #f0f9eb;
+    }
+
+    .button.text {
+      border-color: transparent;
+      background: transparent;
+      color: var(--el-color-primary);
+      padding: 0 8px;
+    }
+
+    .button.danger {
+      color: var(--el-color-danger);
+      border-color: #fbc4c4;
+      background: #fef0f0;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      color: #c0c4cc;
+      border-color: #e4e7ed;
+      background: #f5f7fa;
+    }
+
+    .steps-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--el-border-color-light);
+      margin-bottom: 16px;
+      background: #fff;
+    }
+
+    .steps-tabs button {
+      height: 48px;
+      border: 0;
+      background: #fff;
+      padding: 0 22px;
+      color: var(--el-text-color-regular);
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+
+    .steps-tabs button.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+    }
+
+    .detail-card {
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) 64px;
+    }
+
+    .config-area {
+      padding: 16px 24px 24px;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .pager-actions {
+      height: 64px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      align-items: center;
+      border-top: 1px solid var(--el-border-color-light);
+      padding: 0 24px;
+      background: #fff;
+    }
+
+    .top-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap-16);
+      margin-bottom: 12px;
+    }
+
+    .button-group {
+      display: inline-flex;
+      vertical-align: middle;
+    }
+
+    .seg-button {
+      height: 32px;
+      padding: 0 16px;
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      margin-left: -1px;
+      font-weight: 500;
+    }
+
+    .seg-button:first-child {
+      margin-left: 0;
+      border-top-left-radius: var(--radius);
+      border-bottom-left-radius: var(--radius);
+    }
+
+    .seg-button:last-child {
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+    }
+
+    .seg-button.active {
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
+      color: #fff;
+      z-index: 1;
+    }
+
+    .scenario-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+
+    .scenario-bar select {
+      height: 32px;
+      width: 176px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      background: #fff;
+      color: var(--el-text-color-regular);
+    }
+
+    .sub-entry {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .qr-prefix {
+      color: var(--el-text-color-regular);
+      margin-left: 12px;
+    }
+
+    .qr-prefix span {
+      color: var(--el-text-color-secondary);
+    }
+
+    .language-tabs {
+      height: 40px;
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid var(--el-border-color-light);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .language-tabs button {
+      border: 0;
+      background: #fff;
+      padding: 0 18px;
+      color: var(--el-text-color-regular);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+
+    .language-tabs button.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+      font-weight: 500;
+    }
+
+    .view-title {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
+    .steps-view {
+      width: 900px;
+      margin-left: 64px;
+      padding-bottom: 32px;
+    }
+
+    .empty-state {
+      height: 220px;
+      display: grid;
+      place-items: center;
+      color: var(--el-text-color-secondary);
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fcfcfc;
+    }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 12px;
+      position: relative;
+      min-height: 178px;
+    }
+
+    .step-item:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 28px;
+      bottom: -2px;
+      width: 1px;
+      background: var(--el-border-color-light);
+    }
+
+    .step-index {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--el-color-primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-main {
+      padding-bottom: 28px;
+    }
+
+    .step-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+      margin: 2px 0 10px;
+    }
+
+    .desc-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--el-text-color-regular);
+      border: 1px solid var(--el-border-color-lighter);
+      background: #fff;
+    }
+
+    .desc-table tr {
+      border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+
+    .desc-table tr:last-child {
+      border-bottom: 0;
+    }
+
+    .desc-table th,
+    .desc-table td {
+      text-align: left;
+      padding: 9px 12px;
+      vertical-align: top;
+      font-weight: 400;
+    }
+
+    .desc-table th {
+      width: 150px;
+      color: var(--el-text-color-secondary);
+      background: #fafafa;
+    }
+
+    .thumb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .thumb {
+      width: 86px;
+      height: 62px;
+      border-radius: 4px;
+      border: 1px solid var(--el-border-color-light);
+      background:
+        linear-gradient(135deg, #eef3ff, #f8fbff);
+      display: grid;
+      place-items: center;
+      color: var(--el-color-primary);
+      font-size: 12px;
+    }
+
+    .sub-steps {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sub-step-card {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fcfdff;
+    }
+
+    .sub-step-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--el-text-color-primary);
+    }
+
+    .drawer-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .28);
+      z-index: 40;
+      display: none;
+      align-items: stretch;
+      justify-content: flex-end;
+    }
+
+    .drawer-mask.open {
+      display: flex;
+    }
+
+    .drawer {
+      width: 720px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -4px 0 16px rgba(0, 0, 0, .12);
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr) 64px;
+      animation: slideIn .16s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(24px); opacity: .7; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .drawer-header,
+    .drawer-footer {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .drawer-header {
+      justify-content: space-between;
+    }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .drawer-close {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: var(--el-text-color-secondary);
+      font-size: 22px;
+      line-height: 32px;
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 16px 20px;
+      background: #fff;
+    }
+
+    .drawer-footer {
+      border-top: 1px solid var(--el-border-color-light);
+      border-bottom: 0;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #fff;
+    }
+
+    .drawer-layout {
+      display: grid;
+      grid-template-columns: 168px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .step-nav {
+      position: sticky;
+      top: 0;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .step-nav button {
+      width: 100%;
+      min-height: 40px;
+      border: 0;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      background: #fff;
+      text-align: left;
+      padding: 0 12px;
+      color: var(--el-text-color-regular);
+    }
+
+    .step-nav button:last-child {
+      border-bottom: 0;
+    }
+
+    .step-nav button.active {
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      font-weight: 500;
+    }
+
+    .form-panel {
+      min-width: 0;
+    }
+
+    .form-step {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .form-step-header {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--el-border-color-light);
+      font-weight: 600;
+    }
+
+    .form-step-body {
+      padding: 12px 16px 14px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      min-height: 32px;
+      line-height: 32px;
+      text-align: right;
+      color: var(--el-text-color-regular);
+    }
+
+    .required::before {
+      content: "*";
+      color: var(--el-color-danger);
+      margin-right: 4px;
+    }
+
+    .form-control {
+      min-width: 0;
+    }
+
+    .input,
+    .textarea {
+      width: 100%;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      color: var(--el-text-color-primary);
+      background: #fff;
+      outline: none;
+    }
+
+    .input {
+      height: 32px;
+      padding: 0 11px;
+    }
+
+    .textarea {
+      min-height: 62px;
+      padding: 7px 11px;
+      resize: vertical;
+    }
+
+    .input:focus,
+    .textarea:focus {
+      border-color: var(--el-color-primary);
+    }
+
+    .input:disabled,
+    .textarea:disabled {
+      cursor: not-allowed;
+      color: var(--el-text-color-placeholder);
+      border-color: #e4e7ed;
+      background: #f5f7fa;
+    }
+
+    .has-error .input,
+    .has-error .textarea,
+    .has-error .upload-box {
+      border-color: var(--el-color-danger);
+    }
+
+    .error-text {
+      color: var(--el-color-danger);
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .has-error .error-text {
+      display: block;
+    }
+
+    .helper-text {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .upload-box {
+      width: 124px;
+      height: 82px;
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: #fafafa;
+      color: var(--el-text-color-secondary);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .upload-box.filled {
+      border-style: solid;
+      background: linear-gradient(135deg, #eef3ff, #f9fcff);
+      color: var(--el-color-primary);
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 32px;
+    }
+
+    .switch {
+      width: 42px;
+      height: 22px;
+      border-radius: 20px;
+      border: 0;
+      background: #dcdfe6;
+      position: relative;
+      padding: 0;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      background: #fff;
+      transition: left .15s ease;
+    }
+
+    .switch.on {
+      background: var(--el-color-primary);
+    }
+
+    .switch.on::after {
+      left: 22px;
+    }
+
+    .sub-form {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fcfdff;
+    }
+
+    .sub-form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .toast {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 180px;
+      height: 40px;
+      border-radius: var(--radius);
+      background: #f0f9eb;
+      border: 1px solid #d1edc4;
+      color: #529b2e;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 70;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+    }
+
+    .toast.show {
+      display: flex;
+    }
+
+    .anchor {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--el-color-warning);
+      color: #fff;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 6px;
+      vertical-align: middle;
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    .anchored {
+      position: relative;
+      transition: box-shadow .15s ease, outline-color .15s ease;
+    }
+
+    .anchored.highlight {
+      outline: 2px solid var(--el-color-warning);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 5px rgba(230, 162, 60, .16);
+    }
+
+    .annotation-pane {
+      min-width: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-left: 1px solid #d8dde8;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .annotation-header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .annotation-header h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .annotation-header p {
+      margin: 0;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .annotation-list {
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      background: #fbfcff;
+    }
+
+    .annotation-card {
+      background: #fff;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+    }
+
+    .annotation-card.active {
+      border-color: var(--el-color-primary);
+      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
+    }
+
+    .annotation-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .annotation-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--el-color-primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .annotation-card dl {
+      margin: 0;
+      display: grid;
+      gap: 6px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .annotation-card dt {
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .annotation-card dd {
+      margin: 0;
+    }
+
+    .annotation-card ul {
+      margin: 4px 0 0;
+      padding-left: 18px;
+    }
+
+    .state-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .state-chip {
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      border-radius: 999px;
+      height: 24px;
+      padding: 0 8px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .prototype-shell {
+        display: block;
+      }
+
+      .annotation-pane {
+        position: static;
+        height: auto;
+        min-height: 420px;
+        border-left: 0;
+        border-top: 1px solid #d8dde8;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-shell">
+    <main class="product-pane">
+      <div class="product-canvas" id="productCanvas">
+        <aside class="aside">
+          <div class="brand">
+            <div class="brand-mark">IoT</div>
+            <div>
+              <div class="brand-title">LuteOS Admin</div>
+              <div class="brand-subtitle">智能产品后台</div>
+            </div>
+          </div>
+          <nav class="menu" aria-label="主导航">
+            <div class="menu-group-title">概览</div>
+            <div class="menu-item"><span class="menu-dot"></span>概览</div>
+            <div class="menu-group-title">智能产品</div>
+            <div class="menu-item active"><span class="menu-dot"></span>产品列表</div>
+            <div class="menu-item"><span class="menu-dot"></span>消息推送</div>
+            <div class="menu-group-title">设备管理</div>
+            <div class="menu-item"><span class="menu-dot"></span>设备列表</div>
+            <div class="menu-item"><span class="menu-dot"></span>固件管理</div>
+            <div class="menu-item"><span class="menu-dot"></span>OTA</div>
+            <div class="menu-group-title">配置中心</div>
+            <div class="menu-item"><span class="menu-dot"></span>多语言</div>
+          </nav>
+        </aside>
+
+        <section class="app-main">
+          <header class="header">
+            <div class="breadcrumb">
+              <span>查看产品详情</span>
+              <span>/</span>
+              <span>产品列表</span>
+              <span>/</span>
+              <strong>智能产品</strong>
+            </div>
+            <div class="userbar">
+              <span>ROOT云</span>
+              <div class="avatar">R</div>
+            </div>
+          </header>
+
+          <section class="content">
+            <div class="summary-card anchored" data-anchor="1">
+              <div class="summary-top">
+                <div class="summary-title">
+                  <span class="product-name" id="productName">test-leo2-neo-Neo</span>
+                  <span class="tag tag-success">开发中</span>
+                  <span class="tag tag-info" id="productTypeTag">Wi-Fi 设备</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button class="button" id="switchProductButton">切换为 BLE 样例</button>
+                  <button class="button success">上架产品</button>
+                </div>
+              </div>
+              <div class="summary-grid">
+                <div><span>产品分类：</span><b id="productCategory">test-leo2</b></div>
+                <div><span>产品型号：</span><b id="productModel">test-leo2-neo</b></div>
+                <div><span>产品代码：</span><b>--</b></div>
+                <div><span>产品ID：</span><b id="productId">2060272111821791234</b></div>
+                <div><span>产品模板ID：</span><b id="templateId">2055184914953273345</b></div>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="steps-tabs">
+                <button>基础信息</button>
+                <button>功能设计</button>
+                <button>扩展程序</button>
+                <button>设备调试</button>
+                <button class="active">配网引导</button>
+                <button>高级配置</button>
+              </div>
+
+              <div class="config-area">
+                <div class="top-line">
+                  <div class="button-group anchored" data-anchor="1" id="networkEntryGroup"></div>
+                  <div class="scenario-bar">
+                    <span>场景</span>
+                    <select id="scenarioSelect">
+                      <option value="current">当前入口样例</option>
+                      <option value="multi-empty">多步骤未配置</option>
+                      <option value="multi-filled">多步骤已配置</option>
+                      <option value="validation">校验错误</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="sub-entry anchored" data-anchor="2" id="subEntryArea"></div>
+
+                <div class="language-tabs anchored" data-anchor="3" id="languageTabs"></div>
+
+                <div class="view-title">
+                  <button class="button anchored" data-anchor="5" id="editButton">编辑</button>
+                </div>
+
+                <div id="contentView"></div>
+              </div>
+
+              <div class="pager-actions">
+                <button class="button">上一步</button>
+                <button class="button">下一步</button>
+              </div>
+
+              <div class="drawer-mask" id="drawerMask">
+                <aside class="drawer" role="dialog" aria-modal="true" aria-label="编辑多步骤配网">
+                  <div class="drawer-header">
+                    <div class="drawer-title">编辑多步骤配网</div>
+                    <button class="drawer-close" id="closeDrawerButton" aria-label="关闭">×</button>
+                  </div>
+                  <div class="drawer-body">
+                    <div class="drawer-layout">
+                      <nav class="step-nav anchored" data-anchor="6" id="drawerStepNav"></nav>
+                      <div class="form-panel" id="drawerForm"></div>
+                    </div>
+                  </div>
+                  <div class="drawer-footer anchored" data-anchor="10">
+                    <button class="button" id="cancelButton">取消</button>
+                    <button class="button primary" id="confirmButton">确定</button>
+                  </div>
+                </aside>
+              </div>
+
+              <div class="toast" id="toast">保存成功</div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <aside class="annotation-pane">
+      <div class="annotation-header">
+        <h1>原型批注</h1>
+        <p>点击左侧锚点或批注卡片，可高亮对应位置。抽屉打开时批注自动聚焦字段和校验规则。</p>
+        <div class="state-chip-row" id="stateChips"></div>
+      </div>
+      <div class="annotation-list" id="annotationList"></div>
+    </aside>
+  </div>
+
+  <script>
+    const languages = ["英文（默认）", "法语", "德语", "西班牙语", "意大利语", "阿拉伯语", "葡萄牙语", "中文", "繁体中文", "越南语", "印尼语", "泰语", "马来语", "日语", "俄语", "菲律宾语"];
+    const MAX_STEPS = 5;
+
+    const productMeta = {
+      wifi: {
+        type: "wifi",
+        name: "test-leo2-neo-Neo",
+        typeLabel: "Wi-Fi 设备",
+        category: "test-leo2",
+        model: "test-leo2-neo",
+        id: "2060272111821791234",
+        templateId: "2055184914953273345",
+        entries: ["AP配网", "SmartConfig配网", "扫码配网", "多步骤配网"],
+        defaultEntry: "AP配网"
+      },
+      ble: {
+        type: "ble",
+        name: "V3测试",
+        typeLabel: "BLE 设备",
+        category: "V3测试",
+        model: "V300",
+        id: "2063886410419023874",
+        templateId: "2055184914953273345",
+        entries: ["蓝牙配网", "蓝牙扫码配对", "多步骤配网"],
+        defaultEntry: "蓝牙配网"
+      }
+    };
+
+    const currentGuideSteps = [
+      {
+        copy: "123123",
+        image: "ap-step-1.png",
+        helper: "",
+        button: ""
+      },
+      {
+        copy: "312313",
+        image: "ap-step-2.png",
+        helper: "2313",
+        button: "123123"
+      }
+    ];
+
+    const multiStepSeed = [
+      {
+        image: "ble-reset-step.png",
+        copy: "请长按设备按键 5 秒，直到指示灯开始闪烁。",
+        helper: "确认设备指示灯处于快速闪烁状态",
+        selectable: true,
+        button: "我已确认",
+        guideEnabled: true,
+        guideText: "查看设备复位方法",
+        subSteps: [
+          {
+            image: "reset-guide.png",
+            title: "找到复位键",
+            text: "打开设备底部硅胶盖，找到 Reset 按键。"
+          },
+          {
+            image: "",
+            title: "长按复位",
+            text: "使用卡针长按 5 秒，直到指示灯快速闪烁。"
+          }
+        ]
+      },
+      {
+        image: "phone-bluetooth.png",
+        copy: "请保持手机蓝牙开启，并靠近设备完成配网。",
+        helper: "",
+        selectable: false,
+        button: "下一步",
+        guideEnabled: false,
+        guideText: "",
+        subSteps: []
+      }
+    ];
+
+    const emptyStep = () => ({
+      image: "",
+      copy: "",
+      helper: "",
+      selectable: false,
+      button: "",
+      guideEnabled: false,
+      guideText: "",
+      subSteps: []
+    });
+
+    const emptySubStep = () => ({
+      image: "",
+      title: "",
+      text: ""
+    });
+
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+
+    const state = {
+      productType: "wifi",
+      entry: "AP配网",
+      scenario: "current",
+      language: "英文（默认）",
+      multiConfigs: {
+        wifi: {},
+        ble: {}
+      },
+      drawerOpen: false,
+      activeDrawerStep: 0,
+      drawerSteps: clone(multiStepSeed),
+      errors: {},
+      activeAnnotation: "1"
+    };
+
+    const annotations = {
+      page: [
+        {
+          id: "1",
+          title: "新增多步骤配网入口",
+          location: "配网引导 > 入口按钮组",
+          trigger: "产品进入配网引导页时展示。",
+          response: "Wi-Fi 入口顺序为 AP配网 / SmartConfig配网 / 扫码配网 / 多步骤配网；BLE 入口顺序为 蓝牙配网 / 蓝牙扫码配对 / 多步骤配网。",
+          rules: ["多步骤配网固定在入口区末尾。", "其他入口字段、查看态、编辑态和校验均不变化。"]
+        },
+        {
+          id: "2",
+          title: "BLE 子入口展示规则",
+          location: "配网引导 > BLE 子入口",
+          trigger: "用户选择 BLE 产品下的多步骤配网。",
+          response: "隐藏新版入口 / 旧版入口；切回蓝牙配网时恢复原有子入口。",
+          rules: ["多步骤配网是入口级能力，不属于蓝牙配网的新旧入口子项。"]
+        },
+        {
+          id: "3",
+          title: "复用多语言页签",
+          location: "配网引导 > 语言页签",
+          trigger: "用户切换语言。",
+          response: "按当前语言加载多步骤配网配置；未配置语言显示未配置。",
+          rules: ["语言列表沿用当前页面。", "各语言独立保存，不覆盖其他语言。"]
+        },
+        {
+          id: "4",
+          title: "查看态复用现有样例",
+          location: "配网引导 > 步骤详情",
+          trigger: "当前语言下已有多步骤配网配置。",
+          response: "按现有样例展示纵向步骤列表和描述表，字段空值显示 --。",
+          rules: ["不新增统计摘要面板。", "Wi-Fi 与 BLE 使用同一套查看态规则。"]
+        },
+        {
+          id: "5",
+          title: "编辑入口",
+          location: "配网引导 > 编辑按钮",
+          trigger: "点击编辑。",
+          response: "打开编辑多步骤配网抽屉，并回填当前语言配置。",
+          rules: ["未配置语言进入空表单，默认至少 1 个步骤。"]
+        },
+        {
+          id: "12",
+          title: "旧入口保护",
+          location: "配网引导 > 旧入口",
+          trigger: "用户切回 AP配网、SmartConfig配网、扫码配网或蓝牙旧入口。",
+          response: "旧入口字段、校验、查看态和子入口逻辑保持不变。",
+          rules: ["本需求不在旧入口内追加字段。"]
+        }
+      ],
+      drawer: [
+        {
+          id: "6",
+          title: "步骤字段与必填规则",
+          location: "编辑抽屉 > 步骤配置",
+          trigger: "打开编辑抽屉。",
+          response: "按步骤维护配网引导图、配网文案、辅助文案、按钮文案等字段。",
+          rules: ["配网引导图必填。", "配网文案必填。", "多步骤配网最多 5 个步骤。", "新增至步骤 5 后隐藏新增步骤按钮。"]
+        },
+        {
+          id: "7",
+          title: "辅助文案选中能力",
+          location: "编辑抽屉 > 辅助文案支持选中能力",
+          trigger: "用户打开该开关。",
+          response: "该步骤辅助文案可用于 App 页面内二次确认。",
+          rules: ["该能力与引导文案相互独立。", "关闭时不影响引导文案配置。"]
+        },
+        {
+          id: "8",
+          title: "引导文案独立启用",
+          location: "编辑抽屉 > 引导文案",
+          trigger: "用户启用引导文案。",
+          response: "展示引导文案输入和子步骤配置区域。",
+          rules: ["关闭时引导文案输入框禁用。", "启用后引导文案必填。", "启用后至少 1 个子步骤。", "最多 3 个子步骤。"]
+        },
+        {
+          id: "9",
+          title: "子步骤规则",
+          location: "编辑抽屉 > 子步骤列表",
+          trigger: "引导文案已启用。",
+          response: "子步骤可配置图片、标题、正文。",
+          rules: ["图片可选。", "标题必填。", "正文必填。"]
+        },
+        {
+          id: "10",
+          title: "按钮状态",
+          location: "编辑抽屉 > Footer",
+          trigger: "点击取消或确定。",
+          response: "取消关闭抽屉并丢弃未保存内容；确定触发表单校验。",
+          rules: ["保存成功显示 Toast 并回显。", "保存失败保持抽屉打开。"]
+        },
+        {
+          id: "11",
+          title: "保存失败定位",
+          location: "编辑抽屉 > 校验错误",
+          trigger: "必填项缺失后点击确定。",
+          response: "显示字段级错误，保留用户输入，右侧批注切换到错误说明。",
+          rules: ["错误需要定位到具体步骤、子步骤和字段。"]
+        }
+      ]
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    function isMultiEntry() {
+      return state.entry === "多步骤配网";
+    }
+
+    function activeProduct() {
+      return productMeta[state.productType];
+    }
+
+    function activeMultiSteps() {
+      return state.multiConfigs[state.productType][state.language] || null;
+    }
+
+    function syncScenarioSelect() {
+      const select = el("scenarioSelect");
+      if (select) select.value = state.scenario;
+    }
+
+    function setAnnotation(id) {
+      state.activeAnnotation = id;
+      document.querySelectorAll(".anchored").forEach(node => node.classList.toggle("highlight", node.dataset.anchor === id));
+      renderAnnotations();
+    }
+
+    function renderProductMeta() {
+      const product = activeProduct();
+      el("productName").textContent = product.name;
+      el("productTypeTag").textContent = product.typeLabel;
+      el("productCategory").textContent = product.category;
+      el("productModel").textContent = product.model;
+      el("productId").textContent = product.id;
+      el("templateId").textContent = product.templateId;
+      el("switchProductButton").textContent = state.productType === "wifi" ? "切换为 BLE 样例" : "切换为 Wi-Fi 样例";
+    }
+
+    function renderEntries() {
+      const group = el("networkEntryGroup");
+      group.innerHTML = "";
+      activeProduct().entries.forEach(entry => {
+        const btn = document.createElement("button");
+        btn.className = "seg-button" + (entry === state.entry ? " active" : "");
+        btn.textContent = entry;
+        btn.addEventListener("click", () => {
+          state.entry = entry;
+          state.scenario = entry === "多步骤配网" ? (activeMultiSteps() ? "multi-filled" : "multi-empty") : "current";
+          setAnnotation(entry === "多步骤配网" && state.productType === "ble" ? "2" : "1");
+          renderAll();
+        });
+        group.appendChild(btn);
+      });
+
+      const sub = el("subEntryArea");
+      sub.innerHTML = "";
+      if (state.productType === "ble" && state.entry === "蓝牙配网") {
+        ["新版入口", "旧版入口"].forEach((item, index) => {
+          const btn = document.createElement("button");
+          btn.className = "seg-button" + (index === 0 ? " active" : "");
+          btn.textContent = item;
+          sub.appendChild(btn);
+        });
+        const qr = document.createElement("div");
+        qr.className = "qr-prefix";
+        qr.innerHTML = "<span>二维码前缀：</span>V300";
+        sub.appendChild(qr);
+      } else {
+        sub.innerHTML = "";
+      }
+    }
+
+    function renderLanguages() {
+      const tabs = el("languageTabs");
+      tabs.innerHTML = "";
+      languages.forEach(lang => {
+        const btn = document.createElement("button");
+        btn.textContent = lang;
+        btn.className = lang === state.language ? "active" : "";
+        btn.addEventListener("click", () => {
+          state.language = lang;
+          state.scenario = isMultiEntry() ? (activeMultiSteps() ? "multi-filled" : "multi-empty") : "current";
+          setAnnotation("3");
+          renderAll();
+        });
+        tabs.appendChild(btn);
+      });
+    }
+
+    function renderContent() {
+      const view = el("contentView");
+      const editButton = el("editButton");
+      editButton.style.display = "inline-flex";
+      if (isMultiEntry()) {
+        const steps = activeMultiSteps();
+        if (!steps) {
+          view.innerHTML = `<div class="steps-view anchored" data-anchor="4"><div class="empty-state">未配置</div></div>`;
+        } else {
+          view.innerHTML = renderSteps(steps, true);
+        }
+      } else if (state.productType === "wifi" && state.entry === "AP配网") {
+        view.innerHTML = renderSteps(currentGuideSteps, false);
+      } else if (state.productType === "ble" && state.entry === "蓝牙配网") {
+        view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
+      } else {
+        view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
+      }
+      wireAnchors();
+    }
+
+    function renderSteps(steps, isMulti) {
+      const rows = steps.map((step, index) => {
+        const helper = step.helper || "";
+        const button = step.button || "";
+        const imageName = step.image || "";
+        const selectable = isMulti ? (step.selectable ? "启用" : "--") : null;
+        const guide = isMulti ? renderGuide(step) : "";
+        const cells = [
+          ["配网文案：", step.copy || "--"],
+          ["配网引导图：", imageName ? `<div class="thumb-row"><div class="thumb">图片</div><span>${imageName}</span></div>` : "--"],
+          ["辅助文案：", helper || "--"],
+          ...(isMulti ? [["辅助文案支持选中能力：", selectable]] : []),
+          ["按钮文案：", button || "--"],
+          ...(isMulti ? [["引导文案：", step.guideEnabled ? (step.guideText || "--") : "--"], ["引导文案子步骤：", guide || "--"]] : [])
+        ].map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("");
+        return `
+          <div class="step-item">
+            <div class="step-index">${index + 1}</div>
+            <div class="step-main">
+              <div class="step-title">步骤 ${index + 1}</div>
+              <table class="desc-table">${cells}</table>
+            </div>
+          </div>
+        `;
+      }).join("");
+      return `<div class="steps-view anchored" data-anchor="4">${rows}</div>`;
+    }
+
+    function renderGuide(step) {
+      if (!step.guideEnabled || !step.subSteps.length) return "";
+      return `<div class="sub-steps">${step.subSteps.map((sub, idx) => `
+        <div class="sub-step-card">
+          <div class="sub-step-title">${idx + 1}. ${sub.title || "--"}</div>
+          <div style="color:var(--el-text-color-secondary);margin-bottom:4px;">图片：${sub.image || "--"}</div>
+          <div>${sub.text || "--"}</div>
+        </div>
+      `).join("")}</div>`;
+    }
+
+    function renderDrawer() {
+      const mask = el("drawerMask");
+      mask.classList.toggle("open", state.drawerOpen);
+      if (!state.drawerOpen) return;
+
+      const nav = el("drawerStepNav");
+      nav.innerHTML = "";
+      state.drawerSteps.forEach((step, index) => {
+        const btn = document.createElement("button");
+        btn.className = index === state.activeDrawerStep ? "active" : "";
+        btn.textContent = `步骤 ${index + 1}`;
+        btn.addEventListener("click", () => {
+          state.activeDrawerStep = index;
+          setAnnotation("6");
+          renderDrawer();
+        });
+        nav.appendChild(btn);
+      });
+      if (state.drawerSteps.length < MAX_STEPS) {
+        const add = document.createElement("button");
+        add.textContent = "+ 新增步骤";
+        add.addEventListener("click", () => {
+          if (state.drawerSteps.length >= MAX_STEPS) return;
+          state.drawerSteps.push(emptyStep());
+          state.activeDrawerStep = state.drawerSteps.length - 1;
+          setAnnotation("6");
+          renderDrawer();
+        });
+        nav.appendChild(add);
+      }
+
+      const form = el("drawerForm");
+      form.innerHTML = state.drawerSteps.map((step, index) => renderFormStep(step, index)).join("");
+      wireFormEvents();
+      wireAnchors();
+    }
+
+    function errorKey(stepIndex, field, subIndex = null) {
+      return subIndex === null ? `${stepIndex}.${field}` : `${stepIndex}.sub.${subIndex}.${field}`;
+    }
+
+    function hasError(stepIndex, field, subIndex = null) {
+      return Boolean(state.errors[errorKey(stepIndex, field, subIndex)]);
+    }
+
+    function errorText(stepIndex, field, subIndex = null) {
+      return state.errors[errorKey(stepIndex, field, subIndex)] || "";
+    }
+
+    function renderFormStep(step, index) {
+      const active = index === state.activeDrawerStep;
+      const display = active ? "" : "display:none";
+      const guideHasError = hasError(index, "guideText") || hasError(index, "guideSub");
+      const subForms = step.guideEnabled ? `
+        <div class="form-row anchored" data-anchor="9">
+          <div class="form-label">子步骤</div>
+          <div class="form-control">
+            ${step.subSteps.map((sub, subIndex) => renderSubForm(index, sub, subIndex)).join("")}
+            <button class="button" data-action="add-sub" data-step="${index}" ${step.subSteps.length >= 3 ? "disabled" : ""}>新增子步骤</button>
+            <div class="helper-text">最多 3 个子步骤，图片可选，标题和正文必填。</div>
+          </div>
+        </div>` : "";
+
+      return `
+        <section class="form-step" style="${display}" data-step-index="${index}">
+          <div class="form-step-header">
+            <span>步骤 ${index + 1}</span>
+            <button class="button danger" data-action="delete-step" data-step="${index}" ${state.drawerSteps.length <= 1 ? "disabled" : ""}>删除步骤</button>
+          </div>
+          <div class="form-step-body anchored" data-anchor="6">
+            <div class="form-row ${hasError(index, "image") ? "has-error" : ""}">
+              <div class="form-label required">配网引导图</div>
+              <div class="form-control">
+                <button class="upload-box ${step.image ? "filled" : ""}" data-action="toggle-image" data-step="${index}" type="button">${step.image ? `已上传<br>${step.image}` : "+<br>上传图片"}</button>
+                <div class="helper-text">建议尺寸 800px*600px，大小不超过 3M。</div>
+                <div class="error-text">${errorText(index, "image")}</div>
+              </div>
+            </div>
+            <div class="form-row ${hasError(index, "copy") ? "has-error" : ""}">
+              <div class="form-label required">配网文案</div>
+              <div class="form-control">
+                <textarea class="textarea" data-field="copy" data-step="${index}" maxlength="500" placeholder="请输入配网文案">${escapeHtml(step.copy)}</textarea>
+                <div class="helper-text">${step.copy.length} / 500</div>
+                <div class="error-text">${errorText(index, "copy")}</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">辅助文案</div>
+              <div class="form-control">
+                <input class="input" data-field="helper" data-step="${index}" maxlength="300" placeholder="请输入辅助文案" value="${escapeAttr(step.helper)}">
+                <div class="helper-text">${step.helper.length} / 300</div>
+              </div>
+            </div>
+            <div class="form-row anchored" data-anchor="7">
+              <div class="form-label">辅助文案支持选中能力</div>
+              <div class="form-control">
+                <div class="switch-row">
+                  <button class="switch ${step.selectable ? "on" : ""}" data-action="toggle-selectable" data-step="${index}" type="button" aria-label="切换辅助文案支持选中能力"></button>
+                  <span>${step.selectable ? "启用：App 页面内二次确认" : "未启用"}</span>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">按钮文案</div>
+              <div class="form-control">
+                <input class="input" data-field="button" data-step="${index}" maxlength="30" placeholder="请输入按钮文案" value="${escapeAttr(step.button)}">
+                <div class="helper-text">${step.button.length} / 30</div>
+              </div>
+            </div>
+            <div class="form-row anchored ${guideHasError ? "has-error" : ""}" data-anchor="8">
+              <div class="form-label ${step.guideEnabled ? "required" : ""}">引导文案</div>
+              <div class="form-control">
+                <div class="switch-row">
+                  <button class="switch ${step.guideEnabled ? "on" : ""}" data-action="toggle-guide" data-step="${index}" type="button" aria-label="切换引导文案"></button>
+                  <input class="input" style="max-width:260px" data-field="guideText" data-step="${index}" placeholder="请输入引导文案" value="${escapeAttr(step.guideText)}" ${step.guideEnabled ? "aria-required=\"true\"" : "disabled"}>
+                </div>
+                <div class="helper-text">${step.guideEnabled ? "启用后必填，与辅助文案支持选中能力互相独立。" : "未启用时不填写、不保存该字段。"}</div>
+                <div class="error-text">${errorText(index, "guideText") || errorText(index, "guideSub")}</div>
+              </div>
+            </div>
+            ${subForms}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderSubForm(stepIndex, sub, subIndex) {
+      return `
+        <div class="sub-form">
+          <div class="sub-form-header">
+            <span>子步骤 ${subIndex + 1}</span>
+            <button class="button danger" data-action="delete-sub" data-step="${stepIndex}" data-sub="${subIndex}" ${state.drawerSteps[stepIndex].subSteps.length <= 1 ? "disabled" : ""}>删除</button>
+          </div>
+          <div class="form-row" style="grid-template-columns:90px minmax(0,1fr);">
+            <div class="form-label">图片</div>
+            <div class="form-control">
+              <button class="upload-box ${sub.image ? "filled" : ""}" data-action="toggle-sub-image" data-step="${stepIndex}" data-sub="${subIndex}" type="button">${sub.image ? `已上传<br>${sub.image}` : "+<br>上传图片"}</button>
+            </div>
+          </div>
+          <div class="form-row ${hasError(stepIndex, "title", subIndex) ? "has-error" : ""}" style="grid-template-columns:90px minmax(0,1fr);">
+            <div class="form-label required">标题</div>
+            <div class="form-control">
+              <input class="input" data-field="subTitle" data-step="${stepIndex}" data-sub="${subIndex}" placeholder="请输入子步骤标题" value="${escapeAttr(sub.title)}">
+              <div class="error-text">${errorText(stepIndex, "title", subIndex)}</div>
+            </div>
+          </div>
+          <div class="form-row ${hasError(stepIndex, "text", subIndex) ? "has-error" : ""}" style="grid-template-columns:90px minmax(0,1fr);margin-bottom:0;">
+            <div class="form-label required">正文</div>
+            <div class="form-control">
+              <textarea class="textarea" data-field="subText" data-step="${stepIndex}" data-sub="${subIndex}" placeholder="请输入子步骤正文">${escapeHtml(sub.text)}</textarea>
+              <div class="error-text">${errorText(stepIndex, "text", subIndex)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function wireFormEvents() {
+      document.querySelectorAll("[data-field]").forEach(node => {
+        node.addEventListener("input", (event) => {
+          const step = Number(node.dataset.step);
+          const sub = node.dataset.sub !== undefined ? Number(node.dataset.sub) : null;
+          const item = state.drawerSteps[step];
+          const field = node.dataset.field;
+          if (field === "subTitle") item.subSteps[sub].title = node.value;
+          else if (field === "subText") item.subSteps[sub].text = node.value;
+          else item[field] = node.value;
+          state.errors = {};
+        });
+      });
+      document.querySelectorAll("[data-action]").forEach(node => {
+        node.addEventListener("click", () => {
+          const action = node.dataset.action;
+          const step = Number(node.dataset.step);
+          const sub = node.dataset.sub !== undefined ? Number(node.dataset.sub) : null;
+          const item = state.drawerSteps[step];
+          if (action === "toggle-image") item.image = item.image ? "" : `step-${step + 1}.png`;
+          if (action === "toggle-selectable") item.selectable = !item.selectable;
+          if (action === "toggle-guide") {
+            item.guideEnabled = !item.guideEnabled;
+            if (item.guideEnabled && !item.subSteps.length) item.subSteps.push(emptySubStep());
+          }
+          if (action === "delete-step" && state.drawerSteps.length > 1) {
+            state.drawerSteps.splice(step, 1);
+            state.activeDrawerStep = Math.max(0, Math.min(state.activeDrawerStep, state.drawerSteps.length - 1));
+          }
+          if (action === "add-sub" && item.subSteps.length < 3) item.subSteps.push(emptySubStep());
+          if (action === "delete-sub" && item.subSteps.length > 1) item.subSteps.splice(sub, 1);
+          if (action === "toggle-sub-image") item.subSteps[sub].image = item.subSteps[sub].image ? "" : `sub-${step + 1}-${sub + 1}.png`;
+          state.errors = {};
+          setAnnotation(action.includes("sub") ? "9" : action === "toggle-guide" ? "8" : action === "toggle-selectable" ? "7" : "6");
+          renderDrawer();
+        });
+      });
+    }
+
+    function validateDrawer() {
+      const errors = {};
+      state.drawerSteps.forEach((step, index) => {
+        if (!step.image) errors[errorKey(index, "image")] = "请上传配网引导图";
+        if (!step.copy.trim()) errors[errorKey(index, "copy")] = "请输入配网文案";
+        if (step.guideEnabled) {
+          if (!step.guideText.trim()) errors[errorKey(index, "guideText")] = "请输入引导文案";
+          if (!step.subSteps.length) errors[errorKey(index, "guideSub")] = "请至少新增 1 个子步骤";
+          step.subSteps.forEach((sub, subIndex) => {
+            if (!sub.title.trim()) errors[errorKey(index, "title", subIndex)] = "请输入子步骤标题";
+            if (!sub.text.trim()) errors[errorKey(index, "text", subIndex)] = "请输入子步骤正文";
+          });
+        }
+      });
+      if (state.drawerSteps.length > MAX_STEPS) {
+        errors["stepLimit"] = `多步骤配网最多支持 ${MAX_STEPS} 个步骤`;
+      }
+      state.errors = errors;
+      return Object.keys(errors).length === 0;
+    }
+
+    function renderAnnotations() {
+      const list = el("annotationList");
+      const activeSet = state.drawerOpen ? annotations.drawer : annotations.page;
+      list.innerHTML = activeSet.map(card => `
+        <article class="annotation-card ${state.activeAnnotation === card.id ? "active" : ""}" data-annotation="${card.id}">
+          <div class="annotation-title"><span class="annotation-number">${card.id}</span>${card.title}</div>
+          <dl>
+            <dt>关联位置</dt><dd>${card.location}</dd>
+            <dt>触发条件</dt><dd>${card.trigger}</dd>
+            <dt>系统响应</dt><dd>${card.response}</dd>
+            <dt>校验规则 / PRD 边界</dt><dd><ul>${card.rules.map(rule => `<li>${rule}</li>`).join("")}</ul></dd>
+          </dl>
+        </article>
+      `).join("");
+      document.querySelectorAll(".annotation-card").forEach(card => {
+        card.addEventListener("click", () => setAnnotation(card.dataset.annotation));
+      });
+      el("stateChips").innerHTML = [
+        state.productType === "wifi" ? "Wi-Fi 样例" : "BLE 样例",
+        state.entry,
+        state.language,
+        state.drawerOpen ? "编辑抽屉" : "查看态"
+      ].map(text => `<span class="state-chip">${text}</span>`).join("");
+    }
+
+    function wireAnchors() {
+      document.querySelectorAll(".anchored").forEach(node => {
+        const id = node.dataset.anchor;
+        if (!node.querySelector(`:scope > .anchor[data-anchor-id="${id}"]`) && id) {
+          const anchor = document.createElement("span");
+          anchor.className = "anchor";
+          anchor.dataset.anchorId = id;
+          anchor.textContent = id;
+          anchor.addEventListener("click", (event) => {
+            event.stopPropagation();
+            setAnnotation(id);
+          });
+          if (node.classList.contains("steps-view")) {
+            node.prepend(anchor);
+            anchor.style.position = "absolute";
+            anchor.style.marginLeft = "-34px";
+            anchor.style.marginTop = "4px";
+          } else {
+            node.appendChild(anchor);
+          }
+        }
+        node.addEventListener("click", (event) => {
+          if (event.target.closest("button,input,textarea,select,a")) return;
+          setAnnotation(id);
+        });
+      });
+      setAnnotation(state.activeAnnotation);
+    }
+
+    function renderAll() {
+      renderProductMeta();
+      syncScenarioSelect();
+      renderEntries();
+      renderLanguages();
+      renderContent();
+      renderDrawer();
+      renderAnnotations();
+    }
+
+    function showToast() {
+      const toast = el("toast");
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/"/g, "&quot;");
+    }
+
+    el("switchProductButton").addEventListener("click", () => {
+      state.productType = state.productType === "wifi" ? "ble" : "wifi";
+      state.entry = activeProduct().defaultEntry;
+      state.scenario = "current";
+      state.language = "英文（默认）";
+      state.drawerOpen = false;
+      setAnnotation("1");
+      renderAll();
+    });
+
+    el("scenarioSelect").addEventListener("change", (event) => {
+      const value = event.target.value;
+      if (value === "current") {
+        state.scenario = "current";
+        state.entry = activeProduct().defaultEntry;
+        state.language = "英文（默认）";
+        setAnnotation("12");
+      }
+      if (value === "multi-empty") {
+        state.scenario = "multi-empty";
+        state.entry = "多步骤配网";
+        state.language = "英文（默认）";
+        delete state.multiConfigs[state.productType][state.language];
+        setAnnotation(state.productType === "ble" ? "2" : "1");
+      }
+      if (value === "multi-filled") {
+        state.scenario = "multi-filled";
+        state.entry = "多步骤配网";
+        state.language = "英文（默认）";
+        state.multiConfigs[state.productType][state.language] = clone(multiStepSeed);
+        setAnnotation("4");
+      }
+      if (value === "validation") {
+        state.scenario = "validation";
+        state.entry = "多步骤配网";
+        state.drawerOpen = true;
+        state.drawerSteps = [emptyStep()];
+        state.activeDrawerStep = 0;
+        state.errors = {};
+        window.setTimeout(() => {
+          validateDrawer();
+          setAnnotation("11");
+          renderAll();
+        }, 0);
+      }
+      renderAll();
+    });
+
+    el("editButton").addEventListener("click", () => {
+      if (!isMultiEntry()) {
+        state.entry = "多步骤配网";
+        state.scenario = activeMultiSteps() ? "multi-filled" : "multi-empty";
+      }
+      state.drawerOpen = true;
+      state.drawerSteps = activeMultiSteps() ? clone(activeMultiSteps()) : [emptyStep()];
+      state.activeDrawerStep = 0;
+      state.errors = {};
+      setAnnotation("6");
+      renderAll();
+    });
+
+    el("closeDrawerButton").addEventListener("click", () => {
+      state.drawerOpen = false;
+      state.errors = {};
+      setAnnotation("5");
+      renderAll();
+    });
+
+    el("cancelButton").addEventListener("click", () => {
+      state.drawerOpen = false;
+      state.errors = {};
+      setAnnotation("10");
+      renderAll();
+    });
+
+    el("confirmButton").addEventListener("click", () => {
+      if (!validateDrawer()) {
+        setAnnotation("11");
+        renderAll();
+        return;
+      }
+      state.drawerOpen = false;
+      state.multiConfigs[state.productType][state.language] = clone(state.drawerSteps);
+      state.scenario = "multi-filled";
+      state.errors = {};
+      setAnnotation("4");
+      renderAll();
+      showToast();
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
