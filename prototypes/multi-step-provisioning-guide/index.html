@@ -852,6 +852,13 @@
       margin-top: 4px;
     }
 
+    .static-value {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      color: var(--el-text-color-regular);
+    }
+
     .upload-box {
       width: 124px;
       height: 82px;
@@ -1216,7 +1223,7 @@
                   </div>
                   <div class="drawer-footer anchored" data-anchor="10">
                     <button class="button" id="cancelButton">取消</button>
-                    <button class="button primary" id="confirmButton">确定</button>
+                    <button class="button primary" id="confirmButton">保存</button>
                   </div>
                 </aside>
               </div>
@@ -1441,8 +1448,8 @@
           id: "10",
           title: "按钮状态",
           location: "编辑抽屉 > Footer",
-          trigger: "点击取消或确定。",
-          response: "取消关闭抽屉并丢弃未保存内容；确定触发表单校验。",
+          trigger: "点击取消或保存。",
+          response: "取消关闭抽屉并丢弃未保存内容；保存触发表单校验。",
           rules: ["保存成功显示 Toast 并回显。", "保存失败保持抽屉打开。"]
         },
         {
@@ -1461,6 +1468,10 @@
     function isTargetEntry() {
       return (state.productType === "wifi" && state.entry === "扫码配网")
         || (state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === "旧版入口");
+    }
+
+    function isBleNewEntry() {
+      return state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === "新版入口";
     }
 
     function activeProduct() {
@@ -1485,6 +1496,7 @@
       if (state.drawerIsTarget) {
         return state.productType === "wifi" ? "编辑扫码配网" : "编辑蓝牙配网-旧版入口";
       }
+      if (isBleNewEntry()) return "编辑配网引导";
       if (state.productType === "ble" && state.entry === "蓝牙配网") return `编辑蓝牙配网-${state.subEntry}`;
       return `编辑${state.entry}`;
     }
@@ -1665,6 +1677,7 @@
       }
 
       const form = el("drawerForm");
+      form.classList.toggle("simple-guide", isBleNewEntry() && !state.drawerIsTarget);
       form.innerHTML = state.drawerSteps.map((step, index) => renderFormStep(step, index)).join("");
       wireFormEvents();
       wireAnchors();
@@ -1684,6 +1697,8 @@
 
     function renderFormStep(step, index) {
       const showExtensions = state.drawerIsTarget;
+      const simpleBleGuide = isBleNewEntry() && !state.drawerIsTarget;
+      const showOptionalLegacyFields = !simpleBleGuide;
       const active = index === state.activeDrawerStep;
       const display = active ? "" : "display:none";
       const guideHasError = showExtensions && (hasError(index, "guideText") || hasError(index, "guideSub"));
@@ -1704,11 +1719,23 @@
             <button class="button danger" data-action="delete-step" data-step="${index}" ${state.drawerSteps.length <= 1 ? "disabled" : ""}>删除步骤</button>
           </div>
           <div class="form-step-body anchored" data-anchor="6">
+            ${simpleBleGuide ? `<div class="form-row">
+              <div class="form-label">语言</div>
+              <div class="form-control">
+                <div class="static-value">${state.language}</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">配网指引</div>
+              <div class="form-control">
+                <div class="static-value">步骤 ${index + 1}</div>
+              </div>
+            </div>` : ""}
             <div class="form-row ${hasError(index, "image") ? "has-error" : ""}">
               <div class="form-label required">配网引导图</div>
               <div class="form-control">
                 <button class="upload-box ${step.image ? "filled" : ""}" data-action="toggle-image" data-step="${index}" type="button">${step.image ? `已上传<br>${step.image}` : "+<br>上传图片"}</button>
-                <div class="helper-text">建议尺寸 800px*600px，大小不超过 3M。</div>
+                <div class="helper-text">建议尺寸 800px*600px，大小不超过 3M。${simpleBleGuide ? "支持 json 格式。" : ""}</div>
                 <div class="error-text">${errorText(index, "image")}</div>
               </div>
             </div>
@@ -1720,13 +1747,13 @@
                 <div class="error-text">${errorText(index, "copy")}</div>
               </div>
             </div>
-            <div class="form-row">
+            ${showOptionalLegacyFields ? `<div class="form-row">
               <div class="form-label">辅助文案</div>
               <div class="form-control">
                 <input class="input" data-field="helper" data-step="${index}" maxlength="300" placeholder="请输入辅助文案" value="${escapeAttr(step.helper)}">
                 <div class="helper-text">${step.helper.length} / 300</div>
               </div>
-            </div>
+            </div>` : ""}
             ${showExtensions ? `<div class="form-row anchored" data-anchor="7">
               <div class="form-label">辅助文案支持选中能力</div>
               <div class="form-control">
@@ -1736,13 +1763,13 @@
                 </div>
               </div>
             </div>` : ""}
-            <div class="form-row">
+            ${showOptionalLegacyFields ? `<div class="form-row">
               <div class="form-label">按钮文案</div>
               <div class="form-control">
                 <input class="input" data-field="button" data-step="${index}" maxlength="30" placeholder="请输入按钮文案" value="${escapeAttr(step.button)}">
                 <div class="helper-text">${step.button.length} / 30</div>
               </div>
-            </div>
+            </div>` : ""}
             ${showExtensions ? `<div class="form-row anchored ${guideHasError ? "has-error" : ""}" data-anchor="8">
               <div class="form-label ${step.guideEnabled ? "required" : ""}">引导文案</div>
               <div class="form-control">
