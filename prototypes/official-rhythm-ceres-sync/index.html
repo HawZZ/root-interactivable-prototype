@@ -1,0 +1,3201 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin 官方韵律接入 Ceres 同步原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --app-aside-bg-color: #001529;
+      --app-aside-bg-active: #0b2a4a;
+      --app-bg-color: #f9f9f9;
+      --el-bg-color: #ffffff;
+      --el-color-primary: #4372ff;
+      --el-color-primary-dark-2: #2b6bd9;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-success: #67c23a;
+      --el-color-warning: #e6a23c;
+      --el-color-danger: #f56c6c;
+      --el-color-info: #909399;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --table-head-bg: #fafafa;
+      --annotation-bg: #fbfcff;
+      --annotation-active: #fff7dc;
+      --warning-bg: #fff7e8;
+      --danger-bg: #fff0f0;
+      --success-bg: #f0f9eb;
+      --info-bg: #f4f4f5;
+      --radius: 4px;
+      --aside-width: 208px;
+      --header-height: 54px;
+      --prototype-annotation-width: 420px;
+      --shadow-light: 0 6px 24px rgba(31, 45, 61, .12);
+      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #eef1f6;
+      color: var(--el-text-color-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+    .prototype-shell {
+      display: grid;
+      grid-template-columns: minmax(720px, 1fr) var(--prototype-annotation-width);
+      height: 100dvh;
+      min-height: 100dvh;
+      background: #eef1f6;
+    }
+
+    .prototype-left {
+      min-width: 0;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .canvas {
+      width: 1440px;
+      min-height: calc(100dvh - 36px);
+      margin: 0 auto;
+      background: var(--app-bg-color);
+      border: 1px solid #ccd3df;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(23, 35, 59, .12);
+    }
+
+    .admin-app {
+      min-height: calc(100dvh - 38px);
+      display: grid;
+      grid-template-columns: var(--aside-width) minmax(0, 1fr);
+    }
+
+    .aside {
+      min-height: 100%;
+      background: var(--app-aside-bg-color);
+      color: rgba(255, 255, 255, .76);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius);
+      background: #85b436;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .brand-main {
+      font-size: 15px;
+      line-height: 18px;
+      font-weight: 700;
+    }
+
+    .brand-sub {
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    .menu {
+      padding: 8px 0 24px;
+      overflow: auto;
+    }
+
+    .menu-group-title,
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      white-space: nowrap;
+    }
+
+    .menu-group-title {
+      height: 34px;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, .38);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      height: 42px;
+      border-left: 3px solid transparent;
+      color: rgba(255, 255, 255, .76);
+      font-size: 14px;
+    }
+
+    .menu-item.active {
+      background: var(--app-aside-bg-active);
+      border-left-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .menu-glyph {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid currentColor;
+      opacity: .74;
+      flex: 0 0 auto;
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--header-height) minmax(0, 1fr);
+    }
+
+    .topbar {
+      height: var(--header-height);
+      background: var(--el-bg-color);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 22px;
+      min-width: 0;
+    }
+
+    .breadcrumb strong {
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+    }
+
+    .userbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 20px 24px 24px;
+      min-width: 0;
+      overflow: auto;
+    }
+
+    .summary {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+
+    .summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .summary-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 26px;
+      font-weight: 600;
+    }
+
+    .summary-meta {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .meta-item {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .meta-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .meta-value {
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      height: 42px;
+      padding: 0 4px;
+      border-bottom: 1px solid var(--el-border-color-light);
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--el-text-color-regular);
+      height: 42px;
+      padding: 0;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+    }
+
+    .section-card {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+
+    .section-head {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--el-text-color-primary);
+    }
+
+    .section-desc {
+      margin-top: 2px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .section-body {
+      padding: 16px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(3, 200px) 1fr;
+      align-items: end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--el-text-color-primary);
+      padding: 5px 11px;
+      outline: none;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .textarea {
+      min-height: 68px;
+      resize: vertical;
+    }
+
+    .input::placeholder,
+    .textarea::placeholder {
+      color: var(--el-text-color-placeholder);
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      border-color: var(--el-color-primary);
+      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
+    }
+
+    .input.error,
+    .select.error,
+    .textarea.error {
+      border-color: var(--el-color-danger);
+    }
+
+    .help {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .error-text {
+      color: var(--el-color-danger);
+      font-size: 12px;
+      line-height: 18px;
+      min-height: 18px;
+    }
+
+    .btn {
+      min-height: 32px;
+      padding: 6px 14px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-weight: 500;
+      transition: background .16s ease, border-color .16s ease, color .16s ease, transform .12s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+      color: var(--el-color-primary);
+      border-color: #b8c8ff;
+      background: #f7faff;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover:not(:disabled) {
+      border-color: var(--el-color-primary-dark-2);
+      background: var(--el-color-primary-dark-2);
+      color: #fff;
+    }
+
+    .btn.danger {
+      border-color: var(--el-color-danger);
+      background: var(--el-color-danger);
+      color: #fff;
+    }
+
+    .btn.text {
+      min-height: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+
+    .btn.text:hover:not(:disabled) {
+      background: transparent;
+      color: var(--el-color-primary-dark-2);
+      border: 0;
+    }
+
+    .btn.text.danger-text {
+      color: var(--el-color-danger);
+    }
+
+    .btn:disabled,
+    .btn.text:disabled {
+      border-color: #e4e7ed;
+      background: #f5f7fa;
+      color: #a8abb2;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1180px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--table-head-bg);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #fbfdff;
+    }
+
+    .cell-main {
+      display: grid;
+      gap: 2px;
+    }
+
+    .cell-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+
+    .cell-sub {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      max-width: 210px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.local {
+      color: #2f65d8;
+      background: #edf3ff;
+      border-color: #d6e3ff;
+    }
+
+    .tag.ceres {
+      color: #6a4fb8;
+      background: #f2efff;
+      border-color: #ded7ff;
+    }
+
+    .tag.published,
+    .tag.success {
+      color: #529b2e;
+      background: var(--success-bg);
+      border-color: #d8efca;
+    }
+
+    .tag.configuring,
+    .tag.warning {
+      color: #b88230;
+      background: #fdf6ec;
+      border-color: #faecd8;
+    }
+
+    .tag.info {
+      color: #73767a;
+      background: var(--info-bg);
+      border-color: #e9e9eb;
+    }
+
+    .tag.danger {
+      color: #d94a4a;
+      background: var(--danger-bg);
+      border-color: #ffd4d4;
+    }
+
+    .media-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color-light);
+      background: linear-gradient(135deg, #eef4ff, #ffffff);
+      display: grid;
+      place-items: center;
+      color: var(--el-color-primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .hero-thumb {
+      width: 48px;
+      height: 32px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color-light);
+      background: linear-gradient(135deg, #f2f7ff, #dbe7ff);
+    }
+
+    .swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .swatch-box {
+      width: 18px;
+      height: 18px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(0, 0, 0, .12);
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 178px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+
+    .visibility-panel {
+      margin-top: 12px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .visibility-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+
+    .visibility-title {
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .visibility-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      padding: 0;
+    }
+
+    .visibility-cell {
+      padding: 12px 14px;
+      border-right: 1px solid var(--el-border-color-lighter);
+      min-height: 74px;
+    }
+
+    .visibility-cell:last-child {
+      border-right: 0;
+    }
+
+    .visibility-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .visibility-value {
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .state-banner {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .state-banner.show {
+      display: flex;
+    }
+
+    .state-banner.warning {
+      background: var(--warning-bg);
+      border-color: #f5dab1;
+      color: #8a5a16;
+    }
+
+    .state-banner.danger {
+      background: var(--danger-bg);
+      border-color: #ffd0d0;
+      color: #a83d3d;
+    }
+
+    .state-banner.success {
+      background: var(--success-bg);
+      border-color: #d6ebc5;
+      color: #3f7e22;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      padding: 54px 24px;
+      color: var(--el-text-color-secondary);
+      background: #fff;
+    }
+
+    .empty-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+
+    .skeleton-row td {
+      height: 56px;
+    }
+
+    .skeleton {
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #edf1f7 0%, #f7f9fc 42%, #edf1f7 100%);
+      background-size: 180% 100%;
+      animation: shimmer 1.3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 120% 0; }
+      100% { background-position: -80% 0; }
+    }
+
+    .note-anchor {
+      display: inline-grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border-radius: 50%;
+      background: #fff6d8;
+      color: #8a5a00;
+      border: 1px solid #f1cf77;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 1px 0 rgba(138, 90, 0, .08);
+      flex: 0 0 auto;
+    }
+
+    .anchor-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    [data-anchor].active-anchor {
+      outline: 2px solid #f1c232;
+      outline-offset: 2px;
+      border-radius: var(--radius);
+    }
+
+    .annotation {
+      min-width: 0;
+      background: var(--annotation-bg);
+      border-left: 1px solid #d7deea;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100dvh;
+    }
+
+    .annotation-head {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #fff;
+      border-bottom: 1px solid #e1e7f0;
+      padding: 16px;
+    }
+
+    .annotation-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 700;
+    }
+
+    .annotation-sub {
+      margin-top: 4px;
+      color: #748094;
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .annotation-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .anno-card {
+      border: 1px solid #dfe6f1;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    .anno-card.active {
+      border-color: #efc14d;
+      background: var(--annotation-active);
+      box-shadow: 0 4px 14px rgba(153, 105, 0, .1);
+    }
+
+    .anno-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff6d8;
+      color: #8a5a00;
+      border: 1px solid #f1cf77;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .anno-title {
+      margin: 0 0 6px;
+      color: #1f2d3d;
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 700;
+    }
+
+    .anno-section {
+      margin: 7px 0 0;
+    }
+
+    .anno-section strong {
+      color: #354052;
+      font-size: 12px;
+    }
+
+    .anno-section p {
+      margin: 2px 0 0;
+      color: #69758a;
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .drawer-mask {
+      position: fixed;
+      top: 0;
+      right: var(--prototype-annotation-width);
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      background: rgba(20, 28, 40, .34);
+      display: none;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(20, 28, 40, .34);
+      display: none;
+    }
+
+    .drawer-mask.show,
+    .modal-mask.show {
+      display: block;
+    }
+
+    .drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: min(720px, calc(100vw - var(--prototype-annotation-width) - 24px));
+      height: 100%;
+      background: #fff;
+      box-shadow: var(--shadow-light);
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr) 64px;
+    }
+
+    .drawer-head,
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .drawer-title,
+    .modal-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--el-text-color-secondary);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .icon-btn:hover {
+      background: #f5f7fa;
+      color: var(--el-text-color-primary);
+    }
+
+    .drawer-body {
+      padding: 18px 20px;
+      overflow: auto;
+    }
+
+    .drawer-footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      border-top: 1px solid var(--el-border-color-light);
+      background: #fff;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 18px;
+    }
+
+    .form-grid .span-2 {
+      grid-column: span 2;
+    }
+
+    .form-block {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .form-block-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .readonly-panel {
+      border: 1px solid #faecd8;
+      background: #fdf6ec;
+      color: #8a5a16;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .settings-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fbfcff;
+      font-size: 13px;
+    }
+
+    .setting-key {
+      color: var(--el-text-color-secondary);
+    }
+
+    .modal {
+      width: 520px;
+      max-width: calc(100vw - 32px);
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: var(--shadow-light);
+      position: absolute;
+      top: 16%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-rows: 56px auto 58px;
+      max-height: 74dvh;
+    }
+
+    .modal.wide {
+      width: 760px;
+      top: 8%;
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow: auto;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 0 20px;
+      border-top: 1px solid var(--el-border-color-light);
+    }
+
+    .language-table {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .language-table th,
+    .language-table td {
+      padding: 9px;
+    }
+
+    .sync-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sync-option {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      text-align: left;
+      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .sync-option:hover {
+      border-color: #b8c8ff;
+      background: #fbfdff;
+      box-shadow: 0 3px 10px rgba(67, 114, 255, .08);
+    }
+
+    .sync-option-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .sync-option-desc {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .toast {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 90;
+      min-width: 280px;
+      max-width: 620px;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: #fff;
+      border: 1px solid var(--el-border-color-light);
+      box-shadow: var(--shadow-light);
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .toast.show {
+      display: flex;
+    }
+
+    .toast.success {
+      border-color: #d6ebc5;
+      color: #3f7e22;
+      background: var(--success-bg);
+    }
+
+    .toast.warning {
+      border-color: #f5dab1;
+      color: #8a5a16;
+      background: var(--warning-bg);
+    }
+
+    .toast.danger {
+      border-color: #ffd0d0;
+      color: #a83d3d;
+      background: var(--danger-bg);
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mini-list li {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .mini-label {
+      color: var(--el-text-color-secondary);
+    }
+
+    /* ===== Upload field ===== */
+    .upload-field-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .upload-field-label {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      margin-bottom: 4px;
+    }
+
+    .upload-box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fafafa;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-box:hover {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+    }
+
+    .upload-box.has-image {
+      border-style: solid;
+      border-color: var(--el-border-color-light);
+    }
+
+    .upload-box .upload-icon {
+      font-size: 22px;
+      color: #c0c4cc;
+      line-height: 1;
+    }
+
+    .upload-box .upload-hint {
+      font-size: 11px;
+      color: #c0c4cc;
+      margin-top: 4px;
+    }
+
+    .upload-box img.upload-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .upload-box .upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .42);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .upload-box:hover .upload-overlay {
+      display: flex;
+    }
+
+    .upload-overlay-btn {
+      background: rgba(255, 255, 255, .92);
+      border: none;
+      border-radius: 3px;
+      padding: 3px 7px;
+      font-size: 11px;
+      color: #303133;
+      cursor: pointer;
+    }
+
+    .upload-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .upload-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .upload-item-label {
+      font-size: 11px;
+      color: var(--el-text-color-secondary);
+      text-align: center;
+      max-width: 80px;
+      line-height: 14px;
+    }
+
+    /* ===== Color picker ===== */
+    .color-picker-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--el-text-color-regular);
+      min-width: 120px;
+      transition: border-color .15s;
+    }
+
+    .color-picker-trigger:hover {
+      border-color: var(--el-color-primary);
+    }
+
+    .color-trigger-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, .12);
+      flex-shrink: 0;
+    }
+
+    .color-trigger-empty {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 1px dashed #c0c4cc;
+      flex-shrink: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        #e4e7ed 0px, #e4e7ed 2px,
+        #fff 2px, #fff 6px
+      );
+    }
+
+    .color-trigger-value {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    /* Color picker popover */
+    .color-picker-popover {
+      display: none;
+      position: absolute;
+      z-index: 200;
+      background: #fff;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(23, 35, 59, .16);
+      padding: 14px;
+      width: 266px;
+      user-select: none;
+    }
+
+    .color-picker-popover.show {
+      display: block;
+    }
+
+    /* SV panel */
+    .cp-sv-panel {
+      width: 238px;
+      height: 180px;
+      border-radius: 4px;
+      position: relative;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+
+    .cp-sv-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .cp-sv-white {
+      background: linear-gradient(to right, #fff, transparent);
+    }
+
+    .cp-sv-black {
+      background: linear-gradient(to bottom, transparent, #000);
+    }
+
+    .cp-sv-cursor {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .3), 0 2px 4px rgba(0, 0, 0, .2);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Hue strip */
+    .cp-hue-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cp-hue-strip {
+      flex: 1;
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(
+        to right,
+        #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%
+      );
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cp-hue-thumb {
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, .2);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+      transform: translate(-50%, -50%);
+      cursor: grab;
+    }
+
+    .cp-preview-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, .12);
+      flex-shrink: 0;
+    }
+
+    /* RGB/HEX inputs */
+    .cp-inputs-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .cp-hex-wrap {
+      flex: 0 0 86px;
+    }
+
+    .cp-hex-wrap label,
+    .cp-rgb-col label {
+      font-size: 11px;
+      color: var(--el-text-color-secondary);
+      display: block;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .cp-hex-input,
+    .cp-rgb-input {
+      width: 100%;
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid var(--el-border-color);
+      border-radius: 3px;
+      font-size: 12px;
+      text-align: center;
+      color: var(--el-text-color-primary);
+      background: #fff;
+    }
+
+    .cp-rgb-group {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .cp-rgb-col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cp-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--el-border-color-lighter);
+    }
+
+    .cp-clear-btn {
+      padding: 4px 12px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 12px;
+      color: var(--el-text-color-regular);
+      cursor: pointer;
+    }
+
+    .cp-clear-btn:hover {
+      border-color: var(--el-color-danger);
+      color: var(--el-color-danger);
+    }
+
+    .cp-confirm-btn {
+      padding: 4px 12px;
+      border: 1px solid var(--el-color-primary);
+      border-radius: var(--radius);
+      background: var(--el-color-primary);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .cp-confirm-btn:hover {
+      background: var(--el-color-primary-dark-2);
+      border-color: var(--el-color-primary-dark-2);
+    }
+
+    /* Color picker wrapper positions relative to field */
+    .color-picker-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .prototype-shell {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100dvh;
+      }
+
+      .prototype-left {
+        padding: 10px;
+      }
+
+      .canvas {
+        width: 1440px;
+        min-height: 760px;
+      }
+
+      .annotation {
+        height: 44dvh;
+        border-left: 0;
+        border-top: 1px solid #d7deea;
+      }
+
+      .drawer-mask {
+        right: 0;
+        bottom: 44dvh;
+      }
+
+      .drawer {
+        width: min(720px, 100vw);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-shell">
+    <main class="prototype-left" aria-label="交互产品界面">
+      <section class="canvas">
+        <div class="admin-app">
+          <aside class="aside">
+            <div class="brand">
+              <div class="brand-mark">L</div>
+              <div>
+                <div class="brand-main">LuteOS</div>
+                <div class="brand-sub">IoT Admin</div>
+              </div>
+            </div>
+            <nav class="menu" aria-label="主菜单">
+              <div class="menu-group-title">工作台</div>
+              <div class="menu-item"><span class="menu-glyph"></span>概览</div>
+              <div class="menu-group-title">产品管理</div>
+              <div class="menu-item active"><span class="menu-glyph"></span>智能产品</div>
+              <div class="menu-item"><span class="menu-glyph"></span>产品模板</div>
+              <div class="menu-item"><span class="menu-glyph"></span>产品分类</div>
+              <div class="menu-group-title">设备与 App</div>
+              <div class="menu-item"><span class="menu-glyph"></span>设备列表</div>
+              <div class="menu-item"><span class="menu-glyph"></span>App 管理</div>
+              <div class="menu-group-title">配置中心</div>
+              <div class="menu-item"><span class="menu-glyph"></span>多语言</div>
+              <div class="menu-item"><span class="menu-glyph"></span>系统配置</div>
+            </nav>
+          </aside>
+
+          <div class="main">
+            <header class="topbar">
+              <div class="breadcrumb">
+                <span>首页</span>
+                <span>/</span>
+                <span>智能产品</span>
+                <span>/</span>
+                <strong>产品详情</strong>
+              </div>
+              <div class="userbar">
+                <span>test 环境</span>
+                <span>产品配置</span>
+                <span class="avatar">A</span>
+              </div>
+            </header>
+
+            <div class="content">
+              <section class="summary">
+                <div class="summary-head">
+                  <div class="anchor-wrap" data-anchor="01">
+                    <span class="note-anchor">01</span>
+                    <h1 class="summary-title">V3测试</h1>
+                  </div>
+                  <span class="tag warning">开发中</span>
+                </div>
+                <div class="summary-meta">
+                  <div class="meta-item">
+                    <span class="meta-label">Product ID</span>
+                    <span class="meta-value">2063886410419023874</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">产品型号</span>
+                    <span class="meta-value">V300</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">产品分类</span>
+                    <span class="meta-value">Breast Pump</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">所属 App</span>
+                    <span class="meta-value">Momcozy</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">通讯方式</span>
+                    <span class="meta-value">BLE</span>
+                  </div>
+                </div>
+              </section>
+
+              <div class="tabs" role="tablist" aria-label="产品详情步骤">
+                <button class="tab" type="button">基本信息</button>
+                <button class="tab" type="button">功能设计</button>
+                <button class="tab" type="button">扩展程序</button>
+                <button class="tab active" type="button">高级配置</button>
+                <button class="tab" type="button">发布记录</button>
+              </div>
+
+              <section class="section-card">
+                <div class="section-head">
+                  <div>
+                    <div class="section-title">
+                      <span class="anchor-wrap" data-anchor="01"><span class="note-anchor">01</span>官方韵律</span>
+                      <span class="tag success">已配置</span>
+                    </div>
+                    <div class="section-desc">定义官方韵律，C 端用户可以快捷选择不同的推荐韵律。</div>
+                  </div>
+                  <div class="anchor-wrap" data-anchor="03">
+                    <span class="note-anchor">03</span>
+                    <span class="tag info">APP 仅获取已发布韵律</span>
+                  </div>
+                </div>
+
+                <div class="section-body">
+                  <div id="stateBanner" class="state-banner"></div>
+
+                  <div class="toolbar">
+                    <div class="field">
+                      <label for="keyword">关键词</label>
+                      <input class="input" id="keyword" placeholder="韵律名称 / 韵律编码">
+                    </div>
+                    <div class="field" data-anchor="02">
+                      <label for="sourceFilter">来源</label>
+                      <select class="select" id="sourceFilter">
+                        <option value="ALL">全部</option>
+                        <option value="LOCAL">本地创建</option>
+                        <option value="CERES">Ceres同步</option>
+                      </select>
+                    </div>
+                    <div class="field" data-anchor="03">
+                      <label for="statusFilter">状态</label>
+                      <select class="select" id="statusFilter">
+                        <option value="ALL">全部</option>
+                        <option value="CONFIGURING">配置中</option>
+                        <option value="PUBLISHED">已发布</option>
+                      </select>
+                    </div>
+                    <div class="toolbar-actions">
+                      <select class="select" id="scenarioSelect" aria-label="场景切换" style="width: 176px;">
+                        <option value="default">默认列表</option>
+                        <option value="empty">空列表</option>
+                        <option value="loading">列表加载</option>
+                        <option value="syncFail">同步失败</option>
+                        <option value="codeConflict">modeCode 冲突</option>
+                        <option value="codeOverflow">modeCode 越界</option>
+                        <option value="publishedEdit">已发布编辑</option>
+                        <option value="deletedResync">删除后再同步</option>
+                        <option value="permission">无权限</option>
+                      </select>
+                      <button class="btn" id="queryBtn" type="button">查询</button>
+                      <button class="btn" id="resetBtn" type="button">重置</button>
+                      <button class="btn primary" id="createBtn" type="button">创建韵律</button>
+                      <button class="btn" id="syncBtn" type="button" data-anchor="09">模拟 Ceres 同步</button>
+                    </div>
+                  </div>
+
+                  <div class="table-wrap" data-anchor="02">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style="width: 176px;">韵律名称</th>
+                          <th style="width: 92px;">韵律编码</th>
+                          <th style="width: 92px;">来源</th>
+                          <th style="width: 86px;">状态</th>
+                          <th style="width: 154px;" data-anchor="04">同步时间</th>
+                          <th style="width: 70px;">图标</th>
+                          <th style="width: 76px;">主图</th>
+                          <th style="width: 116px;">色值</th>
+                          <th style="width: 60px;">排序</th>
+                          <th style="width: 88px;">时长</th>
+                          <th style="width: 190px;">描述</th>
+                          <th style="width: 220px;">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody id="rhythmTbody"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="pagination">
+                    <span id="totalText">共 4 条</span>
+                    <button class="btn" type="button">10条/页</button>
+                    <button class="btn" type="button">上一页</button>
+                    <button class="btn primary" type="button">1</button>
+                    <button class="btn" type="button">下一页</button>
+                  </div>
+
+                  <section class="visibility-panel" data-anchor="12">
+                    <div class="visibility-head">
+                      <div>
+                        <div class="visibility-title">接口可见性预览</div>
+                        <div class="section-desc">旧版本接口只返回本地创建且已发布韵律；新版本接口返回所有来源的已发布韵律。</div>
+                      </div>
+                      <span class="tag info">APP 缓存刷新不在本需求范围内</span>
+                    </div>
+                    <div class="visibility-grid" id="visibilityGrid"></div>
+                  </section>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="annotation" aria-label="原型批注">
+      <div class="annotation-head">
+        <h2 class="annotation-title">原型批注</h2>
+        <div class="annotation-sub">点击左侧编号或批注卡片，可查看当前页面、抽屉、弹窗和状态的产品规则。</div>
+      </div>
+      <div class="annotation-body" id="annotationBody"></div>
+    </aside>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask" aria-hidden="true">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
+        <div class="drawer-title" id="drawerTitle">编辑韵律</div>
+        <button class="icon-btn" type="button" id="drawerClose" aria-label="关闭">×</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+      <div class="drawer-footer" id="drawerFooter"></div>
+    </aside>
+  </div>
+
+  <div class="modal-mask" id="modalMask" aria-hidden="true">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">确认</div>
+        <button class="icon-btn" type="button" id="modalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const nowText = "2026-06-25 10:58:36";
+    const state = {
+      rhythms: [
+        {
+          id: "r1",
+          source: "LOCAL",
+          status: "PUBLISHED",
+          name: "Gentle Pump",
+          code: 10001,
+          icon: "G",
+          color: "#6AA6FF",
+          sort: 1,
+          duration: "30秒",
+          desc: "For daily rhythm",
+          syncTime: "--",
+          mainImage: true,
+          ceresUuid: "",
+          deleted: false,
+          lang: {
+            en: { name: "Gentle Pump", desc: "For daily rhythm" },
+            zh: { name: "轻柔吸乳", desc: "适用于日常使用的舒缓韵律" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "阶段 3 个，强度 2 档，本地可编辑"
+        },
+        {
+          id: "r2",
+          source: "LOCAL",
+          status: "CONFIGURING",
+          name: "Night Relief",
+          code: 10002,
+          icon: "N",
+          color: "#7ED3A6",
+          sort: 2,
+          duration: "45秒",
+          desc: "Draft for night use",
+          syncTime: "--",
+          mainImage: true,
+          ceresUuid: "",
+          deleted: false,
+          lang: {
+            en: { name: "Night Relief", desc: "Draft for night use" },
+            zh: { name: "", desc: "" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "阶段 4 个，强度 3 档，本地可编辑"
+        },
+        {
+          id: "r3",
+          source: "CERES",
+          status: "CONFIGURING",
+          name: "Ceres Calm Flow",
+          code: 10003,
+          icon: "C",
+          color: "#A58BFF",
+          sort: 3,
+          duration: "Ceres透传",
+          desc: "Synced from Ceres",
+          syncTime: "2026-06-25 10:30:12",
+          mainImage: true,
+          ceresUuid: "ceres-7b0a-calm-flow",
+          deleted: false,
+          lang: {
+            en: { name: "Ceres Calm Flow", desc: "Synced from Ceres" },
+            zh: { name: "Ceres 舒缓韵律", desc: "来自 Ceres 的舒缓韵律" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "Ceres payload v3，平台只存储下发"
+        },
+        {
+          id: "r4",
+          source: "CERES",
+          status: "PUBLISHED",
+          name: "Ceres Active Pulse",
+          code: 10004,
+          icon: "P",
+          color: "#FF9F6A",
+          sort: 4,
+          duration: "Ceres透传",
+          desc: "Published Ceres rhythm",
+          syncTime: "2026-06-25 10:42:05",
+          mainImage: true,
+          ceresUuid: "ceres-6c4a-active-pulse",
+          deleted: false,
+          lang: {
+            en: { name: "Ceres Active Pulse", desc: "Published Ceres rhythm" },
+            zh: { name: "Ceres 活力韵律", desc: "" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "Ceres payload v5，平台只存储下发"
+        }
+      ],
+      deletedArchive: [],
+      filters: {
+        keyword: "",
+        source: "ALL",
+        status: "ALL"
+      },
+      scenario: "default",
+      selectedAnno: "01",
+      drawerRowId: null,
+      drawerMode: "edit",
+      drawerColor: "",
+      drawerIconSlots: ["", "", ""],
+      drawerMainImageData: "",
+      modalType: null,
+      pendingRowId: null,
+      permissionLocked: false
+    };
+
+    const annotations = {
+      "01": {
+        title: "文案从模式更新为韵律",
+        location: "页面标题、按钮、字段名、弹窗",
+        trigger: "进入产品详情高级配置页。",
+        response: "用户可见文案使用“韵律”，技术字段如 modeCode 保留原命名。",
+        validation: "列表、抽屉、弹窗、toast 和空态不再出现旧创建按钮文案。",
+        boundary: "历史接口名和底层字段不要求在原型中改名。"
+      },
+      "02": {
+        title: "来源治理",
+        location: "官方韵律列表 > 来源列",
+        trigger: "列表同时存在本地创建和 Ceres 同步韵律。",
+        response: "来源作为治理字段展示为本地创建或 Ceres同步，用于同步冲突、删除和接口过滤。",
+        validation: "来源筛选能过滤列表，旧接口只看本地创建，Ceres 删除不受本地保留规则限制。",
+        boundary: "本期不设计 Ceres 平台自身来源管理。"
+      },
+      "03": {
+        title: "状态控制 APP 可见性",
+        location: "状态列、发布、撤回",
+        trigger: "韵律创建、同步、发布、撤回或编辑。",
+        response: "配置中为平台草稿态，APP 不可见；已发布为发布态，APP 可见。",
+        validation: "发布和撤回后，接口可见性预览同步刷新。",
+        boundary: "产品开发中仍受白名单命中范围控制。"
+      },
+      "04": {
+        title: "Ceres 同步时间",
+        location: "同步时间列、编辑抽屉同步信息区",
+        trigger: "Ceres 韵律同步新增或重复同步成功。",
+        response: "记录最近同步到 IoT Admin 的时间，格式 yyyy-mm-dd hh:mm:ss。",
+        validation: "本地创建显示 --，Ceres 同步显示具体时间。",
+        boundary: "是否在 APP 新接口返回同步时间属于技术设计。"
+      },
+      "05": {
+        title: "Ceres 基础字段可编辑",
+        location: "编辑韵律抽屉 > 基础信息",
+        trigger: "点击 Ceres 韵律行内编辑。",
+        response: "名称、描述、编码、图标、主图、排序、色值可由平台编辑。",
+        validation: "保存不回写 Ceres，已发布韵律保存成功后立即生效。",
+        boundary: "Ceres 后续同步不覆盖这些平台编辑字段。"
+      },
+      "06": {
+        title: "Ceres 功能设置不可编辑",
+        location: "编辑韵律抽屉 > 功能设置",
+        trigger: "编辑 Ceres 同步韵律。",
+        response: "功能设置显示只读摘要或维护提示，由 Ceres 同步更新。",
+        validation: "保存基础字段时不要求平台解析或校验功能设置。",
+        boundary: "平台只存储和下发 Ceres 功能设置。"
+      },
+      "07": {
+        title: "多语言范围",
+        location: "多语言弹窗",
+        trigger: "点击行内多语言。",
+        response: "只配置韵律名称和韵律描述，默认英语，缺失语言回退英语。",
+        validation: "弹窗不提供编码、图标、主图、排序、色值和功能设置多语言。",
+        boundary: "Ceres 多语言保存到 IoT Admin 平台侧，不回写 Ceres。"
+      },
+      "08": {
+        title: "modeCode 校验",
+        location: "韵律编码字段",
+        trigger: "创建、编辑或 Ceres 自动生成编码。",
+        response: "平台使用范围 0 到 100000，同一 product 下唯一。",
+        validation: "越界和重复阻断保存或同步新增，并展示字段级错误。",
+        boundary: "APP 使用 modeCode 调用设备侧烧录 mode，其他下发影响遵循现状。"
+      },
+      "09": {
+        title: "Ceres 同步新增",
+        location: "模拟 Ceres 同步弹窗",
+        trigger: "Ceres 携带新 uuid 同步到平台。",
+        response: "平台新建 Ceres 韵律，状态配置中，记录同步时间，自动生成编码。",
+        validation: "新增默认不会进入 APP 返回，直到发布。",
+        boundary: "同步入口为原型演示入口，实际入口以技术方案为准。"
+      },
+      "10": {
+        title: "Ceres 重复同步覆盖规则",
+        location: "同步结果提示",
+        trigger: "同 uuid Ceres 韵律再次同步。",
+        response: "仅更新功能设置摘要和同步时间，不覆盖平台基础字段、多语言、排序和状态。",
+        validation: "重复同步后名称、描述、编码保持平台当前值。",
+        boundary: "Ceres 功能设置结构由 Ceres 和 APP 解释。"
+      },
+      "11": {
+        title: "删除后再次同步",
+        location: "删除确认、同步模拟",
+        trigger: "平台删除 Ceres 韵律后，同 uuid 再次同步。",
+        response: "删除记录不参与 uuid 匹配，再同步按新韵律进入配置中。",
+        validation: "不恢复旧平台 override、多语言和发布状态。",
+        boundary: "平台删除不请求 Ceres 删除源数据。"
+      },
+      "12": {
+        title: "旧新接口返回范围",
+        location: "接口可见性预览",
+        trigger: "列表数据、来源或状态变化。",
+        response: "旧接口返回本地创建且已发布；新接口返回所有来源的已发布。",
+        validation: "配置中和已删除韵律均不返回。",
+        boundary: "新接口字段名、path 和 APP 缓存刷新不在本原型范围。"
+      },
+      "13": {
+        title: "本地删除保护",
+        location: "删除确认或禁用删除按钮",
+        trigger: "删除本地创建韵律。",
+        response: "至少保留一条本地创建韵律，Ceres 韵律不受该规则限制。",
+        validation: "仅剩一条本地韵律时，本地删除被阻断。",
+        boundary: "Ceres 删除仍需危险操作确认。"
+      },
+      "14": {
+        title: "已发布编辑立即生效",
+        location: "编辑保存 toast",
+        trigger: "编辑已发布韵律并保存通过校验。",
+        response: "保存成功后立即影响 APP 可见内容，弹出提示。",
+        validation: "接口可见性预览保持返回该韵律，但展示字段已更新。",
+        boundary: "操作日志、权限和校验规则沿用现状。"
+      }
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function sourceLabel(source) {
+      return source === "CERES" ? "Ceres同步" : "本地创建";
+    }
+
+    function statusLabel(status) {
+      return status === "PUBLISHED" ? "已发布" : "配置中";
+    }
+
+    function getVisibleRows() {
+      if (state.scenario === "empty") return [];
+      return state.rhythms
+        .filter((row) => !row.deleted)
+        .filter((row) => {
+          if (state.filters.source !== "ALL" && row.source !== state.filters.source) return false;
+          if (state.filters.status !== "ALL" && row.status !== state.filters.status) return false;
+          const keyword = state.filters.keyword.trim().toLowerCase();
+          if (!keyword) return true;
+          return row.name.toLowerCase().includes(keyword) || String(row.code).includes(keyword);
+        })
+        .sort((a, b) => a.sort - b.sort);
+    }
+
+    function maxCode() {
+      return Math.max(...state.rhythms.filter((row) => !row.deleted).map((row) => row.code), -1);
+    }
+
+    function nextCode() {
+      return maxCode() + 1;
+    }
+
+    function activeLocalCount() {
+      return state.rhythms.filter((row) => !row.deleted && row.source === "LOCAL").length;
+    }
+
+    function isCodeDuplicate(code, currentId) {
+      return state.rhythms.some((row) => !row.deleted && row.id !== currentId && Number(row.code) === Number(code));
+    }
+
+    function setAnnotation(id) {
+      state.selectedAnno = id;
+      renderAnnotations();
+      $$(".active-anchor").forEach((el) => el.classList.remove("active-anchor"));
+      $$(`[data-anchor="${id}"]`).forEach((el) => el.classList.add("active-anchor"));
+    }
+
+    function renderAnnotations() {
+      const body = $("#annotationBody");
+      body.innerHTML = Object.entries(annotations)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([id, item]) => `
+        <article class="anno-card ${state.selectedAnno === id ? "active" : ""}" data-anno="${id}" tabindex="0">
+          <div class="anno-num">${id}</div>
+          <div>
+            <h3 class="anno-title">${item.title}</h3>
+            <div class="anno-section"><strong>关联位置</strong><p>${item.location}</p></div>
+            <div class="anno-section"><strong>触发条件</strong><p>${item.trigger}</p></div>
+            <div class="anno-section"><strong>系统响应</strong><p>${item.response}</p></div>
+            <div class="anno-section"><strong>校验规则</strong><p>${item.validation}</p></div>
+            <div class="anno-section"><strong>PRD 边界</strong><p>${item.boundary}</p></div>
+          </div>
+        </article>
+      `).join("");
+      $$("[data-anno]").forEach((card) => {
+        card.addEventListener("click", () => setAnnotation(card.dataset.anno));
+        card.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setAnnotation(card.dataset.anno);
+          }
+        });
+      });
+    }
+
+    function renderBanner() {
+      const banner = $("#stateBanner");
+      const scenarios = {
+        syncFail: ["danger", "Ceres 同步失败，请稍后重试。可打开模拟同步弹窗点击失败态查看结果。"],
+        codeConflict: ["danger", "当前处于 modeCode 冲突演示：编辑任意韵律并输入 10001，可看到唯一性校验。"],
+        codeOverflow: ["warning", "当前处于 modeCode 越界演示：Ceres 自动生成编码达到 100001 时会阻断同步新增。"],
+        publishedEdit: ["success", "当前处于已发布编辑演示：编辑已发布韵律并保存，变更立即生效。"],
+        deletedResync: ["warning", "当前处于删除后再同步演示：删除 Ceres 韵律后，同 uuid 再同步按新韵律处理。"],
+        permission: ["warning", "当前处于无权限演示：编辑、发布、撤回、删除操作不可用。"]
+      };
+      const item = scenarios[state.scenario];
+      if (!item) {
+        banner.className = "state-banner";
+        banner.textContent = "";
+        return;
+      }
+      banner.className = `state-banner show ${item[0]}`;
+      banner.innerHTML = `<strong>场景提示</strong><span>${item[1]}</span>`;
+    }
+
+    function renderTable() {
+      const tbody = $("#rhythmTbody");
+      const rows = getVisibleRows();
+      if (state.scenario === "loading") {
+        tbody.innerHTML = Array.from({ length: 4 }).map(() => `
+          <tr class="skeleton-row">
+            <td><div class="skeleton" style="width: 124px;"></div></td>
+            <td><div class="skeleton" style="width: 62px;"></div></td>
+            <td><div class="skeleton" style="width: 74px;"></div></td>
+            <td><div class="skeleton" style="width: 64px;"></div></td>
+            <td><div class="skeleton" style="width: 132px;"></div></td>
+            <td><div class="skeleton" style="width: 36px;"></div></td>
+            <td><div class="skeleton" style="width: 48px;"></div></td>
+            <td><div class="skeleton" style="width: 92px;"></div></td>
+            <td><div class="skeleton" style="width: 30px;"></div></td>
+            <td><div class="skeleton" style="width: 70px;"></div></td>
+            <td><div class="skeleton" style="width: 140px;"></div></td>
+            <td><div class="skeleton" style="width: 160px;"></div></td>
+          </tr>
+        `).join("");
+        $("#totalText").textContent = "加载中";
+        return;
+      }
+      if (rows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12">
+              <div class="empty">
+                <div class="empty-title">暂无官方韵律</div>
+                <div>可创建本地韵律或等待 Ceres 同步。</div>
+                <button class="btn primary" type="button" data-empty-create>创建韵律</button>
+              </div>
+            </td>
+          </tr>
+        `;
+        $("#totalText").textContent = "共 0 条";
+        const create = document.querySelector("[data-empty-create]");
+        if (create) create.addEventListener("click", () => openDrawer("create"));
+        return;
+      }
+
+      tbody.innerHTML = rows.map((row) => {
+        const isCeres = row.source === "CERES";
+        const published = row.status === "PUBLISHED";
+        const localDeleteDisabled = row.source === "LOCAL" && activeLocalCount() <= 1;
+        const disabled = state.permissionLocked;
+        return `
+          <tr data-row="${row.id}">
+            <td>
+              <div class="cell-main">
+                <span class="cell-title">${row.name}</span>
+                <span class="cell-sub">${row.lang.zh.name || "中文未配置，回退英语"}</span>
+              </div>
+            </td>
+            <td data-anchor="08">${row.code}</td>
+            <td data-anchor="02"><span class="tag ${isCeres ? "ceres" : "local"}">${sourceLabel(row.source)}</span></td>
+            <td data-anchor="03"><span class="tag ${published ? "published" : "configuring"}">${statusLabel(row.status)}</span></td>
+            <td data-anchor="04">${row.syncTime}</td>
+            <td><div class="media-thumb">${row.icon}</div></td>
+            <td><div class="hero-thumb"></div></td>
+            <td><span class="swatch"><span class="swatch-box" style="background:${row.color}"></span>${row.color}</span></td>
+            <td>${row.sort}</td>
+            <td>${row.duration}</td>
+            <td><span class="cell-sub">${row.desc}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="btn text" type="button" data-action="lang" data-id="${row.id}" data-anchor="07" ${disabled ? "disabled" : ""}>多语言</button>
+                <button class="btn text" type="button" data-action="edit" data-id="${row.id}" data-anchor="${isCeres ? "05" : "14"}" ${disabled ? "disabled" : ""}>编辑</button>
+                ${published
+                  ? `<button class="btn text" type="button" data-action="withdraw" data-id="${row.id}" data-anchor="03" ${disabled ? "disabled" : ""}>撤回</button>`
+                  : `<button class="btn text" type="button" data-action="publish" data-id="${row.id}" data-anchor="03" ${disabled ? "disabled" : ""}>发布</button>`
+                }
+                <button class="btn text danger-text" type="button" data-action="delete" data-id="${row.id}" data-anchor="${isCeres ? "11" : "13"}" ${disabled || localDeleteDisabled ? "disabled" : ""}>删除</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      $("#totalText").textContent = `共 ${rows.length} 条`;
+      $$("[data-action]").forEach((button) => {
+        button.addEventListener("click", handleRowAction);
+      });
+      $$("[data-anchor]").forEach((el) => {
+        el.addEventListener("click", (event) => {
+          if (el.dataset.anchor) {
+            event.stopPropagation();
+            setAnnotation(el.dataset.anchor);
+          }
+        });
+      });
+    }
+
+    function renderVisibility() {
+      const activeRows = state.rhythms.filter((row) => !row.deleted);
+      const oldApi = activeRows.filter((row) => row.source === "LOCAL" && row.status === "PUBLISHED");
+      const newApi = activeRows.filter((row) => row.status === "PUBLISHED");
+      const ceresPublished = newApi.filter((row) => row.source === "CERES");
+      const configuring = activeRows.filter((row) => row.status === "CONFIGURING");
+      $("#visibilityGrid").innerHTML = `
+        <div class="visibility-cell">
+          <div class="visibility-label">旧版本接口</div>
+          <div class="visibility-value">${oldApi.length ? oldApi.map((row) => row.name).join("、") : "无返回"}</div>
+        </div>
+        <div class="visibility-cell">
+          <div class="visibility-label">新版本接口</div>
+          <div class="visibility-value">${newApi.length ? newApi.map((row) => row.name).join("、") : "无返回"}</div>
+        </div>
+        <div class="visibility-cell">
+          <div class="visibility-label">Ceres 已发布</div>
+          <div class="visibility-value">${ceresPublished.length ? ceresPublished.map((row) => row.name).join("、") : "无"}</div>
+        </div>
+        <div class="visibility-cell">
+          <div class="visibility-label">APP 不可见</div>
+          <div class="visibility-value">${configuring.length ? configuring.map((row) => row.name).join("、") : "无"}</div>
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      state.filters.keyword = $("#keyword").value;
+      state.filters.source = $("#sourceFilter").value;
+      state.filters.status = $("#statusFilter").value;
+      state.scenario = $("#scenarioSelect").value;
+      state.permissionLocked = state.scenario === "permission";
+      renderBanner();
+      renderTable();
+      renderVisibility();
+      setAnnotation(state.selectedAnno);
+    }
+
+    function handleRowAction(event) {
+      const button = event.currentTarget;
+      const action = button.dataset.action;
+      const id = button.dataset.id;
+      const row = state.rhythms.find((item) => item.id === id);
+      if (!row) return;
+      if (action === "edit") openDrawer("edit", id);
+      if (action === "lang") openLanguageModal(id);
+      if (action === "publish") openConfirm("publish", id);
+      if (action === "withdraw") openConfirm("withdraw", id);
+      if (action === "delete") openConfirm("delete", id);
+    }
+
+    function openDrawer(mode, id) {
+      state.drawerMode = mode;
+      state.drawerRowId = id || null;
+      const isCreate = mode === "create";
+      const row = isCreate ? {
+        id: "",
+        source: "LOCAL",
+        status: "CONFIGURING",
+        name: "",
+        code: "",
+        icon: "R",
+        color: "#6AA6FF",
+        sort: maxCode() < 0 ? 1 : state.rhythms.filter((item) => !item.deleted).length + 1,
+        duration: "30秒",
+        desc: "",
+        syncTime: "--",
+        mainImage: true,
+        ceresUuid: "",
+        settingsSummary: "阶段 3 个，强度 2 档，本地可编辑"
+      } : state.rhythms.find((item) => item.id === id);
+      if (!row) return;
+      const isCeres = row.source === "CERES";
+      const isPublished = row.status === "PUBLISHED";
+      $("#drawerTitle").textContent = isCreate ? "创建韵律" : `编辑韵律 - ${row.name}`;
+      $("#drawerBody").innerHTML = `
+        <div class="form-block">
+          <div class="form-block-title">
+            <span data-anchor="${isCeres ? "05" : "14"}">基础信息</span>
+            <span class="tag ${isCeres ? "ceres" : "local"}">${sourceLabel(row.source)}</span>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="formName">韵律名称</label>
+              <input class="input" id="formName" value="${escapeAttr(row.name)}" placeholder="请输入英语默认名称">
+              <div class="error-text" id="errName"></div>
+            </div>
+            <div class="field" data-anchor="08">
+              <label for="formCode">韵律编码</label>
+              <input class="input" id="formCode" value="${escapeAttr(row.code)}" placeholder="0 到 100000">
+              <div class="error-text" id="errCode"></div>
+            </div>
+            <div class="field">
+              <label>韵律色值</label>
+              <div class="color-picker-wrap" id="colorPickerWrap">
+                <button type="button" class="color-picker-trigger" id="colorTrigger">
+                  ${row.color
+                    ? `<span class="color-trigger-swatch" id="triggerSwatch" style="background:${escapeAttr(row.color)}"></span>`
+                    : `<span class="color-trigger-empty" id="triggerSwatch"></span>`
+                  }
+                  <span class="color-trigger-value" id="triggerValue">${row.color || "请选择色值"}</span>
+                </button>
+                <div class="color-picker-popover" id="colorPickerPop">
+                  <div class="cp-sv-panel" id="cpSvPanel">
+                    <div class="cp-sv-layer" id="cpSvBg" style="background: hsl(210,100%,50%)"></div>
+                    <div class="cp-sv-layer cp-sv-white"></div>
+                    <div class="cp-sv-layer cp-sv-black"></div>
+                    <div class="cp-sv-cursor" id="cpSvCursor" style="left:70%;top:30%"></div>
+                  </div>
+                  <div class="cp-hue-row">
+                    <div class="cp-hue-strip" id="cpHueStrip">
+                      <div class="cp-hue-thumb" id="cpHueThumb" style="left:58%"></div>
+                    </div>
+                    <div class="cp-preview-swatch" id="cpPreviewSwatch"></div>
+                  </div>
+                  <div class="cp-inputs-row">
+                    <div class="cp-hex-wrap">
+                      <label>HEX</label>
+                      <input class="cp-hex-input" id="cpHexInput" maxlength="7" placeholder="#6AA6FF">
+                    </div>
+                    <div class="cp-rgb-group">
+                      <div class="cp-rgb-col"><label>R</label><input class="cp-rgb-input" id="cpR" type="number" min="0" max="255"></div>
+                      <div class="cp-rgb-col"><label>G</label><input class="cp-rgb-input" id="cpG" type="number" min="0" max="255"></div>
+                      <div class="cp-rgb-col"><label>B</label><input class="cp-rgb-input" id="cpB" type="number" min="0" max="255"></div>
+                    </div>
+                  </div>
+                  <div class="cp-actions">
+                    <button type="button" class="cp-clear-btn" id="cpClearBtn">清空</button>
+                    <button type="button" class="cp-confirm-btn" id="cpConfirmBtn">确定</button>
+                  </div>
+                </div>
+              </div>
+              <div class="help">用于 APP 侧韵律背景色展示。</div>
+            </div>
+            <div class="field">
+              <label for="formSort">排序</label>
+              <input class="input" id="formSort" value="${escapeAttr(row.sort)}" placeholder="请输入排序">
+              <div class="help">已存在列表项沿用平台配置排序规则。</div>
+            </div>
+            <div class="field span-2">
+              <label>韵律图标</label>
+              <div class="upload-row" id="iconUploadRow">
+                ${["配置图标", "模式按钮", "模式选中按钮"].map((label, idx) => {
+                  const stored = row.iconSlots && row.iconSlots[idx];
+                  return `<div class="upload-item">
+                    <div class="upload-box${stored ? " has-image" : ""}" data-slot="${idx}" data-field="icon" id="iconBox${idx}" role="button" tabindex="0" aria-label="上传${label}">
+                      ${stored
+                        ? `<img class="upload-preview" src="${escapeAttr(stored)}" alt="${escapeAttr(label)}">
+                           <div class="upload-overlay">
+                             <button class="upload-overlay-btn" type="button" data-action="replace" data-slot="${idx}" data-field="icon">替换</button>
+                             <button class="upload-overlay-btn" type="button" data-action="delete" data-slot="${idx}" data-field="icon">删除</button>
+                           </div>`
+                        : `<span class="upload-icon">＋</span><span class="upload-hint">上传</span>`
+                      }
+                    </div>
+                    <div class="upload-item-label">${label}</div>
+                  </div>`;
+                }).join("")}
+              </div>
+              <div class="help">支持 PNG/JPG，建议 100×100px 以上。</div>
+            </div>
+            <div class="field span-2">
+              <label>韵律主图</label>
+              <div class="upload-row" id="mainImageUploadRow">
+                ${(() => {
+                  const stored = row.mainImageData;
+                  return `<div class="upload-item">
+                    <div class="upload-box${stored ? " has-image" : ""}" data-field="mainImage" data-slot="0" id="mainImageBox" role="button" tabindex="0" aria-label="上传韵律主图">
+                      ${stored
+                        ? `<img class="upload-preview" src="${escapeAttr(stored)}" alt="韵律主图">
+                           <div class="upload-overlay">
+                             <button class="upload-overlay-btn" type="button" data-action="replace" data-slot="0" data-field="mainImage">替换</button>
+                             <button class="upload-overlay-btn" type="button" data-action="delete" data-slot="0" data-field="mainImage">删除</button>
+                           </div>`
+                        : `<span class="upload-icon">＋</span><span class="upload-hint">上传</span>`
+                      }
+                    </div>
+                    <div class="upload-item-label">主图</div>
+                  </div>`;
+                })()}
+              </div>
+              <div class="help">支持 PNG/JPG，建议宽高比 16:9。</div>
+            </div>
+            <div class="field span-2">
+              <label for="formDesc">韵律描述</label>
+              <textarea class="textarea" id="formDesc" placeholder="请输入英语默认描述">${escapeHtml(row.desc)}</textarea>
+              <div class="error-text" id="errDesc"></div>
+            </div>
+          </div>
+        </div>
+
+        ${isCeres ? `
+          <div class="form-block" data-anchor="04">
+            <div class="form-block-title">
+              <span>同步信息</span>
+              <span class="tag ceres">Ceres</span>
+            </div>
+            <ul class="mini-list">
+              <li><span class="mini-label">Ceres UUID</span><span>${row.ceresUuid}</span></li>
+              <li><span class="mini-label">同步时间</span><span>${row.syncTime}</span></li>
+              <li><span class="mini-label">覆盖规则</span><span>重复同步仅更新功能设置和同步时间。</span></li>
+            </ul>
+          </div>
+        ` : ""}
+
+        <div class="form-block" data-anchor="${isCeres ? "06" : "14"}">
+          <div class="form-block-title">
+            <span>功能设置</span>
+            ${isCeres ? `<span class="tag warning">不可编辑</span>` : `<span class="tag success">可编辑</span>`}
+          </div>
+          ${isCeres ? `
+            <div class="readonly-panel">Ceres 同步韵律的功能设置由 Ceres 维护，IoT Admin 仅存储和下发，不解析、不校验、不提供编辑入口。</div>
+            <div class="settings-list" style="margin-top: 10px;">
+              <div class="setting-row"><span class="setting-key">payload</span><span>${row.settingsSummary}</span></div>
+              <div class="setting-row"><span class="setting-key">解析责任</span><span>Ceres / APP</span></div>
+            </div>
+          ` : `
+            <div class="settings-list">
+              <div class="setting-row"><span class="setting-key">阶段数量</span><span>3 个阶段，可编辑</span></div>
+              <div class="setting-row"><span class="setting-key">默认时长</span><span>${row.duration}</span></div>
+              <div class="setting-row"><span class="setting-key">强度配置</span><span>低 / 中 / 高</span></div>
+            </div>
+          `}
+        </div>
+
+        ${isPublished ? `
+          <div class="readonly-panel" data-anchor="14">当前韵律已发布，保存并通过校验后将立即对 APP 生效。</div>
+        ` : ""}
+      `;
+      $("#drawerFooter").innerHTML = `
+        <button class="btn" type="button" id="drawerCancel">取消</button>
+        <button class="btn primary" type="button" id="drawerSave">${isCreate ? "保存" : "保存"}</button>
+        ${isCreate ? `<button class="btn primary" type="button" id="drawerSavePublish">保存并发布</button>` : ""}
+      `;
+      $("#drawerMask").classList.add("show");
+      $("#drawerMask").setAttribute("aria-hidden", "false");
+      $("#drawerCancel").addEventListener("click", closeDrawer);
+      $("#drawerSave").addEventListener("click", () => saveDrawer(false));
+      const savePublish = $("#drawerSavePublish");
+      if (savePublish) savePublish.addEventListener("click", () => saveDrawer(true));
+      $$("[data-anchor]").forEach((el) => el.addEventListener("click", () => setAnnotation(el.dataset.anchor)));
+      setAnnotation(isCeres ? "05" : "14");
+
+      // ── init drawer transient state ──────────────────────────────────────────
+      state.drawerColor = row.color || "";
+      state.drawerIconSlots = row.iconSlots ? [...row.iconSlots] : ["", "", ""];
+      state.drawerMainImageData = row.mainImageData || "";
+
+      // ── Color picker ─────────────────────────────────────────────────────────
+      initColorPicker(row.color || "");
+
+      // ── Upload boxes ─────────────────────────────────────────────────────────
+      // Bind icon upload slots (3 boxes)
+      $$("[data-field='icon']").forEach((el) => {
+        if (el.classList.contains("upload-box")) {
+          el.addEventListener("click", (e) => {
+            const slot = parseInt(el.dataset.slot, 10);
+            simulateUpload("icon", slot);
+          });
+        }
+      });
+      // Bind icon overlay buttons (replace / delete)
+      $$(".upload-overlay-btn[data-field='icon']").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const slot = parseInt(btn.dataset.slot, 10);
+          if (btn.dataset.action === "delete") {
+            state.drawerIconSlots[slot] = "";
+            refreshIconBox(slot, false);
+          } else {
+            simulateUpload("icon", slot);
+          }
+        });
+      });
+      // Bind main image upload box
+      const mainBox = $("#mainImageBox");
+      if (mainBox) {
+        mainBox.addEventListener("click", () => simulateUpload("mainImage", 0));
+      }
+      $$(".upload-overlay-btn[data-field='mainImage']").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (btn.dataset.action === "delete") {
+            state.drawerMainImageData = "";
+            refreshMainImageBox(false);
+          } else {
+            simulateUpload("mainImage", 0);
+          }
+        });
+      });
+    }
+
+    // ── Color picker logic ──────────────────────────────────────────────────────
+    // cp state
+    const cpState = { h: 210, s: 0.7, v: 0.7, draggingSV: false, draggingHue: false };
+
+    function hsvToRgb(h, s, v) {
+      const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+      let r, g, b;
+      if (h < 60)      { r = c; g = x; b = 0; }
+      else if (h < 120){ r = x; g = c; b = 0; }
+      else if (h < 180){ r = 0; g = c; b = x; }
+      else if (h < 240){ r = 0; g = x; b = c; }
+      else if (h < 300){ r = x; g = 0; b = c; }
+      else             { r = c; g = 0; b = x; }
+      return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+    }
+
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("").toUpperCase();
+    }
+
+    function hexToRgb(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+      if (!m) return null;
+      const n = parseInt(m[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    function cpHexFromState() {
+      const [r, g, b] = hsvToRgb(cpState.h, cpState.s, cpState.v);
+      return rgbToHex(r, g, b);
+    }
+
+    function cpApplyToUI() {
+      const hex = cpHexFromState();
+      const [r, g, b] = hsvToRgb(cpState.h, cpState.s, cpState.v);
+      const hueColor = `hsl(${cpState.h}, 100%, 50%)`;
+      const svBg = $("#cpSvBg"); if (svBg) svBg.style.background = hueColor;
+      const cursor = $("#cpSvCursor");
+      if (cursor) { cursor.style.left = (cpState.s * 100) + "%"; cursor.style.top = ((1 - cpState.v) * 100) + "%"; }
+      const hueThumb = $("#cpHueThumb");
+      if (hueThumb) hueThumb.style.left = (cpState.h / 360 * 100) + "%";
+      const preview = $("#cpPreviewSwatch"); if (preview) preview.style.background = hex;
+      const hexInput = $("#cpHexInput"); if (hexInput) hexInput.value = hex;
+      const rIn = $("#cpR"); if (rIn) rIn.value = r;
+      const gIn = $("#cpG"); if (gIn) gIn.value = g;
+      const bIn = $("#cpB"); if (bIn) bIn.value = b;
+    }
+
+    function initColorPicker(initColor) {
+      // Parse initial color into HSV
+      if (initColor) {
+        const rgb = hexToRgb(initColor);
+        if (rgb) {
+          const [r, g, b] = rgb.map((n) => n / 255);
+          const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+          cpState.v = max;
+          cpState.s = max === 0 ? 0 : d / max;
+          if (d === 0) { cpState.h = 0; }
+          else if (max === r) { cpState.h = ((g - b) / d % 6) * 60; }
+          else if (max === g) { cpState.h = ((b - r) / d + 2) * 60; }
+          else { cpState.h = ((r - g) / d + 4) * 60; }
+          if (cpState.h < 0) cpState.h += 360;
+        }
+      } else {
+        cpState.h = 210; cpState.s = 0.7; cpState.v = 0.85;
+      }
+      cpApplyToUI();
+
+      const trigger = $("#colorTrigger");
+      const pop = $("#colorPickerPop");
+      if (!trigger || !pop) return;
+
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        pop.classList.toggle("show");
+      });
+
+      // SV panel drag
+      const svPanel = $("#cpSvPanel");
+      if (svPanel) {
+        const onSVMove = (e) => {
+          if (!cpState.draggingSV) return;
+          const rect = svPanel.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          cpState.s = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          cpState.v = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height));
+          cpApplyToUI();
+        };
+        svPanel.addEventListener("mousedown", (e) => { cpState.draggingSV = true; onSVMove(e); });
+        document.addEventListener("mousemove", onSVMove);
+        document.addEventListener("mouseup", () => { cpState.draggingSV = false; });
+      }
+
+      // Hue strip drag
+      const hueStrip = $("#cpHueStrip");
+      if (hueStrip) {
+        const onHueMove = (e) => {
+          if (!cpState.draggingHue) return;
+          const rect = hueStrip.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          cpState.h = Math.max(0, Math.min(360, ((clientX - rect.left) / rect.width) * 360));
+          cpApplyToUI();
+        };
+        hueStrip.addEventListener("mousedown", (e) => { cpState.draggingHue = true; onHueMove(e); });
+        document.addEventListener("mousemove", onHueMove);
+        document.addEventListener("mouseup", () => { cpState.draggingHue = false; });
+      }
+
+      // HEX input
+      const hexInput = $("#cpHexInput");
+      if (hexInput) {
+        hexInput.addEventListener("change", () => {
+          const rgb = hexToRgb(hexInput.value);
+          if (!rgb) return;
+          const [r, g, b] = rgb.map((n) => n / 255);
+          const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+          cpState.v = max;
+          cpState.s = max === 0 ? 0 : d / max;
+          if (d === 0) cpState.h = 0;
+          else if (max === r) cpState.h = ((g - b) / d % 6) * 60;
+          else if (max === g) cpState.h = ((b - r) / d + 2) * 60;
+          else cpState.h = ((r - g) / d + 4) * 60;
+          if (cpState.h < 0) cpState.h += 360;
+          cpApplyToUI();
+        });
+      }
+
+      // RGB inputs
+      ["cpR", "cpG", "cpB"].forEach((id) => {
+        const el = $("#" + id);
+        if (el) el.addEventListener("change", () => {
+          const r = parseInt($("#cpR").value) || 0;
+          const g = parseInt($("#cpG").value) || 0;
+          const b = parseInt($("#cpB").value) || 0;
+          const hex = rgbToHex(r, g, b);
+          const rgb = hexToRgb(hex);
+          if (!rgb) return;
+          const [rn, gn, bn] = rgb.map((n) => n / 255);
+          const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn), d = max - min;
+          cpState.v = max; cpState.s = max === 0 ? 0 : d / max;
+          if (d === 0) cpState.h = 0;
+          else if (max === rn) cpState.h = ((gn - bn) / d % 6) * 60;
+          else if (max === gn) cpState.h = ((bn - rn) / d + 2) * 60;
+          else cpState.h = ((rn - gn) / d + 4) * 60;
+          if (cpState.h < 0) cpState.h += 360;
+          cpApplyToUI();
+        });
+      });
+
+      // Clear
+      const clearBtn = $("#cpClearBtn");
+      if (clearBtn) clearBtn.addEventListener("click", () => {
+        state.drawerColor = "";
+        cpApplyToTrigger("");
+        pop.classList.remove("show");
+      });
+
+      // Confirm
+      const confirmBtn = $("#cpConfirmBtn");
+      if (confirmBtn) confirmBtn.addEventListener("click", () => {
+        const hex = cpHexFromState();
+        state.drawerColor = hex;
+        cpApplyToTrigger(hex);
+        pop.classList.remove("show");
+      });
+
+      // Close on outside click
+      document.addEventListener("click", (e) => {
+        if (pop && pop.classList.contains("show") && !pop.contains(e.target) && e.target !== trigger) {
+          pop.classList.remove("show");
+        }
+      }, { capture: true });
+    }
+
+    function cpApplyToTrigger(hex) {
+      const swatch = $("#triggerSwatch");
+      const val = $("#triggerValue");
+      if (!swatch || !val) return;
+      if (hex) {
+        swatch.className = "color-trigger-swatch";
+        swatch.style.background = hex;
+        val.textContent = hex.toUpperCase();
+      } else {
+        swatch.className = "color-trigger-empty";
+        swatch.style.background = "";
+        val.textContent = "请选择色值";
+      }
+    }
+
+    // ── Upload simulation ──────────────────────────────────────────────────────
+    // Simulated placeholder images (colored SVG data URLs)
+    const PLACEHOLDER_ICONS = [
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='4' fill='%234372ff'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='28' font-family='sans-serif'%3E♪%3C/text%3E%3C/svg%3E",
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='4' fill='%2367c23a'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='28' font-family='sans-serif'%3E▷%3C/text%3E%3C/svg%3E",
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='4' fill='%23e6a23c'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='28' font-family='sans-serif'%3E✓%3C/text%3E%3C/svg%3E"
+    ];
+    const PLACEHOLDER_MAIN_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='90'%3E%3Crect width='160' height='90' fill='%236aa6ff'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='14' font-family='sans-serif'%3E韵律主图%3C/text%3E%3C/svg%3E";
+
+    function simulateUpload(field, slot) {
+      // Simulate file picker → immediately "upload" a placeholder image
+      if (field === "icon") {
+        state.drawerIconSlots[slot] = PLACEHOLDER_ICONS[slot] || PLACEHOLDER_ICONS[0];
+        refreshIconBox(slot, true);
+      } else {
+        state.drawerMainImageData = PLACEHOLDER_MAIN_IMAGE;
+        refreshMainImageBox(true);
+      }
+      showToast("图片上传成功（原型模拟）。", "success");
+    }
+
+    function refreshIconBox(slot, hasImage) {
+      const box = $(`#iconBox${slot}`);
+      if (!box) return;
+      const labels = ["配置图标", "模式按钮", "模式选中按钮"];
+      const src = state.drawerIconSlots[slot];
+      box.className = "upload-box" + (hasImage ? " has-image" : "");
+      box.innerHTML = hasImage
+        ? `<img class="upload-preview" src="${src}" alt="${labels[slot]}">
+           <div class="upload-overlay">
+             <button class="upload-overlay-btn" type="button" data-action="replace" data-slot="${slot}" data-field="icon">替换</button>
+             <button class="upload-overlay-btn" type="button" data-action="delete" data-slot="${slot}" data-field="icon">删除</button>
+           </div>`
+        : `<span class="upload-icon">＋</span><span class="upload-hint">上传</span>`;
+      // Re-bind overlay buttons
+      box.querySelectorAll(".upload-overlay-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const s = parseInt(btn.dataset.slot, 10);
+          if (btn.dataset.action === "delete") { state.drawerIconSlots[s] = ""; refreshIconBox(s, false); }
+          else simulateUpload("icon", s);
+        });
+      });
+      box.onclick = () => simulateUpload("icon", slot);
+    }
+
+    function refreshMainImageBox(hasImage) {
+      const box = $("#mainImageBox");
+      if (!box) return;
+      const src = state.drawerMainImageData;
+      box.className = "upload-box" + (hasImage ? " has-image" : "");
+      box.innerHTML = hasImage
+        ? `<img class="upload-preview" src="${src}" alt="韵律主图">
+           <div class="upload-overlay">
+             <button class="upload-overlay-btn" type="button" data-action="replace" data-slot="0" data-field="mainImage">替换</button>
+             <button class="upload-overlay-btn" type="button" data-action="delete" data-slot="0" data-field="mainImage">删除</button>
+           </div>`
+        : `<span class="upload-icon">＋</span><span class="upload-hint">上传</span>`;
+      box.querySelectorAll(".upload-overlay-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (btn.dataset.action === "delete") { state.drawerMainImageData = ""; refreshMainImageBox(false); }
+          else simulateUpload("mainImage", 0);
+        });
+      });
+      box.onclick = () => simulateUpload("mainImage", 0);
+    }
+
+    function closeDrawer() {
+      $("#drawerMask").classList.remove("show");
+      $("#drawerMask").setAttribute("aria-hidden", "true");
+      state.drawerRowId = null;
+    }
+
+    function saveDrawer(publishAfterSave) {
+      const id = state.drawerRowId;
+      const isCreate = state.drawerMode === "create";
+      const currentId = isCreate ? null : id;
+      const name = $("#formName").value.trim();
+      const desc = $("#formDesc").value.trim();
+      const codeText = $("#formCode").value.trim();
+      const code = Number(codeText);
+      const color = state.drawerColor || "";
+      const sort = Number($("#formSort").value.trim() || 0);
+      let ok = true;
+      clearErrors();
+
+      if (!name) {
+        setFieldError("formName", "errName", "请输入韵律名称。");
+        ok = false;
+      }
+      if (!desc) {
+        setFieldError("formDesc", "errDesc", "请输入韵律描述。");
+        ok = false;
+      }
+      if (codeText === "") {
+        setFieldError("formCode", "errCode", "请输入韵律编码。");
+        ok = false;
+      } else if (!Number.isInteger(code)) {
+        setFieldError("formCode", "errCode", "韵律编码仅支持 0 到 100000 的整数。");
+        ok = false;
+      } else if (code < 0) {
+        setFieldError("formCode", "errCode", "韵律编码不能小于 0。");
+        ok = false;
+      } else if (code > 100000) {
+        setFieldError("formCode", "errCode", "韵律编码不能大于 100000。");
+        ok = false;
+      } else if (isCodeDuplicate(code, currentId)) {
+        setFieldError("formCode", "errCode", "当前产品下已存在相同韵律编码，请修改后保存。");
+        ok = false;
+      }
+
+      if (!ok) {
+        setAnnotation("08");
+        showToast("请按字段提示修正后再保存。", "danger");
+        return;
+      }
+
+      if (isCreate) {
+        const newId = `local-${Date.now()}`;
+        state.rhythms.push({
+          id: newId,
+          source: "LOCAL",
+          status: publishAfterSave ? "PUBLISHED" : "CONFIGURING",
+          name,
+          code,
+          icon: state.drawerIconSlots[0] ? "✓" : "—",
+          iconSlots: [...state.drawerIconSlots],
+          color,
+          sort: sort || state.rhythms.length + 1,
+          duration: "30秒",
+          desc,
+          syncTime: "--",
+          mainImage: !!state.drawerMainImageData,
+          mainImageData: state.drawerMainImageData,
+          ceresUuid: "",
+          deleted: false,
+          lang: {
+            en: { name, desc },
+            zh: { name: "", desc: "" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "阶段 3 个，强度 2 档，本地可编辑"
+        });
+        showToast(publishAfterSave ? "保存并发布成功，韵律将对 APP 可见。" : "保存成功，韵律处于配置中。", "success");
+      } else {
+        const row = state.rhythms.find((item) => item.id === id);
+        Object.assign(row, {
+          name,
+          code,
+          icon: state.drawerIconSlots[0] ? "✓" : (row.icon || "—"),
+          iconSlots: [...state.drawerIconSlots],
+          color,
+          sort: sort || row.sort,
+          desc,
+          mainImage: !!state.drawerMainImageData,
+          mainImageData: state.drawerMainImageData
+        });
+        row.lang.en = { name, desc };
+        showToast(row.status === "PUBLISHED" ? "保存成功，已发布韵律的变更将立即对 APP 生效。" : "保存成功，韵律处于配置中。", "success");
+        setAnnotation(row.status === "PUBLISHED" ? "14" : row.source === "CERES" ? "05" : "08");
+      }
+      closeDrawer();
+      renderTable();
+      renderVisibility();
+    }
+
+    function clearErrors() {
+      $$(".error").forEach((el) => el.classList.remove("error"));
+      $$(".error-text").forEach((el) => el.textContent = "");
+    }
+
+    function setFieldError(fieldId, errId, message) {
+      $(`#${fieldId}`).classList.add("error");
+      $(`#${errId}`).textContent = message;
+    }
+
+    function openLanguageModal(id) {
+      const row = state.rhythms.find((item) => item.id === id);
+      if (!row) return;
+      $("#modal").className = "modal wide";
+      $("#modalTitle").textContent = `多语言配置 - ${row.name}`;
+      $("#modalBody").innerHTML = `
+        <div class="state-banner show warning" style="margin-bottom: 12px;">
+          <strong>回退规则</strong><span>未配置该语言时，将回退展示英语名称和描述。</span>
+        </div>
+        <table class="language-table">
+          <thead>
+            <tr>
+              <th style="width: 120px;">语言</th>
+              <th>韵律名称</th>
+              <th>韵律描述</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${languageRow("英语（默认）", "en", row)}
+            ${languageRow("简体中文", "zh", row)}
+            ${languageRow("繁体中文", "zhHant", row)}
+          </tbody>
+        </table>
+        <div class="help" style="margin-top: 10px;">多语言仅支持韵律名称和韵律描述，不包含编码、图标、主图、排序、色值、同步时间和功能设置。</div>
+      `;
+      $("#modalFooter").innerHTML = `
+        <button class="btn" type="button" data-modal-cancel>取消</button>
+        <button class="btn primary" type="button" data-lang-save>保存</button>
+      `;
+      showModal();
+      $("[data-modal-cancel]").addEventListener("click", closeModal);
+      $("[data-lang-save]").addEventListener("click", () => {
+        ["en", "zh", "zhHant"].forEach((lang) => {
+          row.lang[lang] = {
+            name: $(`#lang-${lang}-name`).value.trim(),
+            desc: $(`#lang-${lang}-desc`).value.trim()
+          };
+        });
+        row.name = row.lang.en.name || row.name;
+        row.desc = row.lang.en.desc || row.desc;
+        closeModal();
+        renderTable();
+        showToast("多语言保存成功。缺失语种将回退英语。", "success");
+        setAnnotation("07");
+      });
+      setAnnotation("07");
+    }
+
+    function languageRow(label, lang, row) {
+      const value = row.lang[lang] || { name: "", desc: "" };
+      return `
+        <tr>
+          <td>${label}</td>
+          <td><input class="input" id="lang-${lang}-name" value="${escapeAttr(value.name)}" placeholder="未配置则回退英语"></td>
+          <td><input class="input" id="lang-${lang}-desc" value="${escapeAttr(value.desc)}" placeholder="未配置则回退英语"></td>
+        </tr>
+      `;
+    }
+
+    function openConfirm(type, id) {
+      const row = state.rhythms.find((item) => item.id === id);
+      if (!row) return;
+      state.modalType = type;
+      state.pendingRowId = id;
+      $("#modal").className = "modal";
+      const titleMap = {
+        publish: "发布韵律",
+        withdraw: "撤回韵律",
+        delete: row.source === "CERES" ? "删除 Ceres 同步韵律" : "删除韵律"
+      };
+      const bodyMap = {
+        publish: `发布后，${row.name} 将在符合产品可见范围的 APP 用户侧可见。确认发布？`,
+        withdraw: `撤回后，${row.name} 将变为配置中，APP 不再返回该韵律。确认撤回？`,
+        delete: row.source === "CERES"
+          ? `删除后，该韵律将从 IoT Admin 和 APP 返回结果中移除，但不会删除 Ceres 平台源数据。若 Ceres 后续再次同步，将按新韵律进入配置中。确认删除？`
+          : `删除后，该本地韵律将从 IoT Admin 和 APP 返回结果中移除。确认删除？`
+      };
+      const primaryMap = { publish: "发布", withdraw: "撤回", delete: "删除" };
+      $("#modalTitle").textContent = titleMap[type];
+      $("#modalBody").innerHTML = `
+        <p style="margin:0 0 12px;color:var(--el-text-color-regular);line-height:22px;">${bodyMap[type]}</p>
+        ${type === "delete" && row.source === "LOCAL" ? `<div class="readonly-panel">至少保留一条本地创建韵律。当前剩余本地创建韵律 ${activeLocalCount()} 条。</div>` : ""}
+        ${type === "delete" && row.source === "CERES" ? `<div class="readonly-panel" data-anchor="11">平台删除不反向请求 Ceres 删除源数据，删除记录不参与后续 uuid 匹配。</div>` : ""}
+      `;
+      $("#modalFooter").innerHTML = `
+        <button class="btn" type="button" data-modal-cancel>取消</button>
+        <button class="btn ${type === "delete" ? "danger" : "primary"}" type="button" data-confirm>${primaryMap[type]}</button>
+      `;
+      showModal();
+      $("[data-modal-cancel]").addEventListener("click", closeModal);
+      $("[data-confirm]").addEventListener("click", applyConfirm);
+      setAnnotation(type === "delete" ? (row.source === "CERES" ? "11" : "13") : "03");
+    }
+
+    function applyConfirm() {
+      const row = state.rhythms.find((item) => item.id === state.pendingRowId);
+      if (!row) return;
+      if (state.modalType === "publish") {
+        row.status = "PUBLISHED";
+        showToast("发布成功，该韵律将对符合产品可见范围的 APP 用户可见。", "success");
+      }
+      if (state.modalType === "withdraw") {
+        row.status = "CONFIGURING";
+        showToast("撤回成功，APP 不再返回该韵律。", "success");
+      }
+      if (state.modalType === "delete") {
+        if (row.source === "LOCAL" && activeLocalCount() <= 1) {
+          showToast("至少需要保留一条本地创建韵律，当前韵律不可删除。", "danger");
+          setAnnotation("13");
+          return;
+        }
+        row.deleted = true;
+        if (row.source === "CERES") {
+          state.deletedArchive.push({ uuid: row.ceresUuid, deletedAt: nowText, oldName: row.name });
+          showToast("删除成功。不会请求 Ceres 删除源数据。", "success");
+          setAnnotation("11");
+        } else {
+          showToast("删除成功。", "success");
+        }
+      }
+      closeModal();
+      renderTable();
+      renderVisibility();
+    }
+
+    function openSyncModal() {
+      $("#modal").className = "modal wide";
+      $("#modalTitle").textContent = "模拟 Ceres 同步";
+      $("#modalBody").innerHTML = `
+        <div class="sync-options">
+          <button class="sync-option" type="button" data-sync="new">
+            <div class="sync-option-title">同步新 uuid</div>
+            <div class="sync-option-desc">新增 Ceres 韵律，默认配置中，记录同步时间，自动生成编码。</div>
+          </button>
+          <button class="sync-option" type="button" data-sync="repeat">
+            <div class="sync-option-title">同 uuid 重复同步</div>
+            <div class="sync-option-desc">仅更新功能设置摘要和同步时间，不覆盖基础信息。</div>
+          </button>
+          <button class="sync-option" type="button" data-sync="deleted">
+            <div class="sync-option-title">删除后再同步</div>
+            <div class="sync-option-desc">已删除 Ceres uuid 不参与匹配，再同步按新韵律处理。</div>
+          </button>
+          <button class="sync-option" type="button" data-sync="fail">
+            <div class="sync-option-title">同步失败</div>
+            <div class="sync-option-desc">展示错误反馈和重试入口。</div>
+          </button>
+          <button class="sync-option" type="button" data-sync="overflow">
+            <div class="sync-option-title">编码越界</div>
+            <div class="sync-option-desc">当最大编码达到 100000 时阻断自动生成。</div>
+          </button>
+          <button class="sync-option" type="button" data-sync="conflict">
+            <div class="sync-option-title">编码冲突</div>
+            <div class="sync-option-desc">自动生成编码与现有韵律重复时阻断同步新增。</div>
+          </button>
+        </div>
+        <div class="readonly-panel" style="margin-top: 12px;">同步入口为原型演示入口，实际触发方式由技术方案确认。</div>
+      `;
+      $("#modalFooter").innerHTML = `<button class="btn" type="button" data-modal-cancel>关闭</button>`;
+      showModal();
+      $("[data-modal-cancel]").addEventListener("click", closeModal);
+      $$("[data-sync]").forEach((button) => button.addEventListener("click", () => applySync(button.dataset.sync)));
+      setAnnotation("09");
+    }
+
+    function applySync(type) {
+      if (type === "fail") {
+        showToast("Ceres 同步失败，请稍后重试。", "danger");
+        state.scenario = "syncFail";
+        $("#scenarioSelect").value = "syncFail";
+        renderAll();
+        return;
+      }
+      if (type === "overflow") {
+        state.scenario = "codeOverflow";
+        $("#scenarioSelect").value = "codeOverflow";
+        showToast("当前可用韵律编码已达到平台上限 100000，无法自动生成新的韵律编码。", "danger");
+        renderAll();
+        setAnnotation("08");
+        return;
+      }
+      if (type === "conflict") {
+        state.scenario = "codeConflict";
+        $("#scenarioSelect").value = "codeConflict";
+        showToast("自动生成的韵律编码与现有韵律重复，请处理编码后重试。", "danger");
+        renderAll();
+        setAnnotation("08");
+        return;
+      }
+      if (type === "repeat") {
+        const row = state.rhythms.find((item) => !item.deleted && item.source === "CERES");
+        if (!row) {
+          showToast("当前没有可重复同步的 Ceres 韵律。", "warning");
+          return;
+        }
+        row.syncTime = nowText;
+        row.settingsSummary = `Ceres payload 已刷新，${nowText}`;
+        showToast("同步成功，已更新 Ceres 功能设置和同步时间，平台编辑字段未被覆盖。", "success");
+        closeModal();
+        renderTable();
+        renderVisibility();
+        setAnnotation("10");
+        return;
+      }
+      if (type === "deleted") {
+        const deleted = state.deletedArchive[state.deletedArchive.length - 1];
+        const newCode = nextCode();
+        state.rhythms.push({
+          id: `ceres-resync-${Date.now()}`,
+          source: "CERES",
+          status: "CONFIGURING",
+          name: "Ceres Restored Flow",
+          code: newCode,
+          icon: "R",
+          color: "#8BB8FF",
+          sort: state.rhythms.filter((item) => !item.deleted).length + 1,
+          duration: "Ceres透传",
+          desc: "Resynced after platform deletion",
+          syncTime: nowText,
+          mainImage: true,
+          ceresUuid: deleted ? deleted.uuid : "ceres-7b0a-calm-flow",
+          deleted: false,
+          lang: {
+            en: { name: "Ceres Restored Flow", desc: "Resynced after platform deletion" },
+            zh: { name: "", desc: "" },
+            zhHant: { name: "", desc: "" }
+          },
+          settingsSummary: "Ceres payload v6，按新韵律处理"
+        });
+        showToast("同步成功，删除记录不参与 uuid 匹配，已按新韵律进入配置中。", "success");
+        closeModal();
+        renderTable();
+        renderVisibility();
+        setAnnotation("11");
+        return;
+      }
+      const code = nextCode();
+      if (code > 100000) {
+        showToast("当前可用韵律编码已达到平台上限 100000，无法自动生成新的韵律编码。", "danger");
+        setAnnotation("08");
+        return;
+      }
+      state.rhythms.push({
+        id: `ceres-${Date.now()}`,
+        source: "CERES",
+        status: "CONFIGURING",
+        name: "Ceres Focus Wave",
+        code,
+        icon: "F",
+        color: "#5DC9C1",
+        sort: state.rhythms.filter((item) => !item.deleted).length + 1,
+        duration: "Ceres透传",
+        desc: "New rhythm from Ceres",
+        syncTime: nowText,
+        mainImage: true,
+        ceresUuid: `ceres-${Date.now()}-focus-wave`,
+        deleted: false,
+        lang: {
+          en: { name: "Ceres Focus Wave", desc: "New rhythm from Ceres" },
+          zh: { name: "", desc: "" },
+          zhHant: { name: "", desc: "" }
+        },
+        settingsSummary: "Ceres payload v1，平台只存储下发"
+      });
+      showToast("同步成功，已新增 1 条 Ceres 韵律，默认状态为配置中。", "success");
+      closeModal();
+      renderTable();
+      renderVisibility();
+      setAnnotation("09");
+    }
+
+    function showModal() {
+      $("#modalMask").classList.add("show");
+      $("#modalMask").setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+      $("#modalMask").classList.remove("show");
+      $("#modalMask").setAttribute("aria-hidden", "true");
+      state.modalType = null;
+      state.pendingRowId = null;
+    }
+
+    function showToast(message, type = "success") {
+      const toast = $("#toast");
+      toast.className = `toast show ${type}`;
+      toast.textContent = message;
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.className = "toast";
+        toast.textContent = "";
+      }, 2800);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    $("#keyword").addEventListener("input", renderAll);
+    $("#sourceFilter").addEventListener("change", renderAll);
+    $("#statusFilter").addEventListener("change", renderAll);
+    $("#scenarioSelect").addEventListener("change", renderAll);
+    $("#queryBtn").addEventListener("click", () => {
+      renderAll();
+      showToast("查询成功。", "success");
+    });
+    $("#resetBtn").addEventListener("click", () => {
+      $("#keyword").value = "";
+      $("#sourceFilter").value = "ALL";
+      $("#statusFilter").value = "ALL";
+      $("#scenarioSelect").value = "default";
+      renderAll();
+      showToast("已重置筛选条件。", "success");
+    });
+    $("#createBtn").addEventListener("click", () => openDrawer("create"));
+    $("#syncBtn").addEventListener("click", openSyncModal);
+    $("#drawerClose").addEventListener("click", closeDrawer);
+    $("#modalClose").addEventListener("click", closeModal);
+    $("#drawerMask").addEventListener("click", (event) => {
+      if (event.target.id === "drawerMask") closeDrawer();
+    });
+    $("#modalMask").addEventListener("click", (event) => {
+      if (event.target.id === "modalMask") closeModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeDrawer();
+        closeModal();
+      }
+    });
+
+    renderAnnotations();
+    renderAll();
+  </script>
+</body>
+</html>
