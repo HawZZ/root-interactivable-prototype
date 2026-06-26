@@ -472,10 +472,6 @@
         </div>
       </section>
 
-      <section id="otaView" class="page-card hide">
-        <div id="otaBody"></div>
-      </section>
-
       <section id="whitelistView" class="page-card hide">
         <div class="list-box" id="whitelistPanel">
           <div class="section-head">
@@ -908,7 +904,6 @@
     function render() {
       renderChrome();
       renderProduct();
-      if (state.view === "ota") renderOta();
       renderWhitelist();
       renderNotes();
       wireTips();
@@ -917,7 +912,6 @@
     function renderChrome() {
       $$(".nav-item").forEach(btn => btn.classList.toggle("active", btn.dataset.view === state.view));
       ["product", "whitelist", "tags"].forEach(view => $(`#${view}View`).classList.toggle("hide", state.view !== view));
-      $("#otaView")?.classList.add("hide");
       const config = {
         product: ["智能产品", "查看产品详情 / 产品列表 / 智能产品"],
         whitelist: ["白名单管理", "白名单管理 / App"],
@@ -964,12 +958,6 @@
       const releaseTarget = Boolean(state.firmwareReleaseTargetId);
       $("#firmwareBody").innerHTML = state.otaMode === "form" ? otaFormHtml({ context: "firmware", releaseTarget }) : firmwareHomeHtml();
       wireFirmware();
-      wireOta();
-    }
-
-    function renderOta() {
-      if (!$("#otaBody")) return;
-      $("#otaBody").innerHTML = state.otaMode === "form" ? otaFormHtml() : otaListHtml();
       wireOta();
     }
 
@@ -1599,52 +1587,6 @@
         render();
       }));
     }
-    function otaListHtml(options = {}) {
-      const isFirmware = options.context === "firmware";
-      const visibleTasks = otaTasks.filter(task => task.publishMode);
-      const rows = visibleTasks.map(task => `
-        <tr>
-          <td>${task.name}</td>
-          <td>${task.firmwareName}</td>
-          <td>${task.firmwareType}</td>
-          <td>${task.firmwareVersion}<span class="sub">APP版本号：${task.appRule} ${task.appVersion}</span></td>
-          <td>${task.hardware}</td>
-          <td>${task.functionVersion}</td>
-          <td><span class="tag ${otaTaskStatusClass(task.status)}">${task.status}</span></td>
-          <td>${task.publishMode}<span class="sub">${task.batchText}</span></td>
-          <td>${task.batchText}</td>
-          <td>${task.upgradeMode}</td>
-          <td>${task.regions.join("、") || "无有效范围，需重新配置"}</td>
-          <td>${task.publishedAt}</td>
-          <td>${task.createdAt}</td>
-          <td class="table-actions">${otaTaskActionsHtml(task)}</td>
-        </tr>`).join("");
-      return `${isFirmware ? "" : otaProductHeroHtml()}
-        <div class="ota-box" id="ota-list" data-note-anchor="${isFirmware ? "firmware-ota" : "ota-upgrade"}">
-          <div class="section-head">
-            <div>
-              <h2><span class="anchor" data-note-anchor="${isFirmware ? "firmware-ota" : "ota-upgrade"}">${isFirmware ? "2" : "1"}</span>${isFirmware ? "OTA 任务" : "OTA"}</h2>
-            </div>
-            ${isFirmware ? "" : `<button class="btn primary" data-ota-action="create">新增OTA任务</button>`}
-          </div>
-          <div class="filters compact">
-            <div class="field"><label>固件类型</label><select><option>全部</option><option>MCU固件</option><option>模组固件</option></select></div>
-            <div class="field"><label>功能版本</label><select><option>全部</option><option>版本1 - 已发布</option><option>版本2 - 开发中</option></select></div>
-            <div class="field"><label>发布状态</label><select><option>全部</option><option>发布中</option><option>暂停发布</option><option>已停止</option><option>已发布</option></select></div>
-            <button class="btn primary">查询</button>
-            <button class="btn">重置</button>
-          </div>
-          ${state.otaTaskMessage ? `<div class="notice success firmware-message">${state.otaTaskMessage}</div>` : ""}
-          <div class="ota-table-wrap">
-            <table>
-              <thead><tr><th>任务名称</th><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>状态</th><th>发布方式</th><th>发布进度</th><th>升级方式</th><th>发布范围</th><th>发布时间</th><th>创建时间</th><th>操作</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-          <div class="pager"><span>共 ${visibleTasks.length} 条</span><button class="btn" disabled>‹</button><button class="btn primary">1</button><button class="btn" disabled>›</button><select><option>10条/页</option></select></div>
-        </div>`;
-    }
-
     function otaStepsHtml() {
       return `<div class="steps ota-steps">
         <button class="step ${state.otaStep === 1 ? "active" : "done"}" data-ota-step="1"><span class="check">✓</span>确认升级固件</button>
@@ -1782,24 +1724,6 @@
       syncOtaRangeMode();
       $("#otaPublishPlan")?.addEventListener("change", syncOtaPublishPlan);
       syncOtaPublishPlan();
-      $$("[data-ota-task-action]").forEach(btn => btn.addEventListener("click", () => {
-        const task = otaTasks.find(item => item.id === btn.dataset.taskId);
-        if (!task) return;
-        const action = btn.dataset.otaTaskAction;
-        if (action === "pause" && task.status === "发布中") {
-          task.status = "暂停发布";
-          state.otaTaskMessage = `${task.name} 已暂停；固件版本状态不回退，继续执行时沿用当前任务配置和已计算命中。`;
-        }
-        if (action === "resume" && task.status === "暂停发布") {
-          task.status = "发布中";
-          state.otaTaskMessage = `${task.name} 已继续发布；继续执行不重新计算命中，修改发布配置才会生成新记录。`;
-        }
-        if (action === "stop" && task.status === "暂停发布") {
-          task.status = "已停止";
-          state.otaTaskMessage = `${task.name} 已停止；停止任务不会新建固件版本。`;
-        }
-        render();
-      }));
       $$("[data-ota-action]").forEach(btn => btn.addEventListener("click", async () => {
         const action = btn.dataset.otaAction;
         if (action === "create" || action === "edit") {
