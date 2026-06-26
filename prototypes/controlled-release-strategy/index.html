@@ -622,11 +622,11 @@
     </div>
   </div>
 
-  <div class="modal-mask" id="versionStateModal">
+  <div class="modal-mask" id="versionImpactModal">
     <div class="modal version-state-modal">
-      <div class="modal-head"><h2 id="versionStateModalTitle">版本状态唯一性校验</h2></div>
-      <div class="modal-body" id="versionStateModalBody"></div>
-      <div class="modal-foot" id="versionStateModalFoot"></div>
+      <div class="modal-head"><h2 id="versionImpactModalTitle">版本命中影响确认</h2></div>
+      <div class="modal-body" id="versionImpactModalBody"></div>
+      <div class="modal-foot" id="versionImpactModalFoot"></div>
     </div>
   </div>
 
@@ -658,38 +658,6 @@
       <div class="modal-foot">
         <button class="btn" id="promptModalCancel">取消</button>
         <button class="btn primary" id="promptModalOk">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 冲突路由弹窗：精准测试/全面接管 -->
-  <div class="modal-mask" id="conflictRouteModal" style="z-index:500">
-    <div class="modal" style="max-width:540px">
-      <div class="modal-head">
-        <h2 id="conflictRouteModalTitle">⚠️ 检测到测试范围重叠</h2>
-      </div>
-      <div class="modal-body">
-        <div id="conflictRouteModalConflictDesc" style="color:#516071;margin-bottom:14px;line-height:1.7;padding:10px 12px;background:#fffbe6;border:1px solid #ffe58f;border-radius:2px"></div>
-        <div style="display:grid;gap:10px">
-          <label id="conflictRouteOptionA" style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #d9dfe9;border-radius:2px;cursor:pointer;background:#fff">
-            <input type="radio" name="conflictRouteChoice" value="A" style="margin-top:3px;flex:0 0 auto">
-            <div>
-              <div id="conflictRouteOptionATitle" style="font-weight:600;color:#1f2d3d;margin-bottom:4px">选项一：精准测试（独立并存）<span style="color:#52a218;font-size:11px;margin-left:6px;font-weight:400">推荐</span></div>
-              <div id="conflictRouteOptionADesc" style="color:#6b7686;line-height:1.6;font-size:11.5px"></div>
-            </div>
-          </label>
-          <label id="conflictRouteOptionB" style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #d9dfe9;border-radius:2px;cursor:pointer;background:#fff">
-            <input type="radio" name="conflictRouteChoice" value="B" style="margin-top:3px;flex:0 0 auto">
-            <div>
-              <div id="conflictRouteOptionBTitle" style="font-weight:600;color:#1f2d3d;margin-bottom:4px">选项二：全面接管（自动暂停冲突版本）</div>
-              <div id="conflictRouteOptionBDesc" style="color:#6b7686;line-height:1.6;font-size:11.5px"></div>
-            </div>
-          </label>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn" id="conflictRouteCancel">取消</button>
-        <button class="btn primary" id="conflictRouteConfirm">确认提交</button>
       </div>
     </div>
   </div>
@@ -733,7 +701,7 @@
       extensionReleaseMode: null,
       lifecycleMessage: "",
       releaseConfigIntent: null,
-      versionStateModalResolve: null,
+      versionImpactModalResolve: null,
       activeModal: null,
       rangeSummaryExpanded: false
     };
@@ -772,7 +740,7 @@
       { version: "1.3.0", updatedAt: "2026-06-05 09:12:10", log: "开发中草稿，补充泵模式入口", status: "开发中", functionVersion: "开发中版本 - 未上架", minApp: "5.2.0" },
       { version: "1.2.0", updatedAt: "2026-06-04 08:51:34", log: "白名单用户测试版本", status: "测试中", functionVersion: "版本1 - 已发布", minApp: "5.2.0" },
       { version: "1.1.0", updatedAt: "2026-06-04 08:50:22", log: "自动发布中，第 3 / 5 天", status: "发布中", functionVersion: "版本1 - 已发布", minApp: "5.2.0" },
-      { version: "1.0.0", updatedAt: "2026-06-04 08:49:53", log: "被 1.1.0 发布覆盖，转为已停止", status: "已停止", functionVersion: "通用", minApp: "通用" },
+      { version: "1.0.0", updatedAt: "2026-06-04 08:49:53", log: "已停止，仅保留历史升级来源", status: "已停止", functionVersion: "通用", minApp: "通用" },
       { version: "0.9.8", updatedAt: "2026-05-28 11:20:16", log: "已停止，保留历史升级来源", status: "已停止", functionVersion: "版本1 - 已发布", minApp: "5.1.0" }
     ];
 
@@ -836,7 +804,7 @@
         { id: "extension-panel-mode", title: "控制面板类型展示态", body: "产品详情页内只展示当前控制面板类型和编辑入口，避免把该块误认为整页保存表单。点击编辑后在弹窗内切换原生 / RN。", loc: "产品详情 > 扩展程序 > 控制面板类型" },
         { id: "extension-manage", title: "按关联产品展示产品模块", body: "产品详情不展示智能模块或其他产品的扩展程序；只展示归属当前产品的产品模块扩展程序。版本状态收敛为开发中、测试中、发布中、暂停发布、已发布和已停止；产品上下文由当前详情页继承，不提供扩展程序产品选择器；测试用户范围固定依赖产品白名单。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
         { id: "extension-manage", title: "扩展程序字段定义", body: "基本信息字段只读：产品上下文、扩展程序名称、PanelCode、业务类型、面板类型。PanelCode 结构为 App缩写.产品类型.产品型号；存量示例 morn.breast-pump.v3，默认 App 缩写新生成值为 mom.breast-pump.v3。版本字段包含版本号、更新时间、更新日志、状态和操作；产品名称和产品ID由详情页承载，不在扩展程序块重复展示。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
-        { id: "versionStateModal", title: "多版本并存时 App 怎么知道推哪个？", body: "同一系列（相同固件类型 + 硬件版本）的多个版本可以同时处于测试中/发布中/已发布，每台设备只收到一个版本。系统按以下顺序决定哪个版本命中：\n\n1. 精确指定版本号（=v）的优先——比如「等于 1.2.0」的比「不低于 1.0.0」的先命中\n2. 要求 APP 版本越高的优先——「≥1.2.0」的比「≥1.0.0」的先命中\n3. 如果条件完全一样，后进入测试/发布的版本先命中\n\n白名单用户能看到测试中版本；普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 扩展程序 > 版本状态唯一性" },
+        { id: "versionImpactModal", title: "多版本并存时 App 怎么知道推哪个？", body: "同一 PanelCode 下的多个扩展程序版本可以同时处于测试中、发布中或已发布，每次请求只命中一个版本。系统先按 PanelCode、功能版本、最小 App 版本、发布范围和用户身份过滤候选，再在同时满足条件的版本中取扩展程序版本号最高者。\n\n白名单公司用户和已授权当前产品的外部用户可见测试中版本；普通线上用户只命中发布中/已发布版本。", loc: "产品详情 > 扩展程序 > 版本命中规则" },
         { id: "extension-lifecycle", title: "扩展程序版本状态机", body: "开发中是进入分发前的准备态；测试中由产品白名单命中；发布中按批次逐步开放给线上用户；暂停发布不参与命中策略，可继续恢复发布或停止；已发布对所有线上用户可见；已停止只保留历史升级来源。命中时仅在测试中、发布中、已发布版本中按扩展程序版本号取最高版本。", loc: "产品详情 > 扩展程序 > 版本列表" },
         { id: "extension-lifecycle", title: "开发中状态支持编辑更新说明（MAGI决策）", body: "扩展程序版本在开发中状态支持编辑更新说明字段。其他字段（版本号、PanelCode 等）如需修改，只能删除后重新新建。", loc: "产品详情 > 扩展程序 > 开发中版本操作" },
         { id: "extension-lifecycle", title: "停止操作真空保护（MAGI决策）", body: "停止扩展程序发布中/已发布版本前，若当前无其他活跃版本（测试中/发布中/已发布），系统弹窗警告「停止后将无可命中的扩展程序版本，App 将回退到本地缓存版本」，用户确认后才执行。", loc: "产品详情 > 扩展程序 > 停止操作" }
@@ -847,10 +815,10 @@
         { id: "firmware-state", title: "固件版本字段定义", body: "固件版本字段包含固件名称、固件类型、固件版本、硬件版本、功能版本、APP版本号条件、状态、上传时间、发布日志和操作。新建时只选择功能版本、固件类型、上传文件、APP版本号条件和备注，文件解析字段只读。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "测试中固件统一入口", body: "原设备调试页内的测试固件能力与固件版本管理中的测试中状态是同一业务对象，不再拆成独立测试固件表。测试中、发布中、已发布都是候选来源，并在共同筛选满足后按固件版本号取最高版本。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "固件状态由行内操作流转", body: "开发中可进入测试或删除；测试中可停止或发布；发布中可暂停发布、停止或修改发布；暂停发布可继续或停止；已发布可修改发布配置或查看详情，已停止仅保留详情查看。暂停发布和已停止版本仅作为历史信息来源，不再匹配命中条件。", loc: "产品详情 > 固件配置 > 固件版本操作" },
-        { id: "versionStateModal", title: "什么叫「同一个固件」？什么叫「同一系列固件」？", body: "同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同。同一个固件在列表中有且仅有一个，重复上传会被阻断。\n\n同一系列固件：固件类型 + 硬件版本相同，但固件版本不同（比如 v1.2 和 v1.5 是同一系列）。同一系列的不同固件版本可以同时并存于任何状态（测试中/发布中/已发布），互不干扰，由路由规则决定每台设备命中哪个版本。\n\n举例：MCU固件 / 硬件版本10 下，v1.2（测试中）、v1.3（发布中）、v1.5（已发布）可以同时存在，不会触发任何阻断或弹窗。", loc: "产品详情 > 固件配置 > 版本操作" },
-        { id: "versionStateModal", title: "多个版本并存时，设备怎么命中？", body: "同一系列（固件类型+硬件版本相同）的多个版本可以同时运行，系统按 APP 版本条件决定每台设备命中哪一个：\n\n① 精确条件（=v）比范围条件（≥v）优先\n   例：=1.2.0 比 ≥1.0.0 先命中\n\n② 同为范围条件时，要求 APP 版本越高的越优先\n   例：≥1.2.0 比 ≥1.0.0 先命中\n\n③ 条件完全一样时，版本号更高的先命中\n\n白名单用户可以看到「测试中」版本；普通用户只能收到「发布中/已发布」版本。", loc: "产品详情 > 固件配置 > 版本操作" },
-        { id: "firmware-state", title: "固件版本编辑边界（MAGI修正）", body: "开发中状态支持编辑：功能版本、固件类型、APP版本号规则+版本值、备注均可修改；硬件版本来自文件名解析，不可手动编辑。进入测试后字段锁定，配置填错需删除开发中版本重新新建。", loc: "产品详情 > 固件配置 > 固件版本操作" },
-        { id: "firmware-state", title: "多版本并存时设备如何分配？（命中路由规则）", body: "同一系列（固件类型+硬件版本相同）的多个固件版本可以同时处于任何状态，每台设备只命中一个版本：\n\n① 精确版本号（=v）优先于范围条件（≥v）\n   例：APP条件「=1.2.0」比「≥1.0.0」先命中\n\n② 同为范围条件时，要求 APP 版本越高的先命中\n   例：「≥1.2.0」比「≥1.0.0」先命中\n\n③ 条件完全一样时，固件版本号更高的先命中\n\n白名单用户可见测试中版本；线上普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 固件配置 > 版本唯一性" },
+        { id: "versionImpactModal", title: "什么叫「同一个固件」？什么叫「同一系列固件」？", body: "同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同。同一个固件在列表中有且仅有一个，重复上传会被阻断。\n\n同一系列固件：固件类型 + 硬件版本相同，但固件版本不同（比如 v1.2 和 v1.5 是同一系列）。同一系列的不同固件版本可以同时并存于任何状态（测试中/发布中/已发布），互不干扰，由命中规则决定每台设备命中哪个版本。\n\n举例：MCU固件 / 硬件版本10 下，v1.2（测试中）、v1.3（发布中）、v1.5（已发布）可以同时存在，不会触发任何阻断或弹窗。", loc: "产品详情 > 固件配置 > 版本操作" },
+        { id: "versionImpactModal", title: "多个版本并存时，设备怎么命中？", body: "同一系列（固件类型+硬件版本相同）的多个版本可以同时运行，系统按 APP 版本条件决定每台设备命中哪一个：\n\n① 精确条件（=v）比范围条件（≥v）优先\n   例：=1.2.0 比 ≥1.0.0 先命中\n\n② 同为范围条件时，要求 APP 版本越高的越优先\n   例：≥1.2.0 比 ≥1.0.0 先命中\n\n③ APP 条件过滤后仍有多个版本同时命中时，版本号更高的先命中\n\n白名单用户可以看到「测试中」版本；普通用户只能收到「发布中/已发布」版本。", loc: "产品详情 > 固件配置 > 版本操作" },
+        { id: "firmware-state", title: "固件版本编辑边界（MAGI修正）", body: "开发中状态只支持编辑备注。功能版本、固件类型、固件文件、固件版本、硬件版本、APP版本号条件保存后不可在编辑入口修改；配置填错需删除开发中版本重新新建。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "firmware-state", title: "多版本并存时设备如何分配？（命中规则）", body: "同一系列（固件类型+硬件版本相同）的多个固件版本可以同时处于任何状态，每台设备只命中一个版本：\n\n① 精确版本号（=v）优先于范围条件（≥v）\n   例：APP条件「=1.2.0」比「≥1.0.0」先命中\n\n② 同为范围条件时，要求 APP 版本越高的先命中\n   例：「≥1.2.0」比「≥1.0.0」先命中\n\n③ APP 条件过滤后仍有多个版本同时命中时，固件版本号更高的先命中\n\n白名单用户可见测试中版本；线上普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 固件配置 > 版本命中规则" },
         { id: "firmware-state", title: "停止版本前的保护提示", body: "点击停止一个「发布中」或「已发布」的固件版本时，系统会检查同类型同硬件版本下是否还有其他活跃版本。\n\n如果没有其他活跃版本：系统弹窗提示「停止后，App 请求时设备不会降级，会保持当前已安装的固件版本不变」，确认后才执行。\n\n如果有其他活跃版本：直接确认停止即可，其他版本会继续服务设备。\n\n暂停发布时：同样检查，如果是唯一活跃版本会给出提示，但不强制阻止暂停。", loc: "产品详情 > 固件配置 > 停止操作" },
         { id: "firmware-state", title: "全面发布直达已发布", body: "选择全面发布时，保存后版本状态直接进入已发布，不经过发布中。选择自动发布时，保存后进入发布中，开放覆盖度达100%后才转已发布。同一系列其他版本不受影响，继续按自身状态服务对应设备。", loc: "产品详情 > 固件配置 > 发布配置" },
         { id: "firmware-state", title: "不在固件配置页跟踪 OTA 进度", body: "产品详情 > 固件配置只承接固件版本管理和发布配置，不展示 OTA 任务列表、命中设备数、成功升级数或失败率。进度追踪后续由独立监控面板承接。", loc: "产品详情 > 固件配置" },
@@ -928,9 +896,9 @@
       extensionPanelMode: [
         { id: "extension-panel-mode-modal", title: "弹窗内编辑面板类型", body: "原生 / RN 选择在弹窗内保存。保存后只刷新控制面板类型及其下方内容显隐，不影响扩展程序版本或 RN 版本发布配置的数据。", loc: "产品详情 > 扩展程序 > 编辑扩展程序配置弹窗" }
       ],
-      versionState: [
-        { id: "versionStateModal", title: "状态流转不会自动阻断或弹窗", body: "同一系列的多个固件版本（固件类型+硬件版本相同，固件版本不同）可以自由进入测试中/发布中/已发布，系统不会弹出冲突弹窗或阻断操作。\n\n唯一会被阻断的情况：上传固件时，固件类型+硬件版本+固件版本三者完全相同——这意味着是同一个固件的重复上传，系统直接提示「已存在」，阻止进入列表。\n\n多个版本并存时，命中规则（APP版本条件 + 固件版本号）自动决定每台设备收到哪个版本，运营无需手动处理冲突。", loc: "版本状态弹窗" },
-        { id: "versionStateModal", title: "重复上传同一固件时会怎样？", body: "「同一个固件」的定义：固件类型 + 硬件版本 + 固件版本三者完全相同。\n\n重复上传时：系统直接阻断并提示「已存在相同固件」，不允许进入列表。\n\n不同固件版本（v1.2、v1.5）即使固件类型和硬件版本相同，也是不同固件，可以共存于列表中，各自独立流转状态。", loc: "新建固件版本" },
+      versionImpact: [
+        { id: "versionImpactModal", title: "状态流转不会自动阻断或弹窗", body: "同一系列的多个固件版本（固件类型+硬件版本相同，固件版本不同）可以自由进入测试中/发布中/已发布，系统不会因为存在其他版本而阻断操作。\n\n唯一会被阻断的情况：上传固件时，固件类型+硬件版本+固件版本三者完全相同——这意味着是同一个固件的重复上传，系统直接提示「已存在」，阻止进入列表。\n\n多个版本并存时，命中规则（APP版本条件 + 固件版本号）自动决定每台设备收到哪个版本，运营无需手动处理版本替换。", loc: "版本命中影响说明" },
+        { id: "versionImpactModal", title: "重复上传同一固件时会怎样？", body: "「同一个固件」的定义：固件类型 + 硬件版本 + 固件版本三者完全相同。\n\n重复上传时：系统直接阻断并提示「已存在相同固件」，不允许进入列表。\n\n不同固件版本（v1.2、v1.5）即使固件类型和硬件版本相同，也是不同固件，可以共存于列表中，各自独立流转状态。", loc: "新建固件版本" },
       ],
       deleteModal: [
         { id: "deleteModal", title: "删除前二次确认", body: "删除白名单用户前展示影响人数和授权关系数量。确认后移除白名单维护记录，并解除该用户后续产品授权命中。", loc: "白名单管理 > 删除确认弹窗" }
@@ -1053,7 +1021,7 @@
     };
 
     const versionHitTips = {
-      firmware: "App 请求 OTA 时，按固件类型、硬件版本、APP 版本条件和发布范围筛选候选版本；同一固件类型×硬件版本×APP版本条件维度内，测试中、发布中、已发布并行比较取最高固件版本；不同维度的版本各自独立命中；暂停发布和已停止不参与命中；无命中时设备保持当前固件版本不变。",
+      firmware: "App 请求 OTA 时，先按用户身份、固件类型、硬件版本、APP 版本条件和发布范围筛选候选版本；同一系列内测试中、发布中、已发布并行比较，取符合条件的最高固件版本；暂停发布和已停止不参与命中；无命中时设备保持当前固件版本不变。",
       extension: "App 请求扩展程序时先按 PanelCode、功能版本、最小 App 版本、发布范围和用户可见范围筛选；测试中仅白名单公司用户和已授权当前产品的外部用户可见，发布中/已发布面向线上用户；测试中、发布中、已发布并行比较，取最高扩展程序版本；暂停发布和已停止不参与命中策略。"
     };
 
@@ -1159,35 +1127,35 @@
       return 0;
     }
 
-    // 版本覆盖确认弹窗（旧版本号更低时，确认后旧版转已停止）
-    function openVersionStateModal(config) {
+    // 通用版本影响弹窗：用于停止真空风险等需要二次确认的场景
+    function openVersionImpactModal(config) {
       const mode = config.mode || "confirm";
-      state.activeModal = "versionState";
-      $("#versionStateModalTitle").textContent = config.title || "版本状态唯一性校验";
-      $("#versionStateModalBody").innerHTML = `
+      state.activeModal = "versionImpact";
+      $("#versionImpactModalTitle").textContent = config.title || "版本命中影响确认";
+      $("#versionImpactModalBody").innerHTML = `
         <div class="version-state-summary" style="margin-bottom:8px;color:#39465a">${config.summary}</div>
         ${config.detail ? `<div class="version-state-detail" style="color:#8b95a4;line-height:1.65">${config.detail}</div>` : ""}
       `;
-      $("#versionStateModalFoot").innerHTML = mode === "block"
-        ? `<button class="btn primary" id="versionStateModalOk">知道了</button>`
-        : `<button class="btn" id="versionStateModalCancel">取消</button><button class="btn primary" id="versionStateModalConfirm">确认覆盖并继续</button>`;
-      $("#versionStateModal").classList.add("open");
+      $("#versionImpactModalFoot").innerHTML = mode === "block"
+        ? `<button class="btn primary" id="versionImpactModalOk">知道了</button>`
+        : `<button class="btn" id="versionImpactModalCancel">取消</button><button class="btn primary" id="versionImpactModalConfirm">确认继续</button>`;
+      $("#versionImpactModal").classList.add("open");
       renderNotes();
       return new Promise(resolve => {
-        state.versionStateModalResolve = resolve;
-        const ok = $("#versionStateModalOk");
-        const cancel = $("#versionStateModalCancel");
-        const confirm = $("#versionStateModalConfirm");
-        if (ok) ok.addEventListener("click", () => closeVersionStateModal(false));
-        if (cancel) cancel.addEventListener("click", () => closeVersionStateModal(false));
-        if (confirm) confirm.addEventListener("click", () => closeVersionStateModal(true));
+        state.versionImpactModalResolve = resolve;
+        const ok = $("#versionImpactModalOk");
+        const cancel = $("#versionImpactModalCancel");
+        const confirm = $("#versionImpactModalConfirm");
+        if (ok) ok.addEventListener("click", () => closeVersionImpactModal(false));
+        if (cancel) cancel.addEventListener("click", () => closeVersionImpactModal(false));
+        if (confirm) confirm.addEventListener("click", () => closeVersionImpactModal(true));
       });
     }
 
-    function closeVersionStateModal(result = false) {
-      $("#versionStateModal").classList.remove("open");
-      const resolve = state.versionStateModalResolve;
-      state.versionStateModalResolve = null;
+    function closeVersionImpactModal(result = false) {
+      $("#versionImpactModal").classList.remove("open");
+      const resolve = state.versionImpactModalResolve;
+      state.versionImpactModalResolve = null;
       state.activeModal = null;
       renderNotes();
       if (resolve) resolve(result);
@@ -1196,14 +1164,14 @@
     function coverageImpact(list, item, nextStatus, kind) {
       const activeStatuses = ["测试中", "发布中", "已发布"];
       if (!activeStatuses.includes(nextStatus)) {
-        return "覆盖检测：该状态不参与版本命中，不会覆盖现有命中版本。";
+        return "命中影响：该状态不参与版本命中，不改变现有命中结果。";
       }
-      const peers = list.filter(candidate => candidate !== item && activeStatuses.includes(candidate.status) && (kind === "firmware" ? candidate.type === item.type : true));
+      const peers = list.filter(candidate => candidate !== item && activeStatuses.includes(candidate.status) && sameSeries(candidate, item, kind));
       const lower = peers.filter(candidate => compareVersion(item.version, candidate.version) > 0);
       const higher = peers.filter(candidate => compareVersion(candidate.version, item.version) > 0).sort((a, b) => compareVersion(b.version, a.version))[0];
-      if (higher) return `覆盖检测：${item.version}/${nextStatus} 不是当前最高候选版本，不会覆盖 ${higher.version}/${higher.status} 的命中。`;
-      if (!lower.length) return `覆盖检测：${item.version}/${nextStatus} 将成为当前最高候选版本，暂无被覆盖版本。`;
-      return `覆盖检测：${item.version}/${nextStatus} 将成为当前最高候选版本，会覆盖 ${lower.map(candidate => `${candidate.version}/${candidate.status}`).join("、")} 的命中。`;
+      if (higher) return `命中影响：${item.version}/${nextStatus} 会进入候选集；若与 ${higher.version}/${higher.status} 同时满足命中条件，仍优先命中 ${higher.version}。`;
+      if (!lower.length) return `命中影响：${item.version}/${nextStatus} 会进入候选集；同一系列暂无更低候选版本受到影响。`;
+      return `命中影响：${item.version}/${nextStatus} 会进入候选集；若与 ${lower.map(candidate => `${candidate.version}/${candidate.status}`).join("、")} 同时满足命中条件，优先命中 ${item.version}，其他版本状态保持不变。`;
     }
 
     // 同一系列：固件类型 + 硬件版本相同（固件版本不同）的版本集合
@@ -1228,7 +1196,6 @@
       return { ok: true, message: "" };
     }
 
-    // 版本覆盖确认弹窗（旧版本号更低时，确认后旧版转已停止）
     function listingRangeSummaryHtml(product) {
       const full = product.listingMode === "full" || product.listingRange?.includes("全部");
       const values = full ? ["全部上架范围"] : (product.listingRange || []);
@@ -1583,7 +1550,7 @@
         if (btn.dataset.firmwareAction === "stop") {
           const activeOthers = firmwareVersions.filter(v => v.id !== item.id && v.type === item.type && v.hardware === item.hardware && ["测试中","发布中","已发布"].includes(v.status));
           if (activeOthers.length === 0) {
-            const confirmed = await openVersionStateModal({
+            const confirmed = await openVersionImpactModal({
               title: "停止后无可命中版本",
               summary: `停止固件版本 ${item.version} 后，该固件类型×硬件版本维度下将无可命中版本，App 请求时设备将保持当前固件版本不变（不升级不回滚）。`,
               detail: "是否仍然停止？",
@@ -1615,7 +1582,6 @@
           state.firmwareMessage = `固件版本 ${item.version} 已暂停发布；该版本暂停期间不参与命中策略，可继续恢复发布或停止。${coverageImpact(firmwareVersions, item, "暂停发布", "firmware")}`;
         }
         if (btn.dataset.firmwareAction === "resume") {
-          // I-28：暂停发布→发布中恢复时，触发触发点B冲突扫描
           const override = await confirmVersionOverride(firmwareVersions, item, "发布中", "firmware");
           if (!override.ok) return;
           const coverage = coverageImpact(firmwareVersions, item, "发布中", "firmware");
@@ -2186,7 +2152,7 @@
         extensionVersionAdd: "新增扩展程序版本抽屉批注",
         extensionVersion: "版本指定弹窗批注",
         extensionPanelMode: "控制面板类型弹窗批注",
-        versionState: "版本状态唯一性弹窗批注",
+        versionImpact: "版本命中影响说明批注",
         deleteModal: "删除确认弹窗批注"
       };
       return labels[key] || "原型批注";
@@ -2770,7 +2736,7 @@
             packageDate: parsed.date,
             packageFormat: parsed.format
           });
-          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建，当前状态为开发中。覆盖检测：开发中版本不参与命中，不覆盖现有版本。`;
+          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建，当前状态为开发中。命中影响：开发中版本不参与命中，不改变现有命中结果。`;
         }
         if (type === "firmwareVersionEdit") {
           const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
@@ -2800,7 +2766,7 @@
               functionVersion: "通用",
               minApp: "通用"
             });
-            state.lifecycleMessage = `版本 ${versionNo} 已新增为开发中，属于进入分发前的准备态。覆盖检测：开发中版本不参与命中，不覆盖现有版本。`;
+            state.lifecycleMessage = `版本 ${versionNo} 已新增为开发中，属于进入分发前的准备态。命中影响：开发中版本不参与命中，不改变现有命中结果。`;
           }
         }
         if (type === "releaseConfig") {
@@ -3046,7 +3012,7 @@
         if (versionAction.dataset.extensionVersionAction === "stop") {
           const activeOthersExt = extensionVersions.filter(v => v.version !== item.version && ["测试中","发布中","已发布"].includes(v.status));
           if (activeOthersExt.length === 0) {
-            const confirmed = await openVersionStateModal({
+            const confirmed = await openVersionImpactModal({
               title: "停止后无可命中版本",
               summary: "停止后将无可命中的扩展程序版本，App 将回退到本地缓存版本。",
               detail: "是否仍然停止？",
@@ -3078,7 +3044,6 @@
           return;
         }
         if (versionAction.dataset.extensionVersionAction === "resume") {
-          // I-21/I-28：暂停→恢复时触发冲突扫描
           const override = await confirmVersionOverride(extensionVersions, item, "发布中", "extension");
           if (!override.ok) return;
           const coverage = coverageImpact(extensionVersions, item, "发布中", "extension");
@@ -3144,8 +3109,8 @@
     $("#extensionPanelModeModal").addEventListener("click", event => {
       if (event.target === $("#extensionPanelModeModal")) closeExtensionPanelModeModal();
     });
-    $("#versionStateModal").addEventListener("click", event => {
-      if (event.target === $("#versionStateModal")) closeVersionStateModal(false);
+    $("#versionImpactModal").addEventListener("click", event => {
+      if (event.target === $("#versionImpactModal")) closeVersionImpactModal(false);
     });
 
     render();
