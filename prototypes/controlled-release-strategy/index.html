@@ -836,7 +836,7 @@
         { id: "extension-panel-mode", title: "控制面板类型展示态", body: "产品详情页内只展示当前控制面板类型和编辑入口，避免把该块误认为整页保存表单。点击编辑后在弹窗内切换原生 / RN。", loc: "产品详情 > 扩展程序 > 控制面板类型" },
         { id: "extension-manage", title: "按关联产品展示产品模块", body: "产品详情不展示智能模块或其他产品的扩展程序；只展示归属当前产品的产品模块扩展程序。版本状态收敛为开发中、测试中、发布中、暂停发布、已发布和已停止；产品上下文由当前详情页继承，不提供扩展程序产品选择器；测试用户范围固定依赖产品白名单。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
         { id: "extension-manage", title: "扩展程序字段定义", body: "基本信息字段只读：产品上下文、扩展程序名称、PanelCode、业务类型、面板类型。PanelCode 结构为 App缩写.产品类型.产品型号；存量示例 morn.breast-pump.v3，默认 App 缩写新生成值为 mom.breast-pump.v3。版本字段包含版本号、更新时间、更新日志、状态和操作；产品名称和产品ID由详情页承载，不在扩展程序块重复展示。", loc: "产品详情 > 扩展程序 > 扩展程序管理" },
-        { id: "versionStateModal", title: "多版本并存时 App 怎么知道推哪个？", body: "多个版本同时处于测试中/发布中/已发布时，每台设备只收到一个版本。系统按以下顺序决定：\n\n1. 精确指定版本号（=v）的优先——比如「等于 1.2.0」比「不低于 1.0.0」先命中\n2. 要求 APP 版本越高的优先——「≥1.2.0」比「≥1.0.0」先命中\n3. 如果条件完全一样，后上线的版本先命中\n\n白名单用户能看到测试中版本；普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 扩展程序 > 版本状态唯一性" },
+        { id: "versionStateModal", title: "多版本并存时 App 怎么知道推哪个？", body: "同一系列（相同固件类型 + 硬件版本）的多个版本可以同时处于测试中/发布中/已发布，每台设备只收到一个版本。系统按以下顺序决定哪个版本命中：\n\n1. 精确指定版本号（=v）的优先——比如「等于 1.2.0」的比「不低于 1.0.0」的先命中\n2. 要求 APP 版本越高的优先——「≥1.2.0」的比「≥1.0.0」的先命中\n3. 如果条件完全一样，后进入测试/发布的版本先命中\n\n白名单用户能看到测试中版本；普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 扩展程序 > 版本状态唯一性" },
         { id: "extension-lifecycle", title: "扩展程序版本状态机", body: "开发中是进入分发前的准备态；测试中由产品白名单命中；发布中按批次逐步开放给线上用户；暂停发布不参与命中策略，可继续恢复发布或停止；已发布对所有线上用户可见；已停止只保留历史升级来源。命中时仅在测试中、发布中、已发布版本中按扩展程序版本号取最高版本。", loc: "产品详情 > 扩展程序 > 版本列表" },
         { id: "extension-lifecycle", title: "开发中状态支持编辑更新说明（MAGI决策）", body: "扩展程序版本在开发中状态支持编辑更新说明字段。其他字段（版本号、PanelCode 等）如需修改，只能删除后重新新建。", loc: "产品详情 > 扩展程序 > 开发中版本操作" },
         { id: "extension-lifecycle", title: "停止操作真空保护（MAGI决策）", body: "停止扩展程序发布中/已发布版本前，若当前无其他活跃版本（测试中/发布中/已发布），系统弹窗警告「停止后将无可命中的扩展程序版本，App 将回退到本地缓存版本」，用户确认后才执行。", loc: "产品详情 > 扩展程序 > 停止操作" }
@@ -847,11 +847,12 @@
         { id: "firmware-state", title: "固件版本字段定义", body: "固件版本字段包含固件名称、固件类型、固件版本、硬件版本、功能版本、APP版本号条件、状态、上传时间、发布日志和操作。新建时只选择功能版本、固件类型、上传文件、APP版本号条件和备注，文件解析字段只读。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "测试中固件统一入口", body: "原设备调试页内的测试固件能力与固件版本管理中的测试中状态是同一业务对象，不再拆成独立测试固件表。测试中、发布中、已发布都是候选来源，并在共同筛选满足后按固件版本号取最高版本。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "固件状态由行内操作流转", body: "开发中可进入测试或删除；测试中可停止或发布；发布中可暂停发布、停止或修改发布；暂停发布可继续或停止；已发布可修改发布配置或查看详情，已停止仅保留详情查看。暂停发布和已停止版本仅作为历史信息来源，不再匹配命中条件。", loc: "产品详情 > 固件配置 > 固件版本操作" },
-        { id: "versionStateModal", title: "冲突路由弹窗（MAGI第4-7轮决策）", body: "弹窗触发：进入测试时，若新版本与已有「测试中」版本的APP版本条件有重叠（同一台设备可能同时满足两个版本的条件），系统弹出二选一弹窗。进入发布时同理，与「发布中/已发布」版本有条件重叠则触发。\n\n选A精准测试：两版本同时运行，系统自动按优先级分配设备。选B全面接管：旧版本自动改为暂停发布，由新版本接管。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "versionStateModal", title: "什么叫「同一个固件」？什么叫「同一系列固件」？", body: "同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同。同一个固件在列表中有且仅有一个，重复上传会被阻断。\n\n同一系列固件：固件类型 + 硬件版本相同，但固件版本不同（比如 v1.2 和 v1.5 是同一系列）。同一系列的不同固件版本可以同时并存于任何状态（测试中/发布中/已发布），互不干扰，由路由规则决定每台设备命中哪个版本。\n\n举例：MCU固件 / 硬件版本10 下，v1.2（测试中）、v1.3（发布中）、v1.5（已发布）可以同时存在，不会触发任何阻断或弹窗。", loc: "产品详情 > 固件配置 > 版本操作" },
+        { id: "versionStateModal", title: "多个版本并存时，设备怎么命中？", body: "同一系列（固件类型+硬件版本相同）的多个版本可以同时运行，系统按 APP 版本条件决定每台设备命中哪一个：\n\n① 精确条件（=v）比范围条件（≥v）优先\n   例：=1.2.0 比 ≥1.0.0 先命中\n\n② 同为范围条件时，要求 APP 版本越高的越优先\n   例：≥1.2.0 比 ≥1.0.0 先命中\n\n③ 条件完全一样时，版本号更高的先命中\n\n白名单用户可以看到「测试中」版本；普通用户只能收到「发布中/已发布」版本。", loc: "产品详情 > 固件配置 > 版本操作" },
         { id: "firmware-state", title: "固件版本编辑边界（MAGI修正）", body: "开发中状态支持编辑：功能版本、固件类型、APP版本号规则+版本值、备注均可修改；硬件版本来自文件名解析，不可手动编辑。进入测试后字段锁定，配置填错需删除开发中版本重新新建。", loc: "产品详情 > 固件配置 > 固件版本操作" },
-        { id: "firmware-state", title: "多版本并存时设备如何分配？（版本冲突路由规则）", body: "多个固件版本同时处于「测试中」或「发布中/已发布」时，每台设备只会命中一个版本。分配规则如下：\n\n① 精确版本号优先：APP条件写「等于v1.2.0」（=v）的固件，优先于写「不低于v1.0.0」（≥v）的固件。适合针对特定APP版本做精准推送。\n\n② 更高要求的范围优先：同为「≥v」条件时，要求APP版本越高的固件优先。比如「≥1.2.0」的固件比「≥1.0.0」优先——覆盖范围更精准的先上。\n\n③ 时间戳兜底：条件完全相同时，后来上线的版本优先。\n\n白名单用户可以看到测试中版本；线上普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 固件配置 > 版本唯一性" },
+        { id: "firmware-state", title: "多版本并存时设备如何分配？（命中路由规则）", body: "同一系列（固件类型+硬件版本相同）的多个固件版本可以同时处于任何状态，每台设备只命中一个版本：\n\n① 精确版本号（=v）优先于范围条件（≥v）\n   例：APP条件「=1.2.0」比「≥1.0.0」先命中\n\n② 同为范围条件时，要求 APP 版本越高的先命中\n   例：「≥1.2.0」比「≥1.0.0」先命中\n\n③ 条件完全一样时，固件版本号更高的先命中\n\n白名单用户可见测试中版本；线上普通用户只能收到发布中/已发布版本。", loc: "产品详情 > 固件配置 > 版本唯一性" },
         { id: "firmware-state", title: "停止版本前的保护提示", body: "点击停止一个「发布中」或「已发布」的固件版本时，系统会检查同类型同硬件版本下是否还有其他活跃版本。\n\n如果没有其他活跃版本：系统弹窗提示「停止后，App 请求时设备不会降级，会保持当前已安装的固件版本不变」，确认后才执行。\n\n如果有其他活跃版本：直接确认停止即可，其他版本会继续服务设备。\n\n暂停发布时：同样检查，如果是唯一活跃版本会给出提示，但不强制阻止暂停。", loc: "产品详情 > 固件配置 > 停止操作" },
-        { id: "firmware-state", title: "全面发布直达已发布（MAGI修正）", body: "选择全面发布时，保存后版本状态直接进入已发布，不经过发布中。选择自动发布时，保存后进入发布中，开放覆盖度达100%后才转已发布。两种路径都会触发版本覆盖确认弹窗。", loc: "产品详情 > 固件配置 > 发布配置" },
+        { id: "firmware-state", title: "全面发布直达已发布", body: "选择全面发布时，保存后版本状态直接进入已发布，不经过发布中。选择自动发布时，保存后进入发布中，开放覆盖度达100%后才转已发布。同一系列其他版本不受影响，继续按自身状态服务对应设备。", loc: "产品详情 > 固件配置 > 发布配置" },
         { id: "firmware-state", title: "不在固件配置页跟踪 OTA 进度", body: "产品详情 > 固件配置只承接固件版本管理和发布配置，不展示 OTA 任务列表、命中设备数、成功升级数或失败率。进度追踪后续由独立监控面板承接。", loc: "产品详情 > 固件配置" },
         { id: "firmware-state", title: "OTA 请求按类型独立决策", body: "设备 / App 请求 OTA 时按固件类型独立判断，MCU 只判断 MCU 固件，模组只判断模组固件。请求参数需要区分整体 OTA 和模块 OTA；测试中、发布中、已发布版本是命中候选，暂停发布和已停止不参与命中策略。", loc: "产品详情 > 固件配置" }
       ],
@@ -928,9 +929,8 @@
         { id: "extension-panel-mode-modal", title: "弹窗内编辑面板类型", body: "原生 / RN 选择在弹窗内保存。保存后只刷新控制面板类型及其下方内容显隐，不影响扩展程序版本或 RN 版本发布配置的数据。", loc: "产品详情 > 扩展程序 > 编辑扩展程序配置弹窗" }
       ],
       versionState: [
-        { id: "versionStateModal", title: "何时会弹出「冲突处理」弹窗？", body: "触发条件（运营视角）：\n\n进入测试时：你要测试的固件/扩展程序，APP版本条件与某个「正在测试中」的版本有重叠——比如两个版本都覆盖了 APP ≥1.0.0 的设备。\n\n发布时：你要发布的版本，APP版本条件与某个「发布中/已发布」的版本有重叠——会有设备同时满足两个版本的条件。\n\n不触发弹窗的情况：两个版本的APP版本条件完全错开（如一个针对 =1.2.0，另一个针对 ≥2.0.0），设备不会同时满足，系统直接放行。", loc: "版本状态弹窗" },
-        { id: "versionStateModal", title: "冲突弹窗：两个选项是什么意思？", body: "选项A「精准测试/精准推送（并存）」：两个版本同时运行，系统自动按规则分配设备——精确指定版本号（=v）的优先；同为范围条件（≥v）时，要求版本越高的那个优先。你的新版本会服务于它条件范围内的设备，旧版本服务于剩余设备，互不干扰。\n\n选项B「全面接管/强制替换」：旧版本退场，系统自动将它改为「暂停发布」，由你的新版本接管所有符合条件的设备。旧版本暂停后不会推送给任何新设备，但可手动恢复。\n\n什么时候选哪个：针对特定APP版本小范围测新功能 → 选A并存；新版本是整体升级、要全面替换旧测试 → 选B接管。", loc: "版本状态弹窗" },
-        { id: "versionStateModal", title: "版本覆盖确认弹窗：什么情况下出现？", body: "当你的新版本版本号比现有版本更高，且条件范围没有重叠时（比如 v2.0 vs v1.5，APP条件完全不同），系统会提示「v2.0 将接替 v1.5，v1.5 会变为已停止」。\n\n区别于冲突弹窗：冲突弹窗是因为两个版本会推给相同的设备；覆盖确认弹窗是因为新版本号更高，会完全替代旧版本，旧版本转为「已停止」（不可恢复）。\n\n注意：已停止的版本不能再恢复运行，只作为历史记录保留。", loc: "版本状态弹窗" },
+        { id: "versionStateModal", title: "状态流转不会自动阻断或弹窗", body: "同一系列的多个固件版本（固件类型+硬件版本相同，固件版本不同）可以自由进入测试中/发布中/已发布，系统不会弹出冲突弹窗或阻断操作。\n\n唯一会被阻断的情况：上传固件时，固件类型+硬件版本+固件版本三者完全相同——这意味着是同一个固件的重复上传，系统直接提示「已存在」，阻止进入列表。\n\n多个版本并存时，命中规则（APP版本条件 + 固件版本号）自动决定每台设备收到哪个版本，运营无需手动处理冲突。", loc: "版本状态弹窗" },
+        { id: "versionStateModal", title: "重复上传同一固件时会怎样？", body: "「同一个固件」的定义：固件类型 + 硬件版本 + 固件版本三者完全相同。\n\n重复上传时：系统直接阻断并提示「已存在相同固件」，不允许进入列表。\n\n不同固件版本（v1.2、v1.5）即使固件类型和硬件版本相同，也是不同固件，可以共存于列表中，各自独立流转状态。", loc: "新建固件版本" },
       ],
       deleteModal: [
         { id: "deleteModal", title: "删除前二次确认", body: "删除白名单用户前展示影响人数和授权关系数量。确认后移除白名单维护记录，并解除该用户后续产品授权命中。", loc: "白名单管理 > 删除确认弹窗" }
@@ -1206,164 +1206,25 @@
       return `覆盖检测：${item.version}/${nextStatus} 将成为当前最高候选版本，会覆盖 ${lower.map(candidate => `${candidate.version}/${candidate.status}`).join("、")} 的命中。`;
     }
 
-    // 判断两个 APP 版本条件是否存在命中集合交集（重叠）
-    // condition: { type: "exact"|"gte", value: "1.2.0" }
-    function appConditionOverlaps(c1, c2) {
-      if (!c1 || !c2) return false; // 无条件视为不限，不触发弹窗
-      const cmp = compareVersion;
-      if (c1.type === "exact" && c2.type === "exact") return c1.value === c2.value;
-      if (c1.type === "exact" && c2.type === "gte")   return cmp(c1.value, c2.value) >= 0; // c1.value >= c2.value
-      if (c1.type === "gte"   && c2.type === "exact") return cmp(c2.value, c1.value) >= 0; // c2.value >= c1.value
-      return true; // gte 与 gte 永远重叠
+    // 同一系列：固件类型 + 硬件版本相同（固件版本不同）的版本集合
+    // 同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同 → 列表中有且仅有一个
+    function sameSeries(a, b, kind) {
+      if (kind === "firmware") return a.type === b.type && (a.hw || a.hardware) === (b.hw || b.hardware);
+      // 扩展程序无硬件版本维度，视为同一系列
+      return true;
     }
 
-    function parseAppCondition(item) {
-      if (!item.appVersionRule || !item.appVersion) return null;
-      return { type: item.appVersionRule === "=" ? "exact" : "gte", value: item.appVersion };
+    function isDuplicateFirmware(list, item, kind) {
+      // 同一个固件 = 固件类型 + 硬件版本 + 固件版本完全相同
+      if (kind !== "firmware") return false;
+      return list.some(c => c !== item && c.type === item.type &&
+        (c.hw || c.hardware) === (item.hw || item.hardware) &&
+        c.version === item.version);
     }
 
-    // 返回与当前 item 在同一「固件类型×硬件版本」维度且 APP 版本条件重叠的版本列表（排除自身）
-    function versionScopePeers(list, item, kind) {
-      return list.filter(candidate => {
-        if (candidate === item) return false;
-        if (kind === "firmware") {
-          if (candidate.type !== item.type) return false;
-          if (candidate.hw !== item.hw) return false;
-          // APP 版本条件重叠判定
-          const c1 = parseAppCondition(item);
-          const c2 = parseAppCondition(candidate);
-          return appConditionOverlaps(c1, c2);
-        }
-        // extension：只有 APP 版本条件维度
-        const c1 = parseAppCondition(item);
-        const c2 = parseAppCondition(candidate);
-        return appConditionOverlaps(c1, c2);
-      });
-    }
-
-    // 打开冲突路由弹窗，返回 Promise<"A"|"B"|null>
-    function openConflictRouteModal(config) {
-      return new Promise(resolve => {
-        state.activeModal = "conflictRoute";
-        $("#conflictRouteModalTitle").textContent = config.title || "⚠️ 检测到范围重叠";
-        $("#conflictRouteModalConflictDesc").textContent = config.conflictDesc;
-        $("#conflictRouteOptionATitle").textContent = config.optionATitle;
-        $("#conflictRouteOptionADesc").textContent  = config.optionADesc;
-        $("#conflictRouteOptionBTitle").textContent = config.optionBTitle;
-        $("#conflictRouteOptionBDesc").textContent  = config.optionBDesc;
-        // 重置选中
-        $$("input[name='conflictRouteChoice']").forEach(r => r.checked = false);
-        // 高亮已选项
-        function updateHighlight() {
-          const val = $("input[name='conflictRouteChoice']:checked")?.value;
-          ["A","B"].forEach(v => {
-            const el = $("#conflictRouteOption" + v);
-            if (el) el.style.borderColor = val === v ? "#315efb" : "#d9dfe9";
-            if (el) el.style.background  = val === v ? "#eef4ff" : "#fff";
-          });
-        }
-        $$("input[name='conflictRouteChoice']").forEach(r => r.addEventListener("change", updateHighlight));
-        $("#conflictRouteModal").classList.add("open");
-        renderNotes();
-        function cleanup(result) {
-          $("#conflictRouteModal").classList.remove("open");
-          state.activeModal = null;
-          renderNotes();
-          resolve(result);
-        }
-        $("#conflictRouteCancel").onclick = () => cleanup(null);
-        $("#conflictRouteConfirm").onclick = () => {
-          const choice = $("input[name='conflictRouteChoice']:checked")?.value;
-          if (!choice) { showToast("请选择一个处理方式后再提交。"); return; }
-          cleanup(choice);
-        };
-      });
-    }
-
+    // 进入测试或发布时：同一系列多版本可以并存，只做真空保护
     async function confirmVersionOverride(list, item, nextStatus, kind) {
-      // --- 进入测试中：冲突路由弹窗（精准测试 / 全面接管）---
-      if (nextStatus === "测试中") {
-        const conflictPeers = versionScopePeers(list, item, kind).filter(c => c.status === "测试中");
-        if (conflictPeers.length) {
-          const conflictNames = conflictPeers.map(c => `${c.version}`).join("、");
-          const choice = await openConflictRouteModal({
-            title: "⚠️ 检测到测试范围重叠",
-            conflictDesc: `您当前提交的测试条件与正在运行的版本 [${conflictNames}] 存在命中范围重叠，请选择测试执行方式：`,
-            optionATitle: "选项一：精准测试（独立并存）推荐",
-            optionADesc:  "效果：满足新条件的设备将优先进入本测试（命中优先级漏斗自动分流），其余旧版本设备继续留在原测试中。适用：小范围精准尝鲜测试，不影响他人。",
-            optionBTitle: "选项二：全面接管（自动暂停冲突版本）",
-            optionBDesc:  `效果：本版本将成为主力测试，重叠范围内的旧版本 [${conflictNames}] 将被系统自动改为「暂停发布」，并记录操作日志。适用：版本迭代，全面替换旧测试版。`,
-          });
-          if (!choice) return { ok: false, message: "" };
-          if (choice === "B") {
-            // 全面接管：将所有重叠的测试中版本改为暂停发布
-            conflictPeers.forEach(c => {
-              c.status = "暂停发布";
-              c.log = `因新测试版 ${item.version} 上线，由系统自动暂停`;
-            });
-            return { ok: true, message: `全面接管：版本 ${conflictNames} 已自动改为暂停发布。` };
-          }
-          // 选项A：精准测试并存，不改变旧版本状态
-          return { ok: true, message: `精准测试：与版本 ${conflictNames} 并存，命中优先级漏斗自动分流。` };
-        }
-        // 无冲突，直接进入测试中
-        return { ok: true, message: "" };
-      }
-
-      // --- 进入发布中/已发布：精准推送 / 强制替换弹窗 ---
-      if (nextStatus === "发布中" || nextStatus === "已发布") {
-        const conflictPeers = versionScopePeers(list, item, kind).filter(c => ["发布中","已发布"].includes(c.status));
-        if (conflictPeers.length) {
-          const conflictNames = conflictPeers.map(c => `${c.version}/${c.status}`).join("、");
-          const choice = await openConflictRouteModal({
-            title: "⚠️ 检测到发布范围重叠",
-            conflictDesc: `您当前提交的发布条件与已有版本 [${conflictNames}] 存在命中范围重叠，请选择发布执行方式：`,
-            optionATitle: "选项一：精准推送（独立并存）",
-            optionADesc:  "效果：新版本按条件推送给对应设备，旧版本继续覆盖其他设备，漏斗自动分流，两个发布版本并存。适用：针对特定 APP 版本推送新固件，不影响其他用户。",
-            optionBTitle: "选项二：强制替换（自动暂停冲突版本）",
-            optionBDesc:  `效果：新版本全面接管，旧版本 [${conflictNames}] 将被系统自动改为「暂停发布」。适用：版本迭代，全面替换旧发布版本。`,
-          });
-          if (!choice) return { ok: false, message: "" };
-          if (choice === "B") {
-            conflictPeers.forEach(c => {
-              c.status = "暂停发布";
-              c.log = `因新版本 ${item.version} 发布，由系统自动暂停`;
-              if (kind === "firmware") {
-                otaTasks.forEach(task => {
-                  if (task.firmwareVersionId === c.id && ["发布中","暂停发布"].includes(task.status)) task.status = "已停止";
-                });
-              }
-            });
-            return { ok: true, message: `强制替换：版本 ${conflictNames.split("/")[0]} 已自动改为暂停发布。` };
-          }
-          return { ok: true, message: `精准推送：与版本 ${conflictNames} 并存，漏斗自动分流。` };
-        }
-        // 无冲突：检查是否有旧版被覆盖（版本号更低）—— 旧版转已停止
-        const olderPeers = list.filter(c => c !== item && kind === "firmware"
-          ? (c.type === item.type && c.hw === item.hw && ["发布中","已发布"].includes(c.status) && compareVersion(item.version, c.version) > 0)
-          : (["发布中","已发布"].includes(c.status) && compareVersion(item.version, c.version) > 0));
-        if (olderPeers.length) {
-          const overwrittenText = olderPeers.map(c => `${c.version}/${c.status}`).join("、");
-          const accepted = await openVersionStateModal({
-            summary: `${item.version} 版本将接替 ${overwrittenText} 的命中。`,
-            detail: `确认后，被接替版本将转为已停止，不再参与命中策略。`
-          });
-          if (!accepted) return { ok: false, message: "" };
-          olderPeers.forEach(c => {
-            c.status = "已停止";
-            c.log = `被 ${item.version} 发布覆盖，转为已停止`;
-            if (kind === "extension") delete extensionReleaseConfigs[c.version];
-            if (kind === "firmware") {
-              otaTasks.forEach(task => {
-                if (task.firmwareVersionId === c.id && ["发布中","暂停发布"].includes(task.status)) task.status = "已停止";
-              });
-            }
-          });
-          return { ok: true, message: `状态覆盖：${overwrittenText} 已转为已停止。` };
-        }
-        return { ok: true, message: "" };
-      }
-
+      // 停止时真空保护（保留，在 wireFirmware/wireExtension 里单独调用，此函数仅作版本流转检查）
       return { ok: true, message: "" };
     }
 
@@ -2882,8 +2743,12 @@
             showToast("请上传符合命名规则的固件文件。");
             return;
           }
-          if (firmwareVersions.some(item => item.version === parsed.firmwareVersion && item.type === firmwareType)) {
-            showToast("该固件类型下已存在相同固件版本。");
+          if (firmwareVersions.some(item =>
+            item.version === parsed.firmwareVersion &&
+            item.type === firmwareType &&
+            (item.hw || item.hardware || "") === (parsed.hardwareVersion || "")
+          )) {
+            showToast(`已存在相同固件：${firmwareType} / 硬件版本 ${parsed.hardwareVersion} / 固件版本 ${parsed.firmwareVersion}，无法重复上传。`);
             return;
           }
           firmwareVersions.unshift({
