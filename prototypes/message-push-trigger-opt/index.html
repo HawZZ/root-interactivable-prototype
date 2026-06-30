@@ -1,0 +1,1335 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>消息推送触发条件选择优化 — 原型（OPT-001）</title>
+  <style>
+    :root {
+      --aside-bg: #001529;
+      --aside-active: #0e2a47;
+      --aside-hover: rgba(255,255,255,.06);
+      --primary: #4080ff;
+      --primary-dark: #2b6bd9;
+      --primary-light: #e8f0ff;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --danger: #f56c6c;
+      --info: #909399;
+      --text-1: #1d2129;
+      --text-2: #4e5969;
+      --text-3: #86909c;
+      --text-ph: #c9cdd4;
+      --border: #e5e6eb;
+      --border-light: #f2f3f5;
+      --bg-page: #f7f8fa;
+      --bg-white: #ffffff;
+      --radius: 4px;
+      --aside-w: 200px;
+      --hdr-h: 50px;
+      --sans: "PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+      /* Tag colors */
+      --tag-bool-bg: #f0f9eb; --tag-bool-color: #529b2e; --tag-bool-border: #b3e19d;
+      --tag-num-bg: #e8f0ff;  --tag-num-color: #2b6bcc;  --tag-num-border: #a5c0f3;
+      --tag-enum-bg: #fff7e8; --tag-enum-color: #b76e00; --tag-enum-border: #f5d9a8;
+      --tag-str-bg: #f4f4f5;  --tag-str-color: #606266;  --tag-str-border: #dddde0;
+      /* annotation */
+      --ann-w: 340px;
+      --ann-bg: #1a1d23;
+      --ann-border: #2e3340;
+      --ann-text: #c9d1e0;
+      --ann-muted: #7a8394;
+      --ann-accent: #5b8df8;
+      --ann-card: #22262f;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--bg-page);color:var(--text-1);min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+
+    /* ── TWO-PANE SHELL ── */
+    .proto-shell{display:grid;grid-template-columns:1fr var(--ann-w);min-height:100vh}
+
+    /* ── ADMIN LAYOUT ── */
+    .admin{display:grid;grid-template-columns:var(--aside-w) 1fr;min-height:100vh}
+
+    /* ── ASIDE ── */
+    .aside{background:var(--aside-bg);display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;align-self:start}
+    .brand{height:56px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+    .brand-logo{width:28px;height:28px;border-radius:4px;background:linear-gradient(135deg,#85b436,#4db35a);display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+    .brand-name{font-size:13px;font-weight:700;color:#fff;line-height:1.2}
+    .brand-sub{font-size:10px;color:rgba(255,255,255,.45)}
+    .menu{padding:8px 0;overflow:auto;flex:1}
+    .menu-group{padding:16px 16px 4px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.04em;text-transform:uppercase}
+    .menu-item{height:40px;display:flex;align-items:center;gap:8px;padding:0 16px;color:rgba(255,255,255,.65);cursor:pointer;border-left:3px solid transparent;transition:background .15s,color .15s;font-size:13px}
+    .menu-item:hover{background:var(--aside-hover);color:rgba(255,255,255,.9)}
+    .menu-item.active{background:var(--aside-active);border-left-color:var(--primary);color:#fff}
+    .menu-item svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
+    /* sub items */
+    .menu-sub{padding-left:32px}
+    .menu-sub .menu-item{height:36px;font-size:13px;border-left:none;padding-left:16px}
+    .menu-sub .menu-item.active{background:rgba(64,128,255,.18);color:#fff;border-left:none}
+    .menu-section{border-top:1px solid rgba(255,255,255,.06);margin-top:4px;padding-top:4px}
+
+    /* ── MAIN SHELL ── */
+    .shell{min-width:0;display:flex;flex-direction:column}
+
+    /* ── HEADER ── */
+    .hdr{height:var(--hdr-h);background:var(--bg-white);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;position:sticky;top:0;z-index:20}
+    .hdr-back{width:28px;height:28px;display:grid;place-items:center;border-radius:var(--radius);color:var(--text-2);cursor:pointer;border:1px solid var(--border);flex-shrink:0}
+    .hdr-back:hover{background:var(--bg-page)}
+    .bc{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--text-3)}
+    .bc span{color:var(--text-1);font-weight:500}
+    .bc i{font-style:normal}
+    .hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--text-2);font-size:13px}
+    .avatar{width:28px;height:28px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:grid;place-items:center;font-size:11px;font-weight:700}
+
+    /* ── PAGE CONTENT ── */
+    .content{padding:20px 28px;flex:1}
+
+    /* ── FORM CARD ── */
+    .form-card{background:var(--bg-white);border-radius:6px;padding:28px 32px 20px}
+
+    /* ── FORM ROW ── */
+    .form-row{display:grid;grid-template-columns:96px 1fr;gap:0 12px;align-items:flex-start;padding:10px 0}
+    .form-label{height:32px;display:flex;align-items:center;font-size:14px;color:var(--text-2);flex-shrink:0}
+    .form-label .req{color:var(--danger);margin-right:2px}
+    .form-ctrl{min-height:32px;display:flex;align-items:flex-start;flex-direction:column;gap:4px}
+    .form-hint{font-size:12px;color:var(--text-3)}
+
+    /* ── ELEMENT CONTROLS ── */
+    .el-input{height:32px;border:1px solid var(--border);border-radius:var(--radius);padding:0 11px;color:var(--text-1);background:#fff;outline:none;width:100%;transition:border-color .15s}
+    .el-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(64,128,255,.12)}
+    .el-input::placeholder{color:var(--text-ph)}
+    .el-textarea{border:1px solid var(--border);border-radius:var(--radius);padding:7px 11px;color:var(--text-1);background:#fff;outline:none;width:100%;resize:none;min-height:80px;transition:border-color .15s;line-height:1.6}
+    .el-textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(64,128,255,.12)}
+    .el-textarea::placeholder{color:var(--text-ph)}
+    .el-select{height:32px;border:1px solid var(--border);border-radius:var(--radius);padding:0 28px 0 11px;color:var(--text-ph);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9cdd4' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat calc(100% - 8px) center;appearance:none;outline:none;cursor:pointer;width:100%;transition:border-color .15s;font-size:14px}
+    .el-select:focus{border-color:var(--primary)}
+    .el-select.has-val{color:var(--text-1)}
+    .readonly-field{min-height:32px;border:1px solid var(--border-light);border-radius:var(--radius);background:#f7f8fa;color:var(--text-1);padding:6px 11px;display:flex;align-items:center;gap:8px;max-width:480px;font-size:14px;box-sizing:border-box}
+    .readonly-tag{height:20px;display:inline-flex;align-items:center;padding:0 6px;border-radius:3px;background:#eef4ff;color:var(--primary);font-size:11px;border:1px solid #c8dcff;flex-shrink:0}
+    .char-count{font-size:12px;color:var(--text-3);text-align:right;width:100%}
+    .field-hint{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-3)}
+    .field-hint-tag{background:#f0f2f5;border-radius:3px;padding:0 5px;height:18px;line-height:18px;font-size:11px;color:var(--text-2);cursor:pointer}
+    .field-hint-tag:hover{background:#e5e6eb}
+
+    /* ── TRIGGER CONDITION ── */
+    .trigger-wrap{width:100%;position:relative}
+
+    /* ── ATTR PICKER (device trigger) ── */
+    .attr-picker{border:1px solid var(--border);border-radius:var(--radius);background:#fff;overflow:hidden;margin-top:6px}
+    .attr-picker.disabled{opacity:.5;pointer-events:none}
+    .attr-search-row{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;gap:4px}
+    .attr-search-icon{color:var(--text-3);flex-shrink:0;display:flex;align-items:center}
+    .attr-search-input{flex:1;height:32px;border:none;outline:none;font-size:14px;color:var(--text-1);background:transparent;padding:0 4px}
+    .attr-search-input::placeholder{color:var(--text-ph)}
+    .attr-clear{width:24px;height:32px;display:grid;place-items:center;color:var(--text-3);cursor:pointer;flex-shrink:0;border-radius:var(--radius)}
+    .attr-clear:hover{color:var(--text-2);background:var(--border-light)}
+    .attr-list-head{display:grid;grid-template-columns:1fr 150px 88px;background:#fafafa;border-bottom:1px solid var(--border);padding:0 10px}
+    .attr-list-head span{height:34px;display:flex;align-items:center;font-size:12px;color:var(--text-3);font-weight:600}
+    .attr-list{max-height:228px;overflow-y:auto}
+    .attr-row{display:grid;grid-template-columns:1fr 150px 88px;padding:0 10px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .1s;border-left:3px solid transparent}
+    .attr-row:last-child{border-bottom:none}
+    .attr-row:hover{background:#f7f9ff}
+    .attr-row.selected{background:#e8f0ff;border-left-color:var(--primary)}
+    .attr-name{height:36px;display:flex;align-items:center;font-size:13px;color:var(--text-1);gap:4px;min-width:0}
+    .attr-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .attr-id{height:36px;display:flex;align-items:center;font-size:12px;color:var(--text-3);font-family:monospace}
+    .attr-type-cell{height:36px;display:flex;align-items:center}
+    .attr-empty{padding:24px 12px;text-align:center;color:var(--text-3);font-size:13px}
+    .attr-empty-link{color:var(--primary);cursor:pointer;margin-top:4px;display:inline-block;font-size:13px}
+    .attr-empty-link:hover{text-decoration:underline}
+
+    /* ── ATTR SUMMARY ── */
+    .attr-summary{border-top:1px solid var(--border-light);padding:8px 10px;min-height:38px;display:flex;align-items:center;background:#fafcff}
+    .attr-summary-empty{font-size:13px;color:var(--text-ph)}
+    .attr-summary-val{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap}
+    .attr-summary-name{font-size:13px;font-weight:500;color:var(--text-1)}
+    .attr-summary-id{font-size:12px;font-family:monospace;color:var(--text-3);background:#f4f5f6;border-radius:3px;padding:1px 6px}
+    .sum-actions{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+    .sum-resel{font-size:12px;color:var(--primary);cursor:pointer;border:1px solid var(--primary);border-radius:var(--radius);padding:1px 8px;background:transparent;line-height:1.5}
+    .sum-resel:hover{background:var(--primary-light)}
+    .sum-clear{width:18px;height:18px;display:grid;place-items:center;color:var(--text-3);cursor:pointer;border-radius:50%}
+    .sum-clear:hover{color:var(--danger);background:#fff0f0}
+
+    /* ── TAGS ── */
+    .tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:3px;font-size:11px;font-weight:500;white-space:nowrap}
+    .tag-bool{background:var(--tag-bool-bg);color:var(--tag-bool-color);border:1px solid var(--tag-bool-border)}
+    .tag-num{background:var(--tag-num-bg);color:var(--tag-num-color);border:1px solid var(--tag-num-border)}
+    .tag-enum{background:var(--tag-enum-bg);color:var(--tag-enum-color);border:1px solid var(--tag-enum-border)}
+    .tag-str{background:var(--tag-str-bg);color:var(--tag-str-color);border:1px solid var(--tag-str-border)}
+
+    /* ── NO-PRODUCT OVERLAY ── */
+    .no-prod-tip{margin-top:6px;padding:8px 12px;background:#f4f5f6;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text-ph)}
+
+    /* ── SCENE BAR ── */
+    .scene-bar{background:#fffbe6;border:1px solid #ffe58f;border-radius:var(--radius);padding:9px 14px;font-size:13px;color:#7d4a00;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .scene-btn{padding:3px 10px;border-radius:var(--radius);border:1px solid #faad14;background:#fff;color:#8c6e00;font-size:12px;cursor:pointer}
+    .scene-btn:hover{background:#fffbe6}
+    .scene-btn.on{background:#faad14;color:#fff;border-color:#faad14}
+
+    /* ── FORM FOOTER ── */
+    .form-footer{padding:20px 0 4px;display:flex;justify-content:flex-end;gap:10px}
+    .btn{height:32px;padding:0 16px;border-radius:var(--radius);font-size:14px;font-weight:500;border:1px solid transparent;display:inline-flex;align-items:center;cursor:pointer}
+    .btn-default{background:#fff;border-color:var(--border);color:var(--text-2)}
+    .btn-default:hover{border-color:var(--primary);color:var(--primary)}
+    .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .btn-primary:hover{background:var(--primary-dark)}
+
+    /* ── ANCHOR BADGES ── */
+    .anchor{display:inline-flex;width:17px;height:17px;border-radius:50%;background:var(--primary);color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.22);transition:transform .15s;position:absolute;z-index:10}
+    .anchor:hover{transform:scale(1.18)}
+    .hl-target{animation:hl .6s ease}
+    @keyframes hl{0%{outline:2px solid var(--primary);outline-offset:2px}100%{outline:2px solid transparent}}
+
+    /* ── ANNOTATION PANEL ── */
+    .ann-pane{background:var(--ann-bg);border-left:1px solid var(--ann-border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden}
+    .ann-hdr{padding:13px 16px 11px;border-bottom:1px solid var(--ann-border);flex-shrink:0}
+    .ann-hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+    .ann-title{color:#e2e8f4;font-size:13px;font-weight:600}
+    .ann-badge{font-size:11px;background:#2e3a52;color:var(--ann-accent);padding:2px 8px;border-radius:20px}
+    .ann-sub{font-size:11px;color:var(--ann-muted)}
+    .ann-tabs{display:flex;border-bottom:1px solid var(--ann-border);flex-shrink:0}
+    .ann-tab{flex:1;height:35px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ann-muted);cursor:pointer;border-bottom:2px solid transparent}
+    .ann-tab.on{color:var(--ann-accent);border-bottom-color:var(--ann-accent)}
+    .ann-body{flex:1;overflow-y:auto;padding-bottom:16px}
+    .ann-card{margin:12px 12px 0;background:var(--ann-card);border:1px solid var(--ann-border);border-radius:6px;overflow:hidden}
+    .ann-card-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--ann-border)}
+    .ann-num{width:20px;height:20px;border-radius:50%;background:var(--ann-accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+    .ann-card-title{font-size:12px;font-weight:600;color:#d4ddf0}
+    .ann-card-tag{margin-left:auto;font-size:10px;padding:1px 7px;border-radius:20px;background:#1a3050;color:#7aaaf5}
+    .ann-card-body{padding:10px 12px;font-size:12px;color:var(--ann-text);line-height:1.65}
+    .ann-card-body p{margin-bottom:6px}
+    .ann-card-body p:last-child{margin-bottom:0}
+    .ann-card-body ul{padding-left:14px;margin:4px 0 6px}
+    .ann-card-body li{margin-bottom:3px}
+    .ann-card-body .lbl{color:var(--ann-muted);font-size:11px;margin-bottom:2px;margin-top:8px;text-transform:uppercase;letter-spacing:.04em}
+    .ann-card-body code{background:#1a1d23;border:1px solid var(--ann-border);border-radius:3px;padding:1px 5px;font-size:11px;font-family:monospace;color:#a6c8ff}
+    .ann-card-body .warn{background:#2d2208;border:1px solid #5c4400;border-radius:4px;padding:6px 9px;color:#e6b64a;margin-top:6px}
+    .ann-card-body .ok{background:#0d2e1a;border:1px solid #1a5c37;border-radius:4px;padding:6px 9px;color:#52c88a;margin-top:6px}
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="proto-shell">
+  <!-- ════════════════════════════
+       LEFT: PRODUCT PANE
+  ════════════════════════════ -->
+  <div><!-- admin shell -->
+    <div class="admin">
+
+      <!-- ASIDE -->
+      <aside class="aside">
+        <div class="brand">
+          <div class="brand-logo">L</div>
+          <div>
+            <div class="brand-name">路特创新</div>
+            <div class="brand-sub">AIoT Platform</div>
+          </div>
+        </div>
+        <nav class="menu">
+          <div class="menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 概览</div>
+          <div class="menu-group">智能产品</div>
+          <div class="menu-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> 智能产品</div>
+          <div class="menu-sub">
+            <div class="menu-item">产品列表</div>
+            <div class="menu-item active">消息推送</div>
+          </div>
+          <div class="menu-section menu-group">设备管理</div>
+          <div class="menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18" stroke-width="2" stroke-linecap="round"/></svg> 设备管理</div>
+          <div class="menu-sub">
+            <div class="menu-item">设备列表</div>
+            <div class="menu-item">固件管理</div>
+            <div class="menu-item">OTA</div>
+          </div>
+          <div class="menu-section menu-group">App</div>
+          <div class="menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg> App</div>
+          <div class="menu-sub">
+            <div class="menu-item">App列表</div>
+            <div class="menu-item">App升级</div>
+            <div class="menu-item">扩展程序管理</div>
+            <div class="menu-item">白名单管理</div>
+            <div class="menu-item">白名单标签组管理</div>
+          </div>
+          <div class="menu-section menu-group">配置中心</div>
+          <div class="menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 配置中心</div>
+          <div class="menu-sub">
+            <div class="menu-item">物模型池</div>
+            <div class="menu-item">产品模板</div>
+            <div class="menu-item">产品分类</div>
+            <div class="menu-item">后台多语言</div>
+          </div>
+          <div class="menu-section menu-group">生产管理</div>
+          <div class="menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg> 生产管理</div>
+          <div class="menu-sub">
+            <div class="menu-item">生产凭证</div>
+            <div class="menu-item">生产记录</div>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- MAIN SHELL -->
+      <div class="shell">
+        <!-- HEADER -->
+        <header class="hdr">
+          <div class="hdr-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          </div>
+          <div class="bc">
+            创建消息推送 <i>／</i> 消息推送 <i>／</i> <span>智能产品</span>
+          </div>
+          <div class="hdr-right">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <div class="avatar">管</div>
+          </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="content">
+
+          <!-- SCENE BAR -->
+          <div class="scene-bar" id="sceneBar">
+            <span>🎬 原型场景</span>
+            <button class="scene-btn on" id="btnNormal" onclick="setScene('normal')">正常（产品上下文）</button>
+            <button class="scene-btn" id="btnNoProd" onclick="setScene('noprod')">产品上下文异常</button>
+            <span style="color:#a08050;font-size:12px">切换演示触发条件交互状态</span>
+          </div>
+
+          <!-- FORM CARD -->
+          <div class="form-card">
+
+            <!-- 产品 -->
+            <div class="form-row">
+              <div class="form-label"><span class="req">*</span> 产品：</div>
+              <div class="form-ctrl">
+                <div class="readonly-field">
+                  <span>智能清洗机 / 207034745803911987</span>
+                  <span class="readonly-tag">只读</span>
+                </div>
+                <div class="field-hint">进入创建页时产品已确定，此处仅展示，不支持编辑。</div>
+              </div>
+            </div>
+
+            <!-- 推送标题 -->
+            <div class="form-row">
+              <div class="form-label"><span class="req">*</span> 推送标题：</div>
+              <div class="form-ctrl" style="width:100%">
+                <input class="el-input" placeholder="请输入推送标题" style="max-width:640px">
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:640px">
+                  <div class="field-hint">
+                    <span class="field-hint-tag">占位符</span>
+                    <span style="color:var(--text-3)">· 0 / 100</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 推送内容 -->
+            <div class="form-row">
+              <div class="form-label"><span class="req">*</span> 推送内容：</div>
+              <div class="form-ctrl" style="width:100%">
+                <textarea class="el-textarea" placeholder="可在输入文案中添加占位符，不同占位符可动态获取用户或设备信息，提升消息推送体验" style="max-width:640px;height:88px"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:640px">
+                  <div class="field-hint">
+                    <span class="field-hint-tag">占位符</span>
+                    <span style="color:var(--text-3)">· 0 / 200</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 跳转页面 -->
+            <div class="form-row">
+              <div class="form-label">跳转页面：</div>
+              <div class="form-ctrl">
+                <select class="el-select" style="max-width:480px">
+                  <option value="">请选择链接地址</option>
+                  <option>设备详情页</option>
+                  <option>运动记录页</option>
+                  <option>健康报告页</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 触发条件 ★★★ 核心优化区域 ★★★ -->
+            <div class="form-row" id="triggerRow" style="position:relative">
+              <!-- Anchor ① -->
+              <div class="anchor" style="top:8px;left:-6px" onclick="toAnn('ann1')" title="批注①">①</div>
+              <div class="form-label"><span class="req">*</span> 触发条件：</div>
+              <div class="form-ctrl" style="width:100%;position:relative">
+                <div class="trigger-wrap" style="max-width:640px">
+
+                  <!-- 产品上下文异常时的灰态覆盖层 -->
+                  <div id="noProdOverlay" style="display:none">
+                    <div class="no-prod-tip">产品上下文异常，无法加载产品关联的触发对象，请返回产品详情页重新进入</div>
+                  </div>
+
+                  <!-- 触发条件选择器主体 -->
+                  <div id="triggerBody">
+                    <!-- 触发类型 Select (下拉形式，还原真实页面样式) -->
+                    <div style="position:relative">
+                      <!-- Anchor ② -->
+                      <div class="anchor" style="top:-6px;right:-6px" onclick="toAnn('ann2')" title="批注②">②</div>
+                      <select class="el-select" id="triggerType" onchange="onTriggerChange(this.value)" style="width:100%">
+                        <option value="">请选择触发条件</option>
+                        <option value="device">设备触发</option>
+                        <option value="cloud">云端触发</option>
+                        <option value="consumable">耗材触发</option>
+                      </select>
+                    </div>
+
+                    <!-- 设备触发属性选择器 -->
+                    <div id="devicePicker" style="display:none;margin-top:8px;position:relative">
+                      <!-- Anchor ③ -->
+                      <div class="anchor" style="top:-6px;right:-6px" onclick="toAnn('ann3')" title="批注③">③</div>
+                      <div class="attr-picker" id="attrPicker">
+                        <!-- 搜索行 -->
+                        <div class="attr-search-row">
+                          <div class="attr-search-icon">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                          </div>
+                          <input class="attr-search-input" id="attrSearch" placeholder="搜索属性名称或标识符" oninput="filterAttrs(this.value)" autocomplete="off">
+                          <div class="attr-clear" id="clearBtn" style="display:none" onclick="clearSearch()" title="清空搜索">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          </div>
+                        </div>
+                        <!-- 表头 -->
+                        <div class="attr-list-head">
+                          <span style="position:relative">属性名称
+                            <div class="anchor" style="top:-7px;right:-22px" onclick="toAnn('ann3')" title="批注③">③</div>
+                          </span>
+                          <span>标识符</span>
+                          <span style="position:relative">数据类型
+                            <div class="anchor" style="top:-7px;right:-22px" onclick="toAnn('ann4')" title="批注④">④</div>
+                          </span>
+                        </div>
+                        <!-- 列表 -->
+                        <div class="attr-list" id="attrList"></div>
+                        <!-- 空态 -->
+                        <div class="attr-empty" id="attrEmpty" style="display:none">
+                          <div style="position:relative;display:inline-block">
+                            无匹配属性
+                            <div class="anchor" style="top:-6px;right:-22px" onclick="toAnn('ann5')" title="批注⑤">⑤</div>
+                          </div>
+                          <div class="attr-empty-link" onclick="clearSearch()">清空搜索条件</div>
+                        </div>
+                        <!-- 判断符 + 属性值 -->
+                        <div style="border-top:1px solid var(--border-light);padding:10px 12px;display:flex;align-items:center;gap:8px;background:#fafcff;flex-wrap:wrap">
+                          <span style="font-size:13px;color:var(--text-2);white-space:nowrap">触发条件</span>
+                          <select class="el-select" id="attrOperator" style="width:96px;height:28px;font-size:12px;padding:0 24px 0 8px">
+                            <option value="eq">=</option>
+                            <option value="neq">≠</option>
+                            <option value="gt">&gt;</option>
+                            <option value="gte">≥</option>
+                            <option value="lt">&lt;</option>
+                            <option value="lte">≤</option>
+                          </select>
+                          <input class="el-input" id="attrValue" placeholder="属性值" style="width:160px;height:28px;font-size:12px">
+                          <span style="font-size:12px;color:var(--text-3)">选择属性后设置判断符和属性值</span>
+                        </div>
+                        <!-- 已选摘要 -->
+                        <div class="attr-summary" id="attrSummary">
+                          <div class="anchor" style="top:-7px;right:-6px;position:absolute" onclick="toAnn('ann6')" title="批注⑥">⑥</div>
+                          <div class="attr-summary-empty" id="sumEmpty">尚未选择触发属性</div>
+                          <div class="attr-summary-val" id="sumVal" style="display:none">
+                            <span class="attr-summary-name" id="sumName"></span>
+                            <span class="attr-summary-id" id="sumId"></span>
+                            <span id="sumType"></span>
+                            <span id="sumCondition"></span>
+                            <div class="sum-actions">
+                              <button class="sum-resel" onclick="reselect()">重选</button>
+                              <div class="sum-clear" onclick="clearSel()" title="清除">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 云端触发配置 -->
+                    <div id="cloudPicker" style="display:none;margin-top:8px;position:relative">
+                      <!-- Anchor ③-cloud -->
+                      <div class="anchor" style="top:-6px;right:-6px" onclick="toAnn('ann3c')" title="批注③-云端">③</div>
+                      <div class="attr-picker" id="cloudPickerInner">
+                        <!-- 搜索行 -->
+                        <div class="attr-search-row">
+                          <div class="attr-search-icon">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                          </div>
+                          <input class="attr-search-input" id="cloudSearch" placeholder="搜索云计时器名称或标识符" oninput="filterClouds(this.value)" autocomplete="off">
+                          <div class="attr-clear" id="cloudClearBtn" style="display:none" onclick="clearCloudSearch()" title="清空搜索">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          </div>
+                        </div>
+                        <!-- 表头 -->
+                        <div class="attr-list-head" style="grid-template-columns:1fr 150px 88px">
+                          <span>云计时器名称</span>
+                          <span>标识符</span>
+                          <span>状态</span>
+                        </div>
+                        <!-- 列表 -->
+                        <div class="attr-list" id="cloudList"></div>
+                        <!-- 空态 -->
+                        <div class="attr-empty" id="cloudEmpty" style="display:none">
+                          <div style="position:relative;display:inline-block">
+                            无匹配云计时器
+                          </div>
+                          <div class="attr-empty-link" onclick="clearCloudSearch()">清空搜索条件</div>
+                        </div>
+                        <!-- 剩余时长条件值 -->
+                        <div style="border-top:1px solid var(--border-light);padding:10px 12px;display:flex;align-items:center;gap:8px;background:#fafcff">
+                          <span style="font-size:13px;color:var(--text-2);white-space:nowrap">剩余时长</span>
+                          <span class="attr-summary-id" style="height:28px;display:inline-flex;align-items:center">≤</span>
+                          <input class="el-input" id="cloudValue" type="number" placeholder="条件值（分钟）" style="width:140px;height:28px;font-size:12px">
+                          <span style="font-size:12px;color:var(--text-3)">分钟</span>
+                        </div>
+                        <!-- 已选摘要 -->
+                        <div class="attr-summary" id="cloudSummary">
+                          <div class="anchor" style="top:-7px;right:-6px;position:absolute" onclick="toAnn('ann6c')" title="批注⑥-云端">⑥</div>
+                          <div class="attr-summary-empty" id="cloudSumEmpty">尚未选择云计时器</div>
+                          <div class="attr-summary-val" id="cloudSumVal" style="display:none">
+                            <span class="attr-summary-name" id="cloudSumName"></span>
+                            <span class="attr-summary-id" id="cloudSumId"></span>
+                            <span id="cloudSumOp"></span>
+                            <div class="sum-actions">
+                              <button class="sum-resel" onclick="reselectCloud()">重选</button>
+                              <div class="sum-clear" onclick="clearCloudSel()" title="清除">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 耗材触发配置 -->
+                    <div id="consumablePicker" style="display:none;margin-top:8px;position:relative">
+                      <!-- Anchor ③-cons -->
+                      <div class="anchor" style="top:-6px;right:-6px" onclick="toAnn('ann3s')" title="批注③-耗材">③</div>
+                      <div class="attr-picker" id="consPickerInner">
+                        <!-- 搜索行 -->
+                        <div class="attr-search-row">
+                          <div class="attr-search-icon">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                          </div>
+                          <input class="attr-search-input" id="consSearch" placeholder="搜索耗材管理项名称或标识符" oninput="filterCons(this.value)" autocomplete="off">
+                          <div class="attr-clear" id="consClearBtn" style="display:none" onclick="clearConsSearch()" title="清空搜索">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          </div>
+                        </div>
+                        <!-- 表头 -->
+                        <div class="attr-list-head" style="grid-template-columns:1fr 150px 88px">
+                          <span>耗材管理项</span>
+                          <span>标识符</span>
+                          <span>类型</span>
+                        </div>
+                        <!-- 列表 -->
+                        <div class="attr-list" id="consList"></div>
+                        <!-- 空态 -->
+                        <div class="attr-empty" id="consEmpty" style="display:none">
+                          <div style="position:relative;display:inline-block">
+                            无匹配耗材管理项
+                          </div>
+                          <div class="attr-empty-link" onclick="clearConsSearch()">清空搜索条件</div>
+                        </div>
+                        <!-- 事件选择 -->
+                        <div style="border-top:1px solid var(--border-light);padding:10px 12px;display:flex;align-items:center;gap:8px;background:#fafcff">
+                          <span style="font-size:13px;color:var(--text-2);white-space:nowrap">触发事件</span>
+                          <select class="el-select" id="consEvent" style="width:160px;height:28px;font-size:12px;padding:0 24px 0 8px">
+                            <option value="">请选择事件</option>
+                            <option value="low">耗材不足</option>
+                            <option value="empty">耗材耗尽</option>
+                          </select>
+                        </div>
+                        <!-- 已选摘要 -->
+                        <div class="attr-summary" id="consSummary">
+                          <div class="anchor" style="top:-7px;right:-6px;position:absolute" onclick="toAnn('ann6s')" title="批注⑥-耗材">⑥</div>
+                          <div class="attr-summary-empty" id="consSumEmpty">尚未选择耗材管理项</div>
+                          <div class="attr-summary-val" id="consSumVal" style="display:none">
+                            <span class="attr-summary-name" id="consSumName"></span>
+                            <span class="attr-summary-id" id="consSumId"></span>
+                            <span id="consSumEv"></span>
+                            <div class="sum-actions">
+                              <button class="sum-resel" onclick="reselectCons()">重选</button>
+                              <div class="sum-clear" onclick="clearConsSel()" title="清除">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Anchor ⑦ product context error -->
+                    <div id="anchor7" style="display:none;position:absolute;top:0;right:-6px">
+                      <div class="anchor" onclick="toAnn('ann7')" title="批注⑦">⑦</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 备注 -->
+            <div class="form-row">
+              <div class="form-label">备注：</div>
+              <div class="form-ctrl" style="width:100%">
+                <textarea class="el-textarea" placeholder="请输入备注" style="max-width:640px;height:72px"></textarea>
+                <div class="char-count" style="max-width:640px">0 / 200</div>
+              </div>
+            </div>
+
+            <!-- 边界说明 + Anchor ⑧ -->
+            <div style="margin-top:8px;padding:10px 14px;background:#fafafa;border:1px solid var(--border-light);border-radius:var(--radius);font-size:12px;color:var(--text-3);display:flex;align-items:flex-start;gap:8px">
+              <div class="anchor" style="position:relative;top:0;left:0;flex-shrink:0" onclick="toAnn('ann8')" title="批注⑧">⑧</div>
+              <span>原型边界说明：V0.3 开发验收覆盖三类触发条件：设备触发、云端触发、耗材触发。设备触发需选择物模型属性并设置判断符和属性值；云端触发选择云计时器并填写剩余时长条件值，剩余时长语义固定为“≤”；耗材触发选择耗材管理项并选择耗材不足或耗材耗尽事件。</span>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div class="form-footer">
+              <button class="btn btn-default">取消</button>
+              <button class="btn btn-primary">立即创建</button>
+            </div>
+          </div><!-- /form-card -->
+
+        </div><!-- /content -->
+      </div><!-- /shell -->
+    </div><!-- /admin -->
+  </div><!-- /left pane -->
+
+  <!-- ════════════════════════════
+       RIGHT: ANNOTATION PANE
+  ════════════════════════════ -->
+  <div class="ann-pane">
+    <div class="ann-hdr">
+      <div class="ann-hdr-top">
+        <span class="ann-title">原型批注</span>
+        <span class="ann-badge">OPT-001</span>
+      </div>
+      <div class="ann-sub">消息推送触发条件选择效率优化 · 2026-06-29</div>
+    </div>
+    <div class="ann-tabs">
+      <div class="ann-tab on" id="tabSpec" onclick="switchTab('spec')">规格批注</div>
+      <div class="ann-tab" id="tabVerify" onclick="switchTab('verify')">验证点</div>
+    </div>
+
+    <!-- 规格批注 -->
+    <div class="ann-body" id="bodySpec">
+
+      <div class="ann-card" id="ann1">
+        <div class="ann-card-hdr">
+          <div class="ann-num">①</div>
+          <div class="ann-card-title">触发条件区域</div>
+          <div class="ann-card-tag">核心优化</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">改动范围</div>
+          <p>原页面「触发条件」为单一 Select 下拉，V0.3 优化后根据触发类型展开对应配置面板。设备触发、云端触发、耗材触发均为本期验收范围。</p>
+          <div class="lbl">触发类型定义</div>
+          <ul>
+            <li><strong>设备触发</strong>：选择物模型属性，设置判断符和属性值触发</li>
+            <li><strong>云端触发</strong>：选择云计时器，设置剩余时长的条件值触发；“剩余时长”语义固定为 ≤</li>
+            <li><strong>耗材触发</strong>：选择耗材管理项，选择「耗材不足」或「耗材耗尽」事件触发</li>
+          </ul>
+          <div class="lbl">切换行为</div>
+          <ul>
+            <li>从任一触发类型切换到其他类型时，静默清理已选项</li>
+            <li>已选摘要区变为空态占位文字（不弹确认框）</li>
+          </ul>
+          <div class="ok">✓ AC-007 覆盖此行为</div>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann2">
+        <div class="ann-card-hdr">
+          <div class="ann-num">②</div>
+          <div class="ann-card-title">触发条件 Select</div>
+          <div class="ann-card-tag">还原真实样式</div>
+        </div>
+        <div class="ann-card-body">
+          <p>触发条件入口保持平台统一的 Select 下拉控件样式，与其他字段保持一致。</p>
+          <p>选中任一触发类型后，Select 下方展开对应配置面板（非替换，是追加展开）。</p>
+          <p>切换其他选项时收起当前面板并清理已选项。</p>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann3">
+        <div class="ann-card-hdr">
+          <div class="ann-num">③</div>
+          <div class="ann-card-title">属性列表三列</div>
+          <div class="ann-card-tag">P0 必做</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">字段</div>
+          <ul>
+            <li><strong>属性名称</strong>：中文名，溢出省略</li>
+            <li><strong>标识符</strong>：等宽字体，唯一键，区分同名属性</li>
+            <li><strong>数据类型</strong>：Tag 展示，颜色见批注④</li>
+          </ul>
+          <div class="lbl">选中交互</div>
+          <ul>
+            <li>单选，点击行高亮（蓝色左边框 + 浅蓝背景）</li>
+            <li>点击另一行时旧高亮消失（不可多选）</li>
+            <li>保存字段为单个 <code>identifier</code> 字符串</li>
+          </ul>
+          <div class="lbl">条件设置</div>
+          <ul>
+            <li>选择属性后设置判断符：= / ≠ / &gt; / ≥ / &lt; / ≤</li>
+            <li>填写属性值，摘要区同步展示「属性 + 判断符 + 属性值」</li>
+            <li>属性值输入控件类型可在正式设计中按 dataType 细化，本原型先用通用输入框验证链路</li>
+          </ul>
+          <div class="lbl">容器规格</div>
+          <p>列表区固定高度 228px，超出内容内部滚动，不撑开页面。</p>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann3c">
+        <div class="ann-card-hdr">
+          <div class="ann-num">③-云</div>
+          <div class="ann-card-title">云端触发 - 云计时器列表</div>
+          <div class="ann-card-tag">P0 必做</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">选择对象</div>
+          <p>选择产品关联的<strong>云计时器</strong>（如滤芯寿命计时、UV灯管计时等）。</p>
+          <div class="lbl">列表字段</div>
+          <ul>
+            <li><strong>云计时器名称</strong>：中文名</li>
+            <li><strong>标识符</strong>：等宽字体，唯一键</li>
+            <li><strong>状态</strong>：运行中 / 已暂停</li>
+          </ul>
+          <div class="lbl">条件配置</div>
+          <ul>
+            <li>条件值：剩余时长（分钟）</li>
+            <li>不提供判断符选择；“剩余时长”的业务语义即 ≤</li>
+            <li>示例：剩余时长 ≤ 30 分钟时触发</li>
+          </ul>
+          <div class="lbl">选中交互</div>
+          <ul>
+            <li>单选，点击行高亮</li>
+            <li>选择后填写剩余时长条件值</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann3s">
+        <div class="ann-card-hdr">
+          <div class="ann-num">③-耗</div>
+          <div class="ann-card-title">耗材触发 - 耗材管理项列表</div>
+          <div class="ann-card-tag">P0 必做</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">选择对象</div>
+          <p>选择产品关联的<strong>耗材管理项</strong>（如主滤芯、前置滤芯、UV灯管等）。</p>
+          <div class="lbl">列表字段</div>
+          <ul>
+            <li><strong>耗材管理项名称</strong>：中文名</li>
+            <li><strong>标识符</strong>：等宽字体，唯一键</li>
+            <li><strong>类型</strong>：滤芯 / 灯管 / 液体 / 耗材</li>
+          </ul>
+          <div class="lbl">事件配置</div>
+          <ul>
+            <li>触发事件：耗材不足 / 耗材耗尽</li>
+            <li>选择耗材管理项后需选择触发事件</li>
+          </ul>
+          <div class="lbl">选中交互</div>
+          <ul>
+            <li>单选，点击行高亮</li>
+            <li>选择后需选择触发事件</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann4">
+        <div class="ann-card-hdr">
+          <div class="ann-num">④</div>
+          <div class="ann-card-title">数据类型 Tag 颜色</div>
+          <div class="ann-card-tag">待接口确认</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">颜色语义</div>
+          <ul>
+            <li><span class="tag tag-bool">布尔型</span> 绿色 — bool</li>
+            <li><span class="tag tag-num">数值型</span> 蓝色 — int / float</li>
+            <li><span class="tag tag-enum">枚举型</span> 橙色 — enum</li>
+            <li><span class="tag tag-str">字符串</span> 灰色 — string</li>
+          </ul>
+          <div class="warn">⚠ dataType 字段按 TSL 规范高置信推断存在，若接口缺失则退化为名称+标识符双列展示。</div>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann5">
+        <div class="ann-card-hdr">
+          <div class="ann-num">⑤</div>
+          <div class="ann-card-title">搜索框 &amp; 空状态</div>
+          <div class="ann-card-tag">P0 必做</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">搜索字段</div>
+          <ul>
+            <li>属性名称（中文）contains 关键词</li>
+            <li>属性标识符 contains 关键词</li>
+            <li>不区分大小写，实时过滤</li>
+          </ul>
+          <div class="lbl">空状态</div>
+          <ul>
+            <li>文字：「无匹配属性」</li>
+            <li>提供「清空搜索条件」入口</li>
+            <li>不清除已选属性（如有）</li>
+          </ul>
+          <div class="warn">⚠ 本地过滤适用 ≤100 条属性，超出需后端接口支持。</div>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann6">
+        <div class="ann-card-hdr">
+          <div class="ann-num">⑥</div>
+          <div class="ann-card-title">已选属性摘要</div>
+          <div class="ann-card-tag">P0 必做</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">空态（未选中）</div>
+          <p>占位文字：「尚未选择触发属性」（灰色）</p>
+          <div class="lbl">已选态（三字段）</div>
+          <ul>
+            <li><strong>属性名称</strong>（加粗主字段）</li>
+            <li><strong>标识符</strong>（等宽字体灰底标签）</li>
+            <li><strong>数据类型 Tag</strong>（颜色同列表）</li>
+          </ul>
+          <div class="lbl">操作入口（P1-004）</div>
+          <ul>
+            <li><strong>[重选]</strong>：清除已选 + 聚焦搜索框</li>
+            <li><strong>[×]</strong>：清除已选，摘要回到空态</li>
+          </ul>
+          <div class="ok">✓ 覆盖 P1-004「已选→重选/清除路径」</div>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann7">
+        <div class="ann-card-hdr">
+          <div class="ann-num">⑦</div>
+          <div class="ann-card-title">产品上下文异常状态</div>
+          <div class="ann-card-tag">P1-003</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">触发条件</div>
+          <p>产品字段在进入创建页时已确定，创建页内只读展示，不提供编辑入口。仅当入口产品上下文异常或对象数据无法加载时，触发条件区域不可配置并显示提示。</p>
+          <div class="lbl">UI 表现</div>
+          <ul>
+            <li>显示提示文字：「产品上下文异常，无法加载产品关联的触发对象，请返回产品详情页重新进入」</li>
+            <li>触发对象选择器不展示，避免在无产品上下文时误选</li>
+          </ul>
+          <p>点击顶部「产品上下文异常」场景切换按钮演示。</p>
+        </div>
+      </div>
+
+      <div class="ann-card" id="ann8">
+        <div class="ann-card-hdr">
+          <div class="ann-num">⑧</div>
+          <div class="ann-card-title">原型边界 &amp; 技术约束</div>
+          <div class="ann-card-tag">边界说明</div>
+        </div>
+        <div class="ann-card-body">
+          <div class="lbl">本次不含</div>
+          <ul>
+            <li>判断逻辑配置（属性选中后的阈值设置）</li>
+            <li>消息推送列表页</li>
+            <li>触发条件以外的表单字段交互</li>
+          </ul>
+          <div class="lbl">技术约束</div>
+          <ul>
+            <li>前端过滤上限：<strong>≤100 条属性</strong></li>
+            <li>&gt;100 条时须后端接口支持关键词搜索</li>
+            <li>后端保存结构不变：<code>trigger.identifier: string</code></li>
+          </ul>
+        </div>
+      </div>
+
+    </div><!-- /bodySpec -->
+
+    <!-- 验证点 -->
+    <div class="ann-body" id="bodyVerify" style="display:none">
+      <div style="padding:12px 12px 0;font-size:11px;color:var(--ann-muted)">10 个验证点，来自原型契约 §5</div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-001 · 选择设备触发后展开选择器</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>在「触发条件」下拉中选择「设备触发」</p>
+          <p><strong>期望：</strong>属性选择器（搜索框+列表+摘要区）在 Select 下方展开</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-002 · 搜索实时过滤</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>输入「温度」或「temperature」</p>
+          <p><strong>期望：</strong>列表只剩匹配项，覆盖名称和标识符</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-003 · 无结果空态</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>输入不存在关键词如「zzzzz」</p>
+          <p><strong>期望：</strong>「无匹配属性」+ 清空搜索入口</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-004 · 选中行高亮 + 摘要更新</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>点击任意属性行</p>
+          <p><strong>期望：</strong>行高亮 + 摘要区展示名称/标识符/类型 Tag</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-005 · 单选（换选）</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>已选 A，再点击 B</p>
+          <p><strong>期望：</strong>A 高亮消失，B 高亮，同时只有一行被选中</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-006 · 清除已选 [×]</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>已选属性后点击摘要区 [×]</p>
+          <p><strong>期望：</strong>高亮消失，摘要回到空态占位文字</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-007 · 重选聚焦搜索框</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>已选属性后点击 [重选]</p>
+          <p><strong>期望：</strong>搜索框获得焦点，已选高亮清除</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-008 · 切换触发类型清理已选</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>任一触发类型已选项后，切换为其他触发类型</p>
+          <p><strong>期望：</strong>摘要变空态，切回原触发类型时不残留旧值</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-009 · 产品上下文异常时提示</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>点击顶部「产品上下文异常」场景切换</p>
+          <p><strong>期望：</strong>触发条件区域不可配置，显示提示文字，不展示选择器</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+      <div class="ann-card">
+        <div class="ann-card-hdr">
+          <div class="ann-num" style="background:#2a4a2a;color:#52c88a;font-size:10px;width:auto;padding:0 6px;border-radius:3px">VP</div>
+          <div class="ann-card-title">VP-010 · 列表容器内部滚动</div>
+        </div>
+        <div class="ann-card-body">
+          <p><strong>操作：</strong>在设备触发下查看属性列表（20+ 条）</p>
+          <p><strong>期望：</strong>列表区域内部滚动（228px 固定高度），不撑开页面</p>
+          <div class="ok">✓ 已实现</div>
+        </div>
+      </div>
+
+    </div><!-- /bodyVerify -->
+  </div><!-- /ann-pane -->
+</div><!-- /proto-shell -->
+
+<script>
+// ── Data ────────────────────────────────────────────────────────
+const ATTRS = [
+  {name:"室内温度",         id:"indoor_temperature",   type:"float"},
+  {name:"目标温度",         id:"target_temperature",   type:"float"},
+  {name:"工作模式",         id:"work_mode",            type:"enum"},
+  {name:"运行状态",         id:"run_status",           type:"bool"},
+  {name:"电源开关",         id:"power_switch",         type:"bool"},
+  {name:"风速等级",         id:"fan_level",            type:"enum"},
+  {name:"湿度",             id:"humidity",             type:"float"},
+  {name:"定时开启时间",     id:"timer_on_time",        type:"string"},
+  {name:"定时关闭时间",     id:"timer_off_time",       type:"string"},
+  {name:"故障代码",         id:"fault_code",           type:"enum"},
+  {name:"电量百分比",       id:"battery_level",        type:"float"},
+  {name:"充电状态",         id:"charging_status",      type:"bool"},
+  {name:"血氧饱和度",       id:"spo2",                 type:"float"},
+  {name:"心率",             id:"heart_rate",           type:"float"},
+  {name:"睡眠评分",         id:"sleep_score",          type:"float"},
+  {name:"深睡时长",         id:"deep_sleep_duration",  type:"float"},
+  {name:"噪声等级",         id:"noise_level",          type:"enum"},
+  {name:"子设备在线数",     id:"child_online_count",   type:"float"},
+  {name:"设备别名",         id:"device_alias",         type:"string"},
+  {name:"固件版本号",       id:"firmware_version",     type:"string"},
+];
+
+const TYPE = {
+  bool:  {label:"布尔型", cls:"tag-bool"},
+  float: {label:"数值型", cls:"tag-num"},
+  int:   {label:"数值型", cls:"tag-num"},
+  enum:  {label:"枚举型", cls:"tag-enum"},
+  string:{label:"字符串", cls:"tag-str"},
+};
+
+const OP_TEXT = {
+  eq: "=",
+  neq: "≠",
+  gt: ">",
+  gte: "≥",
+  lt: "<",
+  lte: "≤",
+};
+
+// 云计时器数据
+const CLOUDS = [
+  {name:"滤芯寿命计时",   id:"filter_life_timer",     status:"运行中"},
+  {name:"UV灯管计时",     id:"uv_lamp_timer",          status:"运行中"},
+  {name:"清洁周期计时",   id:"clean_cycle_timer",     status:"运行中"},
+  {name:"耗材A剩余计时",  id:"consumable_a_timer",    status:"运行中"},
+  {name:"耗材B剩余计时",  id:"consumable_b_timer",    status:"已暂停"},
+  {name:"耗材C剩余计时",  id:"consumable_c_timer",    status:"运行中"},
+  {name:"耗材D剩余计时",  id:"consumable_d_timer",    status:"运行中"},
+  {name:"耗材E剩余计时",  id:"consumable_e_timer",    status:"运行中"},
+];
+
+// 耗材管理项数据
+const CONS = [
+  {name:"主滤芯",     id:"main_filter",      type:"滤芯"},
+  {name:"前置滤芯",   id:"pre_filter",       type:"滤芯"},
+  {name:"后置滤芯",   id:"post_filter",      type:"滤芯"},
+  {name:"UV灯管",     id:"uv_lamp",          type:"灯管"},
+  {name:"清洁液",     id:"cleaning_solution",type:"液体"},
+  {name:"耗材A",      id:"consumable_a",     type:"耗材"},
+  {name:"耗材B",      id:"consumable_b",     type:"耗材"},
+  {name:"耗材C",      id:"consumable_c",     type:"耗材"},
+];
+
+let selId = null;
+let selCloudId = null;
+let selConsId = null;
+let curTrigger = "";
+let curScene = "normal";
+let kw = "";
+let kwCloud = "";
+let kwCons = "";
+
+// ── Render device attrs ───────────────────────────────────────────
+function renderList(q){
+  const list = document.getElementById("attrList");
+  const empty = document.getElementById("attrEmpty");
+  const filt = ATTRS.filter(a => !q || a.name.toLowerCase().includes(q.toLowerCase()) || a.id.toLowerCase().includes(q.toLowerCase()));
+  if(!filt.length){
+    list.innerHTML = "";
+    list.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  list.style.display = "block";
+  list.innerHTML = filt.map(a => {
+    const t = TYPE[a.type] || TYPE.string;
+    return `<div class="attr-row${selId===a.id?' selected':''}" onclick="selAttr('${a.id}')">
+      <div class="attr-name"><span>${esc(a.name)}</span></div>
+      <div class="attr-id">${esc(a.id)}</div>
+      <div class="attr-type-cell"><span class="tag ${t.cls}">${t.label}</span></div>
+    </div>`;
+  }).join("");
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+
+// ── Select device attr ────────────────────────────────────────────
+function selAttr(id){
+  if(curScene==="noprod") return;
+  selId = id;
+  renderList(kw);
+  updateSummary();
+}
+function updateSummary(){
+  const e = document.getElementById("sumEmpty");
+  const v = document.getElementById("sumVal");
+  if(!selId){e.style.display="block";v.style.display="none";return;}
+  const a = ATTRS.find(x=>x.id===selId);
+  if(!a){selId=null;updateSummary();return;}
+  const t = TYPE[a.type]||TYPE.string;
+  const opSel = document.getElementById("attrOperator");
+  const opText = OP_TEXT[opSel.value] || "=";
+  const val = document.getElementById("attrValue").value || "—";
+  e.style.display="none";v.style.display="flex";
+  document.getElementById("sumName").textContent=a.name;
+  document.getElementById("sumId").textContent=a.id;
+  document.getElementById("sumType").innerHTML=`<span class="tag ${t.cls}">${t.label}</span>`;
+  document.getElementById("sumCondition").innerHTML=`<span class="attr-summary-id">${esc(opText)} ${esc(val)}</span>`;
+}
+
+// ── Search device attrs ───────────────────────────────────────────
+function filterAttrs(q){
+  kw=q;
+  document.getElementById("clearBtn").style.display=q?"grid":"none";
+  renderList(q);
+}
+function clearSearch(){
+  const inp=document.getElementById("attrSearch");
+  inp.value="";kw="";filterAttrs("");inp.focus();
+}
+function clearSel(){
+  selId=null;renderList(kw);updateSummary();
+  document.getElementById("attrValue").value="";
+}
+function reselect(){
+  selId=null;renderList(kw);updateSummary();
+  document.getElementById("attrSearch").focus();
+}
+
+// ── Render cloud timers ───────────────────────────────────────────
+function renderCloudList(q){
+  const list = document.getElementById("cloudList");
+  const empty = document.getElementById("cloudEmpty");
+  const filt = CLOUDS.filter(a => !q || a.name.toLowerCase().includes(q.toLowerCase()) || a.id.toLowerCase().includes(q.toLowerCase()));
+  if(!filt.length){
+    list.innerHTML = "";
+    list.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  list.style.display = "block";
+  list.innerHTML = filt.map(a => {
+    const stCls = a.status==="运行中" ? "tag-num" : "tag-str";
+    return `<div class="attr-row${selCloudId===a.id?' selected':''}" onclick="selCloud('${a.id}')">
+      <div class="attr-name"><span>${esc(a.name)}</span></div>
+      <div class="attr-id">${esc(a.id)}</div>
+      <div class="attr-type-cell"><span class="tag ${stCls}">${esc(a.status)}</span></div>
+    </div>`;
+  }).join("");
+}
+function selCloud(id){
+  if(curScene==="noprod") return;
+  selCloudId = id;
+  renderCloudList(kwCloud);
+  updateCloudSummary();
+}
+function updateCloudSummary(){
+  const e = document.getElementById("cloudSumEmpty");
+  const v = document.getElementById("cloudSumVal");
+  if(!selCloudId){e.style.display="block";v.style.display="none";return;}
+  const a = CLOUDS.find(x=>x.id===selCloudId);
+  if(!a){selCloudId=null;updateCloudSummary();return;}
+  const opVal = document.getElementById("cloudValue").value || "—";
+  e.style.display="none";v.style.display="flex";
+  document.getElementById("cloudSumName").textContent=a.name;
+  document.getElementById("cloudSumId").textContent=a.id;
+  document.getElementById("cloudSumOp").innerHTML=`<span class="attr-summary-id">剩余时长 ≤ ${esc(opVal)} 分钟</span>`;
+}
+function filterClouds(q){
+  kwCloud=q;
+  document.getElementById("cloudClearBtn").style.display=q?"grid":"none";
+  renderCloudList(q);
+}
+function clearCloudSearch(){
+  const inp=document.getElementById("cloudSearch");
+  inp.value="";kwCloud="";filterClouds("");inp.focus();
+}
+function clearCloudSel(){
+  selCloudId=null;renderCloudList(kwCloud);updateCloudSummary();
+  document.getElementById("cloudValue").value="";
+}
+function reselectCloud(){
+  selCloudId=null;renderCloudList(kwCloud);updateCloudSummary();
+  document.getElementById("cloudSearch").focus();
+}
+
+// ── Render consumables ────────────────────────────────────────────
+function renderConsList(q){
+  const list = document.getElementById("consList");
+  const empty = document.getElementById("consEmpty");
+  const filt = CONS.filter(a => !q || a.name.toLowerCase().includes(q.toLowerCase()) || a.id.toLowerCase().includes(q.toLowerCase()));
+  if(!filt.length){
+    list.innerHTML = "";
+    list.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  list.style.display = "block";
+  list.innerHTML = filt.map(a => {
+    return `<div class="attr-row${selConsId===a.id?' selected':''}" onclick="selCons('${a.id}')">
+      <div class="attr-name"><span>${esc(a.name)}</span></div>
+      <div class="attr-id">${esc(a.id)}</div>
+      <div class="attr-type-cell"><span class="tag tag-enum">${esc(a.type)}</span></div>
+    </div>`;
+  }).join("");
+}
+function selCons(id){
+  if(curScene==="noprod") return;
+  selConsId = id;
+  renderConsList(kwCons);
+  updateConsSummary();
+}
+function updateConsSummary(){
+  const e = document.getElementById("consSumEmpty");
+  const v = document.getElementById("consSumVal");
+  if(!selConsId){e.style.display="block";v.style.display="none";return;}
+  const a = CONS.find(x=>x.id===selConsId);
+  if(!a){selConsId=null;updateConsSummary();return;}
+  const evSel = document.getElementById("consEvent");
+  const evText = evSel.value ? evSel.options[evSel.selectedIndex].text : "未选择事件";
+  e.style.display="none";v.style.display="flex";
+  document.getElementById("consSumName").textContent=a.name;
+  document.getElementById("consSumId").textContent=a.id;
+  document.getElementById("consSumEv").innerHTML=`<span class="attr-summary-id">${esc(evText)}</span>`;
+}
+function filterCons(q){
+  kwCons=q;
+  document.getElementById("consClearBtn").style.display=q?"grid":"none";
+  renderConsList(q);
+}
+function clearConsSearch(){
+  const inp=document.getElementById("consSearch");
+  inp.value="";kwCons="";filterCons("");inp.focus();
+}
+function clearConsSel(){
+  selConsId=null;renderConsList(kwCons);updateConsSummary();
+  document.getElementById("consEvent").value="";
+}
+function reselectCons(){
+  selConsId=null;renderConsList(kwCons);updateConsSummary();
+  document.getElementById("consSearch").focus();
+}
+
+// ── Trigger type ─────────────────────────────────────────────────
+function onTriggerChange(val){
+  const devPicker = document.getElementById("devicePicker");
+  const cloudPicker = document.getElementById("cloudPicker");
+  const consPicker = document.getElementById("consumablePicker");
+  // clear selections when leaving a trigger type
+  if(curTrigger==="device" && val!=="device"){
+    selId=null;renderList(kw);updateSummary();
+    const av=document.getElementById("attrValue"); if(av) av.value="";
+  }
+  if(curTrigger==="cloud" && val!=="cloud"){
+    selCloudId=null;renderCloudList(kwCloud);updateCloudSummary();
+    const cv=document.getElementById("cloudValue"); if(cv) cv.value="";
+  }
+  if(curTrigger==="consumable" && val!=="consumable"){
+    selConsId=null;renderConsList(kwCons);updateConsSummary();
+    const ce=document.getElementById("consEvent"); if(ce) ce.value="";
+  }
+  curTrigger=val;
+  devPicker.style.display = val==="device" ? "block" : "none";
+  cloudPicker.style.display = val==="cloud" ? "block" : "none";
+  consPicker.style.display = val==="consumable" ? "block" : "none";
+  if(val!=="") applyScene();
+}
+
+// ── Scene ────────────────────────────────────────────────────────
+function setScene(s){
+  curScene=s;
+  document.getElementById("btnNormal").classList.toggle("on",s==="normal");
+  document.getElementById("btnNoProd").classList.toggle("on",s==="noprod");
+  applyScene();
+}
+function applyScene(){
+  const devPicker = document.getElementById("attrPicker");
+  const cloudInner = document.getElementById("cloudPickerInner");
+  const consInner = document.getElementById("consPickerInner");
+  const overlay  = document.getElementById("noProdOverlay");
+  const body     = document.getElementById("triggerBody");
+  const anchor7  = document.getElementById("anchor7");
+  const trigSel  = document.getElementById("triggerType");
+  if(curScene==="noprod"){
+    overlay.style.display="block";
+    trigSel.style.display="none";
+    document.getElementById("devicePicker").style.display="none";
+    document.getElementById("cloudPicker").style.display="none";
+    document.getElementById("consumablePicker").style.display="none";
+    anchor7.style.display="block";
+  } else {
+    overlay.style.display="none";
+    trigSel.style.display="";
+    anchor7.style.display="none";
+    const v = trigSel.value;
+    document.getElementById("devicePicker").style.display = v==="device"?"block":"none";
+    document.getElementById("cloudPicker").style.display = v==="cloud"?"block":"none";
+    document.getElementById("consumablePicker").style.display = v==="consumable"?"block":"none";
+  }
+}
+
+// ── Annotation tabs ───────────────────────────────────────────────
+function switchTab(t){
+  document.getElementById("tabSpec").classList.toggle("on",t==="spec");
+  document.getElementById("tabVerify").classList.toggle("on",t==="verify");
+  document.getElementById("bodySpec").style.display  = t==="spec"  ?"block":"none";
+  document.getElementById("bodyVerify").style.display= t==="verify"?"block":"none";
+}
+function toAnn(id){
+  switchTab("spec");
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:"smooth",block:"nearest"});
+  el.classList.remove("hl-target");
+  void el.offsetWidth;
+  el.classList.add("hl-target");
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+renderList("");
+updateSummary();
+renderCloudList("");
+updateCloudSummary();
+renderConsList("");
+updateConsSummary();
+// 条件值变化时更新摘要
+document.addEventListener("change", function(e){
+  if(e.target.id==="attrOperator") updateSummary();
+  if(e.target.id==="consEvent") updateConsSummary();
+});
+document.addEventListener("input", function(e){
+  if(e.target.id==="attrValue") updateSummary();
+  if(e.target.id==="cloudValue") updateCloudSummary();
+});
+</script>
+</body>
+</html>
