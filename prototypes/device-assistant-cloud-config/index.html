@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IoT Admin 设备助手云端配置原型</title>
+  <title>IoT Admin 设备助手云端配置原型（批注优化版）</title>
   <style>
     :root {
       --app-aside-bg-color: #001529;
@@ -566,6 +566,235 @@
       min-width: 0;
     }
 
+    .kv-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kv-summary-card {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fafafa;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .kv-summary-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .kv-summary-value {
+      margin-top: 2px;
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+      line-height: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .kv-table-wrap {
+      overflow: auto;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      max-height: 430px;
+      background: #fff;
+    }
+
+    .kv-table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .kv-table th,
+    .kv-table td {
+      padding: 10px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      border-right: 1px solid var(--el-border-color-lighter);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .kv-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--table-head-bg);
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+
+    .kv-table th:first-child,
+    .kv-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      width: 260px;
+      background: #fff;
+      color: var(--el-text-color-primary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .kv-table th:first-child {
+      z-index: 3;
+      background: var(--table-head-bg);
+    }
+
+    .kv-value-cell {
+      min-width: 180px;
+      max-width: 260px;
+      color: var(--el-text-color-regular);
+      line-height: 18px;
+      word-break: break-word;
+    }
+
+    .kv-value-cell .input {
+      width: 100%;
+      min-width: 0;
+      height: 30px;
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .kv-row-type {
+      margin-top: 4px;
+      color: var(--el-text-color-secondary);
+      font-size: 11px;
+      line-height: 16px;
+      font-family: var(--sans);
+    }
+
+    .kv-toolbar,
+    .kv-locale-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .kv-toolbar-actions,
+    .kv-media-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .kv-media-value {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .kv-media-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--el-text-color-regular);
+    }
+
+    .kv-media-file {
+      max-width: 160px;
+      font-size: 11px;
+    }
+
+    .kv-th-content {
+      display: grid;
+      gap: 4px;
+      align-items: start;
+    }
+
+    .kv-th-title {
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .kv-th-action {
+      justify-self: start;
+      height: 22px;
+      padding: 0;
+      font-size: 12px;
+      color: var(--el-color-primary);
+      background: transparent;
+      border: 0;
+    }
+
+    .kv-th-note {
+      color: var(--el-text-color-secondary);
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 16px;
+    }
+
+    .kv-preview-modal .modal {
+      width: min(980px, calc(100vw - 40px));
+    }
+
+    .kv-preview-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .kv-preview-layout .preview-column,
+    .kv-preview-layout .step-column {
+      min-height: 560px;
+    }
+
+    .kv-preview-layout .phone {
+      margin: 0 auto;
+    }
+
+    .kv-column-disabled {
+      color: var(--el-text-color-placeholder);
+      background: #f7f8fa;
+    }
+
+    .locale-toggle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .locale-toggle-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 5px 8px;
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+    }
+
+    .locale-toggle-chip input {
+      flex: 0 0 auto;
+    }
+
+    .locale-toggle-chip.disabled {
+      color: var(--el-text-color-placeholder);
+      background: #f7f8fa;
+    }
+
+    .kv-locale-panel {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fafafa;
+      min-width: 0;
+    }
+
     .old-guide-note {
       min-height: 250px;
       display: grid;
@@ -780,7 +1009,7 @@
     .modal-scrim {
       position: fixed;
       inset: 0;
-      z-index: 82;
+      z-index: 180;
       display: none;
       align-items: center;
       justify-content: center;
@@ -1183,6 +1412,7 @@
       flex: initial;
       width: 100%;
       min-height: 112px;
+      cursor: default;
     }
 
     .page-preview-card:hover,
@@ -2036,15 +2266,65 @@
       line-height: 18px;
     }
 
-    .prototype-note-copy p {
-      margin: 0;
+    .prototype-note-body {
+      display: grid;
+      gap: 4px;
+      margin: 2px 0;
+    }
+
+    .prototype-note-copy .prototype-note-section {
+      display: block;
+      margin-top: 4px;
+      padding: 2px 6px;
+      border-left: 2px solid #e6a700;
+      border-radius: 4px;
+      background: #fff7d6;
+      color: #6f4d00;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 18px;
+    }
+
+    .prototype-note-copy .prototype-note-line {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      gap: 4px;
       color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .prototype-note-copy .prototype-note-line.plain {
+      display: block;
       font-size: 13px;
       line-height: 20px;
     }
 
-    .prototype-note-host {
+    .prototype-note-copy .prototype-note-marker {
+      color: #a77800;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .prototype-note-copy .prototype-note-flow {
+      display: block;
+      padding: 4px 6px;
+      border: 1px dashed #e6c55e;
+      border-radius: 5px;
+      background: #fffbeb;
+      color: #5d4100;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      line-height: 17px;
+      white-space: normal;
+    }
+
+    .prototype-note-host:not(.modal-scrim) {
       position: relative !important;
+    }
+
+    .modal-scrim.prototype-note-host {
+      position: fixed !important;
     }
 
     .prototype-note-anchor {
@@ -2589,16 +2869,11 @@
 
           <div class="panel-main">
             <div class="novice-guide-pane" id="newEntry">
-              <div class="reference-locale-tabs" aria-label="语言配置">
-                <div class="reference-locale-scroll">
-                  <div class="reference-locale-nav" id="localeTabs"></div>
-                </div>
-              </div>
               <div class="publish-panel locale-version-panel" id="publishPanel" aria-label="版本控制"></div>
               <div class="tab-panel-body">
                 <div class="tab-content-action" id="entryActionBar">
-                  <button class="btn" id="openDrawerBtn" type="button">编辑草稿</button>
-                  <button class="btn" id="importLanguageBtn" type="button">导入</button>
+                  <button class="btn" id="openDrawerBtn" type="button">编辑英文结构源</button>
+                  <button class="btn" id="saveKvDraftBtn" type="button">保存 KV 草稿</button>
                   <button class="btn primary" id="publishConfigBtn" type="button">发布</button>
                 </div>
                 <div class="novice-empty" id="noviceEmptyState" aria-label="未配置">
@@ -2665,7 +2940,7 @@
       <div class="drawer-title-row">
         <div>
           <h2 class="drawer-title">编辑新手指导</h2>
-          <div class="drawer-subtitle" id="drawerSubtitle">W1 / 新版设备助手 / 英文（默认） / 草稿与发布</div>
+          <div class="drawer-subtitle" id="drawerSubtitle">W1 / 新版设备助手 / 英文结构源 / 生成多语言 KV</div>
         </div>
       </div>
       <button class="btn icon" id="closeDrawerBtn" type="button" aria-label="关闭">×</button>
@@ -2675,7 +2950,7 @@
       <section class="preview-column" aria-label="APP 预览画布">
         <div class="preview-intro">
           <h3 class="column-title">APP 预览</h3>
-          <div class="column-subtitle">左侧为所见即所得预览；点击步骤同步定位右侧配置。</div>
+          <div class="column-subtitle">左侧为只读所见即所得预览；页面切换统一由右侧页面与步骤入口控制。</div>
         </div>
         <div class="phone" id="phonePreview"></div>
       </section>
@@ -2697,7 +2972,7 @@
         <div class="inspector-title-row">
           <div>
             <h3 class="inspector-title" id="inspectorTitle">页面配置</h3>
-            <div class="column-subtitle" id="inspectorSubtitle">编辑当前语言的固定模板字段。</div>
+            <div class="column-subtitle" id="inspectorSubtitle">编辑英文结构源的固定模板字段。</div>
           </div>
         </div>
         <div id="inspectorBody"></div>
@@ -2711,27 +2986,25 @@
       </div>
       <div class="drawer-footer-actions">
         <button class="btn" id="validateBtn" type="button">返回</button>
-        <button class="btn" id="saveDraftBtn" type="button">保存草稿</button>
+        <button class="btn" id="saveDraftBtn" type="button">更新到草稿</button>
       </div>
     </footer>
   </aside>
 
-  <div class="modal-scrim" id="importLanguageModal" aria-hidden="true">
-    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="importLanguageTitle">
+  <div class="modal-scrim kv-preview-modal" id="kvPreviewModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="kvPreviewTitle">
       <header class="modal-header">
         <div>
-          <h3 class="modal-title" id="importLanguageTitle">导入语言配置</h3>
-          <div class="column-subtitle" id="importLanguageSubtitle">选择来源语言后，覆盖当前语言配置并保存为草稿。</div>
+          <h3 class="modal-title" id="kvPreviewTitle">语言列样式预览</h3>
+          <div class="field-help" id="kvPreviewSubtitle">复用抽屉 APP 预览和页面入口样式。</div>
         </div>
-        <button class="btn icon" id="closeImportLanguageModal" type="button" aria-label="关闭导入弹窗">×</button>
+        <button class="btn icon" id="closeKvPreviewBtn" type="button" aria-label="关闭">×</button>
       </header>
       <div class="modal-body">
-        <div class="field-help">优先导入来源语言的已发布配置；若来源语言未发布但存在草稿，则导入草稿配置。</div>
-        <div class="import-language-list" id="importLanguageList" aria-label="可导入语言列表"></div>
+        <div class="kv-preview-layout" id="kvPreviewBody"></div>
       </div>
       <footer class="modal-footer">
-        <button class="btn" id="cancelImportLanguageBtn" type="button">取消</button>
-        <button class="btn primary" id="confirmImportLanguageBtn" type="button">导入并保存草稿</button>
+        <button class="btn primary" id="confirmKvPreviewBtn" type="button">关闭</button>
       </footer>
     </section>
   </div>
@@ -3056,10 +3329,10 @@
       {
         id: "page-language-tabs",
         scope: "page",
-        target: "#newEntry .reference-locale-tabs",
-        title: "多语言入口沿用参考页",
-        body: "新版不在抽屉内新增第二套语言选择；页面语言 Tab 决定当前编辑语言。APP 正式请求只读取该语言已上架配置，指定语言未上架时按接口规则回退英文。",
-        loc: "新版入口 > 语言 Tab"
+        target: "#noviceConfigPreview #localeTabs",
+        title: "语言列管理",
+        body: "语言列管理位于新版入口配置预览区，与 KV 表处于同一上下文；用户通过折叠 / 展开的列管理方式启用或禁用语言。",
+        loc: "新版入口 > 语言列管理"
       },
       {
         id: "page-empty-state",
@@ -3292,8 +3565,8 @@
     }
 
     function currentLocaleMeta() {
-      return state.publishedLocaleMeta[state.activeLocale]
-        || state.draftLocaleMeta[state.activeLocale]
+      return state.publishedLocaleMeta[state.defaultLocale]
+        || state.draftLocaleMeta[state.defaultLocale]
         || { configVersion: state.draftVersion, savedAt: "未保存" };
     }
 
@@ -3320,10 +3593,8 @@
     function setTextValue(item, field, value) {
       const key = i18nKey(field);
       item[key] = item[key] || {};
-      item[key][state.activeLocale] = value;
-      if (state.activeLocale === state.defaultLocale || !item[field]) {
-        item[field] = value;
-      }
+      item[key][state.defaultLocale] = value;
+      item[field] = value;
     }
 
     function localeLabel(code = state.activeLocale) {
@@ -3367,24 +3638,7 @@
     }
 
     function renderLocaleSelect() {
-      const tabs = $("#localeTabs");
-      if (!tabs) return;
-      tabs.innerHTML = state.locales.map((locale) => {
-        const active = locale.code === state.activeLocale ? "active" : "";
-        const warning = localeHasMissing(locale.code) ? "warning" : "";
-        return `
-          <button class="reference-locale-tab ${active} ${warning}" type="button" data-locale="${locale.code}" title="${warning ? "该语言配置不完整" : "该语言配置完整或未校验"}">
-            ${locale.label}
-          </button>
-        `;
-      }).join("");
-      tabs.querySelectorAll("[data-locale]").forEach((button) => {
-        button.addEventListener("click", () => {
-          state.activeLocale = button.dataset.locale;
-          state.validationRan = true;
-          renderAll();
-        });
-      });
+      state.activeLocale = state.defaultLocale;
     }
 
     function localeHasMissing(localeCode) {
@@ -3641,6 +3895,41 @@
       }
     }
 
+    function renderAnnotationBody(body) {
+      const lines = String(body || "").split("\n").map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) return "";
+      return `
+        <span class="prototype-note-body">
+          ${lines.map((line) => {
+            const ordered = line.match(/^(\d+)\.\s+(.+)$/);
+            if (/^流程图[:：]|^状态图[:：]|^路径[:：]/.test(line)) {
+              return `<span class="prototype-note-flow">${escapeHtml(line)}</span>`;
+            }
+            if (line.endsWith("：") || line.endsWith(":")) {
+              return `<strong class="prototype-note-section">${escapeHtml(line.replace(/[:：]$/, ""))}</strong>`;
+            }
+            if (line.startsWith("- ")) {
+              return `
+                <span class="prototype-note-line">
+                  <span class="prototype-note-marker">•</span>
+                  <span>${escapeHtml(line.slice(2))}</span>
+                </span>
+              `;
+            }
+            if (ordered) {
+              return `
+                <span class="prototype-note-line">
+                  <span class="prototype-note-marker">${escapeHtml(ordered[1])}.</span>
+                  <span>${escapeHtml(ordered[2])}</span>
+                </span>
+              `;
+            }
+            return `<span class="prototype-note-line plain">${escapeHtml(line)}</span>`;
+          }).join("")}
+        </span>
+      `;
+    }
+
     function renderPrototypeAnnotations() {
       const list = $("#prototypeAnnotationList");
       const caption = $("#prototypeAnnotationContext");
@@ -3662,7 +3951,7 @@
           <span class="prototype-note-number">${index + 1}</span>
           <span class="prototype-note-copy">
             <strong>${escapeHtml(note.title)}</strong>
-            <p>${escapeHtml(note.body)}</p>
+            ${renderAnnotationBody(note.body)}
             <span>关联位置：${escapeHtml(note.loc)}</span>
           </span>
         </button>
@@ -3707,6 +3996,9 @@
         state.layer = "page";
         state.previewScreen = "stepList";
       }
+      if (page === "steps" && state.steps.length && !state.selectedStepId) {
+        state.selectedStepId = sortedSteps()[0].id;
+      }
       renderAll();
     }
 
@@ -3735,7 +4027,7 @@
     function renderPublishPanel() {
       const panel = $("#publishPanel");
       if (!panel) return;
-      const publishedMeta = state.publishedLocaleMeta[state.activeLocale];
+      const publishedMeta = kvPublishedMeta();
       const status = currentLocaleStatus();
       panel.innerHTML = `
         <div class="status-grid">
@@ -3747,6 +4039,7 @@
           强制新手指引
         </label>
         <div class="field-help">当用户完成设备添加后，点击设备面板强制进入新手引导。</div>
+        <div class="field-help">APP 仅能获取已发布 KV 配置；产品未上架时继承产品白名单授权，产品已上架后所有用户可见。</div>
       `;
       $("#forceNoviceGuideToggle")?.addEventListener("change", (event) => {
         state.forceNoviceGuide = event.target.checked;
@@ -4220,9 +4513,7 @@
       return `
         <div class="indicator">
           ${Array.from({ length: count }, (_, dotIndex) => `
-            <button class="dot ${dotIndex === index ? "active" : ""}" type="button"
-              data-carousel="${escapeHtml(blockId)}" data-carousel-index="${dotIndex}"
-              aria-label="切换到第 ${dotIndex + 1} 项"></button>
+            <span class="dot ${dotIndex === index ? "active" : ""}" aria-label="第 ${dotIndex + 1} 项"></span>
           `).join("")}
         </div>
       `;
@@ -5793,10 +6084,10 @@
         {
           id: "page-language-tabs",
           scope: "page",
-          target: "#newEntry .reference-locale-tabs",
-          title: "多语言入口沿用参考页",
-          body: "新版不在抽屉内新增第二套语言选择；页面语言 Tab 决定当前编辑语言，每个语言维护一套模板配置和素材。",
-          loc: "新版入口 > 语言 Tab"
+          target: "#noviceConfigPreview #localeTabs",
+          title: "语言列管理",
+          body: "语言列管理位于新版入口配置预览区，与 KV 表处于同一上下文；用户通过折叠 / 展开的列管理方式启用或禁用语言。",
+          loc: "新版入口 > 语言列管理"
         },
         {
           id: "force-guide",
@@ -6295,7 +6586,7 @@
       list.querySelectorAll("[data-step-select], .step-item").forEach((item) => {
         item.addEventListener("click", (event) => {
           const target = event.currentTarget.dataset.stepSelect || event.currentTarget.dataset.stepId;
-          if (target) selectStep(target);
+          if (target) selectStep(target, { previewScreen: "stepPage" });
         });
       });
     }
@@ -6950,6 +7241,7 @@
           if (!textValue(section, "content")) issues.push({ level: "错误", type: "danger", text: `${label} 第三部分 ${index + 1} 缺少内容。` });
         });
       });
+      validateEnabledKvCompleteness(issues);
       return issues;
     }
 
@@ -6972,12 +7264,37 @@
 
 
     function currentLocaleStatus() {
-      const hasDraft = Boolean(state.draftLocales[state.activeLocale]);
-      const hasPublished = Boolean(state.publishedLocales[state.activeLocale]);
+      const hasDraft = Boolean(state.draftLocales[state.defaultLocale]);
+      const hasPublished = Boolean(state.publishedLocales[state.defaultLocale]);
       if (hasPublished && hasDraft) return { key: "publishedWithDraft", label: "已发布 / 有草稿", tag: "warning" };
       if (hasPublished) return { key: "published", label: "已发布", tag: "success" };
       if (hasDraft) return { key: "draft", label: "草稿未发布", tag: "warning" };
       return { key: "empty", label: "未配置", tag: "info" };
+    }
+
+    function enabledKvLocales() {
+      return state.locales.filter((locale) => locale.code === state.defaultLocale || state.enabledKvLocales?.[locale.code]);
+    }
+
+    function ensureKvLocaleState() {
+      state.enabledKvLocales = state.enabledKvLocales || {};
+      state.locales.forEach((locale) => {
+        if (locale.code === state.defaultLocale) state.enabledKvLocales[locale.code] = true;
+        if (state.enabledKvLocales[locale.code] === undefined) state.enabledKvLocales[locale.code] = ["de", "it", "ar"].includes(locale.code);
+      });
+    }
+
+    function kvDraftMeta() {
+      return state.draftLocaleMeta[state.defaultLocale];
+    }
+
+    function kvPublishedMeta() {
+      return state.publishedLocaleMeta[state.defaultLocale];
+    }
+
+    function kvStatusLabel() {
+      const status = currentLocaleStatus();
+      return status.label;
     }
 
     function applySimplifiedTemplateModel() {
@@ -6998,14 +7315,21 @@
         draggedBlockId: null,
         importModalOpen: false,
         importSourceLocale: "",
-        draftLocales: { it: true },
-        publishedLocales: { en: true, de: true },
+        localePanelOpen: false,
+        kvPreviewModalOpen: false,
+        previewLocale: "en",
+        kvPreviewPage: "steps",
+        kvPreviewScreen: "stepList",
+        kvPreviewStepId: "",
+        activeLocale: "en",
+        enabledKvLocales: { en: true, de: true, it: true, ar: true },
+        draftLocales: { en: true },
+        publishedLocales: { en: true },
         draftLocaleMeta: {
-          it: { configVersion: "draft-2026.06.09-it", savedAt: "2026-06-09 15:10" }
+          en: { configVersion: "draft-2026.06.18-kv", savedAt: "2026-06-18 10:10" }
         },
         publishedLocaleMeta: {
-          en: { configVersion: "release-2026.06.09-en", savedAt: "2026-06-09 15:20" },
-          de: { configVersion: "release-2026.06.08-de", savedAt: "2026-06-08 18:30" }
+          en: { configVersion: "release-2026.06.18-kv", savedAt: "2026-06-18 09:30" }
         },
         welcomePage: {
           substepMarkerType: "number",
@@ -7041,33 +7365,179 @@
         {
           id: "page-language-tabs",
           scope: "page",
-          target: "#newEntry .reference-locale-tabs",
-          title: "多语言入口沿用参考页",
-          body: "页面语言 Tab 决定当前编辑语言；抽屉内不提供语言切换。每个语言维护一套草稿和已发布配置。",
-          loc: "新版入口 > 语言 Tab"
+          target: "#noviceConfigPreview #localeTabs",
+          title: "批注优化版与语言列管理",
+          body: `版本标记：
+- 本页面为批注优化版本。
+- 页面级需求以右侧原型批注为准。
+- 原型结构、批注结构和交互方案不变。
+
+流程图：入口加载 -> 展示发布状态/操作区/配置预览 -> 展开语言列 -> 启用或禁用语言 -> 进入发布校验
+
+字段规则：
+- 英文列默认启用，不可禁用。
+- 英文列在 KV 表中只读，不支持编辑、导出和导入覆盖。
+- 英文内容只能点击“编辑英文结构源”进入配置抽屉修改。
+- 非英文列启用后参与发布校验。
+- 非英文列禁用后不校验，也不返回给 APP。
+
+空态：
+- 无草稿且无已发布配置：展示未配置底图。
+- 有草稿或已发布配置：展示 KV 摘要、语言列、KV 表和校验摘要。`,
+          loc: "新版入口 > 语言列管理"
+        },
+        {
+          id: "entry-buttons",
+          scope: "page",
+          target: "#entryActionBar",
+          title: "入口按钮状态机",
+          body: `状态图：可编辑 -> 更新到草稿 -> 待发布草稿 -> 发布校验 -> 已发布/发布失败
+
+按钮规则：
+- 编辑英文结构源：始终可点击，打开配置抽屉。
+- 更新到草稿：保存英文结构源，生成或覆盖 KV 草稿，APP 不可获取。
+- 发布：触发配置校验，通过后覆盖已发布配置，失败时阻断并展示错误。
+
+文案：
+- 抽屉保存按钮：更新到草稿。
+- 入口发布按钮：发布。
+- 保存成功：英文结构源已保存为多语言 KV 草稿；APP 无法获取草稿。
+- 发布成功：多语言 KV 已发布；APP 按语言参数获取已发布配置。
+
+可见范围：
+- 发布后的可见范围由产品上架状态和产品白名单授权决定。`,
+          loc: "新版入口 > 操作区"
         },
         {
           id: "publish-state",
           scope: "page",
-          target: "#entryActionBar",
+          target: "#publishPanel",
           title: "草稿与发布",
-          body: "草稿仅用于平台暂存，APP 无法获取；发布后由产品上架状态和产品白名单授权控制 APP 可见范围。",
+          body: `字段说明：
+- 发布状态区仅保留发布时间、发布状态、强制新手指引。
+- 草稿状态在配置预览标题处展示：有草稿/无草稿。
+
+状态图：无配置 -> 有草稿 -> 已发布 -> 有新草稿 -> 再次发布覆盖已发布配置
+
+规则：
+- 当前产品至多一份 KV 草稿和一份已发布 KV 配置。
+- 未发布配置仅存于平台，APP 无法通过任何手段获取。
+- 已发布且产品未上架：仅白名单公司用户和授权外部用户可见。
+- 已发布且产品已上架：所有用户可见。
+
+提醒：
+- 保存草稿不影响 APP。
+- 发布成功后提示当前可见范围。`,
           loc: "新版入口 > 版本控制"
         },
         {
           id: "language-import",
           scope: "page",
-          target: "#importLanguageBtn",
-          title: "语言导入",
-          body: "导入按钮从指定语言导入全部内容，覆盖当前语言配置并保存为草稿，不再提供文件导入导出。",
-          loc: "新版入口 > 操作按钮"
+          target: "#noviceConfigPreview .kv-toolbar",
+          title: "KV 导入导出",
+          body: `流程图：导出非英文文本 Key -> 线下编辑翻译 -> 导入 CSV/XLSX -> 按 Key 和非英文语言列匹配 -> 覆盖当前 KV 草稿的非英文文本 Value
+
+导出规则：
+- 导出 CSV 和导出 XLSX 只包含非英文语言的文本 Key。
+- 英文列不导出。
+- 视频、图片、PDF 等媒体 Key 不进入文件导出。
+
+导入规则：
+- 仅接受 csv/xlsx 文件。
+- 缺少 Key 列时提示导入失败。
+- 文件中若包含英文列，系统忽略，不覆盖英文结构源内容。
+- 文件中若包含媒体 Key，系统忽略，不覆盖媒体文件。
+
+按钮状态：
+- 存在 KV 表时导出可用。
+- 导入成功后仅覆盖当前 KV 草稿中的非英文文本 Value。
+
+技术备注：
+- 原型表达交互，真实实现需支持标准 XLSX 解析和生成。`,
+          loc: "新版入口 > KV 表"
+        },
+        {
+          id: "kv-table-rules",
+          scope: "page",
+          target: "#noviceConfigPreview .kv-table-wrap",
+          title: "KV 表字段与媒体规则",
+          body: `表结构：
+- 第一列为 Key。
+- 后续列为已启用语言的 Value。
+- 英文列来自英文结构源，在 KV 表中只读。
+- 英文列不支持在 KV 表中编辑、导出和导入覆盖。
+- 英文内容只能通过“编辑英文结构源”打开配置抽屉修改。
+
+Key 类型：
+- 文本 Key：非英文启用语言列可直接输入；英文列只展示结构源内容。
+- 视频 Key：一个视频资源占一行。
+- 图片 Key：单张图占一行，多张图拆多行。
+
+媒体操作：
+- 英文列不支持直接上传覆盖英文源资源。
+- 英文列仅提供“同步到其他语言”。
+- 点击同步后，该 Key 的英文资源覆盖其他已启用语言列。
+- 其他语言列可上传同类型文件，上传后覆盖该语言该 Key。
+
+覆盖规则：
+- 上传和同步互相覆盖。
+- 后执行的操作为准。
+
+发布规则：
+- 启用语言列的待发布文本 Key 或媒体 Key 缺失时阻断发布。`,
+          loc: "新版入口 > KV 表"
+        },
+        {
+          id: "kv-style-preview",
+          scope: "page",
+          target: "#kvPreviewModal",
+          title: "语言列样式预览弹窗",
+          body: `触发：
+- 点击任一语言列表头的“预览样式”。
+
+弹窗内容：
+- 左侧复用配置抽屉 APP 预览样式。
+- 右侧复用页面与步骤入口样式。
+- 支持查看 Welcome、Step list、Step detail、Finish 和说明书页。
+
+交互边界：
+- 仅查看语言列渲染效果。
+- 不提供启用/禁用、上传、同步、新增、删除等配置操作。
+
+按钮状态：
+- 右上角关闭和底部关闭均关闭弹窗。
+- 页面入口和 Step 卡片只切换弹窗内预览，不改变外层抽屉编辑状态。`,
+          loc: "新版入口 > 语言列样式预览"
         },
         {
           id: "validation-rules",
           scope: "page",
           target: "#entryValidationBox",
           title: "配置校验",
-          body: "保存草稿或发布时自动校验；未隐藏说明书入口且未上传 PDF 时产生错误项。保存草稿展示错误但不阻断，发布校验不通过会阻断发布。",
+          body: `触发机制：
+- 点击更新到草稿时自动校验。
+- 保存 KV 草稿时自动校验。
+- 点击发布时自动校验。
+- 存在草稿时，页面加载后自动展示校验摘要。
+- 不提供独立运行校验按钮。
+
+阻断规则：
+- 保存草稿：展示错误但不阻断。
+- 发布：存在错误时阻断。
+
+错误项：
+- Step 页数小于 1 或大于 7。
+- Step 页和说明书 PDF 均隐藏。
+- Welcome/Finish 启用但 substep 数量不符合 2-4。
+- icon 模式未选择 icon。
+- Step title 缺失。
+- 第二部分未隐藏但缺少视频/图片。
+- 第三部分超过 3 个、标题或内容缺失、单个图片区超过 10 张。
+- 说明书入口未隐藏且未上传 PDF。
+- 启用语言列待发布文本或媒体 Key 缺失。
+
+空态文案：
+- 无问题时展示“当前配置可发布”。`,
           loc: "新版入口 > 配置校验"
         },
         {
@@ -7075,7 +7545,22 @@
           drawer: true,
           target: "#forceNoviceGuideToggle",
           title: "强制新手指引",
-          body: "强制新手指引是配置项复选框；开启后 APP 首次进入设备控制页时必须进入设备助手。",
+          body: `字段说明：
+- 字段名：forceNoviceGuide。
+- 类型：boolean。
+- 默认值：关闭。
+- 展示位置：发布状态区。
+
+功能文案：
+- 当用户完成设备添加后，点击设备面板强制进入新手引导。
+
+Web 边界：
+- 后台仅保存该开关。
+- 首次进入判定、重置条件和埋点字段由 APP 需求实现。
+
+APP 流程：
+1. 开启后，用户完成设备添加并首次进入设备控制页时强制进入设备助手。
+2. 关闭后，用户仍可从设置 - How to Use 进入 Step 页面。`,
           loc: "新版入口 > 版本控制"
         },
         {
@@ -7083,7 +7568,28 @@
           drawer: true,
           target: "#pageEntryList",
           title: "模板开关",
-          body: "配置能力收敛为 Welcome / Finish 成对模板、Step 模板和说明书 PDF；Welcome 与 Finish 共用显隐配置。",
+          body: `页面流程图：Welcome -> Get started -> Step list/Step detail -> Finish -> 设备控制面板
+
+预览入口：
+- 左侧 APP 预览不承担点击跳转。
+- 所有页面预览入口由右侧页面与步骤区域控制。
+- 点击 Step 模板入口展示 Step list。
+- 点击右侧 Step 列表项进入对应 Step detail。
+- 点击说明书 PDF 入口进入说明书预览。
+
+二次进入路径：
+- 用户从设置 - How to Use 再次进入时，从 Step 页面开始。
+
+显隐规则：
+- Welcome 与 Finish 共用显隐配置，成对出现。
+- Step 页整体显隐在 pageEntryList 控制。
+- 说明书 PDF 显隐在 pageEntryList 控制。
+- Step 页和说明书 PDF 至少有一个非隐藏入口。
+
+按钮边界：
+- 模板入口只负责选择页面和显隐控制。
+- 新增 Step 只在 Step 列表区执行。
+- 预览弹窗内不复用显隐和新增删除配置功能。`,
           loc: "配置抽屉 > 页面入口"
         },
         {
@@ -7091,8 +7597,71 @@
           drawer: true,
           target: "#validationBox",
           title: "抽屉内配置校验",
-          body: "抽屉内展示当前语言草稿的完整校验。说明书入口未隐藏且未上传 PDF 时为错误项；保存草稿不阻断，发布时会阻断。",
+          body: `展示内容：
+- 抽屉内展示英文结构源完整校验。
+- 校验包含模板、Step、媒体、说明书和 Key 完整性问题。
+- 抽屉外只展示摘要。
+
+按钮状态：
+- 返回：关闭抽屉，不保存。
+- 更新到草稿：执行校验，生成或覆盖 KV 草稿，关闭抽屉并刷新入口预览。
+
+判断逻辑：
+- 保存草稿不阻断错误。
+- 错误需保留在配置校验中。
+- 发布按钮不在抽屉 footer 中，用户回到入口后发布。`,
           loc: "配置抽屉 > 配置校验"
+        },
+        {
+          id: "welcome-finish-fields",
+          drawer: true,
+          layer: "welcome",
+          target: "#inspectorBody",
+          title: "Welcome 模板字段",
+          body: `云端配置范围：
+- Welcome/Finish 主图、title、subtitle 由 APP 写入和引用参数。
+- 云端不配置主图、title、subtitle。
+- 云端只配置 substeps。
+
+Welcome substep：
+- 数量：2-4 个。
+- 字段：title、subtitle、标识、预计耗时。
+- 预计耗时单位：h/m/s。
+
+标识规则：
+- substepMarkerType 是页面级配置。
+- 所有 substep 共用序号或 icon 模式。
+- icon 模式下，每个 substep 必须选择 UI 预设 icon。
+- 不支持自定义 icon 上传。
+
+校验：
+- substep 不足时展示校验错误。
+- 保存草稿不阻断。
+- 发布阻断。`,
+          loc: "Welcome 模板 > 字段与规则"
+        },
+        {
+          id: "finish-fields",
+          drawer: true,
+          layer: "finish",
+          target: "#inspectorBody",
+          title: "Finish 模板字段",
+          body: `字段说明：
+- Finish 与 Welcome 成对启用或隐藏。
+- Finish 主图、title、subtitle 由 APP 参数提供。
+- 云端只配置 substeps。
+
+Finish substep：
+- 数量：2-4 个。
+- 默认带 UI 稿预设值。
+- 用户可编辑 title、subtitle 和预设 icon。
+
+流程图：最后一个 Step -> 点击 Finish -> Finish 页面 -> 设备控制面板
+
+校验：
+- Welcome/Finish 启用时参与校验。
+- 校验项包含 substep 数量、title、icon 模式下的 iconKey。`,
+          loc: "Finish 模板 > 字段与流程"
         },
         {
           id: "fixed-step-template",
@@ -7100,15 +7669,84 @@
           layer: "page",
           target: "#inspectorBody",
           title: "Step 固定模板",
-          body: "Step 页不再使用自由 widget 编排；组件固定为标题区、媒体区和正文图片区，不需要排序，也不需要切换组件配置页。",
+          body: `模板结构：
+- 每个 Step 固定三部分。
+- 不再选择 widget 类型。
+- 不切换组件配置页。
+- 不拖拽组件排序。
+
+第一部分：
+- headerIconKey：预设 icon。
+- title：必填。
+- subtitle：可选，留空时 APP 不展示。
+
+第二部分：
+- 支持隐藏。
+- 未隐藏时 video/image 二选一。
+- 视频：mp4，不大于 200M。
+- 视频封面图：可选，png/jpg/jpeg，不大于 5M。
+- 图片：png/jpg/jpeg，不大于 5M。
+
+第三部分：
+- 包含 bodyIntro 和 0-3 个正文图片区。
+- 每个正文图片区 title、content 必填。
+- 每个正文图片区支持 0-10 张图片。
+- 正文 icon 使用预设 icon，支持隐藏。
+
+按钮状态：
+- 正文图片区达到 3 个后，新增按钮禁用。
+- 图片达到 10 张后，追加按钮禁用。
+
+校验：
+- Step 页整体隐藏时保留配置，但不校验内部字段。`,
           loc: "Step 模板 > 固定字段"
+        },
+        {
+          id: "manual-pdf-rules",
+          drawer: true,
+          layer: "manual",
+          target: "#inspectorBody",
+          title: "说明书 PDF",
+          body: `字段说明：
+- manualPdfHidden 控制说明书入口是否展示。
+- manualPdf 为 PDF 资源。
+- 格式仅支持 pdf。
+- 文件大小不大于 10MB。
+
+交互：
+- PDF 展示控制在 pageEntryList。
+- 上传入口在说明书配置面板。
+- 入口勾选展示但未上传 PDF 时产生错误项。
+
+APP 打开方式：
+- WebView 嵌入打开 PDF。
+
+Step list 规则：
+- 未隐藏的 Step 页整体和未隐藏的 PDF 共同计数。
+- 若计数为 1，APP 跳过 Step list，直接进入唯一 Step 页或 PDF 页。
+- 上述跳转逻辑由 APP 实现，Admin 原型只表达配置和校验。`,
+          loc: "说明书 PDF > 字段与校验"
         },
         {
           id: "template-preview-boundary",
           drawer: true,
           target: ".preview-intro",
           title: "预览边界",
-          body: "管理端预览用于验证配置结构、模板启用状态和字段缺失；最终 APP 页面视觉以 UI / APP 实现为准。",
+          body: `预览流程：
+- 左侧手机预览支持 Welcome、Step list、Step detail、Finish、说明书页。
+- APP 预览区为只读所见即所得展示，不绑定管理端点击事件。
+- 页面切换、Step detail 定位和说明书页切换均由右侧页面与步骤区域控制。
+- 内容超出手机高度时，phone-body 独立滚动。
+
+所见即所得边界：
+- 预览不展示内部计数、配置说明或校验文案。
+- 管理端预览用于验证结构、字段缺失和基础交互。
+- 最终视觉、手势、播放器、RTL 和资源异常占位以 UI/APP 实现为准。
+
+异常边界：
+- APP 侧“暂无用户手册”不在 Web 原型中模拟。
+- 资源过期或加载失败占位不在 Web 原型中模拟。
+- 相关规则只在批注中定义。`,
           loc: "配置抽屉 > APP 预览"
         }
       ];
@@ -7172,7 +7810,7 @@
         configStatusTag.textContent = status.label;
       }
       const subtitle = $("#drawerSubtitle");
-      if (subtitle) subtitle.textContent = `W1 / 新版设备助手 / ${localeLabel()} / 草稿与发布`;
+      if (subtitle) subtitle.textContent = "W1 / 新版设备助手 / 英文结构源 / 生成多语言 KV";
     }
 
     function localeHasMissing(localeCode) {
@@ -7186,6 +7824,590 @@
         const stepMissing = checkFields(step, ["title"]);
         const sectionMissing = (step.sections || []).some((section) => checkFields(section, ["title", "content"]));
         return stepMissing || sectionMissing;
+      });
+    }
+
+    function kvSourceValue(item, field) {
+      return item?.[i18nKey(field)]?.[state.defaultLocale] || item?.[field] || "";
+    }
+
+    function kvValue(item, field, localeCode) {
+      if (localeCode === state.defaultLocale) return kvSourceValue(item, field);
+      return item?.[i18nKey(field)]?.[localeCode] || "";
+    }
+
+    function setKvTextValue(item, field, localeCode, value) {
+      const key = i18nKey(field);
+      item[key] = item[key] || {};
+      item[key][localeCode] = value;
+      if (localeCode === state.defaultLocale) {
+        item[field] = value;
+      }
+    }
+
+    function mediaLocaleKey(field) {
+      return `${field}ByLocale`;
+    }
+
+    function kvMediaSource(item, field) {
+      const value = item?.[field];
+      return Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+    }
+
+    function kvMediaValue(item, field, localeCode) {
+      const source = kvMediaSource(item, field);
+      if (localeCode === state.defaultLocale) return source;
+      const localized = item?.[mediaLocaleKey(field)]?.[localeCode];
+      if (Array.isArray(localized)) return localized.filter(Boolean);
+      if (localized) return [localized];
+      return [];
+    }
+
+    function kvMediaValueAt(item, field, localeCode, index) {
+      return kvMediaValue(item, field, localeCode)[index] || null;
+    }
+
+    function setKvMediaValueAt(item, field, localeCode, index, resource) {
+      if (localeCode === state.defaultLocale) {
+        const current = kvMediaSource(item, field);
+        current[index] = resource;
+        item[field] = Array.isArray(item[field]) ? current.filter(Boolean) : current[0] || resource;
+        return;
+      }
+      item[mediaLocaleKey(field)] = item[mediaLocaleKey(field)] || {};
+      const current = kvMediaValue(item, field, localeCode);
+      current[index] = resource;
+      item[mediaLocaleKey(field)][localeCode] = current;
+    }
+
+    function addKvRow(rows, key, item, field, label, kind = "text", mediaType = "", mediaIndex = null) {
+      rows.push({ key, item, field, label, kind, mediaType, mediaIndex, source: kind === "media" ? kvMediaSource(item, field) : kvSourceValue(item, field) });
+    }
+
+    function addOptionalTextKvRow(rows, key, item, field, label) {
+      if (kvSourceValue(item, field).trim()) addKvRow(rows, key, item, field, label);
+    }
+
+    function addMediaRows(rows, keyPrefix, item, field, label, mediaType) {
+      kvMediaSource(item, field).forEach((resource, index) => {
+        addKvRow(rows, `${keyPrefix}.${index + 1}`, item, field, `${label} ${index + 1}`, "media", mediaType, index);
+      });
+    }
+
+    function buildKvRows() {
+      const rows = [];
+      if (state.useWelcomeFinish) {
+        normalizedSubsteps(state.welcomePage).forEach((item, index) => {
+          addKvRow(rows, `welcome.substeps.${index + 1}.title`, item, "title", `Welcome substep ${index + 1} title`);
+          addOptionalTextKvRow(rows, `welcome.substeps.${index + 1}.subtitle`, item, "subtitle", `Welcome substep ${index + 1} subtitle`);
+        });
+        normalizedSubsteps(state.finishPage).forEach((item, index) => {
+          addKvRow(rows, `finish.substeps.${index + 1}.title`, item, "title", `Finish substep ${index + 1} title`);
+          addOptionalTextKvRow(rows, `finish.substeps.${index + 1}.subtitle`, item, "subtitle", `Finish substep ${index + 1} subtitle`);
+        });
+      }
+      visibleSteps().forEach((step, stepIndex) => {
+        addKvRow(rows, `steps.${stepIndex + 1}.title`, step, "title", `Step ${stepIndex + 1} title`);
+        addOptionalTextKvRow(rows, `steps.${stepIndex + 1}.subtitle`, step, "subtitle", `Step ${stepIndex + 1} subtitle`);
+        addOptionalTextKvRow(rows, `steps.${stepIndex + 1}.bodyIntro`, step, "bodyIntro", `Step ${stepIndex + 1} 正文头部文案`);
+        if (step.mediaType === "video" && step.video) addMediaRows(rows, `steps.${stepIndex + 1}.video`, step, "video", `Step ${stepIndex + 1} 视频`, "video");
+        if (step.mediaType === "image" && step.image) addMediaRows(rows, `steps.${stepIndex + 1}.image`, step, "image", `Step ${stepIndex + 1} 图片`, "image");
+        if (step.mediaType === "video" && step.videoCover) addMediaRows(rows, `steps.${stepIndex + 1}.videoCover`, step, "videoCover", `Step ${stepIndex + 1} 视频封面图`, "image");
+        (step.sections || []).forEach((section, sectionIndex) => {
+          addKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.title`, section, "title", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 标题`);
+          addKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.content`, section, "content", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 内容`);
+          addMediaRows(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.images`, section, "images", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 图片`, "image");
+        });
+      });
+      return rows;
+    }
+
+    function renderKvTable(maxRows = 12) {
+      ensureKvLocaleState();
+      const rows = buildKvRows();
+      const locales = enabledKvLocales();
+      const visibleRows = rows.slice(0, maxRows);
+      return `
+        <div class="kv-table-wrap" aria-label="多语言 KV 表">
+          <table class="kv-table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                ${locales.map((locale) => `
+                  <th>
+                    <div class="kv-th-content">
+                      <span class="kv-th-title">${escapeHtml(locale.label)}</span>
+                      ${locale.code === state.defaultLocale ? `<span class="kv-th-note">只读｜在“编辑英文结构源”中修改</span>` : ""}
+                      <button class="kv-th-action" type="button" data-kv-preview-locale="${escapeHtml(locale.code)}">预览样式</button>
+                    </div>
+                  </th>
+                `).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${visibleRows.map((row) => `
+                <tr>
+                  <td title="${escapeHtml(row.label)}">
+                    ${escapeHtml(row.key)}
+                    <div class="kv-row-type">${row.kind === "media" ? `媒体 / ${row.mediaType === "video" ? "视频" : "图片"}` : "文本"}</div>
+                  </td>
+                  ${locales.map((locale) => {
+                    return row.kind === "media" ? renderKvMediaCell(row, locale) : renderKvTextCell(row, locale);
+                  }).join("")}
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+        ${rows.length > maxRows ? `<div class="field-help">当前仅展示前 ${maxRows} 条，共 ${rows.length} 条 KV；实际保存 / 发布为全量覆盖。</div>` : ""}
+      `;
+    }
+
+    function renderKvTextCell(row, locale) {
+      const value = kvValue(row.item, row.field, locale.code);
+      const emptyLabel = locale.code === state.defaultLocale ? "英文源内容未填写" : "待填写";
+      if (locale.code === state.defaultLocale) {
+        return `<td class="kv-value-cell ${value ? "" : "kv-column-disabled"}">${escapeHtml(value || emptyLabel)}</td>`;
+      }
+      return `
+        <td class="kv-value-cell ${value ? "" : "kv-column-disabled"}">
+          <input class="input" type="text" data-kv-input="${escapeHtml(row.key)}" data-kv-locale="${escapeHtml(locale.code)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(emptyLabel)}">
+        </td>
+      `;
+    }
+
+    function renderKvMediaCell(row, locale) {
+      const resource = kvMediaValueAt(row.item, row.field, locale.code, row.mediaIndex ?? 0);
+      const sourceResources = kvMediaSource(row.item, row.field);
+      const emptyLabel = locale.code === state.defaultLocale ? "英文源媒体未上传" : "待上传，或从英文列同步";
+      const accept = row.mediaType === "video" ? "video/mp4" : "image/png,image/jpeg";
+      if (locale.code === state.defaultLocale) {
+        return `
+          <td class="kv-value-cell ${resource ? "" : "kv-column-disabled"}">
+            <div class="kv-media-value">
+              <span class="kv-media-name">${escapeHtml(resourceName(resource, emptyLabel))}</span>
+              <div class="kv-media-actions">
+                <button class="btn text" type="button" data-kv-media-sync="${escapeHtml(row.key)}" ${sourceResources[row.mediaIndex ?? 0] ? "" : "disabled"}>同步到其他语言</button>
+              </div>
+            </div>
+          </td>
+        `;
+      }
+      return `
+        <td class="kv-value-cell ${resource ? "" : "kv-column-disabled"}">
+          <div class="kv-media-value">
+            <span class="kv-media-name">${escapeHtml(resourceName(resource, emptyLabel))}</span>
+            <div class="kv-media-actions">
+              <input class="kv-media-file" type="file" accept="${accept}" data-kv-media-input="${escapeHtml(row.key)}" data-kv-locale="${escapeHtml(locale.code)}">
+            </div>
+          </div>
+        </td>
+      `;
+    }
+
+    function bindKvTableInputs(root = document) {
+      root.querySelectorAll("[data-kv-input]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const row = buildKvRows().find((item) => item.key === input.dataset.kvInput);
+          const localeCode = input.dataset.kvLocale;
+          if (!row || !localeCode || localeCode === state.defaultLocale) return;
+          setKvTextValue(row.item, row.field, localeCode, input.value);
+          setDirty();
+        });
+      });
+    }
+
+    function bindKvMediaControls(root = document) {
+      root.querySelectorAll("[data-kv-media-input]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const row = buildKvRows().find((item) => item.key === input.dataset.kvMediaInput);
+          const localeCode = input.dataset.kvLocale;
+          const file = input.files?.[0];
+          if (!row || !localeCode || localeCode === state.defaultLocale || !file) return;
+          const result = row.mediaType === "video"
+            ? validateFile(file, ["mp4"], 200)
+            : validateFile(file, ["png", "jpg", "jpeg"], 5);
+          if (!result.ok) {
+            showToast(result.message);
+            input.value = "";
+            return;
+          }
+          setKvMediaValueAt(row.item, row.field, localeCode, row.mediaIndex ?? 0, fileResource(file));
+          setDirty();
+          renderEntry();
+          showToast(`${localeCode === state.defaultLocale ? "英文源" : localeLabel(localeCode)} 媒体文件已覆盖`);
+        });
+      });
+      root.querySelectorAll("[data-kv-media-sync]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const row = buildKvRows().find((item) => item.key === button.dataset.kvMediaSync);
+          const source = row ? kvMediaSource(row.item, row.field)[row.mediaIndex ?? 0] : null;
+          if (!row || !source) return;
+          enabledKvLocales()
+            .filter((locale) => locale.code !== state.defaultLocale)
+            .forEach((locale) => setKvMediaValueAt(row.item, row.field, locale.code, row.mediaIndex ?? 0, source));
+          setDirty();
+          renderEntry();
+          showToast("英文媒体文件已覆盖到其他启用语言");
+        });
+      });
+    }
+
+    function renderKvLocalePreviewModal() {
+      const modal = $("#kvPreviewModal");
+      const body = $("#kvPreviewBody");
+      const subtitle = $("#kvPreviewSubtitle");
+      if (!modal || !body) return;
+      const localeCode = state.previewLocale || state.defaultLocale;
+      const locale = state.locales.find((item) => item.code === localeCode) || state.locales[0];
+      modal.classList.toggle("open", Boolean(state.kvPreviewModalOpen));
+      modal.setAttribute("aria-hidden", state.kvPreviewModalOpen ? "false" : "true");
+      if (!state.kvPreviewModalOpen) {
+        body.innerHTML = "";
+        return;
+      }
+      if (subtitle) subtitle.textContent = `${locale.label} / 复用抽屉 APP 预览和页面入口样式。`;
+      const previousLocale = state.activeLocale;
+      const previousScreen = state.previewScreen;
+      const previousStepId = state.selectedStepId;
+      const previousPage = state.selectedPage;
+      state.activeLocale = locale.code;
+      state.previewScreen = state.kvPreviewScreen || "stepList";
+      state.selectedPage = state.kvPreviewPage || "steps";
+      if (state.kvPreviewStepId) state.selectedStepId = state.kvPreviewStepId;
+      if (!["welcome", "finish", "manual", "stepList", "stepPage"].includes(state.previewScreen)) state.previewScreen = "stepList";
+      const phoneHtml = renderPhonePreviewHtml();
+      const pageOverviewHtml = renderKvPreviewPageOverviewHtml();
+      const entryListHtml = renderKvPreviewPageEntryList();
+      state.activeLocale = previousLocale;
+      state.previewScreen = previousScreen;
+      state.selectedStepId = previousStepId;
+      state.selectedPage = previousPage;
+      body.innerHTML = `
+        <section class="preview-column" aria-label="APP 预览画布">
+          <div class="preview-intro">
+            <h3 class="column-title">APP 预览</h3>
+            <div class="column-subtitle">${escapeHtml(locale.label)} 样式预览，仅用于核对语言列内容。</div>
+          </div>
+          <div class="phone ${locale.code === "ar" ? "rtl" : ""}">${phoneHtml}</div>
+        </section>
+        <section class="step-column" aria-label="页面与步骤入口">
+          <div class="column-title-row">
+            <div>
+              <h3 class="column-title">页面与步骤</h3>
+              <div class="column-subtitle">复用配置抽屉的页面入口样式。</div>
+            </div>
+          </div>
+          <div class="page-entry-list">
+            ${entryListHtml}
+          </div>
+          <div class="page-overview phone-step-list-preview">
+            ${pageOverviewHtml}
+          </div>
+        </section>
+      `;
+      bindKvPreviewModalNavigation(body);
+    }
+
+    function renderPhonePreviewHtml() {
+      if (state.previewScreen === "welcome") {
+        return state.useWelcomeFinish
+          ? renderWelcomePreview().replaceAll("data-preview-step-list", "data-kv-preview-nav=\"stepList\"")
+          : renderDisabledTemplatePreview("Welcome");
+      }
+      if (state.previewScreen === "finish") {
+        return state.useWelcomeFinish
+          ? renderFinishPreview().replaceAll("data-preview-step-list", "data-kv-preview-nav=\"stepList\"")
+          : renderDisabledTemplatePreview("Finish");
+      }
+      if (state.previewScreen === "manual") {
+        return renderManualPreview().replaceAll("data-preview-step-list", "data-kv-preview-nav=\"stepList\"");
+      }
+      if (state.previewScreen === "stepList") {
+        return `
+          <div class="phone-status"><span>9:41</span><span>设备助手</span><span>100%</span></div>
+          <div class="phone-body">
+            <div class="phone-nav-row">
+              <button class="phone-back" type="button" data-kv-preview-nav="stepList">‹</button>
+              <div class="phone-title">How to Use</div>
+              <span></span>
+            </div>
+            <div class="page-overview phone-step-list-preview">${renderKvPreviewPageOverviewHtml()}</div>
+          </div>
+        `;
+      }
+      const step = selectedStep();
+      return `
+        <div class="phone-status"><span>9:41</span><span>设备助手</span><span>100%</span></div>
+        <div class="phone-body">
+          <div class="phone-nav-row">
+            <button class="phone-back" type="button" data-kv-preview-nav="stepList">‹</button>
+            <div class="phone-title">Step ${step?.order || 1}</div>
+            <span></span>
+          </div>
+          ${renderStepTemplatePreview(step)}
+          ${isLastStep(step) && state.useWelcomeFinish ? `<button class="phone-primary-action" type="button">Finish</button>` : ""}
+        </div>
+      `;
+    }
+
+    function renderKvPreviewPageOverviewHtml() {
+      const steps = visibleSteps();
+      const showManual = !state.manualPdfHidden;
+      const total = visibleStepListItemCount();
+      return `
+        <div class="page-preview-list">
+          ${steps.map((step, index) => renderKvPreviewStepCard(step, index)).join("")}
+          ${showManual ? renderKvPreviewManualCard(steps.length) : ""}
+          ${total ? "" : `<div class="empty-preview">Step 页和说明书 PDF 均已隐藏。</div>`}
+        </div>
+      `;
+    }
+
+    function renderKvPreviewStepCard(step, index) {
+      const active = state.kvPreviewScreen === "stepPage" && (state.kvPreviewStepId || state.selectedStepId) === step.id ? "active" : "";
+      const title = textValue(step, "title") || `Step ${index + 1}`;
+      const subtitle = textValue(step, "subtitle");
+      return `
+        <button class="page-preview-card ${active}" type="button" data-kv-preview-step="${escapeHtml(step.id)}">
+          <div class="page-preview-title">${escapeHtml(title)}</div>
+          ${subtitle ? `<div class="page-preview-desc">${escapeHtml(subtitle)}</div>` : ""}
+        </button>
+      `;
+    }
+
+    function renderKvPreviewManualCard(index) {
+      const active = state.kvPreviewScreen === "manual" ? "active" : "";
+      const title = state.manualPdf ? resourceName(state.manualPdf) : "说明书 PDF";
+      return `
+        <button class="page-preview-card ${active}" type="button" data-kv-preview-nav="manual">
+          <div class="page-preview-title">${escapeHtml(title)}</div>
+          <div class="page-preview-desc">PDF 说明书</div>
+        </button>
+      `;
+    }
+
+    function renderKvPreviewPageEntryList() {
+      const entries = [
+        { key: "welcome", label: "Welcome", desc: state.useWelcomeFinish ? "与 Finish 成对启用" : "与 Finish 成对隐藏" },
+        { key: "steps", label: "Step", desc: state.stepsHidden ? "已隐藏，配置保留" : `${state.steps.length} / 7 页固定模板` },
+        { key: "finish", label: "Finish", desc: state.useWelcomeFinish ? "与 Welcome 成对启用" : "与 Welcome 成对隐藏" },
+        { key: "manual", label: "说明书 PDF", desc: state.manualPdfHidden ? "已隐藏" : state.manualPdf ? resourceName(state.manualPdf) : "未上传，可隐藏" }
+      ];
+      return entries.map((entry) => `
+        <button class="page-entry-btn ${state.kvPreviewPage === entry.key ? "active" : ""}" type="button" data-kv-preview-page="${entry.key}">
+          <span>${escapeHtml(entry.label)}</span>
+          <span class="step-meta">${escapeHtml(entry.desc)}</span>
+        </button>
+      `).join("");
+    }
+
+    function bindKvPreviewControls(root = document) {
+      root.querySelectorAll("[data-kv-preview-locale]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.previewLocale = button.dataset.kvPreviewLocale || state.defaultLocale;
+          state.kvPreviewModalOpen = true;
+          state.kvPreviewPage = "steps";
+          state.kvPreviewScreen = "stepList";
+          state.kvPreviewStepId = visibleSteps()[0]?.id || "";
+          renderKvLocalePreviewModal();
+        });
+      });
+    }
+
+    function setKvPreviewTarget(page, stepId = "") {
+      state.kvPreviewPage = page;
+      if (page === "welcome") {
+        state.kvPreviewScreen = "welcome";
+      } else if (page === "finish") {
+        state.kvPreviewScreen = "finish";
+      } else if (page === "manual") {
+        state.kvPreviewScreen = "manual";
+      } else if (stepId) {
+        state.kvPreviewPage = "steps";
+        state.kvPreviewScreen = "stepPage";
+        state.kvPreviewStepId = stepId;
+      } else {
+        state.kvPreviewPage = "steps";
+        state.kvPreviewScreen = "stepList";
+        state.kvPreviewStepId = state.kvPreviewStepId || visibleSteps()[0]?.id || "";
+      }
+      renderKvLocalePreviewModal();
+    }
+
+    function bindKvPreviewModalNavigation(root = document) {
+      root.querySelectorAll("[data-kv-preview-page]").forEach((button) => {
+        button.addEventListener("click", () => setKvPreviewTarget(button.dataset.kvPreviewPage));
+      });
+      root.querySelectorAll("[data-kv-preview-step]").forEach((button) => {
+        button.addEventListener("click", () => setKvPreviewTarget("steps", button.dataset.kvPreviewStep));
+      });
+      root.querySelectorAll("[data-kv-preview-nav]").forEach((button) => {
+        button.addEventListener("click", () => setKvPreviewTarget(button.dataset.kvPreviewNav));
+      });
+    }
+
+    function closeKvPreviewModal() {
+      state.kvPreviewModalOpen = false;
+      renderKvLocalePreviewModal();
+    }
+
+    function textKvRows() {
+      return buildKvRows().filter((row) => row.kind !== "media");
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    }
+
+    function exportKvText(format) {
+      const locales = enabledKvLocales().filter((locale) => locale.code !== state.defaultLocale);
+      const rows = textKvRows();
+      const matrix = [
+        ["Key", ...locales.map((locale) => locale.label)],
+        ...rows.map((row) => [
+          row.key,
+          ...locales.map((locale) => kvValue(row.item, row.field, locale.code))
+        ])
+      ];
+      const content = format === "xlsx"
+        ? matrix.map((line) => line.map((value) => String(value ?? "").replaceAll("\t", " ")).join("\t")).join("\n")
+        : matrix.map((line) => line.map(csvEscape).join(",")).join("\n");
+      const blob = new Blob([content], { type: format === "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `device-assistant-kv-text.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast(`已导出文本 KV ${format.toUpperCase()}，不包含英文列和媒体文件 Key`);
+    }
+
+    function parseDelimitedRows(content) {
+      const rows = [];
+      let cell = "";
+      let row = [];
+      let quoted = false;
+      for (let index = 0; index < content.length; index += 1) {
+        const char = content[index];
+        const next = content[index + 1];
+        if (quoted) {
+          if (char === '"' && next === '"') {
+            cell += '"';
+            index += 1;
+          } else if (char === '"') {
+            quoted = false;
+          } else {
+            cell += char;
+          }
+        } else if (char === '"') {
+          quoted = true;
+        } else if (char === "," || char === "\t") {
+          row.push(cell);
+          cell = "";
+        } else if (char === "\n") {
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else if (char !== "\r") {
+          cell += char;
+        }
+      }
+      row.push(cell);
+      rows.push(row);
+      return rows.filter((item) => item.some((value) => value !== ""));
+    }
+
+    function importKvTextFile(file) {
+      if (!file) return;
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!["csv", "xlsx"].includes(ext)) {
+        showToast("仅支持导入 CSV / XLSX 文本 KV 文件");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rows = parseDelimitedRows(String(reader.result || ""));
+        const header = rows[0] || [];
+        const keyIndex = header.findIndex((name) => name.trim().toLowerCase() === "key");
+        if (keyIndex < 0) {
+          showToast("导入失败：缺少 Key 列");
+          return;
+        }
+        const localeColumns = header.map((name, index) => {
+          if (index === keyIndex) return null;
+          const locale = state.locales.find((item) => item.label === name.trim() || item.code === name.trim());
+          return locale && locale.code !== state.defaultLocale ? { locale, index } : null;
+        }).filter(Boolean);
+        const rowMap = new Map(textKvRows().map((row) => [row.key, row]));
+        rows.slice(1).forEach((values) => {
+          const key = values[keyIndex];
+          const row = rowMap.get(key);
+          if (!row) return;
+          localeColumns.forEach(({ locale, index }) => {
+            state.enabledKvLocales[locale.code] = true;
+            setKvTextValue(row.item, row.field, locale.code, values[index] || "");
+          });
+        });
+        state.validationRan = true;
+        setDirty();
+        renderAll();
+        showToast("文本 KV 已全量导入并覆盖匹配 Key；英文列和媒体文件 Key 不被导入覆盖");
+      };
+      reader.readAsText(file);
+    }
+
+    function validateEnabledKvCompleteness(issues) {
+      const locales = enabledKvLocales().filter((locale) => locale.code !== state.defaultLocale);
+      if (!locales.length) return;
+      buildKvRows().forEach((row) => {
+        locales.forEach((locale) => {
+          const missing = row.kind === "media"
+            ? !kvMediaValueAt(row.item, row.field, locale.code, row.mediaIndex ?? 0)
+            : !kvValue(row.item, row.field, locale.code).trim();
+          if (missing) {
+            issues.push({
+              level: "错误",
+              type: "danger",
+              text: `${locale.label} 缺少 ${row.kind === "media" ? "媒体" : "文本"} Key：${row.key}。`
+            });
+          }
+        });
+      });
+    }
+
+    function renderLocaleColumnControls() {
+      ensureKvLocaleState();
+      return `
+        <div class="locale-toggle-grid">
+          ${state.locales.map((locale) => {
+            const checked = locale.code === state.defaultLocale || state.enabledKvLocales[locale.code];
+            const disabled = locale.code === state.defaultLocale;
+            return `
+              <label class="locale-toggle-chip ${checked ? "" : "disabled"}">
+                <input type="checkbox" data-kv-locale-toggle="${escapeHtml(locale.code)}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
+                ${escapeHtml(locale.label)}
+              </label>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function bindLocaleColumnControls(root = document) {
+      ensureKvLocaleState();
+      root.querySelectorAll("[data-kv-locale-toggle]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const code = input.dataset.kvLocaleToggle;
+          if (code === state.defaultLocale) return;
+          state.enabledKvLocales[code] = input.checked;
+          setDirty();
+          renderAll();
+        });
       });
     }
 
@@ -7322,15 +8544,22 @@
 
     function saveDraft() {
       state.validationRan = true;
-      renderValidationBox(validateConfig());
+      state.activeLocale = state.defaultLocale;
+      const issues = validateConfig();
+      renderValidationBox(issues);
       const stamp = new Date().toLocaleString("zh-CN", { hour12: false });
       state.draftVersion = `draft-${Date.now()}`;
       state.lastSaved = "刚刚保存草稿";
-      state.draftLocales[state.activeLocale] = true;
-      state.draftLocaleMeta[state.activeLocale] = { configVersion: state.draftVersion, savedAt: stamp };
+      state.draftLocales[state.defaultLocale] = true;
+      state.draftLocaleMeta[state.defaultLocale] = {
+        configVersion: state.draftVersion,
+        savedAt: stamp,
+        kvRows: buildKvRows().length,
+        enabledLocales: enabledKvLocales().map((locale) => locale.code)
+      };
       state.drawerOpen = false;
       renderAll();
-      showToast(`${localeLabel()} 草稿已保存；草稿仅存于平台，APP 无法获取`);
+      showToast("英文结构源已保存为多语言 KV 草稿；APP 无法获取草稿");
     }
 
     function publishConfig() {
@@ -7342,16 +8571,22 @@
       }
       const stamp = new Date().toLocaleString("zh-CN", { hour12: false });
       const versionSeed = Date.now();
-      state.publishedLocales[state.activeLocale] = true;
-      delete state.draftLocales[state.activeLocale];
-      delete state.draftLocaleMeta[state.activeLocale];
+      state.activeLocale = state.defaultLocale;
+      state.publishedLocales[state.defaultLocale] = true;
+      delete state.draftLocales[state.defaultLocale];
+      delete state.draftLocaleMeta[state.defaultLocale];
       state.publishedVersion = `release-${versionSeed}`;
-      state.publishedLocaleMeta[state.activeLocale] = { configVersion: state.publishedVersion, savedAt: stamp };
+      state.publishedLocaleMeta[state.defaultLocale] = {
+        configVersion: state.publishedVersion,
+        savedAt: stamp,
+        kvRows: buildKvRows().length,
+        enabledLocales: enabledKvLocales().map((locale) => locale.code)
+      };
       state.lastSaved = "刚刚发布";
       state.drawerOpen = false;
       renderAll();
       const visibility = state.productListed ? "产品已上架，所有用户可见" : "产品未上架，仅产品白名单授权用户可见";
-      showToast(`${localeLabel()} 配置已发布；${visibility}`);
+      showToast(`多语言 KV 已发布；APP 按语言参数获取已发布配置；${visibility}`);
     }
 
     function renderSavedEntryPreview() {
@@ -7367,10 +8602,14 @@
         return;
       }
       const meta = currentLocaleMeta();
-      const hasDraft = Boolean(state.draftLocales[state.activeLocale]);
+      const hasDraft = Boolean(state.draftLocales[state.defaultLocale]);
       if (hasDraft && !state.validationRan) state.validationRan = true;
       const draftTag = hasDraft ? "warning" : "success";
       const draftLabel = hasDraft ? "有草稿" : "无草稿";
+      const kvRows = buildKvRows();
+      const textRows = kvRows.filter((row) => row.kind !== "media");
+      const mediaRows = kvRows.filter((row) => row.kind === "media");
+      const enabledLocales = enabledKvLocales();
       const issues = state.validationRan ? validateConfig() : [];
       const errors = issues.filter((issue) => issue.type === "danger").length;
       const warnings = issues.filter((issue) => issue.type === "warning").length;
@@ -7394,11 +8633,38 @@
       preview.innerHTML = `
         <div class="saved-preview-head">
           <div>
-            <div class="saved-preview-title">设备助手模板配置预览</div>
-            <div class="saved-preview-meta">${escapeHtml(localeLabel())} / Step list 可见项 ${visibleStepListItemCount()} / ${state.steps.length} step 模板 / ${state.useWelcomeFinish ? "含 Welcome + Finish" : "不含 Welcome + Finish"} / ${state.manualPdfHidden ? "说明书隐藏" : state.manualPdf ? "含说明书" : "未上传说明书"} / ${escapeHtml(meta.savedAt || "刚刚保存")}</div>
+            <div class="saved-preview-title">设备助手多语言 KV 配置</div>
+            <div class="saved-preview-meta">英文结构源 / ${kvRows.length} 条 KV / ${enabledLocales.length} 个启用语言列 / Step list 可见项 ${visibleStepListItemCount()} / ${escapeHtml(meta.savedAt || "刚刚保存")}</div>
           </div>
           <span class="tag ${draftTag}">${draftLabel}</span>
         </div>
+        <div class="kv-summary-grid">
+          <div class="kv-summary-card"><span class="kv-summary-label">结构源</span><strong class="kv-summary-value">英文</strong></div>
+          <div class="kv-summary-card"><span class="kv-summary-label">文本 / 媒体 Key</span><strong class="kv-summary-value">${textRows.length} / ${mediaRows.length}</strong></div>
+          <div class="kv-summary-card"><span class="kv-summary-label">启用语言列</span><strong class="kv-summary-value">${enabledLocales.length}</strong></div>
+        </div>
+        <div class="kv-locale-panel">
+          <div class="kv-locale-toolbar">
+            <div>
+              <strong>语言列管理</strong>
+              <div class="field-help">启用语言后，发布前需要校验该语言所有文本和媒体 Key 是否配置完整。</div>
+            </div>
+            <button class="btn text" id="toggleLocalePanelBtn" type="button">${state.localePanelOpen ? "收起语言" : "展开语言"}</button>
+          </div>
+          <div id="localeTabs">
+            ${state.localePanelOpen ? renderLocaleColumnControls() : `<div class="field-help">${enabledLocales.map((locale) => locale.label).join("、")}</div>`}
+          </div>
+        </div>
+        <div class="kv-toolbar">
+          <div class="field-help">导入 / 导出仅包含非英文语言的文本 Key；英文列只读，不支持编辑、导出和导入覆盖，只能点击“编辑英文结构源”修改英文内容。媒体 Key 可在语言列上传同类型文件，或在英文列同步到其他启用语言。</div>
+          <div class="kv-toolbar-actions">
+            <button class="btn" id="exportKvCsvBtn" type="button">导出 CSV</button>
+            <button class="btn" id="exportKvXlsxBtn" type="button">导出 XLSX</button>
+            <label class="btn" for="importKvFileInput">导入 CSV/XLSX</label>
+            <input id="importKvFileInput" type="file" accept=".csv,.xlsx,text/csv" hidden>
+          </div>
+        </div>
+        ${renderKvTable(30)}
         <div class="validation-box" id="entryValidationBox">
           <div class="inspector-title-row">
             <strong>配置校验</strong>
@@ -7408,6 +8674,18 @@
           ${state.validationRan && issues.length > 5 ? `<div class="field-help">还有 ${issues.length - 5} 条问题未展示。</div>` : ""}
         </div>
       `;
+      bindKvTableInputs(preview);
+      bindKvMediaControls(preview);
+      bindKvPreviewControls(preview);
+      bindLocaleColumnControls(preview);
+      $("#toggleLocalePanelBtn")?.addEventListener("click", () => {
+        state.localePanelOpen = !state.localePanelOpen;
+        renderEntry();
+      });
+      $("#exportKvCsvBtn")?.addEventListener("click", () => exportKvText("csv"));
+      $("#exportKvXlsxBtn")?.addEventListener("click", () => exportKvText("xlsx"));
+      $("#importKvFileInput")?.addEventListener("change", (event) => importKvTextFile(event.target.files?.[0]));
+      renderKvLocalePreviewModal();
     }
 
     function renderSavedEntryStep(step, index) {
@@ -7509,7 +8787,7 @@
     function renderPublishPanel() {
       const panel = $("#publishPanel");
       if (!panel) return;
-      const publishedMeta = state.publishedLocaleMeta[state.activeLocale];
+      const publishedMeta = kvPublishedMeta();
       const status = currentLocaleStatus();
       panel.innerHTML = `
         <div class="status-grid">
@@ -7521,6 +8799,7 @@
           强制新手指引
         </label>
         <div class="field-help">当用户完成设备添加后，点击设备面板强制进入新手引导。</div>
+        <div class="field-help">APP 仅能获取已发布 KV 配置；产品未上架时继承产品白名单授权，产品已上架后所有用户可见。</div>
       `;
       $("#forceNoviceGuideToggle")?.addEventListener("change", (event) => {
         state.forceNoviceGuide = event.target.checked;
@@ -7544,7 +8823,7 @@
           <div class="phone-status"><span>9:41</span><span>设备助手</span><span>100%</span></div>
           <div class="phone-body">
             <div class="phone-nav-row">
-              <button class="phone-back" type="button" ${state.useWelcomeFinish ? "data-preview-welcome" : ""}>‹</button>
+              <span class="phone-back" aria-hidden="true">‹</span>
               <div class="phone-title">How to Use</div>
               <span></span>
             </div>
@@ -7557,31 +8836,16 @@
           <div class="phone-status"><span>9:41</span><span>设备助手</span><span>100%</span></div>
           <div class="phone-body">
             <div class="phone-nav-row">
-              <button class="phone-back" type="button" data-preview-step-list>‹</button>
+              <span class="phone-back" aria-hidden="true">‹</span>
               <div class="phone-title">Step ${step?.order || 1}</div>
               <span></span>
             </div>
             ${renderStepTemplatePreview(step)}
-            ${isLastStep(step) && state.useWelcomeFinish ? `<button class="phone-primary-action" type="button" data-preview-finish>Finish</button>` : ""}
+            ${isLastStep(step) && state.useWelcomeFinish ? `<div class="phone-primary-action" aria-hidden="true">Finish</div>` : ""}
           </div>
         `;
       }
       renderPageOverview();
-      phone.querySelector("[data-preview-step-list]")?.addEventListener("click", () => {
-        state.previewScreen = "stepList";
-        state.layer = "page";
-        state.selectedPage = "steps";
-        renderAll();
-      });
-      phone.querySelector("[data-preview-welcome]")?.addEventListener("click", () => selectAssistantPage("welcome"));
-      phone.querySelector("[data-preview-finish]")?.addEventListener("click", () => selectAssistantPage("finish"));
-      phone.querySelectorAll("[data-carousel]").forEach((button) => {
-        button.addEventListener("click", (event) => {
-          event.stopPropagation();
-          state.carouselIndex[button.dataset.carousel] = Number(button.dataset.carouselIndex);
-          renderPhonePreview();
-        });
-      });
     }
 
     function renderWelcomePreview() {
@@ -7595,7 +8859,7 @@
           </section>
           <div class="app-param-note">主图、title、subtitle 由 APP 写入和引用参数，不在云端配置。</div>
           ${renderTemplateSubstepsPreview(normalizedSubsteps(state.welcomePage), normalizedSubstepMarkerType(state.welcomePage), true)}
-          <button class="phone-primary-action" type="button" data-preview-step-list>Get started</button>
+          <div class="phone-primary-action" aria-hidden="true">Get started</div>
         </div>
       `;
     }
@@ -7605,7 +8869,7 @@
         <div class="phone-status"><span>9:41</span><span>Finish</span><span>100%</span></div>
         <div class="phone-body">
           <div class="phone-nav-row">
-            <button class="phone-back" type="button" data-preview-step-list>‹</button>
+            <span class="phone-back" aria-hidden="true">‹</span>
             <div class="phone-title">Finish</div>
             <span></span>
           </div>
@@ -7625,7 +8889,7 @@
         <div class="phone-status"><span>9:41</span><span>Manual</span><span>100%</span></div>
         <div class="phone-body">
           <div class="phone-nav-row">
-            <button class="phone-back" type="button" data-preview-step-list>‹</button>
+            <span class="phone-back" aria-hidden="true">‹</span>
             <div class="phone-title">Manual</div>
             <span></span>
           </div>
@@ -7762,20 +9026,20 @@
         const page = state.layer === "welcome" ? state.welcomePage : state.finishPage;
         const pageName = state.layer === "welcome" ? "Welcome 模板" : "Finish 模板";
         $("#inspectorTitle").textContent = pageName;
-        $("#inspectorSubtitle").textContent = `${localeLabel()} / ${state.useWelcomeFinish ? "成对启用" : "成对隐藏"} / 固定模板`;
+        $("#inspectorSubtitle").textContent = `英文结构源 / ${state.useWelcomeFinish ? "成对启用" : "成对隐藏"} / 固定模板`;
         $("#inspectorBody").innerHTML = renderAssistantPageForm(page, state.layer);
         bindAssistantPageForm(page, state.layer);
         return;
       }
       if (state.layer === "manual") {
         $("#inspectorTitle").textContent = "说明书 PDF";
-        $("#inspectorSubtitle").textContent = `${localeLabel()} / PDF 说明书入口，可隐藏。`;
+        $("#inspectorSubtitle").textContent = "英文结构源 / PDF 说明书入口，可隐藏。";
         $("#inspectorBody").innerHTML = renderManualForm();
         bindManualForm();
         return;
       }
       $("#inspectorTitle").textContent = "Step 模板";
-      $("#inspectorSubtitle").textContent = `${localeLabel()} / 第 ${step?.order || 1} 页 / 固定字段，不需要组件排序。`;
+      $("#inspectorSubtitle").textContent = `英文结构源 / 第 ${step?.order || 1} 页 / 固定字段，不需要组件排序。`;
       $("#inspectorBody").innerHTML = renderStepTemplateForm(step);
       bindStepTemplateForm(step);
     }
@@ -8239,6 +9503,7 @@
           if (!textValue(section, "content")) issues.push({ level: "错误", type: "danger", text: `${label} 第三部分 ${index + 1} 缺少内容。` });
         });
       });
+      validateEnabledKvCompleteness(issues);
       return issues;
     }
 
@@ -8264,7 +9529,7 @@
             <strong>配置校验</strong>
             <span class="tag info">未运行</span>
           </div>
-          <div class="field-help">点击“发布”时会校验结构和素材风险；保存草稿允许继续编辑。</div>
+          <div class="field-help">点击“发布”时会校验结构、素材和已启用语言的所有 Key；保存草稿允许继续编辑。</div>
         `;
         return;
       }
@@ -8281,7 +9546,7 @@
             <span class="tag ${issue.type}">${issue.level}</span>
             <span>${escapeHtml(issue.text)}</span>
           </div>
-        `).join("") : `<div class="field-help">当前配置可发布。发布后新增接口将返回当前语言已发布配置。</div>`}
+        `).join("") : `<div class="field-help">当前配置可发布。发布后新增接口将返回已发布 KV 配置。</div>`}
         ${issues.length > 5 ? `<div class="field-help">还有 ${issues.length - 5} 条问题未展示。</div>` : ""}
       `;
     }
@@ -8322,10 +9587,6 @@
           ${total ? "" : `<div class="empty-preview">Step 页和说明书 PDF 均已隐藏。</div>`}
         </div>
       `;
-      overview.querySelectorAll("[data-page-preview-step]").forEach((button) => {
-        button.addEventListener("click", () => selectStep(button.dataset.pagePreviewStep, { previewScreen: "stepPage" }));
-      });
-      overview.querySelector("[data-page-preview-manual]")?.addEventListener("click", () => selectAssistantPage("manual"));
     }
 
     function renderPagePreviewCard(step, index) {
@@ -8333,10 +9594,10 @@
       const title = textValue(step, "title") || `Step ${index + 1}`;
       const subtitle = textValue(step, "subtitle");
       return `
-        <button class="page-preview-card ${active}" type="button" data-page-preview-step="${escapeHtml(step.id)}">
+        <div class="page-preview-card ${active}" data-page-preview-step="${escapeHtml(step.id)}">
           <div class="page-preview-title">${escapeHtml(title)}</div>
           ${subtitle ? `<div class="page-preview-desc">${escapeHtml(subtitle)}</div>` : ""}
-        </button>
+        </div>
       `;
     }
 
@@ -8344,10 +9605,10 @@
       const active = state.selectedPage === "manual" ? "active" : "";
       const title = state.manualPdf ? resourceName(state.manualPdf) : "说明书 PDF";
       return `
-        <button class="page-preview-card ${active}" type="button" data-page-preview-manual>
+        <div class="page-preview-card ${active}" data-page-preview-manual>
           <div class="page-preview-title">${escapeHtml(title)}</div>
           <div class="page-preview-desc">PDF 说明书</div>
-        </button>
+        </div>
       `;
     }
 
@@ -8360,7 +9621,7 @@
       renderPhonePreview();
       renderInspector();
       renderValidationBox();
-      renderImportLanguageModal();
+      renderKvLocalePreviewModal();
       renderPrototypeAnnotations();
     }
 
@@ -8396,14 +9657,8 @@
 
     on("#addStepBtn", "click", addStep);
     on("#saveDraftBtn", "click", saveDraft);
+    on("#saveKvDraftBtn", "click", saveDraft);
     on("#publishConfigBtn", "click", publishConfig);
-    on("#importLanguageBtn", "click", importFromLocale);
-    on("#closeImportLanguageModal", "click", closeImportLanguageModal);
-    on("#cancelImportLanguageBtn", "click", closeImportLanguageModal);
-    on("#confirmImportLanguageBtn", "click", confirmImportFromLocale);
-    on("#importLanguageModal", "click", (event) => {
-      if (event.target?.id === "importLanguageModal") closeImportLanguageModal();
-    });
     on("#validateBtn", "click", () => {
       state.drawerOpen = false;
       renderAll();
@@ -8415,6 +9670,11 @@
     });
     on("#closePrototypeAnnotations", "click", () => setPrototypeAnnotationsOpen(false));
     on("#openPrototypeAnnotations", "click", () => setPrototypeAnnotationsOpen(true));
+    on("#closeKvPreviewBtn", "click", closeKvPreviewModal);
+    on("#confirmKvPreviewBtn", "click", closeKvPreviewModal);
+    on("#kvPreviewModal", "click", (event) => {
+      if (event.target?.id === "kvPreviewModal") closeKvPreviewModal();
+    });
     applySimplifiedTemplateModel();
     setPrototypeAnnotationsOpen(true);
     renderAll();
