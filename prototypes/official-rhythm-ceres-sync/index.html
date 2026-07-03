@@ -431,6 +431,19 @@
       line-height: 18px;
     }
 
+    .required-mark {
+      color: var(--el-color-danger);
+      margin-left: 2px;
+      font-weight: 700;
+    }
+
+    .optional-mark {
+      color: var(--el-text-color-placeholder);
+      margin-left: 4px;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
     .error-text {
       color: var(--el-color-danger);
       font-size: 12px;
@@ -1968,16 +1981,16 @@
         title: "Ceres 基础字段可编辑",
         location: "编辑韵律抽屉 > 基础信息",
         trigger: "点击 Ceres 韵律行内编辑。",
-        response: "名称、描述、编码、图标、主图、排序、色值可由平台编辑。",
-        validation: "保存不回写 Ceres，已发布韵律保存成功后立即生效。",
+        response: "韵律名称和韵律描述为必填；编码、图标、主图、排序、色值为选填，且平台编辑不回写 Ceres。",
+        validation: "名称或描述为空时阻断保存；选填字段为空时可保存，已发布韵律保存成功后立即生效。",
         boundary: "Ceres 后续同步不覆盖这些平台编辑字段。"
       },
       "06": {
         title: "Ceres 功能设置不可编辑",
         location: "编辑韵律抽屉 > 功能设置",
         trigger: "编辑 Ceres 同步韵律。",
-        response: "功能设置显示只读摘要或维护提示，由 Ceres 同步更新。",
-        validation: "保存基础字段时不要求平台解析或校验功能设置。",
+        response: "功能设置显示只读摘要或维护提示，由 Ceres 同步更新，不提供编辑入口。",
+        validation: "保存基础字段时不要求平台填写、解析或校验 Ceres 功能设置。",
         boundary: "平台只存储和下发 Ceres 功能设置。"
       },
       "07": {
@@ -1992,8 +2005,8 @@
         title: "modeCode 校验",
         location: "韵律编码字段",
         trigger: "创建、编辑或 Ceres 自动生成编码。",
-        response: "平台使用范围 0 到 100000，同一 product 下唯一。",
-        validation: "越界和重复阻断保存或同步新增，并展示字段级错误。",
+        response: "韵律编码为选填；填写时平台使用范围 0 到 100000，同一 product 下唯一。",
+        validation: "空值不阻断保存；填写后越界或重复才阻断保存或同步新增，并展示字段级错误。",
         boundary: "APP 使用 modeCode 调用设备侧烧录 mode，其他下发影响遵循现状。"
       },
       "09": {
@@ -2041,8 +2054,8 @@
         location: "编辑保存 toast",
         trigger: "编辑已发布韵律并保存通过校验。",
         response: "保存成功后立即影响 APP 可见内容，弹出提示。",
-        validation: "接口可见性预览保持返回该韵律，但展示字段已更新。",
-        boundary: "操作日志、权限和校验规则沿用现状。"
+        validation: "韵律名称、韵律描述必填；本地创建韵律的功能设置必填；其他基础字段为空不阻断保存。",
+        boundary: "Ceres 功能设置不可编辑；操作日志和权限沿用现状。"
       }
     };
 
@@ -2072,7 +2085,11 @@
     }
 
     function maxCode() {
-      return Math.max(...state.rhythms.filter((row) => !row.deleted).map((row) => row.code), -1);
+      const codes = state.rhythms
+        .filter((row) => !row.deleted)
+        .map((row) => Number(row.code))
+        .filter((code) => Number.isInteger(code));
+      return Math.max(...codes, -1);
     }
 
     function nextCode() {
@@ -2084,6 +2101,7 @@
     }
 
     function isCodeDuplicate(code, currentId) {
+      if (!Number.isInteger(code)) return false;
       return state.rhythms.some((row) => !row.deleted && row.id !== currentId && Number(row.code) === Number(code));
     }
 
@@ -2317,17 +2335,17 @@
           </div>
           <div class="form-grid">
             <div class="field">
-              <label for="formName">韵律名称</label>
+              <label for="formName">韵律名称<span class="required-mark">*</span></label>
               <input class="input" id="formName" value="${escapeAttr(row.name)}" placeholder="请输入英语默认名称">
               <div class="error-text" id="errName"></div>
             </div>
             <div class="field" data-anchor="08">
-              <label for="formCode">韵律编码</label>
-              <input class="input" id="formCode" value="${escapeAttr(row.code)}" placeholder="0 到 100000">
+              <label for="formCode">韵律编码<span class="optional-mark">选填</span></label>
+              <input class="input" id="formCode" value="${escapeAttr(row.code)}" placeholder="0 到 100000，未填则按平台规则生成或保留">
               <div class="error-text" id="errCode"></div>
             </div>
             <div class="field">
-              <label>韵律色值</label>
+              <label>韵律色值<span class="optional-mark">选填</span></label>
               <div class="color-picker-wrap" id="colorPickerWrap">
                 <button type="button" class="color-picker-trigger" id="colorTrigger">
                   ${row.color
@@ -2369,12 +2387,12 @@
               <div class="help">用于 APP 侧韵律背景色展示。</div>
             </div>
             <div class="field">
-              <label for="formSort">排序</label>
+              <label for="formSort">排序<span class="optional-mark">选填</span></label>
               <input class="input" id="formSort" value="${escapeAttr(row.sort)}" placeholder="请输入排序">
               <div class="help">已存在列表项沿用平台配置排序规则。</div>
             </div>
             <div class="field span-2">
-              <label>韵律图标</label>
+              <label>韵律图标<span class="optional-mark">选填</span></label>
               <div class="upload-row" id="iconUploadRow">
                 ${["配置图标", "模式按钮", "模式选中按钮"].map((label, idx) => {
                   const stored = row.iconSlots && row.iconSlots[idx];
@@ -2396,7 +2414,7 @@
               <div class="help">支持 PNG/JPG，建议 100×100px 以上。</div>
             </div>
             <div class="field span-2">
-              <label>韵律主图</label>
+              <label>韵律主图<span class="optional-mark">选填</span></label>
               <div class="upload-row" id="mainImageUploadRow">
                 ${(() => {
                   const stored = row.mainImageData;
@@ -2418,7 +2436,7 @@
               <div class="help">支持 PNG/JPG，建议宽高比 16:9。</div>
             </div>
             <div class="field span-2">
-              <label for="formDesc">韵律描述</label>
+              <label for="formDesc">韵律描述<span class="required-mark">*</span></label>
               <textarea class="textarea" id="formDesc" placeholder="请输入英语默认描述">${escapeHtml(row.desc)}</textarea>
               <div class="error-text" id="errDesc"></div>
             </div>
@@ -2441,8 +2459,8 @@
 
         <div class="form-block" data-anchor="${isCeres ? "06" : "14"}">
           <div class="form-block-title">
-            <span>功能设置</span>
-            ${isCeres ? `<span class="tag warning">不可编辑</span>` : `<span class="tag success">可编辑</span>`}
+            <span>功能设置${isCeres ? "" : `<span class=\"required-mark\">*</span>`}</span>
+            ${isCeres ? `<span class="tag warning">不可编辑</span>` : `<span class="tag success">必填</span>`}
           </div>
           ${isCeres ? `
             <div class="readonly-panel">Ceres 同步韵律的功能设置由 Ceres 维护，IoT Admin 仅存储和下发，不解析、不校验、不提供编辑入口。</div>
@@ -2797,7 +2815,7 @@
       const name = $("#formName").value.trim();
       const desc = $("#formDesc").value.trim();
       const codeText = $("#formCode").value.trim();
-      const code = Number(codeText);
+      const code = codeText === "" ? null : Number(codeText);
       const color = state.drawerColor || "";
       const sort = Number($("#formSort").value.trim() || 0);
       let ok = true;
@@ -2811,21 +2829,20 @@
         setFieldError("formDesc", "errDesc", "请输入韵律描述。");
         ok = false;
       }
-      if (codeText === "") {
-        setFieldError("formCode", "errCode", "请输入韵律编码。");
-        ok = false;
-      } else if (!Number.isInteger(code)) {
-        setFieldError("formCode", "errCode", "韵律编码仅支持 0 到 100000 的整数。");
-        ok = false;
-      } else if (code < 0) {
-        setFieldError("formCode", "errCode", "韵律编码不能小于 0。");
-        ok = false;
-      } else if (code > 100000) {
-        setFieldError("formCode", "errCode", "韵律编码不能大于 100000。");
-        ok = false;
-      } else if (isCodeDuplicate(code, currentId)) {
-        setFieldError("formCode", "errCode", "当前产品下已存在相同韵律编码，请修改后保存。");
-        ok = false;
+      if (codeText !== "") {
+        if (!Number.isInteger(code)) {
+          setFieldError("formCode", "errCode", "韵律编码仅支持 0 到 100000 的整数。");
+          ok = false;
+        } else if (code < 0) {
+          setFieldError("formCode", "errCode", "韵律编码不能小于 0。");
+          ok = false;
+        } else if (code > 100000) {
+          setFieldError("formCode", "errCode", "韵律编码不能大于 100000。");
+          ok = false;
+        } else if (isCodeDuplicate(code, currentId)) {
+          setFieldError("formCode", "errCode", "当前产品下已存在相同韵律编码，请修改后保存。");
+          ok = false;
+        }
       }
 
       if (!ok) {
@@ -2836,12 +2853,13 @@
 
       if (isCreate) {
         const newId = `local-${Date.now()}`;
+        const finalCode = codeText === "" ? nextCode() : code;
         state.rhythms.push({
           id: newId,
           source: "LOCAL",
           status: publishAfterSave ? "PUBLISHED" : "CONFIGURING",
           name,
-          code,
+          code: finalCode,
           icon: state.drawerIconSlots[0] ? "✓" : "—",
           iconSlots: [...state.drawerIconSlots],
           color,
@@ -2865,7 +2883,7 @@
         const row = state.rhythms.find((item) => item.id === id);
         Object.assign(row, {
           name,
-          code,
+          code: codeText === "" ? row.code : code,
           icon: state.drawerIconSlots[0] ? "✓" : (row.icon || "—"),
           iconSlots: [...state.drawerIconSlots],
           color,
