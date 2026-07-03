@@ -832,6 +832,36 @@
       line-height: 18px;
     }
 
+    .annotation-sim-tools {
+      margin-top: 12px;
+      border: 1px solid #dfe6f1;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .annotation-sim-title {
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 18px;
+    }
+
+    .annotation-sim-desc {
+      color: #748094;
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .annotation-sim-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
     .annotation-body {
       min-height: 0;
       overflow: auto;
@@ -1683,21 +1713,9 @@
                       </select>
                     </div>
                     <div class="toolbar-actions">
-                      <select class="select" id="scenarioSelect" aria-label="场景切换" style="width: 176px;">
-                        <option value="default">默认列表</option>
-                        <option value="empty">空列表</option>
-                        <option value="loading">列表加载</option>
-                        <option value="syncFail">同步失败</option>
-                        <option value="codeConflict">modeCode 冲突</option>
-                        <option value="codeOverflow">modeCode 越界</option>
-                        <option value="publishedEdit">已发布编辑</option>
-                        <option value="deletedResync">删除后再同步</option>
-                        <option value="permission">无权限</option>
-                      </select>
                       <button class="btn" id="queryBtn" type="button">查询</button>
                       <button class="btn" id="resetBtn" type="button">重置</button>
                       <button class="btn primary" id="createBtn" type="button">创建韵律</button>
-                      <button class="btn" id="syncBtn" type="button" data-anchor="09">模拟 Ceres 同步</button>
                     </div>
                   </div>
 
@@ -1753,6 +1771,26 @@
       <div class="annotation-head">
         <h2 class="annotation-title">原型批注</h2>
         <div class="annotation-sub">点击左侧编号或批注卡片，可查看当前页面、抽屉、弹窗和状态的产品规则。</div>
+        <div class="annotation-sim-tools" aria-label="原型演示工具">
+          <div>
+            <div class="annotation-sim-title">原型演示工具</div>
+            <div class="annotation-sim-desc">以下控件仅用于切换演示状态和模拟第三方同步，不属于 IoT Admin 页面功能。</div>
+          </div>
+          <div class="annotation-sim-row">
+            <select class="select" id="scenarioSelect" aria-label="场景切换">
+              <option value="default">默认列表</option>
+              <option value="empty">空列表</option>
+              <option value="loading">列表加载</option>
+              <option value="syncFail">同步失败</option>
+              <option value="codeConflict">modeCode 冲突</option>
+              <option value="codeOverflow">modeCode 越界</option>
+              <option value="publishedEdit">已发布编辑</option>
+              <option value="deletedResync">删除后再同步</option>
+              <option value="permission">无权限</option>
+            </select>
+            <button class="btn" id="syncBtn" type="button" data-anchor="09">模拟 Ceres 同步</button>
+          </div>
+        </div>
       </div>
       <div class="annotation-body" id="annotationBody"></div>
     </aside>
