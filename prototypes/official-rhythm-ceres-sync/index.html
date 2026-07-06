@@ -1697,7 +1697,7 @@
                   </div>
                   <div class="anchor-wrap" data-anchor="03">
                     <span class="note-anchor">03</span>
-                    <span class="tag info">APP 仅获取已发布韵律</span>
+                    <span class="tag info">APP 仅获取发布韵律</span>
                   </div>
                 </div>
 
@@ -1721,8 +1721,9 @@
                       <label for="statusFilter">状态</label>
                       <select class="select" id="statusFilter">
                         <option value="ALL">全部</option>
-                        <option value="CONFIGURING">配置中</option>
-                        <option value="PUBLISHED">已发布</option>
+                        <option value="DRAFT">草稿</option>
+                        <option value="PUBLISHED">发布</option>
+                        <option value="OFFLINE">下架</option>
                       </select>
                     </div>
                     <div class="toolbar-actions">
@@ -1766,7 +1767,7 @@
                     <div class="visibility-head">
                       <div>
                         <div class="visibility-title">接口可见性预览</div>
-                        <div class="section-desc">旧版本接口只返回本地创建且已发布韵律；新版本接口返回所有来源的已发布韵律。</div>
+                        <div class="section-desc">旧版本接口只返回本地创建且发布韵律；新版本接口返回所有来源的发布韵律。</div>
                       </div>
                       <span class="tag info">APP 缓存刷新不在本需求范围内</span>
                     </div>
@@ -1797,8 +1798,8 @@
               <option value="syncFail">同步失败</option>
               <option value="codeConflict">modeCode 冲突</option>
               <option value="codeOverflow">modeCode 越界</option>
-              <option value="publishedEdit">已发布编辑</option>
-              <option value="deletedResync">删除后再同步</option>
+              <option value="publishedEdit">发布编辑</option>
+              <option value="fullSync">Ceres 全量同步</option>
               <option value="permission">无权限</option>
             </select>
             <button class="btn" id="syncBtn" type="button" data-anchor="09">模拟 Ceres 同步</button>
@@ -1862,7 +1863,7 @@
         {
           id: "r2",
           source: "LOCAL",
-          status: "CONFIGURING",
+          status: "DRAFT",
           name: "Night Relief",
           code: 10002,
           icon: "N",
@@ -1884,7 +1885,7 @@
         {
           id: "r3",
           source: "CERES",
-          status: "CONFIGURING",
+          status: "DRAFT",
           name: "Ceres Calm Flow",
           code: 10003,
           icon: "C",
@@ -1895,6 +1896,7 @@
           syncTime: "2026-06-25 10:30:12",
           mainImage: true,
           ceresUuid: "ceres-7b0a-calm-flow",
+          productIds: ["2063886410419023874", "2063886410419023999"],
           deleted: false,
           lang: {
             en: { name: "Ceres Calm Flow", desc: "Synced from Ceres" },
@@ -1917,6 +1919,7 @@
           syncTime: "2026-06-25 10:42:05",
           mainImage: true,
           ceresUuid: "ceres-6c4a-active-pulse",
+          productIds: ["2063886410419023874"],
           deleted: false,
           lang: {
             en: { name: "Ceres Active Pulse", desc: "Published Ceres rhythm" },
@@ -1957,16 +1960,16 @@
         title: "来源治理",
         location: "官方韵律列表 > 来源列",
         trigger: "列表同时存在本地创建和 Ceres 同步韵律。",
-        response: "来源作为治理字段展示为本地创建或 Ceres同步，用于同步冲突、删除和接口过滤。",
-        validation: "来源筛选能过滤列表，旧接口只看本地创建，Ceres 删除不受本地保留规则限制。",
+        response: "来源作为治理字段展示为本地创建或 Ceres同步；Ceres 数据携带产品 ID，IoT Admin 按产品 ID 自动归属到对应产品。",
+        validation: "来源筛选能过滤列表；同一 Ceres 韵律可匹配多个产品；本地韵律删除不再保留最后一条保护。",
         boundary: "本期不设计 Ceres 平台自身来源管理。"
       },
       "03": {
         title: "状态控制 APP 可见性",
-        location: "状态列、发布、撤回",
-        trigger: "韵律创建、同步、发布、撤回或编辑。",
-        response: "配置中为平台草稿态，APP 不可见；已发布为发布态，APP 可见。",
-        validation: "发布和撤回后，接口可见性预览同步刷新。",
+        location: "状态列、发布、下架",
+        trigger: "韵律创建、同步、发布、下架或编辑。",
+        response: "IoT Admin 参考 Ceres 状态机：草稿 / 发布 / 下架；草稿和下架 APP 不可见，发布 APP 可见。",
+        validation: "本地创建默认草稿；草稿点击发布进入发布；发布点击下架进入下架；下架支持重新发布。",
         boundary: "产品开发中仍受白名单命中范围控制。"
       },
       "04": {
@@ -1982,7 +1985,7 @@
         location: "编辑韵律抽屉 > 基础信息",
         trigger: "点击 Ceres 韵律行内编辑。",
         response: "韵律名称和韵律描述为必填；编码、图标、主图、排序、色值为选填，且平台编辑不回写 Ceres。",
-        validation: "名称或描述为空时阻断保存；选填字段为空时可保存，已发布韵律保存成功后立即生效。",
+        validation: "名称或描述为空时阻断保存；选填字段为空时可保存，发布韵律保存成功后立即生效。",
         boundary: "Ceres 后续同步不覆盖这些平台编辑字段。"
       },
       "06": {
@@ -2013,46 +2016,46 @@
         title: "Ceres 同步新增",
         location: "模拟 Ceres 同步弹窗",
         trigger: "Ceres 携带新 uuid 同步到平台。",
-        response: "平台新建 Ceres 韵律，状态配置中，记录同步时间，自动生成编码。",
+        response: "平台新建 Ceres 韵律，状态草稿，记录同步时间，自动生成编码。",
         validation: "新增默认不会进入 APP 返回，直到发布。",
         boundary: "同步入口为原型演示入口，实际入口以技术方案为准。"
       },
       "10": {
-        title: "Ceres 重复同步覆盖规则",
+        title: "Ceres 全量同步与覆盖规则",
         location: "同步结果提示",
-        trigger: "同 uuid Ceres 韵律再次同步。",
-        response: "仅更新功能设置摘要和同步时间，不覆盖平台基础字段、多语言、排序和状态。",
-        validation: "重复同步后名称、描述、编码保持平台当前值。",
+        trigger: "Ceres 按产品维度全量同步韵律。",
+        response: "按 Ceres 携带的产品 ID 自动归属到对应产品；本次全量缺失的历史 Ceres 韵律转为下架。",
+        validation: "示例：第一次同步 a/b/c 发布，第二次仅同步 a/b 发布时，c 自动转为下架。",
         boundary: "Ceres 功能设置结构由 Ceres 和 APP 解释。"
       },
       "11": {
-        title: "删除后再次同步",
-        location: "删除确认、同步模拟",
-        trigger: "平台删除 Ceres 韵律后，同 uuid 再次同步。",
-        response: "删除记录不参与 uuid 匹配，再同步按新韵律进入配置中。",
-        validation: "不恢复旧平台 override、多语言和发布状态。",
-        boundary: "平台删除不请求 Ceres 删除源数据。"
+        title: "Ceres 产品 ID 匹配",
+        location: "同步信息、同步模拟",
+        trigger: "Ceres 同步数据携带一个或多个产品 ID。",
+        response: "IoT Admin 根据产品 ID 将韵律自动添加到对应产品；一个韵律可匹配多个产品。",
+        validation: "同步信息区展示产品 ID；跨产品匹配不影响当前产品内的状态和编辑规则。",
+        boundary: "产品 ID 来源和跨产品写入事务由技术方案承接。"
       },
       "12": {
         title: "旧新接口返回范围",
         location: "接口可见性预览",
         trigger: "列表数据、来源或状态变化。",
-        response: "旧接口返回本地创建且已发布；新接口返回所有来源的已发布。",
-        validation: "配置中和已删除韵律均不返回。",
+        response: "旧接口返回本地创建且发布；新接口返回所有来源的发布。",
+        validation: "草稿和已删除韵律均不返回。",
         boundary: "新接口字段名、path 和 APP 缓存刷新不在本原型范围。"
       },
       "13": {
-        title: "本地删除保护",
-        location: "删除确认或禁用删除按钮",
+        title: "本地删除规则",
+        location: "删除确认",
         trigger: "删除本地创建韵律。",
-        response: "至少保留一条本地创建韵律，Ceres 韵律不受该规则限制。",
-        validation: "仅剩一条本地韵律时，本地删除被阻断。",
-        boundary: "Ceres 删除仍需危险操作确认。"
+        response: "取消本地韵律最后一条不可删除逻辑，本地创建韵律均可删除。",
+        validation: "仅剩一条本地韵律时仍可删除，删除后列表和 APP 接口不再返回。",
+        boundary: "删除仍需危险操作确认。"
       },
       "14": {
-        title: "已发布编辑立即生效",
+        title: "发布编辑立即生效",
         location: "编辑保存 toast",
-        trigger: "编辑已发布韵律并保存通过校验。",
+        trigger: "编辑发布韵律并保存通过校验。",
         response: "保存成功后立即影响 APP 可见内容，弹出提示。",
         validation: "韵律名称、韵律描述必填；本地创建韵律的功能设置必填；其他基础字段为空不阻断保存。",
         boundary: "Ceres 功能设置不可编辑；操作日志和权限沿用现状。"
@@ -2067,7 +2070,12 @@
     }
 
     function statusLabel(status) {
-      return status === "PUBLISHED" ? "已发布" : "配置中";
+      const labels = {
+        DRAFT: "草稿",
+        PUBLISHED: "发布",
+        OFFLINE: "下架"
+      };
+      return labels[status] || "草稿";
     }
 
     function getVisibleRows() {
@@ -2098,6 +2106,12 @@
 
     function activeLocalCount() {
       return state.rhythms.filter((row) => !row.deleted && row.source === "LOCAL").length;
+    }
+
+    function getStatusTagClass(status) {
+      if (status === "PUBLISHED") return "published";
+      if (status === "OFFLINE") return "danger";
+      return "configuring";
     }
 
     function isCodeDuplicate(code, currentId) {
@@ -2146,9 +2160,9 @@
         syncFail: ["danger", "Ceres 同步失败，请稍后重试。可打开模拟同步弹窗点击失败态查看结果。"],
         codeConflict: ["danger", "当前处于 modeCode 冲突演示：编辑任意韵律并输入 10001，可看到唯一性校验。"],
         codeOverflow: ["warning", "当前处于 modeCode 越界演示：Ceres 自动生成编码达到 100001 时会阻断同步新增。"],
-        publishedEdit: ["success", "当前处于已发布编辑演示：编辑已发布韵律并保存，变更立即生效。"],
+        publishedEdit: ["success", "当前处于发布编辑演示：编辑发布韵律并保存，变更立即生效。"],
         deletedResync: ["warning", "当前处于删除后再同步演示：删除 Ceres 韵律后，同 uuid 再同步按新韵律处理。"],
-        permission: ["warning", "当前处于无权限演示：编辑、发布、撤回、删除操作不可用。"]
+        permission: ["warning", "当前处于无权限演示：编辑、发布、下架、删除操作不可用。"]
       };
       const item = scenarios[state.scenario];
       if (!item) {
@@ -2204,7 +2218,7 @@
       tbody.innerHTML = rows.map((row) => {
         const isCeres = row.source === "CERES";
         const published = row.status === "PUBLISHED";
-        const localDeleteDisabled = row.source === "LOCAL" && activeLocalCount() <= 1;
+        const offline = row.status === "OFFLINE";
         const disabled = state.permissionLocked;
         return `
           <tr data-row="${row.id}">
@@ -2216,7 +2230,7 @@
             </td>
             <td data-anchor="08">${row.code}</td>
             <td data-anchor="02"><span class="tag ${isCeres ? "ceres" : "local"}">${sourceLabel(row.source)}</span></td>
-            <td data-anchor="03"><span class="tag ${published ? "published" : "configuring"}">${statusLabel(row.status)}</span></td>
+            <td data-anchor="03"><span class="tag ${getStatusTagClass(row.status)}">${statusLabel(row.status)}</span></td>
             <td data-anchor="04">${row.syncTime}</td>
             <td><div class="media-thumb">${row.icon}</div></td>
             <td><div class="hero-thumb"></div></td>
@@ -2229,10 +2243,10 @@
                 <button class="btn text" type="button" data-action="lang" data-id="${row.id}" data-anchor="07" ${disabled ? "disabled" : ""}>多语言</button>
                 <button class="btn text" type="button" data-action="edit" data-id="${row.id}" data-anchor="${isCeres ? "05" : "14"}" ${disabled ? "disabled" : ""}>编辑</button>
                 ${published
-                  ? `<button class="btn text" type="button" data-action="withdraw" data-id="${row.id}" data-anchor="03" ${disabled ? "disabled" : ""}>撤回</button>`
+                  ? `<button class="btn text" type="button" data-action="withdraw" data-id="${row.id}" data-anchor="03" ${disabled ? "disabled" : ""}>下架</button>`
                   : `<button class="btn text" type="button" data-action="publish" data-id="${row.id}" data-anchor="03" ${disabled ? "disabled" : ""}>发布</button>`
                 }
-                <button class="btn text danger-text" type="button" data-action="delete" data-id="${row.id}" data-anchor="${isCeres ? "11" : "13"}" ${disabled || localDeleteDisabled ? "disabled" : ""}>删除</button>
+                <button class="btn text danger-text" type="button" data-action="delete" data-id="${row.id}" data-anchor="${isCeres ? "11" : "13"}" ${disabled ? "disabled" : ""}>删除</button>
               </div>
             </td>
           </tr>
@@ -2257,7 +2271,7 @@
       const oldApi = activeRows.filter((row) => row.source === "LOCAL" && row.status === "PUBLISHED");
       const newApi = activeRows.filter((row) => row.status === "PUBLISHED");
       const ceresPublished = newApi.filter((row) => row.source === "CERES");
-      const configuring = activeRows.filter((row) => row.status === "CONFIGURING");
+      const configuring = activeRows.filter((row) => row.status !== "PUBLISHED");
       $("#visibilityGrid").innerHTML = `
         <div class="visibility-cell">
           <div class="visibility-label">旧版本接口</div>
@@ -2268,11 +2282,11 @@
           <div class="visibility-value">${newApi.length ? newApi.map((row) => row.name).join("、") : "无返回"}</div>
         </div>
         <div class="visibility-cell">
-          <div class="visibility-label">Ceres 已发布</div>
+          <div class="visibility-label">Ceres 发布</div>
           <div class="visibility-value">${ceresPublished.length ? ceresPublished.map((row) => row.name).join("、") : "无"}</div>
         </div>
         <div class="visibility-cell">
-          <div class="visibility-label">APP 不可见</div>
+          <div class="visibility-label">APP 不可见（草稿/下架）</div>
           <div class="visibility-value">${configuring.length ? configuring.map((row) => row.name).join("、") : "无"}</div>
         </div>
       `;
@@ -2310,7 +2324,7 @@
       const row = isCreate ? {
         id: "",
         source: "LOCAL",
-        status: "CONFIGURING",
+        status: "DRAFT",
         name: "",
         code: "",
         icon: "R",
@@ -2451,6 +2465,7 @@
             </div>
             <ul class="mini-list">
               <li><span class="mini-label">Ceres UUID</span><span>${row.ceresUuid}</span></li>
+              <li><span class="mini-label">产品 ID</span><span>${(row.productIds || ["2063886410419023874"]).join("、")}</span></li>
               <li><span class="mini-label">同步时间</span><span>${row.syncTime}</span></li>
               <li><span class="mini-label">覆盖规则</span><span>重复同步仅更新功能设置和同步时间。</span></li>
             </ul>
@@ -2478,7 +2493,7 @@
         </div>
 
         ${isPublished ? `
-          <div class="readonly-panel" data-anchor="14">当前韵律已发布，保存并通过校验后将立即对 APP 生效。</div>
+          <div class="readonly-panel" data-anchor="14">当前韵律发布，保存并通过校验后将立即对 APP 生效。</div>
         ` : ""}
       `;
       $("#drawerFooter").innerHTML = `
@@ -2857,7 +2872,7 @@
         state.rhythms.push({
           id: newId,
           source: "LOCAL",
-          status: publishAfterSave ? "PUBLISHED" : "CONFIGURING",
+          status: publishAfterSave ? "PUBLISHED" : "DRAFT",
           name,
           code: finalCode,
           icon: state.drawerIconSlots[0] ? "✓" : "—",
@@ -2878,7 +2893,7 @@
           },
           settingsSummary: "阶段 3 个，强度 2 档，本地可编辑"
         });
-        showToast(publishAfterSave ? "保存并发布成功，韵律将对 APP 可见。" : "保存成功，韵律处于配置中。", "success");
+        showToast(publishAfterSave ? "保存并发布成功，韵律将对 APP 可见。" : "保存成功，韵律处于草稿。", "success");
       } else {
         const row = state.rhythms.find((item) => item.id === id);
         Object.assign(row, {
@@ -2893,7 +2908,7 @@
           mainImageData: state.drawerMainImageData
         });
         row.lang.en = { name, desc };
-        showToast(row.status === "PUBLISHED" ? "保存成功，已发布韵律的变更将立即对 APP 生效。" : "保存成功，韵律处于配置中。", "success");
+        showToast(row.status === "PUBLISHED" ? "保存成功，发布韵律的变更将立即对 APP 生效。" : "保存成功，韵律处于草稿。", "success");
         setAnnotation(row.status === "PUBLISHED" ? "14" : row.source === "CERES" ? "05" : "08");
       }
       closeDrawer();
@@ -2978,21 +2993,20 @@
       $("#modal").className = "modal";
       const titleMap = {
         publish: "发布韵律",
-        withdraw: "撤回韵律",
+        withdraw: "下架韵律",
         delete: row.source === "CERES" ? "删除 Ceres 同步韵律" : "删除韵律"
       };
       const bodyMap = {
         publish: `发布后，${row.name} 将在符合产品可见范围的 APP 用户侧可见。确认发布？`,
-        withdraw: `撤回后，${row.name} 将变为配置中，APP 不再返回该韵律。确认撤回？`,
+        withdraw: `下架后，${row.name} 将进入下架状态，APP 不再返回该韵律。确认下架？`,
         delete: row.source === "CERES"
-          ? `删除后，该韵律将从 IoT Admin 和 APP 返回结果中移除，但不会删除 Ceres 平台源数据。若 Ceres 后续再次同步，将按新韵律进入配置中。确认删除？`
+          ? `删除后，该韵律将从 IoT Admin 和 APP 返回结果中移除，但不会删除 Ceres 平台源数据。若 Ceres 后续再次同步，将按新韵律进入草稿。确认删除？`
           : `删除后，该本地韵律将从 IoT Admin 和 APP 返回结果中移除。确认删除？`
       };
-      const primaryMap = { publish: "发布", withdraw: "撤回", delete: "删除" };
+      const primaryMap = { publish: "发布", withdraw: "下架", delete: "删除" };
       $("#modalTitle").textContent = titleMap[type];
       $("#modalBody").innerHTML = `
         <p style="margin:0 0 12px;color:var(--el-text-color-regular);line-height:22px;">${bodyMap[type]}</p>
-        ${type === "delete" && row.source === "LOCAL" ? `<div class="readonly-panel">至少保留一条本地创建韵律。当前剩余本地创建韵律 ${activeLocalCount()} 条。</div>` : ""}
         ${type === "delete" && row.source === "CERES" ? `<div class="readonly-panel" data-anchor="11">平台删除不反向请求 Ceres 删除源数据，删除记录不参与后续 uuid 匹配。</div>` : ""}
       `;
       $("#modalFooter").innerHTML = `
@@ -3013,15 +3027,10 @@
         showToast("发布成功，该韵律将对符合产品可见范围的 APP 用户可见。", "success");
       }
       if (state.modalType === "withdraw") {
-        row.status = "CONFIGURING";
-        showToast("撤回成功，APP 不再返回该韵律。", "success");
+        row.status = "OFFLINE";
+        showToast("下架成功，APP 不再返回该韵律。", "success");
       }
       if (state.modalType === "delete") {
-        if (row.source === "LOCAL" && activeLocalCount() <= 1) {
-          showToast("至少需要保留一条本地创建韵律，当前韵律不可删除。", "danger");
-          setAnnotation("13");
-          return;
-        }
         row.deleted = true;
         if (row.source === "CERES") {
           state.deletedArchive.push({ uuid: row.ceresUuid, deletedAt: nowText, oldName: row.name });
@@ -3043,15 +3052,15 @@
         <div class="sync-options">
           <button class="sync-option" type="button" data-sync="new">
             <div class="sync-option-title">同步新 uuid</div>
-            <div class="sync-option-desc">新增 Ceres 韵律，默认配置中，记录同步时间，自动生成编码。</div>
+            <div class="sync-option-desc">新增 Ceres 韵律，默认草稿，记录同步时间，自动生成编码。</div>
           </button>
           <button class="sync-option" type="button" data-sync="repeat">
             <div class="sync-option-title">同 uuid 重复同步</div>
             <div class="sync-option-desc">仅更新功能设置摘要和同步时间，不覆盖基础信息。</div>
           </button>
-          <button class="sync-option" type="button" data-sync="deleted">
-            <div class="sync-option-title">删除后再同步</div>
-            <div class="sync-option-desc">已删除 Ceres uuid 不参与匹配，再同步按新韵律处理。</div>
+          <button class="sync-option" type="button" data-sync="fullSync">
+            <div class="sync-option-title">Ceres 全量同步</div>
+            <div class="sync-option-desc">演示第二次全量仅返回 a/b 时，历史 c 自动转为下架。</div>
           </button>
           <button class="sync-option" type="button" data-sync="fail">
             <div class="sync-option-title">同步失败</div>
@@ -3114,36 +3123,65 @@
         setAnnotation("10");
         return;
       }
-      if (type === "deleted") {
-        const deleted = state.deletedArchive[state.deletedArchive.length - 1];
-        const newCode = nextCode();
-        state.rhythms.push({
-          id: `ceres-resync-${Date.now()}`,
-          source: "CERES",
-          status: "CONFIGURING",
-          name: "Ceres Restored Flow",
-          code: newCode,
-          icon: "R",
-          color: "#8BB8FF",
-          sort: state.rhythms.filter((item) => !item.deleted).length + 1,
+      if (type === "fullSync") {
+        const ensureCeresRow = (uuid, data) => {
+          let row = state.rhythms.find((item) => !item.deleted && item.source === "CERES" && item.ceresUuid === uuid);
+          if (!row) {
+            row = {
+              id: `ceres-full-${uuid}-${Date.now()}`,
+              source: "CERES",
+              deleted: false,
+              lang: { en: { name: data.name, desc: data.desc }, zh: { name: "", desc: "" }, zhHant: { name: "", desc: "" } },
+              mainImage: true,
+              ...data,
+              ceresUuid: uuid
+            };
+            state.rhythms.push(row);
+          }
+          Object.assign(row, data, { syncTime: nowText, productIds: data.productIds || ["2063886410419023874"] });
+          return row;
+        };
+        ensureCeresRow("ceres-7b0a-calm-flow", {
+          status: "PUBLISHED",
+          name: "Ceres Calm Flow",
+          code: 10003,
+          icon: "A",
+          color: "#A58BFF",
+          sort: 3,
           duration: "Ceres透传",
-          desc: "Resynced after platform deletion",
-          syncTime: nowText,
-          mainImage: true,
-          ceresUuid: deleted ? deleted.uuid : "ceres-7b0a-calm-flow",
-          deleted: false,
-          lang: {
-            en: { name: "Ceres Restored Flow", desc: "Resynced after platform deletion" },
-            zh: { name: "", desc: "" },
-            zhHant: { name: "", desc: "" }
-          },
-          settingsSummary: "Ceres payload v6，按新韵律处理"
+          desc: "Full sync rhythm A",
+          settingsSummary: `Ceres full payload A 已刷新，${nowText}`,
+          productIds: ["2063886410419023874", "2063886410419023999"]
         });
-        showToast("同步成功，删除记录不参与 uuid 匹配，已按新韵律进入配置中。", "success");
+        ensureCeresRow("ceres-6c4a-active-pulse", {
+          status: "PUBLISHED",
+          name: "Ceres Active Pulse",
+          code: 10004,
+          icon: "B",
+          color: "#FF9F6A",
+          sort: 4,
+          duration: "Ceres透传",
+          desc: "Full sync rhythm B",
+          settingsSummary: `Ceres full payload B 已刷新，${nowText}`,
+          productIds: ["2063886410419023874"]
+        });
+        ensureCeresRow("ceres-c-quiet-wave", {
+          status: "OFFLINE",
+          name: "Ceres Quiet Wave",
+          code: 10006,
+          icon: "C",
+          color: "#8BB8FF",
+          sort: 5,
+          duration: "Ceres透传",
+          desc: "Full sync rhythm C",
+          settingsSummary: `第一次全量曾发布，本次全量未返回，自动下架，${nowText}`,
+          productIds: ["2063886410419023874"]
+        });
+        showToast("全量同步完成：a、b 保持发布；本次未返回的 c 已转为下架。", "success");
         closeModal();
         renderTable();
         renderVisibility();
-        setAnnotation("11");
+        setAnnotation("10");
         return;
       }
       const code = nextCode();
@@ -3155,7 +3193,7 @@
       state.rhythms.push({
         id: `ceres-${Date.now()}`,
         source: "CERES",
-        status: "CONFIGURING",
+        status: "DRAFT",
         name: "Ceres Focus Wave",
         code,
         icon: "F",
@@ -3166,6 +3204,7 @@
         syncTime: nowText,
         mainImage: true,
         ceresUuid: `ceres-${Date.now()}-focus-wave`,
+        productIds: ["2063886410419023874"],
         deleted: false,
         lang: {
           en: { name: "Ceres Focus Wave", desc: "New rhythm from Ceres" },
@@ -3174,7 +3213,7 @@
         },
         settingsSummary: "Ceres payload v1，平台只存储下发"
       });
-      showToast("同步成功，已新增 1 条 Ceres 韵律，默认状态为配置中。", "success");
+      showToast("同步成功，已新增 1 条 Ceres 韵律，默认状态为草稿。", "success");
       closeModal();
       renderTable();
       renderVisibility();
