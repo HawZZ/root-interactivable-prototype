@@ -531,9 +531,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                 </div>
                 <!-- BLE 子入口 -->
                 <div id="bleSubEntry" class="sub-entry" style="margin-top:12px;">
-                  <button class="sub-entry-btn" id="bleNew" onclick="selectBleMode('new')">新版入口</button>
-                  <button class="sub-entry-btn active" id="bleOld" onclick="selectBleMode('old')">旧版入口
-                    <span class="anchor-badge" title="批注 2：BLE 仅旧版入口扩展" style="background:#4372ff;">2</span>
+                  <button class="sub-entry-btn" id="bleNew" onclick="selectBleMode('new')">单步骤配网</button>
+                  <button class="sub-entry-btn active" id="bleOld" onclick="selectBleMode('old')">多步骤配网
+                    <span class="anchor-badge" title="批注 2：BLE 仅多步骤配网扩展" style="background:#4372ff;">2</span>
                   </button>
                 </div>
               </div>
@@ -582,7 +582,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                   </div>
                 </div>
 
-                <!-- Wi-Fi 扫码配网 / BLE 旧版入口 - 目标入口 -->
+                <!-- Wi-Fi 扫码配网 / BLE 多步骤配网 - 目标入口 -->
                 <div id="viewTarget">
                   <div class="view-header">
                     <div class="view-title">
@@ -615,10 +615,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                   </div>
                 </div>
 
-                <!-- BLE 新版入口 -->
+                <!-- BLE 单步骤配网 -->
                 <div id="viewBleNew" class="hidden">
                   <div class="view-header">
-                    <div class="view-title">蓝牙配网 · 新版入口
+                    <div class="view-title">蓝牙配网 · 单步骤配网
                       <span class="anchor-badge" title="批注 12：非目标入口不变化">12</span>
                     </div>
                     <button class="btn btn-default btn-sm" onclick="openDrawer('bleNew')">编辑</button>
@@ -848,14 +848,14 @@ const annotations = [
     location: '入口按钮组',
     trigger: '页面加载，或切换产品类型',
     response: 'Wi-Fi 入口保持 AP配网 / SmartConfig配网 / 扫码配网；BLE 入口保持 蓝牙配网 / 蓝牙扫码配对。不新增独立入口。',
-    rule: '仅 Wi-Fi 扫码配网 和 BLE 蓝牙配网 + 旧版入口 追加扩展字段；其余入口保持原样。'
+    rule: '仅 Wi-Fi 扫码配网 和 BLE 蓝牙配网 + 多步骤配网 追加扩展字段；其余入口保持原样。'
   },
   {
-    id: 2, title: 'BLE 仅旧版入口扩展', tag: '入口', group: 'entry',
+    id: 2, title: 'BLE 仅多步骤配网扩展', tag: '入口', group: 'entry',
     location: 'BLE 子入口区域',
     trigger: '切换到 BLE 产品 → 选择蓝牙配网',
-    response: '展示新版入口 / 旧版入口。仅旧版入口展示本期扩展字段；新版入口保持语言、配网引导图、配网指引、配网文案。',
-    rule: 'BLE 蓝牙配网 + 新版入口 不展示扩展字段，编辑抽屉标题为 "编辑配网引导"。'
+    response: '展示单步骤配网 / 多步骤配网。仅多步骤配网展示本期扩展字段；单步骤配网保持语言、配网引导图、配网指引、配网文案。',
+    rule: 'BLE 蓝牙配网 + 单步骤配网 不展示扩展字段，编辑抽屉标题为 "编辑配网引导"。'
   },
   {
     id: 3, title: '复用多语言逻辑', tag: '多语言', group: 'view',
@@ -875,7 +875,7 @@ const annotations = [
     id: 5, title: '打开目标入口编辑抽屉', tag: '编辑', group: 'edit',
     location: '查看态右上角编辑按钮',
     trigger: '点击"编辑"按钮',
-    response: '打开右侧 Drawer，标题跟随配置路径（"编辑扫码配网" 或 "编辑蓝牙配网-旧版入口"），回填当前语言已有配置。',
+    response: '打开右侧 Drawer，标题跟随配置路径（"编辑扫码配网" 或 "编辑蓝牙配网-多步骤配网"），回填当前语言已有配置。',
     rule: '非目标入口也有编辑按钮，但仅展示旧字段，不展示扩展字段。'
   },
   {
@@ -923,9 +923,9 @@ const annotations = [
   {
     id: 12, title: '非目标入口不变化', tag: '入口', group: 'entry',
     location: '非目标入口',
-    trigger: '切换到 AP配网、SmartConfig、新版入口、蓝牙扫码配对',
+    trigger: '切换到 AP配网、SmartConfig、单步骤配网、蓝牙扫码配对',
     response: '不展示扩展字段。字段、校验、查看态、编辑态全部保持原样。',
-    rule: 'BLE 新版入口编辑抽屉：标题"编辑配网引导"，字段：语言、配网引导图、配网指引、配网文案。'
+    rule: 'BLE 单步骤配网编辑抽屉：标题"编辑配网引导"，字段：语言、配网引导图、配网指引、配网文案。'
   }
 ];
 
@@ -1061,7 +1061,7 @@ function renderView() {
         viewBleNew.classList.remove('hidden');
       } else { // old
         viewTarget.classList.remove('hidden');
-        document.getElementById('targetLabel').textContent = '蓝牙配网 · 旧版入口';
+        document.getElementById('targetLabel').textContent = '蓝牙配网 · 多步骤配网';
       }
     }
   }
@@ -1181,7 +1181,7 @@ function openDrawer(type) {
 
   // 目标入口抽屉
   const isWifi = state.product === 'wifi';
-  document.getElementById('drawerTitle').textContent = isWifi ? '编辑扫码配网' : '编辑蓝牙配网-旧版入口';
+  document.getElementById('drawerTitle').textContent = isWifi ? '编辑扫码配网' : '编辑蓝牙配网-多步骤配网';
   document.getElementById('editDrawer').classList.add('open');
 
   const data = getConfigData();
