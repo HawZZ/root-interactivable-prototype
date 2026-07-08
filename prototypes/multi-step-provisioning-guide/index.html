@@ -1,2327 +1,1700 @@
-<!doctype html>
-<html lang="zh-Hans">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-  <title>云端多步骤配网引导扩展字段原型</title>
-  <style>
-    :root {
-      --app-aside-bg-color: #001529;
-      --app-aside-bg-active: #0b2a4a;
-      --app-bg-color: #f9f9f9;
-      --el-bg-color: #ffffff;
-      --el-color-primary: #4372ff;
-      --el-color-primary-dark-2: #2b6bd9;
-      --el-color-primary-light-7: #e0ecff;
-      --el-color-primary-light-9: #ecf5ff;
-      --el-color-success: #67c23a;
-      --el-color-warning: #e6a23c;
-      --el-color-danger: #f56c6c;
-      --el-color-info: #909399;
-      --el-text-color-primary: #303133;
-      --el-text-color-regular: #606266;
-      --el-text-color-secondary: #909399;
-      --el-text-color-placeholder: #a8abb2;
-      --el-border-color: #dcdfe6;
-      --el-border-color-light: #e4e7ed;
-      --el-border-color-lighter: #ebeef5;
-      --table-head-bg: #fafafa;
-      --radius: 4px;
-      --radius-lg: 6px;
-      --shadow-panel: 0 1px 2px rgba(0, 21, 41, .04);
-      --shadow-floating: 0 12px 32px rgba(0, 21, 41, .14);
-      --gap-8: 8px;
-      --gap-12: 12px;
-      --gap-16: 16px;
-      --gap-24: 24px;
-      --aside-width: 208px;
-      --header-height: 54px;
-      --annotation-width: 380px;
-      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-
-    html,
-    body {
-      margin: 0;
-      min-height: 100%;
-      background: #eef1f6;
-      color: var(--el-text-color-primary);
-      font-family: var(--sans);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    button { cursor: pointer; }
-
-    button,
-    input,
-    select,
-    textarea {
-      transition: border-color .15s ease, box-shadow .15s ease, color .15s ease, background-color .15s ease;
-    }
-
-    button:focus-visible,
-    input:focus-visible,
-    select:focus-visible,
-    textarea:focus-visible {
-      outline: 2px solid rgba(67, 114, 255, .26);
-      outline-offset: 2px;
-    }
-
-    .prototype-shell {
-      height: 100vh;
-      height: 100dvh;
-      min-height: 720px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) var(--annotation-width);
-      gap: 0;
-      background: #eef1f6;
-    }
-
-    .product-pane {
-      min-width: 0;
-      min-height: 0;
-      overflow: auto;
-      padding: 16px;
-    }
-
-    .product-canvas {
-      width: 1440px;
-      height: calc(100vh - 32px);
-      height: calc(100dvh - 32px);
-      min-height: 760px;
-      margin: 0 auto;
-      background: var(--app-bg-color);
-      display: grid;
-      grid-template-columns: var(--aside-width) minmax(0, 1fr);
-      border: 1px solid #d8dde8;
-      box-shadow: 0 8px 24px rgba(0, 21, 41, .08);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .aside {
-      background: var(--app-aside-bg-color);
-      color: rgba(255, 255, 255, .72);
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand {
-      height: 64px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, .08);
-      color: #fff;
-    }
-
-    .brand-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
-      display: grid;
-      place-items: center;
-      background: #85b436;
-      font-weight: 800;
-      letter-spacing: 0;
-    }
-
-    .brand-title {
-      font-weight: 700;
-      line-height: 18px;
-    }
-
-    .brand-subtitle {
-      color: rgba(255,255,255,.52);
-      font-size: 12px;
-      line-height: 16px;
-    }
-
-    .menu {
-      padding: 8px 0 24px;
-      overflow: auto;
-    }
-
-    .menu-group-title,
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 18px;
-      white-space: nowrap;
-    }
-
-    .menu-group-title {
-      height: 36px;
-      margin-top: 8px;
-      color: rgba(255,255,255,.38);
-      font-size: 12px;
-    }
-
-    .menu-item {
-      height: 42px;
-      border-left: 3px solid transparent;
-      color: rgba(255,255,255,.76);
-    }
-
-    .menu-item:hover {
-      background: rgba(255, 255, 255, .06);
-      color: #fff;
-    }
-
-    .menu-item.active {
-      background: var(--app-aside-bg-active);
-      border-left-color: var(--el-color-primary);
-      color: #fff;
-    }
-
-    .menu-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: currentColor;
-      opacity: .75;
-      flex: 0 0 auto;
-    }
-
-    .app-main {
-      min-width: 0;
-      min-height: 0;
-      display: grid;
-      grid-template-rows: var(--header-height) minmax(0, 1fr);
-    }
-
-    .header {
-      height: var(--header-height);
-      background: var(--el-bg-color);
-      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      gap: var(--gap-16);
-      position: relative;
-      z-index: 2;
-    }
-
-    .breadcrumb {
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-      line-height: 22px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .breadcrumb strong {
-      color: var(--el-text-color-primary);
-      font-weight: 500;
-    }
-
-    .userbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--el-text-color-regular);
-      font-size: 13px;
-    }
-
-    .avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--el-color-primary-light-9);
-      color: var(--el-color-primary);
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-    }
-
-    .content {
-      padding: 24px;
-      min-width: 0;
-      min-height: 0;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: 16px;
-    }
-
-    .summary-card,
-    .detail-card {
-      background: var(--el-bg-color);
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-panel);
-    }
-
-    .summary-card {
-      padding: 16px 20px;
-      margin-bottom: 0;
-    }
-
-    .summary-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--gap-16);
-      margin-bottom: 12px;
-    }
-
-    .product-name {
-      font-size: 18px;
-      font-weight: 600;
-      margin-right: 10px;
-    }
-
-    .summary-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      height: 24px;
-      padding: 0 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      border: 1px solid transparent;
-      white-space: nowrap;
-    }
-
-    .tag-success {
-      background: #f0f9eb;
-      color: #529b2e;
-      border-color: #d1edc4;
-    }
-
-    .tag-info {
-      background: #f4f4f5;
-      color: #73767a;
-      border-color: #e9e9eb;
-    }
-
-    .tag-warning {
-      background: #fdf6ec;
-      color: #b88230;
-      border-color: #faecd8;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px 24px;
-      color: var(--el-text-color-regular);
-      font-size: 13px;
-    }
-
-    .summary-grid span {
-      color: var(--el-text-color-secondary);
-      margin-right: 4px;
-    }
-
-    .summary-grid b {
-      color: var(--el-text-color-primary);
-      font-weight: 500;
-    }
-
-    .button {
-      height: 32px;
-      padding: 0 16px;
-      border-radius: var(--radius);
-      border: 1px solid var(--el-border-color);
-      background: #fff;
-      color: var(--el-text-color-regular);
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .button:hover {
-      border-color: var(--el-color-primary);
-      color: var(--el-color-primary);
-      background: #fff;
-    }
-
-    .button.primary {
-      background: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      color: #fff;
-    }
-
-    .button.primary:hover {
-      background: var(--el-color-primary-dark-2);
-      border-color: var(--el-color-primary-dark-2);
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(67, 114, 255, .22);
-    }
-
-    .button.success {
-      color: var(--el-color-success);
-      border-color: #b3e19d;
-      background: #f0f9eb;
-    }
-
-    .button.text {
-      border-color: transparent;
-      background: transparent;
-      color: var(--el-color-primary);
-      padding: 0 8px;
-    }
-
-    .button.danger {
-      color: var(--el-color-danger);
-      border-color: #fbc4c4;
-      background: #fef0f0;
-    }
-
-    .button:disabled {
-      cursor: not-allowed;
-      color: #c0c4cc;
-      border-color: #e4e7ed;
-      background: #f5f7fa;
-      box-shadow: none;
-    }
-
-    .steps-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--el-border-color-light);
-      margin-bottom: 0;
-      background: #fff;
-    }
-
-    .steps-tabs button {
-      height: 48px;
-      border: 0;
-      background: #fff;
-      padding: 0 22px;
-      color: var(--el-text-color-regular);
-      border-bottom: 2px solid transparent;
-      font-weight: 500;
-    }
-
-    .steps-tabs button.active {
-      color: var(--el-color-primary);
-      border-bottom-color: var(--el-color-primary);
-    }
-
-    .steps-tabs button:hover {
-      color: var(--el-color-primary);
-      background: #fbfdff;
-    }
-
-    .detail-card {
-      min-height: 0;
-      padding: 0;
-      overflow: hidden;
-      position: relative;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr) 64px;
-    }
-
-    .config-area {
-      padding: 16px 24px 20px;
-      min-height: 0;
-      overflow: auto;
-      display: grid;
-      grid-template-rows: auto auto auto auto minmax(0, 1fr);
-    }
-
-    .pager-actions {
-      height: 64px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      align-items: center;
-      border-top: 1px solid var(--el-border-color-light);
-      padding: 0 24px;
-      background: #fff;
-    }
-
-    .top-line {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: var(--gap-16);
-      margin-bottom: 12px;
-    }
-
-    .button-group {
-      display: inline-flex;
-      vertical-align: middle;
-    }
-
-    .seg-button {
-      height: 32px;
-      padding: 0 16px;
-      border: 1px solid var(--el-border-color);
-      background: #fff;
-      color: var(--el-text-color-regular);
-      margin-left: -1px;
-      font-weight: 500;
-      position: relative;
-    }
-
-    .seg-button:hover {
-      color: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      z-index: 1;
-    }
-
-    .seg-button:first-child {
-      margin-left: 0;
-      border-top-left-radius: var(--radius);
-      border-bottom-left-radius: var(--radius);
-    }
-
-    .seg-button:last-child {
-      border-top-right-radius: var(--radius);
-      border-bottom-right-radius: var(--radius);
-    }
-
-    .seg-button.active {
-      background: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      color: #fff;
-      z-index: 1;
-      box-shadow: 0 2px 6px rgba(67, 114, 255, .18);
-    }
-
-    .sub-entry {
-      min-height: 36px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .qr-prefix {
-      color: var(--el-text-color-regular);
-      margin-left: 12px;
-      height: 28px;
-      padding: 0 10px;
-      border: 1px solid var(--el-border-color-lighter);
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      background: #fafcff;
-      font-size: 12px;
-    }
-
-    .qr-prefix span {
-      color: var(--el-text-color-secondary);
-    }
-
-    .language-tabs {
-      height: 40px;
-      display: flex;
-      align-items: stretch;
-      border-bottom: 1px solid var(--el-border-color-light);
-      overflow-x: auto;
-      overflow-y: hidden;
-      margin-bottom: 16px;
-      scrollbar-width: none;
-    }
-
-    .language-tabs::-webkit-scrollbar {
-      display: none;
-    }
-
-    .language-tabs button {
-      border: 0;
-      background: #fff;
-      padding: 0 18px;
-      color: var(--el-text-color-regular);
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-    }
-
-    .language-tabs button.active {
-      color: var(--el-color-primary);
-      border-bottom-color: var(--el-color-primary);
-      font-weight: 500;
-    }
-
-    .language-tabs button:hover {
-      color: var(--el-color-primary);
-      background: #fbfdff;
-    }
-
-    .view-title {
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: 10px;
-    }
-
-    .steps-view {
-      width: min(980px, calc(100% - 96px));
-      margin-left: 64px;
-      padding-bottom: 32px;
-    }
-
-    .empty-state {
-      min-height: 280px;
-      display: grid;
-      place-items: center;
-      color: var(--el-text-color-secondary);
-      border: 1px dashed var(--el-border-color);
-      border-radius: var(--radius);
-      background: #fcfcfc;
-      font-size: 13px;
-    }
-
-    .step-item {
-      display: grid;
-      grid-template-columns: 24px minmax(0, 1fr);
-      gap: 12px;
-      position: relative;
-      min-height: 178px;
-    }
-
-    .step-item:not(:last-child)::before {
-      content: "";
-      position: absolute;
-      left: 11px;
-      top: 28px;
-      bottom: -2px;
-      width: 1px;
-      background: var(--el-border-color-light);
-    }
-
-    .step-index {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--el-color-primary);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .step-main {
-      padding-bottom: 28px;
-    }
-
-    .step-title {
-      color: var(--el-text-color-primary);
-      font-weight: 600;
-      margin: 2px 0 10px;
-    }
-
-    .desc-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      color: var(--el-text-color-regular);
-      border: 1px solid var(--el-border-color-lighter);
-      background: #fff;
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .desc-table tr {
-      border-bottom: 1px solid var(--el-border-color-lighter);
-    }
-
-    .desc-table tr:last-child {
-      border-bottom: 0;
-    }
-
-    .desc-table th,
-    .desc-table td {
-      text-align: left;
-      padding: 10px 12px;
-      vertical-align: top;
-      font-weight: 400;
-    }
-
-    .desc-table th {
-      width: 150px;
-      color: var(--el-text-color-secondary);
-      background: #fafafa;
-    }
-
-    .thumb-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .thumb {
-      width: 86px;
-      height: 62px;
-      border-radius: 4px;
-      border: 1px solid var(--el-border-color-light);
-      background:
-        linear-gradient(135deg, #eef3ff, #f8fbff);
-      display: grid;
-      place-items: center;
-      color: var(--el-color-primary);
-      font-size: 12px;
-      flex: 0 0 auto;
-    }
-
-    .sub-steps {
-      display: grid;
-      gap: 8px;
-    }
-
-    .sub-step-card {
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      padding: 10px;
-      background: #fcfdff;
-      box-shadow: 0 1px 2px rgba(0, 21, 41, .03);
-    }
-
-    .sub-step-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: var(--el-text-color-primary);
-    }
-
-    .drawer-mask {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, .24);
-      z-index: 40;
-      display: none;
-      align-items: stretch;
-      justify-content: flex-end;
-      backdrop-filter: blur(1px);
-    }
-
-    .drawer-mask.open {
-      display: flex;
-    }
-
-    .drawer {
-      width: 720px;
-      height: 100%;
-      background: #fff;
-      box-shadow: var(--shadow-floating);
-      display: grid;
-      grid-template-rows: 56px minmax(0, 1fr) 64px;
-      animation: slideIn .16s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(24px); opacity: .7; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    .drawer-header,
-    .drawer-footer {
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid var(--el-border-color-light);
-    }
-
-    .drawer-header {
-      justify-content: space-between;
-    }
-
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .drawer-close {
-      width: 32px;
-      height: 32px;
-      border: 0;
-      background: transparent;
-      color: var(--el-text-color-secondary);
-      font-size: 22px;
-      line-height: 32px;
-      border-radius: var(--radius);
-    }
-
-    .drawer-close:hover {
-      background: #f5f7fa;
-      color: var(--el-text-color-primary);
-    }
-
-    .drawer-body {
-      min-height: 0;
-      overflow: hidden;
-      padding: 16px 20px;
-      background: #f7f9fc;
-    }
-
-    .drawer-footer {
-      border-top: 1px solid var(--el-border-color-light);
-      border-bottom: 0;
-      justify-content: flex-end;
-      gap: 12px;
-      background: #fff;
-    }
-
-    .drawer-layout {
-      display: grid;
-      grid-template-columns: 168px minmax(0, 1fr);
-      gap: 16px;
-      align-items: stretch;
-      height: 100%;
-      min-height: 0;
-    }
-
-    .step-nav {
-      position: sticky;
-      top: 0;
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #fff;
-      align-self: start;
-      box-shadow: var(--shadow-panel);
-    }
-
-    .step-nav button {
-      width: 100%;
-      min-height: 40px;
-      border: 0;
-      border-bottom: 1px solid var(--el-border-color-lighter);
-      background: #fff;
-      text-align: left;
-      padding: 0 12px;
-      color: var(--el-text-color-regular);
-      position: relative;
-    }
-
-    .step-nav button:hover:not(:disabled) {
-      color: var(--el-color-primary);
-      background: #fbfdff;
-    }
-
-    .step-nav button:last-child {
-      border-bottom: 0;
-    }
-
-    .step-nav button.active {
-      color: var(--el-color-primary);
-      background: var(--el-color-primary-light-9);
-      font-weight: 500;
-    }
-
-    .step-nav button.active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: var(--el-color-primary);
-    }
-
-    .form-panel {
-      min-width: 0;
-      min-height: 0;
-      overflow: auto;
-      padding-right: 2px;
-    }
-
-    .form-step {
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      margin-bottom: 0;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: var(--shadow-panel);
-    }
-
-    .form-step-header {
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 0 12px;
-      background: #fafafa;
-      border-bottom: 1px solid var(--el-border-color-light);
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .form-step-body {
-      padding: 16px 16px 18px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 116px minmax(0, 1fr);
-      gap: 12px;
-      align-items: start;
-      margin-bottom: 14px;
-    }
-
-    .form-row.anchored {
-      grid-template-columns: 24px 148px minmax(0, 1fr);
-      column-gap: 10px;
-    }
-
-    .form-row.anchored > .form-label {
-      grid-column: 2;
-    }
-
-    .form-row.anchored > .form-control {
-      grid-column: 3;
-    }
-
-    .form-label {
-      min-height: 32px;
-      line-height: 32px;
-      text-align: right;
-      color: var(--el-text-color-regular);
-      white-space: nowrap;
-    }
-
-    .required::before {
-      content: "*";
-      color: var(--el-color-danger);
-      margin-right: 4px;
-    }
-
-    .form-control {
-      min-width: 0;
-    }
-
-    .input,
-    .textarea {
-      width: 100%;
-      border: 1px solid var(--el-border-color);
-      border-radius: var(--radius);
-      color: var(--el-text-color-primary);
-      background: #fff;
-      outline: none;
-    }
-
-    .input {
-      height: 32px;
-      padding: 0 11px;
-    }
-
-    .textarea {
-      min-height: 62px;
-      padding: 7px 11px;
-      resize: vertical;
-    }
-
-    .input:focus,
-    .textarea:focus {
-      border-color: var(--el-color-primary);
-      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
-    }
-
-    .input:disabled,
-    .textarea:disabled {
-      cursor: not-allowed;
-      color: var(--el-text-color-secondary);
-      border-color: #e4e7ed;
-      background: #f5f7fa;
-    }
-
-    .has-error .input,
-    .has-error .textarea,
-    .has-error .upload-box {
-      border-color: var(--el-color-danger);
-      box-shadow: 0 0 0 2px rgba(245, 108, 108, .1);
-    }
-
-    .error-text {
-      color: var(--el-color-danger);
-      font-size: 12px;
-      margin-top: 4px;
-      display: none;
-    }
-
-    .has-error .error-text {
-      display: block;
-    }
-
-    .helper-text {
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .static-value {
-      min-height: 32px;
-      display: flex;
-      align-items: center;
-      color: var(--el-text-color-regular);
-    }
-
-    .upload-box {
-      width: 124px;
-      height: 82px;
-      border: 1px dashed var(--el-border-color);
-      border-radius: var(--radius);
-      display: grid;
-      place-items: center;
-      background: #fafafa;
-      color: var(--el-text-color-secondary);
-      text-align: center;
-      font-size: 12px;
-    }
-
-    .upload-box:hover {
-      border-color: var(--el-color-primary);
-      color: var(--el-color-primary);
-      background: #f8fbff;
-    }
-
-    .upload-box.filled {
-      border-style: solid;
-      background: linear-gradient(135deg, #eef3ff, #f9fcff);
-      color: var(--el-color-primary);
-    }
-
-    .switch-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-height: 32px;
-    }
-
-    .switch-row span {
-      white-space: nowrap;
-    }
-
-    .switch {
-      width: 42px;
-      height: 22px;
-      border-radius: 20px;
-      border: 0;
-      background: #dcdfe6;
-      position: relative;
-      padding: 0;
-    }
-
-    .switch:hover {
-      box-shadow: 0 0 0 3px rgba(67, 114, 255, .1);
-    }
-
-    .switch::after {
-      content: "";
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      background: #fff;
-      transition: left .15s ease, box-shadow .15s ease;
-      box-shadow: 0 1px 3px rgba(0, 21, 41, .18);
-    }
-
-    .switch.on {
-      background: var(--el-color-primary);
-    }
-
-    .switch.on::after {
-      left: 22px;
-    }
-
-    .sub-form {
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #fcfdff;
-      box-shadow: 0 1px 2px rgba(0, 21, 41, .03);
-    }
-
-    .sub-form-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-
-    .step-nav.anchored > .anchor {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      margin-left: 0;
-    }
-
-    .form-step-body.anchored > .anchor {
-      position: absolute;
-      left: -34px;
-      top: 12px;
-      margin-left: 0;
-    }
-
-    .form-row.anchored > .anchor {
-      position: static;
-      grid-column: 1;
-      grid-row: 1;
-      align-self: center;
-      justify-self: center;
-      margin-left: 0;
-    }
-
-    .toast {
-      position: absolute;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      min-width: 180px;
-      height: 40px;
-      border-radius: var(--radius);
-      background: #f0f9eb;
-      border: 1px solid #d1edc4;
-      color: #529b2e;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 70;
-      box-shadow: 0 8px 20px rgba(0, 21, 41, .12);
-    }
-
-    .toast.show {
-      display: flex;
-    }
-
-    .anchor {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--el-color-warning);
-      color: #fff;
-      display: inline-grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 700;
-      margin-left: 6px;
-      vertical-align: middle;
-      box-shadow: 0 0 0 2px #fff;
-      cursor: pointer;
-    }
-
-    .anchor:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 0 2px #fff, 0 4px 8px rgba(230, 162, 60, .22);
-    }
-
-    .anchored {
-      position: relative;
-      transition: box-shadow .15s ease, outline-color .15s ease;
-    }
-
-    .anchored.highlight {
-      outline: 2px solid var(--el-color-warning);
-      outline-offset: 3px;
-      box-shadow: 0 0 0 5px rgba(230, 162, 60, .16);
-    }
-
-    .annotation-pane {
-      min-width: 0;
-      height: 100vh;
-      height: 100dvh;
-      position: sticky;
-      top: 0;
-      background: #fbfcff;
-      border-left: 1px solid #d8dde8;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-    }
-
-    .annotation-header {
-      padding: 18px 18px 14px;
-      border-bottom: 1px solid var(--el-border-color-light);
-      background: #fff;
-    }
-
-    .annotation-header h1 {
-      margin: 0 0 8px;
-      font-size: 18px;
-      line-height: 24px;
-    }
-
-    .annotation-header p {
-      margin: 0;
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-    }
-
-    .annotation-controls {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      background: #fbfcff;
-      display: grid;
-      gap: 8px;
-    }
-
-    .annotation-controls-title {
-      color: var(--el-text-color-primary);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .annotation-control-row {
-      display: grid;
-      grid-template-columns: 64px minmax(0, 1fr);
-      align-items: center;
-      gap: 8px;
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-    }
-
-    .annotation-control-row select {
-      width: 100%;
-      height: 32px;
-      border: 1px solid var(--el-border-color);
-      border-radius: var(--radius);
-      padding: 0 10px;
-      background: #fff;
-      color: var(--el-text-color-regular);
-      font-size: 12px;
-    }
-
-    .annotation-control-row select:focus {
-      border-color: var(--el-color-primary);
-      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
-      outline: none;
-    }
-
-    .annotation-button {
-      height: 32px;
-      border: 1px solid var(--el-border-color);
-      border-radius: var(--radius);
-      background: #fff;
-      color: var(--el-text-color-regular);
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .annotation-button:hover {
-      border-color: var(--el-color-primary);
-      color: var(--el-color-primary);
-      background: #fff;
-    }
-
-    .annotation-list {
-      overflow: auto;
-      padding: 14px;
-      display: grid;
-      align-content: start;
-      gap: 12px;
-      background: #fbfcff;
-    }
-
-    .annotation-card {
-      background: #fff;
-      border: 1px solid var(--el-border-color-light);
-      border-radius: var(--radius);
-      padding: 12px;
-      cursor: pointer;
-      box-shadow: var(--shadow-panel);
-    }
-
-    .annotation-card:hover {
-      border-color: #c6d2ff;
-      box-shadow: 0 4px 12px rgba(0, 21, 41, .06);
-    }
-
-    .annotation-card.active {
-      border-color: var(--el-color-primary);
-      box-shadow: 0 0 0 2px rgba(67, 114, 255, .12);
-    }
-
-    .annotation-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .annotation-number {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--el-color-primary);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      flex: 0 0 auto;
-    }
-
-    .annotation-card dl {
-      margin: 0;
-      display: grid;
-      gap: 6px;
-      color: var(--el-text-color-regular);
-      font-size: 13px;
-    }
-
-    .annotation-card dt {
-      color: var(--el-text-color-secondary);
-      font-weight: 600;
-      margin-top: 4px;
-    }
-
-    .annotation-card dd {
-      margin: 0;
-    }
-
-    .annotation-card ul {
-      margin: 4px 0 0;
-      padding-left: 18px;
-    }
-
-    .state-chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .state-chip {
-      border: 1px solid var(--el-border-color);
-      background: #fff;
-      border-radius: 999px;
-      height: 24px;
-      padding: 0 8px;
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-    }
-
-    @media (max-width: 1100px) {
-      .prototype-shell {
-        display: block;
-      }
-
-      .annotation-pane {
-        position: static;
-        height: auto;
-        min-height: 420px;
-        border-left: 0;
-        border-top: 1px solid #d8dde8;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配网引导 · 产品详情 · IoT Admin</title>
+<style>
+/* ===== 设计系统 ===== */
+:root {
+  --primary: #4372ff;
+  --primary-hover: #2d5ce8;
+  --primary-light: #e8eeff;
+  --bg-page: #f9f9f9;
+  --bg-white: #ffffff;
+  --sidebar-bg: #001529;
+  --sidebar-text: rgba(255,255,255,0.65);
+  --sidebar-active: #ffffff;
+  --sidebar-active-bg: #4372ff;
+  --border: #e8e8e8;
+  --border-light: #f0f0f0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #595959;
+  --text-tertiary: #8c8c8c;
+  --text-placeholder: #bfbfbf;
+  --tag-blue-bg: #e8eeff;
+  --tag-blue-text: #4372ff;
+  --tag-green-bg: #e6f7e9;
+  --tag-green-text: #52c41a;
+  --tag-orange-bg: #fff3e0;
+  --tag-orange-text: #fa8c16;
+  --error: #ff4d4f;
+  --error-bg: #fff1f0;
+  --success: #52c41a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-md: 6px;
+  --transition: all 0.2s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 14px; color: var(--text-primary); background: var(--bg-page); min-height: 100vh; }
+
+/* ===== 布局 ===== */
+.layout { display: flex; min-height: 100vh; }
+
+/* ===== 侧边栏 ===== */
+.sidebar { width: 208px; background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar-logo-text { color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+.sidebar-logo-sub { color: rgba(255,255,255,0.45); font-size: 11px; margin-top: 2px; }
+.sidebar-menu { flex: 1; padding: 8px 0; }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: var(--sidebar-text); transition: var(--transition); font-size: 14px; }
+.sidebar-item:hover { color: var(--sidebar-active); background: rgba(255,255,255,0.06); }
+.sidebar-item.active { color: var(--sidebar-active); background: var(--sidebar-active-bg); }
+.sidebar-item-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.75; }
+.sidebar-item.active .sidebar-item-icon { opacity: 1; }
+.sidebar-section { padding: 16px 20px 4px; color: rgba(255,255,255,0.3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; }
+.sidebar-sub-item { display: flex; align-items: center; gap: 10px; padding: 8px 20px 8px 32px; cursor: pointer; color: rgba(255,255,255,0.5); transition: var(--transition); font-size: 13px; }
+.sidebar-sub-item:hover { color: var(--sidebar-active); }
+.sidebar-sub-item.active { color: var(--sidebar-active); }
+
+/* ===== 主内容区 ===== */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ===== Header ===== */
+.header { height: 54px; background: var(--bg-white); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0; }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+.breadcrumb-sep { color: var(--border); }
+.breadcrumb-cur { color: var(--text-primary); font-weight: 500; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.header-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+/* ===== 产品信息头 ===== */
+.product-header { background: var(--bg-white); border-bottom: 1px solid var(--border); padding: 16px 24px 0; }
+.product-info { display: flex; align-items: flex-start; gap: 16px; padding-bottom: 16px; }
+.product-icon { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #e8eeff 0%, #c5d5ff 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.product-icon svg { width: 24px; height: 24px; color: var(--primary); }
+.product-detail { flex: 1; }
+.product-name { font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.product-badge { padding: 1px 8px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+.badge-online { background: var(--tag-green-bg); color: var(--tag-green-text); }
+.badge-offline { background: #f5f5f5; color: var(--text-tertiary); }
+.product-meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-secondary); }
+.product-meta-item { display: flex; align-items: center; gap: 4px; }
+.product-meta-label { color: var(--text-tertiary); }
+.product-meta-value { font-family: monospace; }
+.product-header-actions { margin-left: auto; }
+.btn { height: 32px; padding: 0 16px; border-radius: var(--radius); font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-default { background: #fff; color: var(--text-primary); border-color: var(--border); }
+.btn-default:hover { color: var(--primary); border-color: var(--primary); }
+.btn-link { background: transparent; border: none; color: var(--primary); padding: 0 8px; height: 28px; font-size: 13px; }
+.btn-link:hover { color: var(--primary-hover); }
+.btn-text { background: transparent; border: none; color: var(--text-secondary); padding: 0 8px; height: 28px; font-size: 13px; }
+.btn-text:hover { color: var(--primary); }
+.btn-sm { height: 28px; padding: 0 12px; font-size: 13px; }
+.btn-icon { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius); }
+.btn-danger { background: var(--error); color: #fff; border-color: var(--error); }
+.btn-danger:hover { opacity: 0.9; }
+
+/* ===== 步骤导航 ===== */
+.step-nav { display: flex; align-items: center; gap: 0; border-top: 1px solid var(--border-light); margin-top: 0; }
+.step-nav-item { padding: 12px 20px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); white-space: nowrap; }
+.step-nav-item:hover { color: var(--primary); }
+.step-nav-item.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+
+/* ===== 内容区 ===== */
+.content-area { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ===== 二栏布局 ===== */
+.two-col { display: flex; gap: 20px; min-height: calc(100vh - 280px); }
+.col-main { flex: 1; min-width: 0; }
+.col-annotation { width: 340px; flex-shrink: 0; }
+
+/* ===== 卡片 ===== */
+.card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.card-body { padding: 20px; }
+
+/* ===== 入口按钮组 ===== */
+.entry-group { margin-bottom: 20px; }
+.entry-group-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; }
+.entry-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.entry-btn { padding: 6px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px; }
+.entry-btn:hover { border-color: var(--primary); color: var(--primary); }
+.entry-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 500; }
+
+/* ===== 子入口标签 ===== */
+.sub-entry { margin-bottom: 16px; display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; width: fit-content; }
+.sub-entry-btn { padding: 5px 14px; font-size: 13px; cursor: pointer; background: #fff; color: var(--text-secondary); transition: var(--transition); border: none; border-right: 1px solid var(--border); }
+.sub-entry-btn:last-child { border-right: none; }
+.sub-entry-btn:hover { background: var(--primary-light); color: var(--primary); }
+.sub-entry-btn.active { background: var(--primary); color: #fff; }
+
+/* ===== 语言页签 ===== */
+.lang-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+.lang-tab { padding: 8px 14px; font-size: 13px; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; white-space: nowrap; transition: var(--transition); }
+.lang-tab:hover { color: var(--primary); }
+.lang-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+.lang-tab.unconfigured { color: var(--text-tertiary); }
+.lang-tab.unconfigured::after { content: '·'; color: var(--text-placeholder); margin-left: 2px; }
+
+/* ===== 查看态 ===== */
+.view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.view-title { font-size: 13px; color: var(--text-secondary); }
+
+/* 未配置态 */
+.unconfigured-state { padding: 40px 20px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); background: var(--bg-page); }
+.unconfigured-icon { width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.25; }
+.unconfigured-text { font-size: 13px; color: var(--text-tertiary); }
+
+/* 步骤列表 */
+.step-list { display: flex; flex-direction: column; gap: 16px; }
+.step-item { border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden; }
+.step-item-header { background: #fafafa; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-light); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.step-desc-table { padding: 0; }
+.desc-row { display: flex; border-bottom: 1px solid var(--border-light); }
+.desc-row:last-child { border-bottom: none; }
+.desc-label { width: 120px; padding: 10px 16px; font-size: 12px; color: var(--text-tertiary); flex-shrink: 0; background: #fafafa; border-right: 1px solid var(--border-light); }
+.desc-value { padding: 10px 16px; font-size: 13px; color: var(--text-primary); flex: 1; min-width: 0; word-break: break-word; }
+.desc-value.empty { color: var(--text-placeholder); }
+.desc-value .img-thumb { width: 56px; height: 42px; border-radius: var(--radius-sm); background: linear-gradient(135deg, #e8eeff 0%, #c5d5ff 100%); display: flex; align-items: center; justify-content: center; }
+.desc-value .img-thumb svg { width: 20px; height: 20px; color: var(--primary); opacity: 0.6; }
+.toggle-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.toggle-on { background: var(--tag-green-bg); color: var(--tag-green-text); }
+.toggle-off { background: #f5f5f5; color: var(--text-tertiary); }
+
+/* 引导文案子步骤查看态 */
+.sub-step-view { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.sub-step-view-item { display: flex; gap: 10px; padding: 8px; background: #fafafa; border-radius: var(--radius); border: 1px solid var(--border-light); }
+.sub-step-view-img { width: 40px; height: 30px; border-radius: var(--radius-sm); background: linear-gradient(135deg, #e8eeff 0%, #c5d5ff 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.sub-step-view-img svg { width: 16px; height: 16px; color: var(--primary); opacity: 0.6; }
+.sub-step-view-content { flex: 1; min-width: 0; }
+.sub-step-view-title { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.sub-step-view-body { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.anchor-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; margin-left: 6px; flex-shrink: 0; vertical-align: middle; cursor: help; }
+
+/* ===== 抽屉 ===== */
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 980px; background: #fff; z-index: 101; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
+.drawer.open { transform: translateX(0); }
+.drawer-header { height: 56px; padding: 0 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.drawer-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.drawer-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius); color: var(--text-tertiary); transition: var(--transition); border: none; background: none; }
+.drawer-close:hover { background: var(--bg-page); color: var(--text-primary); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.drawer-footer { height: 64px; padding: 0 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+
+/* ===== 抽屉表单 ===== */
+.form-section { margin-bottom: 20px; }
+.form-section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; }
+.form-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.form-label { width: 100px; flex-shrink: 0; font-size: 13px; color: var(--text-secondary); padding-top: 8px; text-align: right; line-height: 1.4; }
+.form-label.required::before { content: '*'; color: var(--error); margin-right: 3px; }
+.form-control { flex: 1; min-width: 0; }
+.input { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; color: var(--text-primary); font-family: inherit; transition: var(--transition); outline: none; background: #fff; }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(67,114,255,0.1); }
+.input.error { border-color: var(--error); box-shadow: 0 0 0 2px rgba(255,77,79,0.1); }
+.input:disabled { background: #f5f5f5; color: var(--text-tertiary); cursor: not-allowed; }
+.textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; color: var(--text-primary); font-family: inherit; transition: var(--transition); outline: none; resize: vertical; min-height: 80px; }
+.textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(67,114,255,0.1); }
+.textarea.error { border-color: var(--error); }
+.form-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.error-msg { font-size: 12px; color: var(--error); margin-top: 4px; display: none; }
+.error-msg.show { display: block; }
+.char-count { font-size: 12px; color: var(--text-tertiary); text-align: right; margin-top: 2px; }
+
+/* 上传控件 */
+.upload-area { border: 1px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; transition: var(--transition); background: #fafafa; }
+.upload-area:hover { border-color: var(--primary); background: var(--primary-light); }
+.upload-area.has-file { background: #f0f7ff; border-color: var(--primary); border-style: solid; padding: 10px; display: flex; align-items: center; gap: 10px; text-align: left; }
+.upload-placeholder { color: var(--text-tertiary); }
+.upload-placeholder svg { width: 24px; height: 24px; margin-bottom: 6px; opacity: 0.4; }
+.upload-placeholder-text { font-size: 13px; }
+.upload-placeholder-hint { font-size: 11px; color: var(--text-placeholder); margin-top: 3px; }
+.upload-file-preview { width: 48px; height: 36px; border-radius: var(--radius-sm); background: linear-gradient(135deg, #e8eeff 0%, #c5d5ff 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.upload-file-preview svg { width: 20px; height: 20px; color: var(--primary); opacity: 0.7; }
+.upload-file-info { flex: 1; min-width: 0; }
+.upload-file-name { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-file-size { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+.upload-file-remove { color: var(--error); cursor: pointer; padding: 4px; opacity: 0.7; border: none; background: none; }
+.upload-file-remove:hover { opacity: 1; }
+
+/* 开关 */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; height: 32px; }
+.toggle { width: 36px; height: 20px; border-radius: 10px; background: #d9d9d9; cursor: pointer; transition: var(--transition); position: relative; flex-shrink: 0; border: none; }
+.toggle.on { background: var(--primary); }
+.toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: var(--transition); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.toggle.on .toggle-knob { left: 18px; }
+.toggle-label { font-size: 13px; color: var(--text-secondary); }
+
+/* 步骤块 */
+.step-block { border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 16px; overflow: visible; }
+.step-block-header { background: #fafafa; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-light); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.step-block-num { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-block-title { font-size: 13px; font-weight: 500; flex: 1; }
+.step-block-actions { display: flex; gap: 4px; }
+.step-block-body { padding: 16px; }
+
+/* 子步骤块 */
+.sub-steps-container { margin-top: 12px; }
+.sub-step-block { border: 1px solid var(--border-light); border-radius: var(--radius); margin-bottom: 10px; background: #fafafa; overflow: hidden; }
+.sub-step-block-header { padding: 8px 12px; display: flex; align-items: center; gap: 8px; background: #f5f5f5; border-bottom: 1px solid var(--border-light); }
+.sub-step-block-num { width: 18px; height: 18px; border-radius: 50%; background: #bfbfbf; color: #fff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sub-step-block-title { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.sub-step-block-body { padding: 12px; }
+.add-sub-step-btn { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px dashed var(--border); border-radius: var(--radius); font-size: 13px; color: var(--primary); cursor: pointer; background: none; width: 100%; justify-content: center; transition: var(--transition); }
+.add-sub-step-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+.add-sub-step-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 新增/删除步骤 */
+.add-step-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px dashed var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--primary); cursor: pointer; background: none; width: 100%; justify-content: center; transition: var(--transition); margin-top: 4px; }
+.add-step-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+
+/* ===== 批注面板 ===== */
+.annotation-panel { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); position: sticky; top: 0; }
+.annotation-header { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #001529; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.annotation-header-title { font-size: 13px; font-weight: 600; color: #fff; }
+.annotation-header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+/* 批注控制区 */
+.annotation-control { padding: 12px 16px; border-bottom: 1px solid var(--border-light); background: #fafafa; }
+.control-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.control-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.control-btn { padding: 4px 10px; border-radius: var(--radius); font-size: 12px; border: 1px solid var(--border); cursor: pointer; background: #fff; color: var(--text-secondary); transition: var(--transition); }
+.control-btn:hover { border-color: var(--primary); color: var(--primary); }
+.control-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* 批注内容区 */
+.annotation-content { padding: 16px; max-height: calc(100vh - 380px); overflow-y: auto; }
+.annotation-card { margin-bottom: 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--radius); background: #fff; transition: var(--transition); }
+.annotation-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(67,114,255,0.08); }
+.annotation-card.highlight { border-color: var(--primary); background: var(--primary-light); }
+.annotation-card-id { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.annotation-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.annotation-card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.annotation-card-tag { padding: 1px 6px; border-radius: 2px; font-size: 10px; background: var(--tag-blue-bg); color: var(--tag-blue-text); }
+.annotation-field { margin-bottom: 7px; }
+.annotation-field-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+.annotation-field-value { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.annotation-rule { background: #f6f8ff; border-left: 2px solid var(--primary); padding: 6px 10px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 6px; }
+
+/* ===== Toast ===== */
+.toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+.toast { padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; color: #fff; box-shadow: var(--shadow-md); pointer-events: auto; animation: toastIn 0.25s ease; }
+.toast-success { background: #52c41a; }
+.toast-error { background: var(--error); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== 分隔线 ===== */
+.divider { height: 1px; background: var(--border-light); margin: 8px 0; }
+
+/* ===== 空状态 ===== */
+.empty-state { padding: 32px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+
+/* ===== 底部导航 ===== */
+.step-footer { background: var(--bg-white); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; flex-shrink: 0; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 1400px) {
+  .col-annotation { width: 300px; }
+  .drawer { width: 900px; }
+  .drawer-preview-col { width: 260px; }
+  .phone-mock { width: 244px; }
+  .phone-screen { height: 460px; }
+}
+
+/* ===== 辅助 ===== */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.ml-auto { margin-left: auto; }
+.text-error { color: var(--error); }
+.text-muted { color: var(--text-tertiary); }
+.text-sm { font-size: 12px; }
+.hidden { display: none !important; }
+
+/* ===== 手机预览面板 ===== */
+.drawer-body-flex { display: flex; gap: 16px; height: 100%; min-height: 0; }
+.drawer-form-col { flex: 1; min-width: 0; overflow-y: auto; padding: 20px 24px 20px 24px; }
+.drawer-preview-col { width: 296px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border-light); padding: 20px 16px 20px 16px; overflow-y: auto; }
+.preview-sticky-wrap { position: sticky; top: 0; }
+.preview-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.phone-mock { width: 272px; background: #000; border-radius: 28px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08); }
+.phone-notch { width: 80px; height: 18px; background: #000; border-radius: 0 0 12px 12px; margin: 0 auto; position: relative; z-index: 2; }
+.phone-screen { background: #fff; border-radius: 22px; overflow: hidden; height: 520px; position: relative; }
+.phone-screen::-webkit-scrollbar { width: 0; }
+/* -- Page-based step view -- */
+.pv-page { display: flex; flex-direction: column; height: 100%; }
+.pv-header { padding: 28px 16px 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pv-back { width: 18px; height: 18px; color: #1a1a1a; cursor: default; }
+.pv-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.pv-step-dots { display: flex; justify-content: center; gap: 5px; padding: 2px 0 6px; flex-shrink: 0; }
+.pv-dot { width: 6px; height: 6px; border-radius: 50%; background: #e0e0e0; transition: all 0.2s; }
+.pv-dot.active { background: #4372ff; width: 16px; border-radius: 3px; }
+.pv-page-body { flex: 1; overflow-y: auto; padding: 0 14px; }
+.pv-page-body::-webkit-scrollbar { width: 0; }
+.pv-product-img { width: 100%; height: 120px; background: linear-gradient(135deg, #e8eeff 0%, #d0dcff 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.pv-product-img svg { width: 36px; height: 36px; color: #4372ff; opacity: 0.4; }
+.pv-product-img-empty { width: 100%; height: 120px; background: #f5f5f5; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.pv-product-img-empty svg { width: 28px; height: 28px; color: #d9d9d9; }
+.pv-step-label-inline { font-size: 10px; color: #8c8c8c; margin-bottom: 6px; }
+.pv-txt { font-size: 13px; color: #1a1a1a; line-height: 1.55; margin-bottom: 10px; font-weight: 500; }
+.pv-txt-placeholder { font-size: 13px; color: #d9d9d9; line-height: 1.55; margin-bottom: 10px; font-style: italic; }
+.pv-aux { font-size: 11px; color: #595959; background: #f0f2f5; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.pv-aux-icon { width: 14px; height: 14px; flex-shrink: 0; }
+.pv-guide { font-size: 11px; color: #4372ff; margin-bottom: 6px; cursor: pointer; }
+.pv-guide:hover { text-decoration: underline; }
+.pv-page-footer { padding: 8px 14px 14px; flex-shrink: 0; }
+.pv-action-btn { display: block; width: 100%; padding: 10px; border: none; border-radius: 22px; background: #4372ff; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.15s; }
+.pv-action-btn:hover { background: #3562e8; }
+.pv-action-btn.disabled { background: #d9d9d9; cursor: not-allowed; }
+.pv-scanning { text-align: center; padding: 6px 0 2px; font-size: 10px; color: #bfbfbf; }
+/* -- Sub-step bottom sheet -- */
+.pv-modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); z-index: 5; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 22px; overflow: hidden; }
+.pv-sheet { background: #fff; border-radius: 18px 18px 0 0; display: flex; flex-direction: column; max-height: 85%; overflow: hidden; box-shadow: 0 -4px 24px rgba(0,0,0,0.2); }
+.pv-sheet-handle { width: 32px; height: 4px; background: #d9d9d9; border-radius: 2px; margin: 8px auto 0; flex-shrink: 0; }
+.pv-sheet-head { padding: 10px 14px 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; border-bottom: 1px solid #f0f0f0; }
+.pv-sheet-icon { width: 22px; height: 22px; border-radius: 50%; background: #4372ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pv-sheet-icon svg { width: 12px; height: 12px; color: #fff; }
+.pv-sheet-title { font-size: 13px; font-weight: 600; color: #1a1a1a; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-sheet-close { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8c8c8c; border-radius: 50%; background: #f5f5f5; border: none; flex-shrink: 0; font-size: 12px; transition: all 0.15s; }
+.pv-sheet-close:hover { background: #e8e8e8; color: #1a1a1a; }
+.pv-sheet-body { flex: 1; overflow-y: auto; padding: 10px 14px; }
+.pv-sheet-body::-webkit-scrollbar { width: 0; }
+.pv-substep-full { background: #f8f9fa; border-radius: 10px; overflow: hidden; margin-bottom: 6px; border: 1px solid #eef0f3; }
+.pv-substep-full-img { width: 100%; height: 100px; background: linear-gradient(135deg, #e8eeff 0%, #d0dcff 100%); display: flex; align-items: center; justify-content: center; }
+.pv-substep-full-img svg { width: 28px; height: 28px; color: #4372ff; opacity: 0.4; }
+.pv-substep-full-img-empty { width: 100%; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+.pv-substep-full-img-empty svg { width: 24px; height: 24px; color: #d9d9d9; }
+.pv-substep-full-body { padding: 10px 12px; }
+.pv-substep-full-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+.pv-substep-full-title-ph { font-size: 13px; font-weight: 600; color: #d9d9d9; font-style: italic; margin-bottom: 4px; }
+.pv-substep-full-text { font-size: 11px; color: #595959; line-height: 1.5; }
+.pv-substep-full-text-ph { font-size: 11px; color: #d9d9d9; font-style: italic; }
+.pv-sheet-nav { padding: 8px 14px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; border-top: 1px solid #f0f0f0; }
+.pv-nav-btn { width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0; border: none; color: #595959; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.pv-nav-btn:hover { background: #e0e0e0; color: #1a1a1a; }
+.pv-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.pv-nav-dots { display: flex; gap: 5px; align-items: center; }
+.pv-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: #d9d9d9; transition: all 0.2s; cursor: pointer; }
+.pv-nav-dot.active { background: #4372ff; width: 14px; border-radius: 3px; }
+.pv-nav-counter { font-size: 10px; color: #8c8c8c; }
+/* -- Empty state -- */
+.pv-empty-hint { text-align: center; padding: 40px 16px; font-size: 11px; color: #bfbfbf; }
+</style>
 </head>
 <body>
-  <div class="prototype-shell">
-    <main class="product-pane">
-      <div class="product-canvas" id="productCanvas">
-        <aside class="aside">
-          <div class="brand">
-            <div class="brand-mark">IoT</div>
-            <div>
-              <div class="brand-title">LuteOS Admin</div>
-              <div class="brand-subtitle">智能产品后台</div>
+
+<!-- ===== 布局容器 ===== -->
+<div class="layout">
+
+  <!-- 侧边栏 -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text">IoT Admin</div>
+      <div class="sidebar-logo-sub">智能物联网管理平台</div>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        概览
+      </div>
+      <div class="sidebar-item active">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm0 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9z"/></svg>
+        智能产品
+      </div>
+      <div class="sidebar-item">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2"/></svg>
+        设备管理
+      </div>
+      <div class="sidebar-item">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3z"/><circle cx="8" cy="8" r="2"/></svg>
+        数据分析
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <div class="main">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="breadcrumb">
+        <span>智能产品</span>
+        <span class="breadcrumb-sep">/</span>
+        <span>产品列表</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-cur">查看产品详情</span>
+      </div>
+      <div class="header-actions">
+        <div class="header-avatar">L</div>
+      </div>
+    </header>
+
+    <!-- 产品信息头 -->
+    <div class="product-header">
+      <div class="product-info">
+        <div class="product-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+        </div>
+        <div class="product-detail">
+          <div class="product-name" id="productName">
+            test-leo2-neo-Neo
+            <span class="product-badge badge-online">上架中</span>
+          </div>
+          <div class="product-meta">
+            <div class="product-meta-item">
+              <span class="product-meta-label">产品类型：</span>
+              <span id="productType">Wi-Fi 设备</span>
+            </div>
+            <div class="product-meta-item">
+              <span class="product-meta-label">产品 ID：</span>
+              <span class="product-meta-value" id="productId">2060272111821791234</span>
+            </div>
+            <div class="product-meta-item">
+              <span class="product-meta-label">产品型号：</span>
+              <span class="product-meta-value" id="productModel">test-leo2-neo</span>
+            </div>
+            <div class="product-meta-item">
+              <span class="product-meta-label">产品模板 ID：</span>
+              <span class="product-meta-value">tpl_112233</span>
             </div>
           </div>
-          <nav class="menu" aria-label="主导航">
-            <div class="menu-group-title">概览</div>
-            <div class="menu-item"><span class="menu-dot"></span>概览</div>
-            <div class="menu-group-title">智能产品</div>
-            <div class="menu-item active"><span class="menu-dot"></span>产品列表</div>
-            <div class="menu-item"><span class="menu-dot"></span>消息推送</div>
-            <div class="menu-group-title">设备管理</div>
-            <div class="menu-item"><span class="menu-dot"></span>设备列表</div>
-            <div class="menu-item"><span class="menu-dot"></span>固件管理</div>
-            <div class="menu-item"><span class="menu-dot"></span>OTA</div>
-            <div class="menu-group-title">配置中心</div>
-            <div class="menu-item"><span class="menu-dot"></span>多语言</div>
-          </nav>
-        </aside>
+        </div>
+        <div class="product-header-actions">
+          <button class="btn btn-default">下架产品</button>
+        </div>
+      </div>
 
-        <section class="app-main">
-          <header class="header">
-            <div class="breadcrumb">
-              <span>查看产品详情</span>
-              <span>/</span>
-              <span>产品列表</span>
-              <span>/</span>
-              <strong>智能产品</strong>
-            </div>
-            <div class="userbar">
-              <span>ROOT云</span>
-              <div class="avatar">R</div>
-            </div>
-          </header>
+      <!-- 步骤导航 -->
+      <nav class="step-nav">
+        <div class="step-nav-item">基础信息</div>
+        <div class="step-nav-item">功能设计</div>
+        <div class="step-nav-item">扩展程序</div>
+        <div class="step-nav-item">设备调试</div>
+        <div class="step-nav-item active">配网引导</div>
+        <div class="step-nav-item">高级配置</div>
+      </nav>
+    </div>
 
-          <section class="content">
-            <div class="summary-card anchored" data-anchor="1">
-              <div class="summary-top">
-                <div class="summary-title">
-                  <span class="product-name" id="productName">test-leo2-neo-Neo</span>
-                  <span class="tag tag-success">开发中</span>
-                  <span class="tag tag-info" id="productTypeTag">Wi-Fi 设备</span>
+    <!-- 内容区 -->
+    <div class="content-area">
+      <div class="two-col">
+
+        <!-- 左侧产品页 -->
+        <div class="col-main">
+          <div class="card">
+            <div class="card-body" style="padding-bottom: 0;">
+
+              <!-- 产品类型切换（原型控制，放在主区域顶部但视觉上弱化） -->
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:10px 12px;background:#f6f8ff;border-radius:6px;border:1px solid #e0e8ff;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="#4372ff"><circle cx="7" cy="7" r="6" fill="none" stroke="#4372ff" stroke-width="1.5"/><text x="7" y="11" text-anchor="middle" font-size="8" fill="#4372ff">i</text></svg>
+                <span style="font-size:12px;color:#4372ff;font-weight:500;">原型切换：</span>
+                <button class="btn btn-sm" id="switchWifi" onclick="switchProduct('wifi')" style="font-size:12px;height:26px;padding:0 10px;">Wi-Fi 产品</button>
+                <button class="btn btn-sm btn-default" id="switchBle" onclick="switchProduct('ble')" style="font-size:12px;height:26px;padding:0 10px;">BLE 产品</button>
+                <span style="font-size:11px;color:#8c8c8c;margin-left:4px;">（此控制条为原型专用，非真实产品 UI）</span>
+              </div>
+
+              <!-- 入口按钮组 - Wi-Fi -->
+              <div id="wifiEntries" class="entry-group">
+                <div class="entry-group-label">配网方式
+                  <span class="anchor-badge" title="批注 1：目标入口范围">1</span>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <button class="button success">上架产品</button>
+                <div class="entry-buttons">
+                  <button class="entry-btn" id="wifiAp" onclick="selectEntry('wifi','ap')">AP配网</button>
+                  <button class="entry-btn" id="wifiSmart" onclick="selectEntry('wifi','smart')">SmartConfig配网</button>
+                  <button class="entry-btn active" id="wifiQr" onclick="selectEntry('wifi','qr')">扫码配网</button>
                 </div>
               </div>
-              <div class="summary-grid">
-                <div><span>产品分类：</span><b id="productCategory">test-leo2</b></div>
-                <div><span>产品型号：</span><b id="productModel">test-leo2-neo</b></div>
-                <div><span>产品代码：</span><b>--</b></div>
-                <div><span>产品ID：</span><b id="productId">2060272111821791234</b></div>
-                <div><span>产品模板ID：</span><b id="templateId">2055184914953273345</b></div>
-              </div>
-            </div>
 
-            <div class="detail-card">
-              <div class="steps-tabs">
-                <button>基础信息</button>
-                <button>功能设计</button>
-                <button>扩展程序</button>
-                <button>设备调试</button>
-                <button class="active">配网引导</button>
-                <button>高级配置</button>
-              </div>
-
-              <div class="config-area">
-                <div class="top-line">
-                  <div class="button-group anchored" data-anchor="1" id="networkEntryGroup"></div>
+              <!-- 入口按钮组 - BLE -->
+              <div id="bleEntries" class="entry-group hidden">
+                <div class="entry-group-label">配网方式
+                  <span class="anchor-badge" title="批注 1：目标入口范围">1</span>
                 </div>
-
-                <div class="sub-entry anchored" data-anchor="2" id="subEntryArea"></div>
-
-                <div class="language-tabs anchored" data-anchor="3" id="languageTabs"></div>
-
-                <div class="view-title">
-                  <button class="button anchored" data-anchor="5" id="editButton">编辑</button>
+                <div class="entry-buttons">
+                  <button class="entry-btn active" id="bleBt" onclick="selectEntry('ble','bt')">蓝牙配网</button>
+                  <button class="entry-btn" id="bleScan" onclick="selectEntry('ble','scan')">蓝牙扫码配对</button>
                 </div>
-
-                <div id="contentView"></div>
+                <!-- BLE 子入口 -->
+                <div id="bleSubEntry" class="sub-entry" style="margin-top:12px;">
+                  <button class="sub-entry-btn" id="bleNew" onclick="selectBleMode('new')">新版入口</button>
+                  <button class="sub-entry-btn active" id="bleOld" onclick="selectBleMode('old')">旧版入口
+                    <span class="anchor-badge" title="批注 2：BLE 仅旧版入口扩展" style="background:#4372ff;">2</span>
+                  </button>
+                </div>
               </div>
 
-              <div class="pager-actions">
-                <button class="button">上一步</button>
-                <button class="button">下一步</button>
+              <!-- 语言页签 -->
+              <div class="lang-tabs" id="langTabs">
+                <div class="lang-tab active" onclick="selectLang('en')">英文</div>
+                <div class="lang-tab" onclick="selectLang('fr')">法语</div>
+                <div class="lang-tab" onclick="selectLang('de')">德语</div>
+                <div class="lang-tab" onclick="selectLang('es')">西班牙语</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('it')">意大利语</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('ar')">阿拉伯语</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('pt')">葡萄牙语</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('zh')">中文</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('zh-tw')">繁体中文</div>
+                <div class="lang-tab unconfigured" onclick="selectLang('vi')">越南语</div>
+              </div>
+              <div id="langTabAnnotation" style="margin-top:-12px;margin-bottom:12px;">
+                <span class="anchor-badge" title="批注 3：复用多语言逻辑">3</span>
               </div>
 
-              <div class="drawer-mask" id="drawerMask">
-                <aside class="drawer" role="dialog" aria-modal="true" aria-label="编辑配网引导">
-                  <div class="drawer-header">
-                    <div class="drawer-title">编辑扫码配网</div>
-                    <button class="drawer-close" id="closeDrawerButton" aria-label="关闭">×</button>
+              <!-- 查看态区域 -->
+              <div id="viewArea">
+
+                <!-- Wi-Fi AP / SmartConfig - 非目标入口 -->
+                <div id="viewNonTarget" class="hidden">
+                  <div class="view-header">
+                    <div class="view-title">
+                      <span id="nonTargetLabel">AP配网</span> · 非目标入口
+                      <span class="anchor-badge" title="批注 12：非目标入口不变化">12</span>
+                    </div>
+                    <button class="btn btn-default btn-sm" onclick="openDrawer('nonTarget')">
+                      编辑<span class="anchor-badge" title="批注 5：打开编辑抽屉" style="background:#4372ff;">5</span>
+                    </button>
                   </div>
-                  <div class="drawer-body">
-                    <div class="drawer-layout">
-                      <nav class="step-nav anchored" data-anchor="6" id="drawerStepNav"></nav>
-                      <div class="form-panel" id="drawerForm"></div>
+                  <div class="step-list">
+                    <div class="step-item">
+                      <div class="step-item-header"><div class="step-num">1</div><div class="step-label">步骤 1</div></div>
+                      <div class="step-desc-table">
+                        <div class="desc-row"><div class="desc-label">配网引导图</div><div class="desc-value"><div class="img-thumb"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div></div></div>
+                        <div class="desc-row"><div class="desc-label">配网文案</div><div class="desc-value">打开手机 Wi-Fi 设置，连接设备热点，然后返回此页面。</div></div>
+                        <div class="desc-row"><div class="desc-label">辅助文案</div><div class="desc-value empty">--</div></div>
+                        <div class="desc-row"><div class="desc-label">按钮文案</div><div class="desc-value">下一步</div></div>
+                      </div>
                     </div>
                   </div>
-                  <div class="drawer-footer anchored" data-anchor="10">
-                    <button class="button" id="cancelButton">取消</button>
-                    <button class="button primary" id="confirmButton">保存</button>
+                </div>
+
+                <!-- Wi-Fi 扫码配网 / BLE 旧版入口 - 目标入口 -->
+                <div id="viewTarget">
+                  <div class="view-header">
+                    <div class="view-title">
+                      <span id="targetLabel">扫码配网</span> 配置
+                      <span class="anchor-badge" title="批注 4：目标入口查看态扩展字段回显">4</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="openDrawer('target')">
+                      编辑<span class="anchor-badge" title="批注 5：打开编辑抽屉" style="background:rgba(255,255,255,0.6);color:#4372ff;border-radius:50%;">5</span>
+                    </button>
                   </div>
-                </aside>
-              </div>
 
-              <div class="toast" id="toast">保存成功</div>
+                  <!-- 已配置态 -->
+                  <div id="viewConfigured">
+                    <div class="step-list" id="viewStepList">
+                      <!-- 步骤由 JS 渲染 -->
+                    </div>
+                  </div>
+
+                  <!-- 未配置态 -->
+                  <div id="viewUnconfigured" class="hidden">
+                    <div class="unconfigured-state">
+                      <div class="unconfigured-icon">
+                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M24 8v32M8 24h32" stroke-linecap="round"/>
+                        </svg>
+                      </div>
+                      <div class="unconfigured-text">未配置</div>
+                      <div class="text-muted text-sm" style="margin-top:8px;">点击右上角「编辑」开始配置</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BLE 新版入口 -->
+                <div id="viewBleNew" class="hidden">
+                  <div class="view-header">
+                    <div class="view-title">蓝牙配网 · 新版入口
+                      <span class="anchor-badge" title="批注 12：非目标入口不变化">12</span>
+                    </div>
+                    <button class="btn btn-default btn-sm" onclick="openDrawer('bleNew')">编辑</button>
+                  </div>
+                  <div class="step-list">
+                    <div class="step-item">
+                      <div class="step-item-header"><div class="step-num">1</div><div class="step-label">步骤 1</div></div>
+                      <div class="step-desc-table">
+                        <div class="desc-row"><div class="desc-label">配网引导图</div><div class="desc-value"><div class="img-thumb"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div></div></div>
+                        <div class="desc-row"><div class="desc-label">配网指引</div><div class="desc-value">请将设备靠近手机。</div></div>
+                        <div class="desc-row"><div class="desc-label">配网文案</div><div class="desc-value">开启蓝牙并允许权限</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BLE 蓝牙扫码配对 -->
+                <div id="viewBleScan" class="hidden">
+                  <div class="view-header">
+                    <div class="view-title">蓝牙扫码配对
+                      <span class="anchor-badge" title="批注 12：非目标入口不变化">12</span>
+                    </div>
+                    <button class="btn btn-default btn-sm" onclick="openDrawer('bleScanEdit')">编辑</button>
+                  </div>
+                  <div class="empty-state">暂未配置扫码配对引导内容</div>
+                </div>
+
+              </div><!-- /viewArea -->
             </div>
-          </section>
-        </section>
-      </div>
-    </main>
-
-    <aside class="annotation-pane">
-      <div class="annotation-header">
-        <h1>原型批注</h1>
-        <p>点击左侧锚点或批注卡片，可高亮对应位置。抽屉打开时批注自动聚焦字段和校验规则。</p>
-        <div class="annotation-controls" aria-label="原型控制">
-          <div class="annotation-controls-title">原型控制</div>
-          <div class="annotation-control-row">
-            <span>样例产品</span>
-            <button class="annotation-button" id="switchProductButton">切换为 BLE 样例</button>
+            <!-- 底部步骤导航 -->
+            <div class="step-footer">
+              <button class="btn btn-default">上一步</button>
+              <button class="btn btn-primary">下一步</button>
+            </div>
           </div>
-          <label class="annotation-control-row">
-            <span>演示场景</span>
-            <select id="scenarioSelect">
-              <option value="current">当前入口样例</option>
-              <option value="target-empty">目标入口未配置</option>
-              <option value="target-filled">目标入口已配置</option>
-              <option value="non-target">非目标入口对照</option>
-              <option value="validation">校验错误</option>
-            </select>
-          </label>
         </div>
-        <div class="state-chip-row" id="stateChips"></div>
+
+        <!-- 右侧批注面板 -->
+        <div class="col-annotation">
+          <div class="annotation-panel">
+            <div class="annotation-header">
+              <div class="annotation-header-title">原型批注</div>
+              <div class="annotation-header-sub">云端多步骤配网引导扩展字段 v1.1</div>
+            </div>
+            <div class="annotation-control">
+              <div class="control-label">当前状态</div>
+              <div class="control-btns" id="annotationFilter">
+                <button class="control-btn active" onclick="filterAnnotation('all')">全部</button>
+                <button class="control-btn" onclick="filterAnnotation('entry')">入口范围</button>
+                <button class="control-btn" onclick="filterAnnotation('view')">查看态</button>
+                <button class="control-btn" onclick="filterAnnotation('edit')">编辑态</button>
+                <button class="control-btn" onclick="filterAnnotation('validate')">校验</button>
+              </div>
+            </div>
+            <div class="annotation-content" id="annotationContent">
+              <!-- 批注由 JS 渲染 -->
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="annotation-list" id="annotationList"></div>
-    </aside>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ===== 抽屉 Overlay ===== -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- ===== 目标入口编辑抽屉 ===== -->
+<div class="drawer" id="editDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawerTitle">编辑扫码配网</div>
+    <button class="drawer-close" onclick="closeDrawer()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M12.7 3.3a1 1 0 0 0-1.4 0L8 6.6 4.7 3.3a1 1 0 0 0-1.4 1.4L6.6 8l-3.3 3.3a1 1 0 1 0 1.4 1.4L8 9.4l3.3 3.3a1 1 0 0 0 1.4-1.4L9.4 8l3.3-3.3a1 1 0 0 0 0-1.4z"/></svg>
+    </button>
   </div>
+  <div class="drawer-body" style="overflow:hidden;padding:0;">
+    <div class="drawer-body-flex">
+      <div class="drawer-form-col" id="drawerBody">
+        <!-- 由 JS 渲染 -->
+      </div>
+      <div class="drawer-preview-col">
+        <div class="preview-sticky-wrap">
+          <div class="preview-label">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" opacity="0.5"><rect x="4" y="1" width="8" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.5"/></svg>
+            App 端预览
+          </div>
+          <div class="phone-mock">
+            <div class="phone-notch"></div>
+            <div class="phone-screen" id="phonePreview">
+              <!-- 由 JS 渲染 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeDrawer()">取消</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveDrawer()">保存</button>
+  </div>
+</div>
 
-  <script>
-    const languages = ["英文（默认）", "法语", "德语", "西班牙语", "意大利语", "阿拉伯语", "葡萄牙语", "中文", "繁体中文", "越南语", "印尼语", "泰语", "马来语", "日语", "俄语", "菲律宾语"];
-    const EXISTING_STEP_LIMIT = 10;
-    const BLE_SINGLE_STEP = "单步骤配网";
-    const BLE_MULTI_STEP = "多步骤配网";
-    const BLE_SUB_ENTRIES = [BLE_SINGLE_STEP, BLE_MULTI_STEP];
+<!-- ===== 非目标入口编辑抽屉 ===== -->
+<div class="drawer" id="nonTargetDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="nonTargetDrawerTitle">编辑配网引导</div>
+    <button class="drawer-close" onclick="closeNonTargetDrawer()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M12.7 3.3a1 1 0 0 0-1.4 0L8 6.6 4.7 3.3a1 1 0 0 0-1.4 1.4L6.6 8l-3.3 3.3a1 1 0 1 0 1.4 1.4L8 9.4l3.3 3.3a1 1 0 0 0 1.4-1.4L9.4 8l3.3-3.3a1 1 0 0 0 0-1.4z"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <div class="annotation-rule" style="margin-bottom:16px;">
+      <strong>批注 12：非目标入口保护</strong><br>
+      此入口不展示扩展字段，仅保留原有字段：配网引导图、配网文案、辅助文案、按钮文案。编辑态和校验逻辑不受本需求影响。
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">步骤 1</div>
+      <div class="form-row">
+        <div class="form-label required">配网引导图</div>
+        <div class="form-control">
+          <div class="upload-area has-file">
+            <div class="upload-file-preview"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div>
+            <div class="upload-file-info"><div class="upload-file-name">step1_guide.png</div><div class="upload-file-size">245 KB</div></div>
+          </div>
+          <div class="form-hint">建议尺寸 800px×600px，大小不超过 3M，支持 png/jpg/jpeg/gif/json</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label required">配网文案</div>
+        <div class="form-control">
+          <textarea class="textarea" placeholder="请输入配网文案">打开手机 Wi-Fi 设置，连接设备热点，然后返回此页面。</textarea>
+          <div class="char-count">23 / 500</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">辅助文案</div>
+        <div class="form-control">
+          <input class="input" type="text" placeholder="请输入辅助文案（可选）">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">按钮文案</div>
+        <div class="form-control">
+          <input class="input" type="text" placeholder="请输入按钮文案（可选）" value="下一步">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeNonTargetDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="closeNonTargetDrawer(); showToast('保存成功', 'success')">保存</button>
+  </div>
+</div>
 
-    const productMeta = {
-      wifi: {
-        type: "wifi",
-        name: "test-leo2-neo-Neo",
-        typeLabel: "Wi-Fi 设备",
-        category: "test-leo2",
-        model: "test-leo2-neo",
-        id: "2060272111821791234",
-        templateId: "2055184914953273345",
-        entries: ["AP配网", "SmartConfig配网", "扫码配网"],
-        defaultEntry: "AP配网"
-      },
-      ble: {
-        type: "ble",
-        name: "V3测试",
-        typeLabel: "BLE 设备",
-        category: "V3测试",
-        model: "V300",
-        id: "2063886410419023874",
-        templateId: "2055184914953273345",
-        entries: ["蓝牙配网", "蓝牙扫码配对"],
-        defaultEntry: "蓝牙配网"
-      }
-    };
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
 
-    const currentGuideSteps = [
-      {
-        copy: "123123",
-        image: "ap-step-1.png",
-        helper: "",
-        button: ""
-      },
-      {
-        copy: "312313",
-        image: "ap-step-2.png",
-        helper: "2313",
-        button: "123123"
-      }
-    ];
-
-    const extensionSeed = [
-      {
-        image: "ble-reset-step.png",
-        copy: "请长按设备按键 5 秒，直到指示灯开始闪烁。",
-        helper: "确认设备指示灯处于快速闪烁状态",
-        selectable: true,
-        button: "我已确认",
-        guideEnabled: true,
-        guideText: "查看设备复位方法",
-        subSteps: [
-          {
-            image: "reset-guide.png",
-            title: "找到复位键",
-            text: "打开设备底部硅胶盖，找到 Reset 按键。"
-          },
-          {
-            image: "",
-            title: "长按复位",
-            text: "使用卡针长按 5 秒，直到指示灯快速闪烁。"
-          }
-        ]
-      },
-      {
-        image: "phone-bluetooth.png",
-        copy: "请保持手机蓝牙开启，并靠近设备完成配网。",
-        helper: "",
-        selectable: false,
-        button: "下一步",
-        guideEnabled: false,
-        guideText: "",
-        subSteps: []
-      }
-    ];
-
-    const emptyStep = () => ({
-      image: "",
-      copy: "",
-      helper: "",
-      selectable: false,
-      button: "",
-      guideEnabled: false,
-      guideText: "",
-      subSteps: []
-    });
-
-    const emptySubStep = () => ({
-      image: "",
-      title: "",
-      text: ""
-    });
-
-    const clone = (value) => JSON.parse(JSON.stringify(value));
-
-    const state = {
-      productType: "wifi",
-      entry: "AP配网",
-      subEntry: BLE_SINGLE_STEP,
-      scenario: "current",
-      language: "英文（默认）",
-      targetConfigs: {
-        wifi: {},
-        ble: {}
-      },
-      drawerOpen: false,
-      drawerIsTarget: false,
-      activeDrawerStep: 0,
-      drawerSteps: clone(extensionSeed),
-      errors: {},
-      activeAnnotation: "1"
-    };
-
-    const annotations = {
-      page: [
+<script>
+// ===== 数据状态 =====
+const state = {
+  product: 'wifi',  // wifi | ble
+  wifiEntry: 'qr',  // ap | smart | qr
+  bleEntry: 'bt',   // bt | scan
+  bleMode: 'old',   // new | old
+  lang: 'en',
+  // 已保存的配置（模拟）
+  savedData: {
+    wifi_qr_en: {
+      configured: true,
+      steps: [
         {
-          id: "1",
-          title: "目标入口范围",
-          location: "配网引导 > 入口按钮组",
-          trigger: "产品进入配网引导页时展示。",
-          response: "入口按钮组保持现状。Wi-Fi 仅扫码配网追加扩展字段；BLE 仅蓝牙配网 + 多步骤配网追加扩展字段。",
-          rules: ["不新增一级独立多步骤配网入口。", "AP配网、SmartConfig配网、蓝牙配网 + 单步骤配网、蓝牙扫码配对均不新增本期扩展字段。"]
+          img: true, imgName: 'step1.gif',
+          txt: '请长按设备按键 5 秒，直到指示灯快速闪烁，然后点击下一步。',
+          auxTxt: '确认设备指示灯处于快速闪烁状态',
+          auxSelectable: true,
+          btnTxt: '我已确认',
+          guideEnabled: true,
+          guideText: '查看设备复位方法',
+          subSteps: [
+            { img: true, imgName: 'sub1.png', title: '找到复位键', body: '打开底部硅胶盖，找到 Reset 按键。' },
+            { img: false, title: '长按 5 秒', body: '长按 Reset 键约 5 秒，直到指示灯闪烁变快。' },
+          ]
         },
         {
-          id: "2",
-          title: "BLE 子入口展示规则",
-          location: "配网引导 > BLE 子入口",
-          trigger: "用户选择 BLE 产品下的蓝牙配网或蓝牙扫码配对。",
-          response: "继续展示子入口，名称调整为单步骤配网 / 多步骤配网；仅蓝牙配网 + 多步骤配网展示本期扩展字段。",
-          rules: ["单步骤配网保持原字段和校验。", "蓝牙扫码配对不新增本期扩展字段。"]
-        },
-        {
-          id: "3",
-          title: "复用多语言页签",
-          location: "配网引导 > 语言页签",
-          trigger: "用户切换语言。",
-          response: "按当前语言加载目标配置路径的配置；未配置语言显示未配置。",
-          rules: ["语言列表沿用当前页面。", "各语言独立保存，不覆盖其他语言。"]
-        },
-        {
-          id: "4",
-          title: "目标入口查看态扩展字段回显",
-          location: "配网引导 > 步骤详情",
-          trigger: "当前语言下目标配置路径已有配置。",
-          response: "按现有样例展示纵向步骤列表和描述表，并在目标路径中回显辅助文案选中能力、引导文案和子步骤。",
-          rules: ["不新增统计摘要面板。", "Wi-Fi 扫码配网与 BLE 蓝牙配网 + 多步骤配网使用同一套扩展字段回显规则。"]
-        },
-        {
-          id: "5",
-          title: "编辑入口",
-          location: "配网引导 > 编辑按钮",
-          trigger: "点击编辑。",
-          response: "打开当前配置路径的编辑抽屉，并回填当前语言配置。",
-          rules: ["目标路径展示扩展字段。", "非目标入口打开旧字段抽屉，不展示扩展字段。", "未配置语言进入空表单，默认至少 1 个步骤。"]
-        },
-        {
-          id: "12",
-          title: "非目标入口保护",
-          location: "配网引导 > 非目标入口",
-          trigger: "用户切回 AP配网、SmartConfig配网、蓝牙配网 + 单步骤配网或蓝牙扫码配对。",
-          response: "非目标入口字段、校验、查看态和子入口逻辑保持不变。",
-          rules: ["本需求只在两个目标配置路径追加扩展字段。"]
-        }
-      ],
-      drawer: [
-        {
-          id: "6",
-          title: "步骤字段与必填规则",
-          location: "编辑抽屉 > 步骤配置",
-          trigger: "打开编辑抽屉。",
-          response: "按步骤维护配网引导图、配网文案、辅助文案、按钮文案等字段。",
-          rules: ["配网引导图必填。", "配网文案必填。", "步骤数量同步现有入口限制，本需求不新增最大 5 步限制。"]
-        },
-        {
-          id: "7",
-          title: "辅助文案选中能力",
-          location: "编辑抽屉 > 辅助文案支持选中能力",
-          trigger: "用户打开该开关。",
-          response: "该步骤辅助文案可用于 App 页面内二次确认。",
-          rules: ["该能力与引导文案相互独立。", "关闭时不影响引导文案配置。"]
-        },
-        {
-          id: "8",
-          title: "引导文案独立启用",
-          location: "编辑抽屉 > 引导文案",
-          trigger: "用户启用引导文案。",
-          response: "展示引导文案输入和子步骤配置区域。",
-          rules: ["关闭时引导文案输入框禁用。", "启用后引导文案必填。", "启用后至少 1 个子步骤。", "最多 3 个子步骤。"]
-        },
-        {
-          id: "9",
-          title: "子步骤规则",
-          location: "编辑抽屉 > 子步骤列表",
-          trigger: "引导文案已启用。",
-          response: "子步骤可配置图片、标题、正文。",
-          rules: ["图片可选。", "标题必填。", "正文必填。"]
-        },
-        {
-          id: "10",
-          title: "按钮状态",
-          location: "编辑抽屉 > Footer",
-          trigger: "点击取消或保存。",
-          response: "取消关闭抽屉并丢弃未保存内容；保存触发表单校验。",
-          rules: ["保存成功显示 Toast 并回显。", "保存失败保持抽屉打开。"]
-        },
-        {
-          id: "11",
-          title: "保存失败定位",
-          location: "编辑抽屉 > 校验错误",
-          trigger: "必填项缺失后点击保存。",
-          response: "显示字段级错误，保留用户输入，右侧批注切换到错误说明。",
-          rules: ["错误需要定位到具体步骤、子步骤和字段。"]
+          img: true, imgName: 'step2.png',
+          txt: '扫描设备二维码，完成网络绑定。',
+          auxTxt: '',
+          auxSelectable: false,
+          btnTxt: '',
+          guideEnabled: false,
+          guideText: '',
+          subSteps: []
         }
       ]
-    };
-
-    const el = (id) => document.getElementById(id);
-
-    function isTargetEntry() {
-      return (state.productType === "wifi" && state.entry === "扫码配网")
-        || (state.productType === "ble" && state.entry === "蓝牙配网" && state.subEntry === BLE_MULTI_STEP);
-    }
-
-    function hasBleSubEntries() {
-      return state.productType === "ble" && (state.entry === "蓝牙配网" || state.entry === "蓝牙扫码配对");
-    }
-
-    function isBleSingleStepEntry() {
-      return hasBleSubEntries() && state.subEntry === BLE_SINGLE_STEP;
-    }
-
-    function activeProduct() {
-      return productMeta[state.productType];
-    }
-
-    function activeTargetSteps() {
-      return state.targetConfigs[state.productType][state.language] || null;
-    }
-
-    function setTargetPath() {
-      if (state.productType === "wifi") {
-        state.entry = "扫码配网";
-      } else {
-        state.entry = "蓝牙配网";
-        state.subEntry = BLE_MULTI_STEP;
-      }
-      state.scenario = activeTargetSteps() ? "target-filled" : "target-empty";
-    }
-
-    function drawerTitle() {
-      if (state.drawerIsTarget) {
-        return state.productType === "wifi" ? "编辑扫码配网" : `编辑蓝牙配网-${BLE_MULTI_STEP}`;
-      }
-      if (isBleSingleStepEntry()) return "编辑配网引导";
-      if (hasBleSubEntries()) return `编辑${state.entry}-${state.subEntry}`;
-      return `编辑${state.entry}`;
-    }
-
-    function syncScenarioSelect() {
-      const select = el("scenarioSelect");
-      if (select) select.value = state.scenario;
-    }
-
-    function setAnnotation(id) {
-      state.activeAnnotation = id;
-      document.querySelectorAll(".anchored").forEach(node => node.classList.toggle("highlight", node.dataset.anchor === id));
-      renderAnnotations();
-    }
-
-    function renderProductMeta() {
-      const product = activeProduct();
-      el("productName").textContent = product.name;
-      el("productTypeTag").textContent = product.typeLabel;
-      el("productCategory").textContent = product.category;
-      el("productModel").textContent = product.model;
-      el("productId").textContent = product.id;
-      el("templateId").textContent = product.templateId;
-      el("switchProductButton").textContent = state.productType === "wifi" ? "切换为 BLE 样例" : "切换为 Wi-Fi 样例";
-    }
-
-    function renderEntries() {
-      const group = el("networkEntryGroup");
-      group.innerHTML = "";
-      activeProduct().entries.forEach(entry => {
-        const btn = document.createElement("button");
-        btn.className = "seg-button" + (entry === state.entry ? " active" : "");
-        btn.textContent = entry;
-        btn.addEventListener("click", () => {
-          state.entry = entry;
-          if (state.productType === "ble" && (entry === "蓝牙配网" || entry === "蓝牙扫码配对")) state.subEntry = BLE_SINGLE_STEP;
-          state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : (entry === activeProduct().defaultEntry ? "current" : "non-target");
-          setAnnotation(hasBleSubEntries() ? "2" : (isTargetEntry() ? "4" : "12"));
-          renderAll();
-        });
-        group.appendChild(btn);
-      });
-
-      const sub = el("subEntryArea");
-      sub.innerHTML = "";
-      if (hasBleSubEntries()) {
-        BLE_SUB_ENTRIES.forEach((item) => {
-          const btn = document.createElement("button");
-          btn.className = "seg-button" + (state.subEntry === item ? " active" : "");
-          btn.textContent = item;
-          btn.addEventListener("click", () => {
-            state.subEntry = item;
-            state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : "non-target";
-            setAnnotation(isTargetEntry() ? "4" : "12");
-            renderAll();
-          });
-          sub.appendChild(btn);
-        });
-        const qr = document.createElement("div");
-        qr.className = "qr-prefix";
-        qr.innerHTML = "<span>二维码前缀：</span>V300";
-        sub.appendChild(qr);
-      } else {
-        sub.innerHTML = "";
-      }
-    }
-
-    function renderLanguages() {
-      const tabs = el("languageTabs");
-      tabs.innerHTML = "";
-      languages.forEach(lang => {
-        const btn = document.createElement("button");
-        btn.textContent = lang;
-        btn.className = lang === state.language ? "active" : "";
-        btn.addEventListener("click", () => {
-          state.language = lang;
-          state.scenario = isTargetEntry() ? (activeTargetSteps() ? "target-filled" : "target-empty") : state.scenario;
-          setAnnotation("3");
-          renderAll();
-        });
-        tabs.appendChild(btn);
-      });
-    }
-
-    function renderContent() {
-      const view = el("contentView");
-      const editButton = el("editButton");
-      editButton.style.display = "inline-flex";
-      if (isTargetEntry()) {
-        const steps = activeTargetSteps();
-        if (!steps) {
-          view.innerHTML = `<div class="steps-view anchored" data-anchor="4"><div class="empty-state">未配置</div></div>`;
-        } else {
-          view.innerHTML = renderSteps(steps, true);
+    },
+    wifi_qr_zh: { configured: false, steps: [] },
+    ble_old_en: {
+      configured: true,
+      steps: [
+        {
+          img: true, imgName: 'ble_step1.png',
+          txt: '请开启手机蓝牙，确保设备处于配对模式（指示灯蓝色闪烁）。',
+          auxTxt: '设备指示灯蓝色慢速闪烁',
+          auxSelectable: true,
+          btnTxt: '开始配对',
+          guideEnabled: true,
+          guideText: '如何开启蓝牙配对模式？',
+          subSteps: [
+            { img: true, imgName: 'ble_sub1.png', title: '进入配网模式', body: '同时按住 Pair 键 3 秒，直到蓝灯闪烁。' },
+          ]
         }
-      } else if (state.productType === "wifi" && state.entry === "AP配网") {
-        view.innerHTML = renderSteps(currentGuideSteps, false);
-      } else if (hasBleSubEntries()) {
-        view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
-      } else {
-        view.innerHTML = `<div class="steps-view anchored" data-anchor="12"><div class="empty-state">未配置</div></div>`;
-      }
-      wireAnchors();
-    }
+      ]
+    },
+    ble_old_zh: { configured: false, steps: [] }
+  },
+  // 编辑中的草稿
+  draft: null,
+  drawerType: null // 'target' | 'nonTarget' | 'bleNew' | 'bleScanEdit'
+};
 
-    function renderSteps(steps, isMulti) {
-      const rows = steps.map((step, index) => {
-        const helper = step.helper || "";
-        const button = step.button || "";
-        const imageName = step.image || "";
-        const selectable = isMulti ? (step.selectable ? "启用" : "--") : null;
-        const guide = isMulti ? renderGuide(step) : "";
-        const cells = [
-          ["配网文案：", step.copy || "--"],
-          ["配网引导图：", imageName ? `<div class="thumb-row"><div class="thumb">图片</div><span>${imageName}</span></div>` : "--"],
-          ["辅助文案：", helper || "--"],
-          ...(isMulti ? [["辅助文案支持选中能力：", selectable]] : []),
-          ["按钮文案：", button || "--"],
-          ...(isMulti ? [["引导文案：", step.guideEnabled ? (step.guideText || "--") : "--"], ["引导文案子步骤：", guide || "--"]] : [])
-        ].map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join("");
-        return `
-          <div class="step-item">
-            <div class="step-index">${index + 1}</div>
-            <div class="step-main">
-              <div class="step-title">步骤 ${index + 1}</div>
-              <table class="desc-table">${cells}</table>
+// ===== 批注数据 =====
+const annotations = [
+  {
+    id: 1, title: '目标入口范围', tag: '入口', group: 'entry',
+    location: '入口按钮组',
+    trigger: '页面加载，或切换产品类型',
+    response: 'Wi-Fi 入口保持 AP配网 / SmartConfig配网 / 扫码配网；BLE 入口保持 蓝牙配网 / 蓝牙扫码配对。不新增独立入口。',
+    rule: '仅 Wi-Fi 扫码配网 和 BLE 蓝牙配网 + 旧版入口 追加扩展字段；其余入口保持原样。'
+  },
+  {
+    id: 2, title: 'BLE 仅旧版入口扩展', tag: '入口', group: 'entry',
+    location: 'BLE 子入口区域',
+    trigger: '切换到 BLE 产品 → 选择蓝牙配网',
+    response: '展示新版入口 / 旧版入口。仅旧版入口展示本期扩展字段；新版入口保持语言、配网引导图、配网指引、配网文案。',
+    rule: 'BLE 蓝牙配网 + 新版入口 不展示扩展字段，编辑抽屉标题为 "编辑配网引导"。'
+  },
+  {
+    id: 3, title: '复用多语言逻辑', tag: '多语言', group: 'view',
+    location: '语言页签',
+    trigger: '点击任意语言页签',
+    response: '切换当前语言视图；未配置语言显示"未配置"状态。',
+    rule: '每种语言的配置按语言维度独立保存和回显，不互相影响。'
+  },
+  {
+    id: 4, title: '目标入口查看态扩展字段回显', tag: '查看态', group: 'view',
+    location: '查看态步骤列表',
+    trigger: '已配置语言下的目标入口',
+    response: '纵向步骤列表，每步使用描述表展示所有字段（含扩展字段）。空值显示 --。',
+    rule: '扩展字段：辅助文案支持选中能力、引导文案（含子步骤）。引导文案关闭时显示 --。'
+  },
+  {
+    id: 5, title: '打开目标入口编辑抽屉', tag: '编辑', group: 'edit',
+    location: '查看态右上角编辑按钮',
+    trigger: '点击"编辑"按钮',
+    response: '打开右侧 Drawer，标题跟随配置路径（"编辑扫码配网" 或 "编辑蓝牙配网-旧版入口"），回填当前语言已有配置。',
+    rule: '非目标入口也有编辑按钮，但仅展示旧字段，不展示扩展字段。'
+  },
+  {
+    id: 6, title: '步骤字段与必填规则', tag: '编辑', group: 'edit',
+    location: '编辑抽屉 > 步骤配置',
+    trigger: '打开编辑抽屉',
+    response: '每步包含：配网引导图*、配网文案*、辅助文案、辅助文案支持选中能力、按钮文案、引导文案（开关+输入框）。步骤数量同步现有入口限制。',
+    rule: '配网引导图和配网文案为必填。步骤不额外限制为 5 步。'
+  },
+  {
+    id: 7, title: '辅助文案选中能力', tag: '编辑', group: 'edit',
+    location: '编辑抽屉 > 辅助文案支持选中能力',
+    trigger: '每步骤内',
+    response: '独立开关/Checkbox，与引导文案互相独立。用于 App 页面内二次确认场景。',
+    rule: '启用/关闭不影响引导文案字段的状态。'
+  },
+  {
+    id: 8, title: '引导文案独立启用', tag: '编辑', group: 'edit',
+    location: '编辑抽屉 > 引导文案区域',
+    trigger: '启用/关闭引导文案开关',
+    response: '关闭时：输入框禁用，子步骤区域隐藏。启用时：输入框变为必填，子步骤区域展示。',
+    rule: '引导文案启用后本身必填；关闭时历史数据保留但不输出。'
+  },
+  {
+    id: 9, title: '子步骤 1-3 个，标题/正文必填', tag: '编辑', group: 'edit',
+    location: '编辑抽屉 > 子步骤列表',
+    trigger: '引导文案已启用',
+    response: '子步骤至少 1 个，最多 3 个。子步骤图片可选，标题和正文必填。超过 3 个时"新增子步骤"按钮禁用。',
+    rule: '子步骤图片未上传不阻塞保存。'
+  },
+  {
+    id: 10, title: '取消/保存按钮状态', tag: '编辑', group: 'edit',
+    location: '编辑抽屉 Footer',
+    trigger: '用户操作',
+    response: '取消：关闭抽屉，丢弃未保存内容。保存：触发校验，通过则保存并关闭，失败则保持打开并提示错误。',
+    rule: '保存成功显示 Toast"保存成功"；失败显示字段级错误，不额外弹全局 Toast。'
+  },
+  {
+    id: 11, title: '保存失败定位与输入保留', tag: '校验', group: 'validate',
+    location: '编辑抽屉 > 校验错误区',
+    trigger: '点击保存且校验失败',
+    response: '抽屉保持打开，保留用户输入，字段错误高亮，定位到具体步骤/子步骤/字段。',
+    rule: '逐步骤校验：① 配网引导图必填 ② 配网文案必填 ③ 引导文案启用时必填 ④ 子步骤标题/正文必填。'
+  },
+  {
+    id: 12, title: '非目标入口不变化', tag: '入口', group: 'entry',
+    location: '非目标入口',
+    trigger: '切换到 AP配网、SmartConfig、新版入口、蓝牙扫码配对',
+    response: '不展示扩展字段。字段、校验、查看态、编辑态全部保持原样。',
+    rule: 'BLE 新版入口编辑抽屉：标题"编辑配网引导"，字段：语言、配网引导图、配网指引、配网文案。'
+  }
+];
+
+let currentAnnotationFilter = 'all';
+
+// ===== 工具函数 =====
+function getCurrentKey() {
+  if (state.product === 'wifi') {
+    if (state.wifiEntry === 'qr') return `wifi_qr_${state.lang}`;
+  } else {
+    if (state.bleEntry === 'bt' && state.bleMode === 'old') return `ble_old_${state.lang}`;
+  }
+  return null;
+}
+
+function getConfigData() {
+  const key = getCurrentKey();
+  if (!key) return null;
+  return state.savedData[key] || { configured: false, steps: [] };
+}
+
+function isTargetEntry() {
+  if (state.product === 'wifi') return state.wifiEntry === 'qr';
+  if (state.product === 'ble') return state.bleEntry === 'bt' && state.bleMode === 'old';
+  return false;
+}
+
+// ===== 切换产品类型 =====
+function switchProduct(type) {
+  state.product = type;
+  const wifiEntries = document.getElementById('wifiEntries');
+  const bleEntries = document.getElementById('bleEntries');
+  const wifiBtn = document.getElementById('switchWifi');
+  const bleBtn = document.getElementById('switchBle');
+
+  if (type === 'wifi') {
+    wifiEntries.classList.remove('hidden');
+    bleEntries.classList.add('hidden');
+    document.getElementById('productName').childNodes[0].textContent = 'test-leo2-neo-Neo';
+    document.getElementById('productId').textContent = '2060272111821791234';
+    document.getElementById('productModel').textContent = 'test-leo2-neo';
+    document.getElementById('productType').textContent = 'Wi-Fi 设备';
+    wifiBtn.className = 'btn btn-sm btn-primary';
+    bleBtn.className = 'btn btn-sm btn-default';
+    selectEntry('wifi', 'qr');
+  } else {
+    wifiEntries.classList.add('hidden');
+    bleEntries.classList.remove('hidden');
+    document.getElementById('productName').childNodes[0].textContent = 'V3测试';
+    document.getElementById('productId').textContent = '2063886410419023874';
+    document.getElementById('productModel').textContent = 'V300';
+    document.getElementById('productType').textContent = 'BLE 设备';
+    wifiBtn.className = 'btn btn-sm btn-default';
+    bleBtn.className = 'btn btn-sm btn-primary';
+    selectEntry('ble', 'bt');
+  }
+  state.lang = 'en';
+  updateLangTabs();
+  renderView();
+}
+
+// ===== 切换入口 =====
+function selectEntry(product, entry) {
+  if (product === 'wifi') {
+    state.wifiEntry = entry;
+    ['wifiAp', 'wifiSmart', 'wifiQr'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    const map = { ap: 'wifiAp', smart: 'wifiSmart', qr: 'wifiQr' };
+    document.getElementById(map[entry])?.classList.add('active');
+  } else {
+    state.bleEntry = entry;
+    ['bleBt', 'bleScan'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    const map = { bt: 'bleBt', scan: 'bleScan' };
+    document.getElementById(map[entry])?.classList.add('active');
+    const subEntry = document.getElementById('bleSubEntry');
+    if (entry === 'bt') { subEntry.classList.remove('hidden'); }
+    else { subEntry.classList.add('hidden'); }
+  }
+  renderView();
+}
+
+// ===== BLE 子入口 =====
+function selectBleMode(mode) {
+  state.bleMode = mode;
+  ['bleNew', 'bleOld'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById(mode === 'new' ? 'bleNew' : 'bleOld')?.classList.add('active');
+  renderView();
+}
+
+// ===== 切换语言 =====
+function selectLang(lang) {
+  state.lang = lang;
+  updateLangTabs();
+  renderView();
+}
+
+function updateLangTabs() {
+  const configuredLangs = ['en', 'fr', 'de', 'es'];
+  document.querySelectorAll('.lang-tab').forEach((tab, i) => {
+    const langs = ['en','fr','de','es','it','ar','pt','zh','zh-tw','vi'];
+    const l = langs[i];
+    tab.classList.toggle('active', l === state.lang);
+    tab.classList.toggle('unconfigured', !configuredLangs.includes(l));
+  });
+}
+
+// ===== 渲染查看态 =====
+function renderView() {
+  const viewTarget = document.getElementById('viewTarget');
+  const viewNonTarget = document.getElementById('viewNonTarget');
+  const viewBleNew = document.getElementById('viewBleNew');
+  const viewBleScan = document.getElementById('viewBleScan');
+
+  // 隐藏所有
+  viewTarget.classList.add('hidden');
+  viewNonTarget.classList.add('hidden');
+  viewBleNew.classList.add('hidden');
+  viewBleScan.classList.add('hidden');
+
+  if (state.product === 'wifi') {
+    if (state.wifiEntry === 'qr') {
+      viewTarget.classList.remove('hidden');
+      document.getElementById('targetLabel').textContent = '扫码配网';
+    } else {
+      viewNonTarget.classList.remove('hidden');
+      document.getElementById('nonTargetLabel').textContent = state.wifiEntry === 'ap' ? 'AP配网' : 'SmartConfig配网';
+      document.getElementById('nonTargetDrawerTitle').textContent = '编辑配网引导';
+    }
+  } else { // BLE
+    if (state.bleEntry === 'scan') {
+      viewBleScan.classList.remove('hidden');
+    } else { // bt
+      if (state.bleMode === 'new') {
+        viewBleNew.classList.remove('hidden');
+      } else { // old
+        viewTarget.classList.remove('hidden');
+        document.getElementById('targetLabel').textContent = '蓝牙配网 · 旧版入口';
+      }
+    }
+  }
+
+  // 渲染目标入口视图
+  if (!viewTarget.classList.contains('hidden')) {
+    renderTargetView();
+  }
+
+  renderAnnotations();
+}
+
+function renderTargetView() {
+  const data = getConfigData();
+  const viewConfigured = document.getElementById('viewConfigured');
+  const viewUnconfigured = document.getElementById('viewUnconfigured');
+
+  if (!data || !data.configured) {
+    viewConfigured.classList.add('hidden');
+    viewUnconfigured.classList.remove('hidden');
+    return;
+  }
+  viewConfigured.classList.remove('hidden');
+  viewUnconfigured.classList.add('hidden');
+
+  const list = document.getElementById('viewStepList');
+  list.innerHTML = data.steps.map((step, i) => renderStepView(step, i + 1)).join('');
+}
+
+function renderStepView(step, num) {
+  const auxSel = step.auxSelectable
+    ? `<span class="toggle-badge toggle-on">已启用</span>`
+    : `<span class="text-muted">--</span>`;
+
+  let guideContent = '<span class="text-muted">--</span>';
+  if (step.guideEnabled && step.guideText) {
+    const subStepsHtml = step.subSteps && step.subSteps.length > 0
+      ? `<div class="sub-step-view">${step.subSteps.map((s, si) => `
+        <div class="sub-step-view-item">
+          <div class="sub-step-view-img">
+            ${s.img ? `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg>` : `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#d9d9d9" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>`}
+          </div>
+          <div class="sub-step-view-content">
+            <div class="sub-step-view-title">子步骤 ${si + 1}：${escHtml(s.title)}</div>
+            <div class="sub-step-view-body">${escHtml(s.body)}</div>
+          </div>
+        </div>`).join('')}</div>`
+      : '<div class="text-muted text-sm" style="margin-top:4px;">子步骤未配置</div>';
+    guideContent = `
+      <div><span class="text-sm" style="color:#595959;">入口文案：</span>${escHtml(step.guideText)}</div>
+      ${subStepsHtml}`;
+  }
+
+  return `
+    <div class="step-item">
+      <div class="step-item-header">
+        <div class="step-num">${num}</div>
+        <div class="step-label">步骤 ${num}</div>
+        <span class="anchor-badge" title="批注 4：查看态回显">4</span>
+      </div>
+      <div class="step-desc-table">
+        <div class="desc-row">
+          <div class="desc-label">配网引导图</div>
+          <div class="desc-value">
+            ${step.img ? `<div class="img-thumb"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div>` : '<span class="empty">--</span>'}
+          </div>
+        </div>
+        <div class="desc-row">
+          <div class="desc-label">配网文案</div>
+          <div class="desc-value">${escHtml(step.txt) || '<span class="empty">--</span>'}</div>
+        </div>
+        <div class="desc-row">
+          <div class="desc-label">辅助文案</div>
+          <div class="desc-value">${step.auxTxt ? escHtml(step.auxTxt) : '<span class="empty">--</span>'}</div>
+        </div>
+        <div class="desc-row">
+          <div class="desc-label">辅助文案选中
+          <span class="anchor-badge" title="批注 7：辅助文案选中能力">7</span></div>
+          <div class="desc-value">${auxSel}</div>
+        </div>
+        <div class="desc-row">
+          <div class="desc-label">按钮文案</div>
+          <div class="desc-value">${step.btnTxt ? escHtml(step.btnTxt) : '<span class="empty">--</span>'}</div>
+        </div>
+        <div class="desc-row">
+          <div class="desc-label">引导文案
+          <span class="anchor-badge" title="批注 8：引导文案独立启用">8</span></div>
+          <div class="desc-value">${guideContent}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== 编辑抽屉 =====
+function openDrawer(type) {
+  state.drawerType = type;
+  document.getElementById('drawerOverlay').classList.add('open');
+
+  if (type === 'nonTarget') {
+    document.getElementById('nonTargetDrawer').classList.add('open');
+    return;
+  }
+  if (type === 'bleNew') {
+    document.getElementById('nonTargetDrawerTitle').textContent = '编辑配网引导';
+    document.getElementById('nonTargetDrawer').classList.add('open');
+    return;
+  }
+  if (type === 'bleScanEdit') {
+    document.getElementById('nonTargetDrawerTitle').textContent = '编辑蓝牙扫码配对';
+    document.getElementById('nonTargetDrawer').classList.add('open');
+    return;
+  }
+
+  // 目标入口抽屉
+  const isWifi = state.product === 'wifi';
+  document.getElementById('drawerTitle').textContent = isWifi ? '编辑扫码配网' : '编辑蓝牙配网-旧版入口';
+  document.getElementById('editDrawer').classList.add('open');
+
+  const data = getConfigData();
+  if (!data || !data.configured) {
+    // 默认空表单，1个步骤
+    state.draft = { steps: [createEmptyStep()] };
+  } else {
+    state.draft = JSON.parse(JSON.stringify(data));
+  }
+  // Reset preview to first step
+  previewState.currentStep = 0;
+  previewState.subStepIdx = 0;
+  previewState.modalOpen = false;
+  renderDrawer();
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('editDrawer').classList.remove('open');
+  document.getElementById('nonTargetDrawer').classList.remove('open');
+  state.draft = null;
+  state.drawerType = null;
+}
+
+function closeNonTargetDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('nonTargetDrawer').classList.remove('open');
+}
+
+function createEmptyStep() {
+  return { img: false, imgName: '', txt: '', auxTxt: '', auxSelectable: false, btnTxt: '', guideEnabled: false, guideText: '', subSteps: [] };
+}
+
+function createEmptySubStep() {
+  return { img: false, imgName: '', title: '', body: '' };
+}
+
+// ===== 手机预览渲染 =====
+const previewState = { currentStep: 0, subStepIdx: 0, modalOpen: false };
+
+const defaultBtnTexts = { en: 'Next', zh: '下一步', fr: 'Suivant', de: 'Weiter', es: 'Siguiente', it: 'Avanti', ar: 'التالي', pt: 'Próximo', 'zh-tw': '下一步', vi: 'Tiếp theo' };
+function getDefaultBtnText() { return defaultBtnTexts[state.lang] || 'Next'; }
+
+function renderPhonePreview() {
+  const preview = document.getElementById('phonePreview');
+  if (!preview || !state.draft) return;
+  const steps = state.draft.steps || [];
+  if (steps.length === 0) { preview.innerHTML = '<div class="pv-empty-hint">Add a step to preview</div>'; return; }
+  const idx = Math.min(previewState.currentStep, steps.length - 1);
+  previewState.currentStep = idx;
+  const step = steps[idx];
+  const imgSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><circle cx="8.5" cy="9" r="2"/><path d="M3 16l5-4 4 4 3-3 4 4"/></svg>';
+  const isLast = idx >= steps.length - 1;
+  const txt = step.txt || '';
+  const auxTxt = step.auxTxt || '';
+  const btnTxt = step.btnTxt || getDefaultBtnText();
+  const guideEnabled = step.guideEnabled;
+  const guideText = step.guideText || '';
+  const subs = step.subSteps || [];
+
+  let html = '<div class="pv-page">';
+  html += '<div class="pv-header"><svg class="pv-back" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4L6 9l5 5"/></svg><span class="pv-title">Connect to Device</span></div>';
+  if (steps.length > 1) {
+    html += '<div class="pv-step-dots">';
+    for (let i = 0; i < steps.length; i++) html += '<div class="pv-dot' + (i === idx ? ' active' : '') + '"></div>';
+    html += '</div>';
+  }
+  html += '<div class="pv-page-body">';
+  html += '<div class="pv-step-label-inline">Step ' + (idx + 1) + ' of ' + steps.length + '</div>';
+  html += step.img ? '<div class="pv-product-img">' + imgSvg + '</div>' : '<div class="pv-product-img-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><line x1="3" y1="3" x2="21" y2="17"/></svg></div>';
+  html += txt ? '<div class="pv-txt">' + escHtml(txt) + '</div>' : '<div class="pv-txt-placeholder">Enter step description…</div>';
+  if (auxTxt) {
+    html += '<div class="pv-aux">' + (step.auxSelectable ? '<svg class="pv-aux-icon" viewBox="0 0 16 16" fill="none" stroke="#4372ff" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 8l2 2 3.5-3.5"/></svg>' : '') + escHtml(auxTxt) + '</div>';
+  }
+  if (guideEnabled && guideText) {
+    html += '<div class="pv-guide" onclick="openPreviewHelp(' + idx + ')">' + escHtml(guideText) + '</div>';
+  }
+  html += '</div>';
+  html += '<div class="pv-page-footer"><button class="pv-action-btn" onclick="previewNextStep()">' + escHtml(btnTxt) + '</button>';
+  if (isLast) html += '<div class="pv-scanning">Scanning nearby devices…</div>';
+  html += '</div></div>';
+
+  if (previewState.modalOpen && guideEnabled && subs.length > 0) {
+    const si = Math.min(previewState.subStepIdx, subs.length - 1);
+    previewState.subStepIdx = si;
+    const sub = subs[si];
+    let modal = '<div class="pv-modal-overlay">';
+    modal += '<div class="pv-sheet">';
+    modal += '<div class="pv-sheet-handle"></div>';
+    modal += '<div class="pv-sheet-head">';
+    modal += '<div class="pv-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12-2.13A3 3 0 0112 13v1"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg></div>';
+    modal += '<span class="pv-sheet-title">' + escHtml(guideText) + '</span>';
+    modal += '<button class="pv-sheet-close" onclick="closePreviewHelp()">✕</button>';
+    modal += '</div>';
+    modal += '<div class="pv-sheet-body"><div class="pv-substep-full">';
+    modal += sub.img ? '<div class="pv-substep-full-img">' + imgSvg + '</div>' : '<div class="pv-substep-full-img-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/></svg></div>';
+    modal += '<div class="pv-substep-full-body">';
+    modal += sub.title ? '<div class="pv-substep-full-title">' + escHtml(sub.title) + '</div>' : '<div class="pv-substep-full-title-ph">Sub-step title</div>';
+    modal += sub.body ? '<div class="pv-substep-full-text">' + escHtml(sub.body) + '</div>' : '<div class="pv-substep-full-text-ph">Sub-step body</div>';
+    modal += '</div></div></div>';
+    modal += '<div class="pv-sheet-nav">';
+    modal += '<button class="pv-nav-btn" onclick="navSubStep(-1)"' + (subs.length <= 1 ? ' disabled' : '') + '><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L4 6l4 4"/></svg></button>';
+    modal += '<div class="pv-nav-dots">';
+    for (let j = 0; j < subs.length; j++) modal += '<div class="pv-nav-dot' + (j === si ? ' active' : '') + '" onclick="goToSubStep(' + j + ')"></div>';
+    modal += '</div>';
+    modal += '<button class="pv-nav-btn" onclick="navSubStep(1)"' + (subs.length <= 1 ? ' disabled' : '') + '><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2l4 4-4 4"/></svg></button>';
+    modal += '<span class="pv-nav-counter">' + (si + 1) + ' / ' + subs.length + '</span>';
+    modal += '</div></div>';
+    html += modal;
+  }
+  preview.innerHTML = html;
+}
+
+function previewNextStep() {
+  const steps = state.draft?.steps || [];
+  if (previewState.currentStep < steps.length - 1) {
+    previewState.currentStep++;
+    previewState.modalOpen = false;
+    previewState.subStepIdx = 0;
+    renderPhonePreview();
+  }
+}
+
+function openPreviewHelp(stepIdx) {
+  previewState.modalOpen = true;
+  previewState.subStepIdx = 0;
+  renderPhonePreview();
+}
+
+function closePreviewHelp() {
+  previewState.modalOpen = false;
+  renderPhonePreview();
+}
+
+function navSubStep(dir) {
+  const step = state.draft?.steps?.[previewState.currentStep];
+  if (!step) return;
+  const subs = step.subSteps || [];
+  if (subs.length <= 1) return;
+  previewState.subStepIdx = (previewState.subStepIdx + dir + subs.length) % subs.length;
+  renderPhonePreview();
+}
+
+function goToSubStep(idx) {
+  previewState.subStepIdx = idx;
+  renderPhonePreview();
+}
+
+function renderDrawer() {
+  const body = document.getElementById('drawerBody');
+  const draft = state.draft;
+  let html = `<div class="annotation-rule" style="margin-bottom:16px;">
+    <strong>批注 5 / 6：</strong>编辑目标入口，展示旧字段和扩展字段。步骤数量同步现有入口限制，不额外限制为 5 步。
+  </div>`;
+
+  draft.steps.forEach((step, i) => {
+    html += renderStepBlock(step, i, draft.steps.length);
+  });
+
+  html += `<button class="add-step-btn" onclick="addStep()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+    新增步骤
+    <span class="anchor-badge" title="批注 6：步骤数同现有入口限制">6</span>
+  </button>`;
+
+  body.innerHTML = html;
+  clearErrors();
+  renderPhonePreview();
+  // Bind incremental preview updates
+  body.querySelectorAll('input[id^="txt_"], textarea[id^="txt_"], input[id^="auxTxt_"], input[id^="btnTxt_"], input[id^="guideText_"], input[id^="subTitle_"], textarea[id^="subBody_"]').forEach(el => {
+    el.addEventListener('input', renderPhonePreview);
+  });
+}
+
+function renderStepBlock(step, i, total) {
+  const guideDisabled = !step.guideEnabled;
+  const subCount = step.subSteps ? step.subSteps.length : 0;
+  const canAddSub = step.guideEnabled && subCount < 3;
+
+  let subStepsHtml = '';
+  if (step.guideEnabled) {
+    const subHtml = (step.subSteps || []).map((sub, si) => `
+      <div class="sub-step-block" id="subStep_${i}_${si}">
+        <div class="sub-step-block-header">
+          <div class="sub-step-block-num">${si+1}</div>
+          <div class="sub-step-block-title">子步骤 ${si+1}</div>
+          <button class="btn-text btn btn-sm" onclick="deleteSubStep(${i},${si})" ${subCount <= 1 ? 'style="opacity:.4;cursor:not-allowed"' : ''}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M9.5 2.5l-7 7M2.5 2.5l7 7"/></svg>
+            删除
+          </button>
+        </div>
+        <div class="sub-step-block-body">
+          <div class="form-row">
+            <div class="form-label" style="width:60px;">图片</div>
+            <div class="form-control">
+              ${sub.img
+                ? `<div class="upload-area has-file"><div class="upload-file-preview"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div><div class="upload-file-info"><div class="upload-file-name">${escHtml(sub.imgName)}</div></div><button class="upload-file-remove" onclick="clearSubImg(${i},${si})">✕</button></div>`
+                : `<div class="upload-area" onclick="mockUploadSubImg(${i},${si})"><div class="upload-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><circle cx="8" cy="9" r="2"/><path d="M3 16l5-4 4 4 3-3 4 4"/></svg><div class="upload-placeholder-text">点击上传</div><div class="upload-placeholder-hint">可选</div></div></div>`}
             </div>
           </div>
-        `;
-      }).join("");
-      return `<div class="steps-view anchored" data-anchor="4">${rows}</div>`;
-    }
-
-    function renderGuide(step) {
-      if (!step.guideEnabled || !step.subSteps.length) return "";
-      return `<div class="sub-steps">${step.subSteps.map((sub, idx) => `
-        <div class="sub-step-card">
-          <div class="sub-step-title">${idx + 1}. ${sub.title || "--"}</div>
-          <div style="color:var(--el-text-color-secondary);margin-bottom:4px;">图片：${sub.image || "--"}</div>
-          <div>${sub.text || "--"}</div>
+          <div class="form-row">
+            <div class="form-label required" style="width:60px;">标题</div>
+            <div class="form-control">
+              <input class="input" id="subTitle_${i}_${si}" type="text" value="${escHtml(sub.title)}" placeholder="请输入子步骤标题" oninput="updateSubField(${i},${si},'title',this.value)">
+              <div class="error-msg" id="err_subTitle_${i}_${si}">请输入子步骤标题</div>
+              <span class="anchor-badge" title="批注 9：子步骤标题必填">9</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-label required" style="width:60px;">正文</div>
+            <div class="form-control">
+              <textarea class="textarea" id="subBody_${i}_${si}" placeholder="请输入子步骤正文" oninput="updateSubField(${i},${si},'body',this.value)" style="min-height:60px;">${escHtml(sub.body)}</textarea>
+              <div class="error-msg" id="err_subBody_${i}_${si}">请输入子步骤正文</div>
+            </div>
+          </div>
         </div>
-      `).join("")}</div>`;
-    }
+      </div>`).join('');
 
-    function renderDrawer() {
-      const mask = el("drawerMask");
-      mask.classList.toggle("open", state.drawerOpen);
-      if (!state.drawerOpen) return;
-      const title = drawerTitle();
-      const drawer = document.querySelector(".drawer");
-      document.querySelector(".drawer-title").textContent = title;
-      drawer.setAttribute("aria-label", title);
+    subStepsHtml = `
+      <div class="sub-steps-container" id="subStepsContainer_${i}">
+        <div class="form-section-title" style="font-size:12px;margin-top:8px;">子步骤
+          <span class="anchor-badge" title="批注 9：1-3个子步骤">9</span>
+        </div>
+        ${subHtml}
+        <button class="add-sub-step-btn" onclick="addSubStep(${i})" ${!canAddSub ? 'disabled' : ''}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          新增子步骤${subCount >= 3 ? '（最多 3 个）' : ''}
+        </button>
+      </div>`;
+  }
 
-      const nav = el("drawerStepNav");
-      nav.innerHTML = "";
-      state.drawerSteps.forEach((step, index) => {
-        const btn = document.createElement("button");
-        btn.className = index === state.activeDrawerStep ? "active" : "";
-        btn.textContent = `步骤 ${index + 1}`;
-        btn.addEventListener("click", () => {
-          state.activeDrawerStep = index;
-          setAnnotation("6");
-          renderDrawer();
-        });
-        nav.appendChild(btn);
-      });
-      if (state.drawerSteps.length < EXISTING_STEP_LIMIT) {
-        const add = document.createElement("button");
-        add.textContent = "+ 新增步骤";
-        add.addEventListener("click", () => {
-          if (state.drawerSteps.length >= EXISTING_STEP_LIMIT) return;
-          state.drawerSteps.push(emptyStep());
-          state.activeDrawerStep = state.drawerSteps.length - 1;
-          setAnnotation("6");
-          renderDrawer();
-        });
-        nav.appendChild(add);
-      }
-
-      const form = el("drawerForm");
-      form.classList.toggle("simple-guide", isBleSingleStepEntry() && !state.drawerIsTarget);
-      form.innerHTML = state.drawerSteps.map((step, index) => renderFormStep(step, index)).join("");
-      wireFormEvents();
-      wireAnchors();
-    }
-
-    function errorKey(stepIndex, field, subIndex = null) {
-      return subIndex === null ? `${stepIndex}.${field}` : `${stepIndex}.sub.${subIndex}.${field}`;
-    }
-
-    function hasError(stepIndex, field, subIndex = null) {
-      return Boolean(state.errors[errorKey(stepIndex, field, subIndex)]);
-    }
-
-    function errorText(stepIndex, field, subIndex = null) {
-      return state.errors[errorKey(stepIndex, field, subIndex)] || "";
-    }
-
-    function renderFormStep(step, index) {
-      const showExtensions = state.drawerIsTarget;
-      const simpleBleGuide = isBleSingleStepEntry() && !state.drawerIsTarget;
-      const showOptionalLegacyFields = !simpleBleGuide;
-      const active = index === state.activeDrawerStep;
-      const display = active ? "" : "display:none";
-      const guideHasError = showExtensions && (hasError(index, "guideText") || hasError(index, "guideSub"));
-      const guideInputTitle = step.guideEnabled ? "引导文案已启用，保存时必填" : "引导文案未启用，输入框禁用且不参与保存";
-      const subForms = showExtensions && step.guideEnabled ? `
-        <div class="form-row anchored" data-anchor="9">
-          <div class="form-label">子步骤</div>
+  return `
+    <div class="step-block" id="stepBlock_${i}">
+      <div class="step-block-header">
+        <div class="step-block-num">${i+1}</div>
+        <div class="step-block-title">步骤 ${i+1}</div>
+        <div class="step-block-actions">
+          <button class="btn-text btn btn-sm" onclick="deleteStep(${i})" ${total <= 1 ? 'style="opacity:.4;cursor:not-allowed"' : ''}>删除</button>
+        </div>
+      </div>
+      <div class="step-block-body">
+        <div class="form-row">
+          <div class="form-label required">配网引导图</div>
           <div class="form-control">
-            ${step.subSteps.map((sub, subIndex) => renderSubForm(index, sub, subIndex)).join("")}
-            <button class="button" data-action="add-sub" data-step="${index}" ${step.subSteps.length >= 3 ? "disabled" : ""}>新增子步骤</button>
-            <div class="helper-text">最多 3 个子步骤，图片可选，标题和正文必填。</div>
-          </div>
-        </div>` : "";
-
-      return `
-        <section class="form-step" style="${display}" data-step-index="${index}">
-          <div class="form-step-header">
-            <span>步骤 ${index + 1}</span>
-            <button class="button danger" data-action="delete-step" data-step="${index}" ${state.drawerSteps.length <= 1 ? "disabled" : ""}>删除步骤</button>
-          </div>
-          <div class="form-step-body anchored" data-anchor="6">
-            ${simpleBleGuide ? `<div class="form-row">
-              <div class="form-label">语言</div>
-              <div class="form-control">
-                <div class="static-value">${state.language}</div>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-label">配网指引</div>
-              <div class="form-control">
-                <div class="static-value">步骤 ${index + 1}</div>
-              </div>
-            </div>` : ""}
-            <div class="form-row ${hasError(index, "image") ? "has-error" : ""}">
-              <div class="form-label required">配网引导图</div>
-              <div class="form-control">
-                <button class="upload-box ${step.image ? "filled" : ""}" data-action="toggle-image" data-step="${index}" type="button">${step.image ? `已上传<br>${step.image}` : "+<br>上传图片"}</button>
-                <div class="helper-text">建议尺寸 800px*600px，大小不超过 3M。${simpleBleGuide ? "支持 json 格式。" : ""}</div>
-                <div class="error-text">${errorText(index, "image")}</div>
-              </div>
-            </div>
-            <div class="form-row ${hasError(index, "copy") ? "has-error" : ""}">
-              <div class="form-label required">配网文案</div>
-              <div class="form-control">
-                <textarea class="textarea" data-field="copy" data-step="${index}" maxlength="500" placeholder="请输入配网文案">${escapeHtml(step.copy)}</textarea>
-                <div class="helper-text">${step.copy.length} / 500</div>
-                <div class="error-text">${errorText(index, "copy")}</div>
-              </div>
-            </div>
-            ${showOptionalLegacyFields ? `<div class="form-row">
-              <div class="form-label">辅助文案</div>
-              <div class="form-control">
-                <input class="input" data-field="helper" data-step="${index}" maxlength="300" placeholder="请输入辅助文案" value="${escapeAttr(step.helper)}">
-                <div class="helper-text">${step.helper.length} / 300</div>
-              </div>
-            </div>` : ""}
-            ${showExtensions ? `<div class="form-row anchored" data-anchor="7">
-              <div class="form-label">辅助文案支持选中能力</div>
-              <div class="form-control">
-                <div class="switch-row">
-                  <button class="switch ${step.selectable ? "on" : ""}" data-action="toggle-selectable" data-step="${index}" type="button" aria-label="切换辅助文案支持选中能力"></button>
-                  <span>${step.selectable ? "启用：App 页面内二次确认" : "未启用"}</span>
-                </div>
-              </div>
-            </div>` : ""}
-            ${showOptionalLegacyFields ? `<div class="form-row">
-              <div class="form-label">按钮文案</div>
-              <div class="form-control">
-                <input class="input" data-field="button" data-step="${index}" maxlength="30" placeholder="请输入按钮文案" value="${escapeAttr(step.button)}">
-                <div class="helper-text">${step.button.length} / 30</div>
-              </div>
-            </div>` : ""}
-            ${showExtensions ? `<div class="form-row anchored ${guideHasError ? "has-error" : ""}" data-anchor="8">
-              <div class="form-label ${step.guideEnabled ? "required" : ""}">引导文案</div>
-              <div class="form-control">
-                <div class="switch-row">
-                  <button class="switch ${step.guideEnabled ? "on" : ""}" data-action="toggle-guide" data-step="${index}" type="button" aria-label="切换引导文案"></button>
-                  <input class="input" style="max-width:260px" data-field="guideText" data-step="${index}" placeholder="请输入引导文案" title="${guideInputTitle}" value="${escapeAttr(step.guideText)}" ${step.guideEnabled ? "aria-required=\"true\"" : "disabled"}>
-                </div>
-                <div class="helper-text">${step.guideEnabled ? "启用后必填，与辅助文案支持选中能力互相独立。" : "未启用时不填写、不保存该字段。"}</div>
-                <div class="error-text">${errorText(index, "guideText") || errorText(index, "guideSub")}</div>
-              </div>
-            </div>` : ""}
-            ${subForms}
-          </div>
-        </section>
-      `;
-    }
-
-    function renderSubForm(stepIndex, sub, subIndex) {
-      return `
-        <div class="sub-form">
-          <div class="sub-form-header">
-            <span>子步骤 ${subIndex + 1}</span>
-            <button class="button danger" data-action="delete-sub" data-step="${stepIndex}" data-sub="${subIndex}" ${state.drawerSteps[stepIndex].subSteps.length <= 1 ? "disabled" : ""}>删除</button>
-          </div>
-          <div class="form-row" style="grid-template-columns:90px minmax(0,1fr);">
-            <div class="form-label">图片</div>
-            <div class="form-control">
-              <button class="upload-box ${sub.image ? "filled" : ""}" data-action="toggle-sub-image" data-step="${stepIndex}" data-sub="${subIndex}" type="button">${sub.image ? `已上传<br>${sub.image}` : "+<br>上传图片"}</button>
-            </div>
-          </div>
-          <div class="form-row ${hasError(stepIndex, "title", subIndex) ? "has-error" : ""}" style="grid-template-columns:90px minmax(0,1fr);">
-            <div class="form-label required">标题</div>
-            <div class="form-control">
-              <input class="input" data-field="subTitle" data-step="${stepIndex}" data-sub="${subIndex}" placeholder="请输入子步骤标题" value="${escapeAttr(sub.title)}">
-              <div class="error-text">${errorText(stepIndex, "title", subIndex)}</div>
-            </div>
-          </div>
-          <div class="form-row ${hasError(stepIndex, "text", subIndex) ? "has-error" : ""}" style="grid-template-columns:90px minmax(0,1fr);margin-bottom:0;">
-            <div class="form-label required">正文</div>
-            <div class="form-control">
-              <textarea class="textarea" data-field="subText" data-step="${stepIndex}" data-sub="${subIndex}" placeholder="请输入子步骤正文">${escapeHtml(sub.text)}</textarea>
-              <div class="error-text">${errorText(stepIndex, "text", subIndex)}</div>
-            </div>
+            ${step.img
+              ? `<div class="upload-area has-file"><div class="upload-file-preview"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="12" rx="1"/><circle cx="7" cy="8" r="2"/><path d="M2 14l4-3 3 3 3-4 4 4"/></svg></div><div class="upload-file-info"><div class="upload-file-name">${escHtml(step.imgName)}</div><div class="upload-file-size">已上传</div></div><button class="upload-file-remove" onclick="clearStepImg(${i})">✕</button></div>`
+              : `<div class="upload-area" onclick="mockUploadStepImg(${i})"><div class="upload-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><circle cx="8" cy="9" r="2"/><path d="M3 16l5-4 4 4 3-3 4 4"/></svg><div class="upload-placeholder-text">点击上传</div><div class="upload-placeholder-hint">png/jpg/gif/json，≤ 3M，建议 800×600</div></div></div>`}
+            <div class="error-msg" id="err_img_${i}">请上传配网引导图</div>
           </div>
         </div>
-      `;
-    }
+        <div class="form-row">
+          <div class="form-label required">配网文案</div>
+          <div class="form-control">
+            <textarea class="textarea" id="txt_${i}" placeholder="请输入配网文案" oninput="updateStepField(${i},'txt',this.value)">${escHtml(step.txt)}</textarea>
+            <div class="char-count">${step.txt.length} / 500</div>
+            <div class="error-msg" id="err_txt_${i}">请输入配网文案</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">辅助文案</div>
+          <div class="form-control">
+            <input class="input" id="auxTxt_${i}" type="text" value="${escHtml(step.auxTxt)}" placeholder="可选，支持 300 字" oninput="updateStepField(${i},'auxTxt',this.value)">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">辅助文案选中
+            <span class="anchor-badge" title="批注 7：独立启用">7</span>
+          </div>
+          <div class="form-control">
+            <div class="toggle-wrap">
+              <button class="toggle ${step.auxSelectable ? 'on' : ''}" id="auxSel_${i}" onclick="toggleAuxSelectable(${i})">
+                <div class="toggle-knob"></div>
+              </button>
+              <span class="toggle-label">${step.auxSelectable ? '已启用' : '未启用'}</span>
+            </div>
+            <div class="form-hint">启用后，辅助文案可用于 App 内二次确认</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">按钮文案</div>
+          <div class="form-control">
+            <input class="input" id="btnTxt_${i}" type="text" value="${escHtml(step.btnTxt)}" placeholder="可选，支持 30 字" oninput="updateStepField(${i},'btnTxt',this.value)">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">引导文案
+            <span class="anchor-badge" title="批注 8：独立启用与条件必填">8</span>
+          </div>
+          <div class="form-control">
+            <div class="toggle-wrap" style="margin-bottom:8px;">
+              <button class="toggle ${step.guideEnabled ? 'on' : ''}" id="guide_${i}" onclick="toggleGuide(${i})">
+                <div class="toggle-knob"></div>
+              </button>
+              <span class="toggle-label">${step.guideEnabled ? '已启用' : '未启用'}</span>
+            </div>
+            <input class="input" id="guideText_${i}" type="text" value="${escHtml(step.guideText)}" placeholder="请输入引导文案入口文案" oninput="updateStepField(${i},'guideText',this.value)" ${guideDisabled ? 'disabled' : ''}>
+            <div class="error-msg" id="err_guideText_${i}">请输入引导文案</div>
+            <div class="form-hint">启用后，引导文案本身必填，且至少需要 1 个子步骤</div>
+          </div>
+        </div>
+        ${subStepsHtml}
+      </div>
+    </div>`;
+}
 
-    function wireFormEvents() {
-      document.querySelectorAll("[data-field]").forEach(node => {
-        node.addEventListener("input", (event) => {
-          const step = Number(node.dataset.step);
-          const sub = node.dataset.sub !== undefined ? Number(node.dataset.sub) : null;
-          const item = state.drawerSteps[step];
-          const field = node.dataset.field;
-          if (field === "subTitle") item.subSteps[sub].title = node.value;
-          else if (field === "subText") item.subSteps[sub].text = node.value;
-          else item[field] = node.value;
-          state.errors = {};
-        });
+// ===== 草稿更新 =====
+function updateStepField(i, field, val) {
+  state.draft.steps[i][field] = val;
+  if (field === 'txt') {
+    const el = document.getElementById(`txt_${i}`);
+    if (el) {
+      el.nextElementSibling.textContent = `${val.length} / 500`;
+    }
+  }
+}
+
+function updateSubField(stepIdx, subIdx, field, val) {
+  state.draft.steps[stepIdx].subSteps[subIdx][field] = val;
+}
+
+function toggleAuxSelectable(i) {
+  state.draft.steps[i].auxSelectable = !state.draft.steps[i].auxSelectable;
+  const btn = document.getElementById(`auxSel_${i}`);
+  const label = btn.nextElementSibling;
+  if (state.draft.steps[i].auxSelectable) {
+    btn.classList.add('on'); label.textContent = '已启用';
+  } else {
+    btn.classList.remove('on'); label.textContent = '未启用';
+  }
+  renderPhonePreview();
+}
+
+function toggleGuide(i) {
+  state.draft.steps[i].guideEnabled = !state.draft.steps[i].guideEnabled;
+  if (state.draft.steps[i].guideEnabled && state.draft.steps[i].subSteps.length === 0) {
+    state.draft.steps[i].subSteps = [createEmptySubStep()];
+  }
+  renderDrawer();
+}
+
+function addStep() {
+  state.draft.steps.push(createEmptyStep());
+  renderDrawer();
+  const lastBlock = document.getElementById(`stepBlock_${state.draft.steps.length - 1}`);
+  if (lastBlock) lastBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function deleteStep(i) {
+  if (state.draft.steps.length <= 1) return;
+  state.draft.steps.splice(i, 1);
+  renderDrawer();
+}
+
+function addSubStep(i) {
+  if (state.draft.steps[i].subSteps.length >= 3) return;
+  state.draft.steps[i].subSteps.push(createEmptySubStep());
+  renderDrawer();
+}
+
+function deleteSubStep(stepIdx, subIdx) {
+  if (state.draft.steps[stepIdx].subSteps.length <= 1) return;
+  state.draft.steps[stepIdx].subSteps.splice(subIdx, 1);
+  renderDrawer();
+}
+
+function mockUploadStepImg(i) {
+  state.draft.steps[i].img = true;
+  state.draft.steps[i].imgName = `step${i+1}_guide.png`;
+  renderDrawer();
+}
+
+function clearStepImg(i) {
+  state.draft.steps[i].img = false;
+  state.draft.steps[i].imgName = '';
+  renderDrawer();
+}
+
+function mockUploadSubImg(stepIdx, subIdx) {
+  state.draft.steps[stepIdx].subSteps[subIdx].img = true;
+  state.draft.steps[stepIdx].subSteps[subIdx].imgName = `sub_img_${subIdx+1}.png`;
+  renderDrawer();
+}
+
+function clearSubImg(stepIdx, subIdx) {
+  state.draft.steps[stepIdx].subSteps[subIdx].img = false;
+  state.draft.steps[stepIdx].subSteps[subIdx].imgName = '';
+  renderDrawer();
+}
+
+// ===== 保存 =====
+function saveDrawer() {
+  clearErrors();
+  const errors = validateDraft();
+  if (errors.length > 0) {
+    showValidationErrors(errors);
+    return;
+  }
+  const key = getCurrentKey();
+  if (key) {
+    state.savedData[key] = { configured: true, steps: JSON.parse(JSON.stringify(state.draft.steps)) };
+  }
+  closeDrawer();
+  renderView();
+  showToast('保存成功', 'success');
+}
+
+function validateDraft() {
+  const errors = [];
+  state.draft.steps.forEach((step, i) => {
+    if (!step.img) errors.push({ field: `err_img_${i}`, msg: '请上传配网引导图', stepIdx: i });
+    if (!step.txt || !step.txt.trim()) errors.push({ field: `err_txt_${i}`, msg: '请输入配网文案', stepIdx: i });
+    if (step.guideEnabled) {
+      if (!step.guideText || !step.guideText.trim()) errors.push({ field: `err_guideText_${i}`, msg: '请输入引导文案', stepIdx: i });
+      const subs = step.subSteps || [];
+      if (subs.length === 0) errors.push({ field: `err_guideText_${i}`, msg: '引导文案启用后至少需要 1 个子步骤', stepIdx: i });
+      subs.forEach((sub, si) => {
+        if (!sub.title || !sub.title.trim()) errors.push({ field: `err_subTitle_${i}_${si}`, msg: '请输入子步骤标题', stepIdx: i, subIdx: si });
+        if (!sub.body || !sub.body.trim()) errors.push({ field: `err_subBody_${i}_${si}`, msg: '请输入子步骤正文', stepIdx: i, subIdx: si });
       });
-      document.querySelectorAll("[data-action]").forEach(node => {
-        node.addEventListener("click", () => {
-          const action = node.dataset.action;
-          const step = Number(node.dataset.step);
-          const sub = node.dataset.sub !== undefined ? Number(node.dataset.sub) : null;
-          const item = state.drawerSteps[step];
-          if (action === "toggle-image") item.image = item.image ? "" : `step-${step + 1}.png`;
-          if (action === "toggle-selectable") item.selectable = !item.selectable;
-          if (action === "toggle-guide") {
-            item.guideEnabled = !item.guideEnabled;
-            if (item.guideEnabled && !item.subSteps.length) item.subSteps.push(emptySubStep());
-          }
-          if (action === "delete-step" && state.drawerSteps.length > 1) {
-            state.drawerSteps.splice(step, 1);
-            state.activeDrawerStep = Math.max(0, Math.min(state.activeDrawerStep, state.drawerSteps.length - 1));
-          }
-          if (action === "add-sub" && item.subSteps.length < 3) item.subSteps.push(emptySubStep());
-          if (action === "delete-sub" && item.subSteps.length > 1) item.subSteps.splice(sub, 1);
-          if (action === "toggle-sub-image") item.subSteps[sub].image = item.subSteps[sub].image ? "" : `sub-${step + 1}-${sub + 1}.png`;
-          state.errors = {};
-          setAnnotation(action.includes("sub") ? "9" : action === "toggle-guide" ? "8" : action === "toggle-selectable" ? "7" : "6");
-          renderDrawer();
-        });
-      });
     }
+  });
+  return errors;
+}
 
-    function validateDrawer() {
-      const errors = {};
-      state.drawerSteps.forEach((step, index) => {
-        if (!step.image) errors[errorKey(index, "image")] = "请上传配网引导图";
-        if (!step.copy.trim()) errors[errorKey(index, "copy")] = "请输入配网文案";
-        if (state.drawerIsTarget && step.guideEnabled) {
-          if (!step.guideText.trim()) errors[errorKey(index, "guideText")] = "请输入引导文案";
-          if (!step.subSteps.length) errors[errorKey(index, "guideSub")] = "请至少新增 1 个子步骤";
-          step.subSteps.forEach((sub, subIndex) => {
-            if (!sub.title.trim()) errors[errorKey(index, "title", subIndex)] = "请输入子步骤标题";
-            if (!sub.text.trim()) errors[errorKey(index, "text", subIndex)] = "请输入子步骤正文";
-          });
-        }
-      });
-      if (state.drawerSteps.length > EXISTING_STEP_LIMIT) {
-        errors["stepLimit"] = `步骤数量不可超过现有入口限制（${EXISTING_STEP_LIMIT} 步）`;
-      }
-      state.errors = errors;
-      return Object.keys(errors).length === 0;
+function clearErrors() {
+  document.querySelectorAll('.error-msg').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.input.error, .textarea.error').forEach(el => el.classList.remove('error'));
+}
+
+function showValidationErrors(errors) {
+  if (errors.length === 0) return;
+  const first = errors[0];
+  errors.forEach(err => {
+    const el = document.getElementById(err.field);
+    if (el) { el.classList.add('show'); el.textContent = err.msg; }
+    // 标红对应输入框
+    const inputId = err.field.replace('err_', '');
+    const inp = document.getElementById(inputId);
+    if (inp) inp.classList.add('error');
+  });
+  // 滚动到第一个错误
+  const firstEl = document.getElementById(first.field);
+  if (firstEl) firstEl.closest('.step-block')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // 高亮批注 11
+  highlightAnnotation(11);
+}
+
+// ===== 批注渲染 =====
+function renderAnnotations() {
+  const container = document.getElementById('annotationContent');
+  const filtered = currentAnnotationFilter === 'all'
+    ? annotations
+    : annotations.filter(a => a.group === currentAnnotationFilter);
+
+  container.innerHTML = filtered.map(a => `
+    <div class="annotation-card" id="ann_${a.id}" onclick="highlightAnnotation(${a.id})">
+      <div class="annotation-card-header">
+        <span class="annotation-card-id">${a.id}</span>
+        <span class="annotation-card-title">${a.title}</span>
+        <span class="annotation-card-tag">${a.tag}</span>
+      </div>
+      <div class="annotation-field">
+        <div class="annotation-field-label">关联位置</div>
+        <div class="annotation-field-value">${a.location}</div>
+      </div>
+      <div class="annotation-field">
+        <div class="annotation-field-label">触发条件</div>
+        <div class="annotation-field-value">${a.trigger}</div>
+      </div>
+      <div class="annotation-field">
+        <div class="annotation-field-label">系统响应</div>
+        <div class="annotation-field-value">${a.response}</div>
+      </div>
+      <div class="annotation-rule">${a.rule}</div>
+    </div>`).join('');
+}
+
+function filterAnnotation(group) {
+  currentAnnotationFilter = group;
+  document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.control-btn').forEach(btn => {
+    if (btn.textContent.trim().toLowerCase().includes(group) || (group === 'all' && btn.textContent.trim() === '全部')) {
+      btn.classList.add('active');
     }
+  });
+  renderAnnotations();
+}
 
-    function renderAnnotations() {
-      const list = el("annotationList");
-      const activeSet = state.drawerOpen ? annotations.drawer : annotations.page;
-      list.innerHTML = activeSet.map(card => `
-        <article class="annotation-card ${state.activeAnnotation === card.id ? "active" : ""}" data-annotation="${card.id}">
-          <div class="annotation-title"><span class="annotation-number">${card.id}</span>${card.title}</div>
-          <dl>
-            <dt>关联位置</dt><dd>${card.location}</dd>
-            <dt>触发条件</dt><dd>${card.trigger}</dd>
-            <dt>系统响应</dt><dd>${card.response}</dd>
-            <dt>校验规则 / PRD 边界</dt><dd><ul>${card.rules.map(rule => `<li>${rule}</li>`).join("")}</ul></dd>
-          </dl>
-        </article>
-      `).join("");
-      document.querySelectorAll(".annotation-card").forEach(card => {
-        card.addEventListener("click", () => setAnnotation(card.dataset.annotation));
-      });
-      el("stateChips").innerHTML = [
-        state.productType === "wifi" ? "Wi-Fi 样例" : "BLE 样例",
-        state.entry,
-        hasBleSubEntries() ? state.subEntry : "",
-        state.language,
-        state.drawerOpen ? "编辑抽屉" : "查看态"
-      ].filter(Boolean).map(text => `<span class="state-chip">${text}</span>`).join("");
-    }
+function highlightAnnotation(id) {
+  document.querySelectorAll('.annotation-card').forEach(el => el.classList.remove('highlight'));
+  const target = document.getElementById(`ann_${id}`);
+  if (target) {
+    target.classList.add('highlight');
+    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
 
-    function wireAnchors() {
-      document.querySelectorAll(".anchored").forEach(node => {
-        const id = node.dataset.anchor;
-        if (!node.querySelector(`:scope > .anchor[data-anchor-id="${id}"]`) && id) {
-          const anchor = document.createElement("span");
-          anchor.className = "anchor";
-          anchor.dataset.anchorId = id;
-          anchor.textContent = id;
-          anchor.addEventListener("click", (event) => {
-            event.stopPropagation();
-            setAnnotation(id);
-          });
-          if (node.classList.contains("steps-view")) {
-            node.prepend(anchor);
-            anchor.style.position = "absolute";
-            anchor.style.marginLeft = "-34px";
-            anchor.style.marginTop = "4px";
-          } else {
-            node.appendChild(anchor);
-          }
-        }
-        node.addEventListener("click", (event) => {
-          if (event.target.closest("button,input,textarea,select,a")) return;
-          setAnnotation(id);
-        });
-      });
-      setAnnotation(state.activeAnnotation);
-    }
+// ===== Toast =====
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 2800);
+}
 
-    function renderAll() {
-      renderProductMeta();
-      syncScenarioSelect();
-      renderEntries();
-      renderLanguages();
-      renderContent();
-      renderDrawer();
-      renderAnnotations();
-    }
+// ===== 初始化 =====
+function init() {
+  switchProduct('wifi');
+}
 
-    function showToast() {
-      const toast = el("toast");
-      toast.classList.add("show");
-      window.setTimeout(() => toast.classList.remove("show"), 1800);
-    }
-
-    function escapeHtml(value) {
-      return String(value || "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#39;"
-      }[char]));
-    }
-
-    function escapeAttr(value) {
-      return escapeHtml(value).replace(/"/g, "&quot;");
-    }
-
-    el("switchProductButton").addEventListener("click", () => {
-      state.productType = state.productType === "wifi" ? "ble" : "wifi";
-      state.entry = activeProduct().defaultEntry;
-      state.subEntry = BLE_SINGLE_STEP;
-      state.scenario = "current";
-      state.language = "英文（默认）";
-      state.drawerOpen = false;
-      state.drawerIsTarget = false;
-      setAnnotation("1");
-      renderAll();
-    });
-
-    el("scenarioSelect").addEventListener("change", (event) => {
-      const value = event.target.value;
-      state.drawerOpen = false;
-      state.drawerIsTarget = false;
-      state.errors = {};
-      if (value === "current") {
-        state.scenario = "current";
-        state.entry = activeProduct().defaultEntry;
-        state.subEntry = BLE_SINGLE_STEP;
-        state.language = "英文（默认）";
-        setAnnotation("12");
-      }
-      if (value === "target-empty") {
-        setTargetPath();
-        state.scenario = "target-empty";
-        state.language = "英文（默认）";
-        delete state.targetConfigs[state.productType][state.language];
-        setAnnotation(state.productType === "ble" ? "2" : "4");
-      }
-      if (value === "target-filled") {
-        setTargetPath();
-        state.scenario = "target-filled";
-        state.language = "英文（默认）";
-        state.targetConfigs[state.productType][state.language] = clone(extensionSeed);
-        setAnnotation("4");
-      }
-      if (value === "non-target") {
-        state.scenario = "non-target";
-        state.language = "英文（默认）";
-        if (state.productType === "wifi") {
-          state.entry = "SmartConfig配网";
-        } else {
-          state.entry = "蓝牙配网";
-          state.subEntry = BLE_SINGLE_STEP;
-        }
-        setAnnotation("12");
-      }
-      if (value === "validation") {
-        setTargetPath();
-        state.scenario = "validation";
-        state.drawerOpen = true;
-        state.drawerIsTarget = true;
-        state.drawerSteps = [emptyStep()];
-        state.activeDrawerStep = 0;
-        state.errors = {};
-        window.setTimeout(() => {
-          validateDrawer();
-          setAnnotation("11");
-          renderAll();
-        }, 0);
-      }
-      renderAll();
-    });
-
-    el("editButton").addEventListener("click", () => {
-      state.drawerIsTarget = isTargetEntry();
-      state.drawerOpen = true;
-      state.drawerSteps = state.drawerIsTarget
-        ? (activeTargetSteps() ? clone(activeTargetSteps()) : [emptyStep()])
-        : (state.productType === "wifi" && state.entry === "AP配网" ? clone(currentGuideSteps) : [emptyStep()]);
-      state.activeDrawerStep = 0;
-      state.errors = {};
-      setAnnotation("6");
-      renderAll();
-    });
-
-    el("closeDrawerButton").addEventListener("click", () => {
-      state.drawerOpen = false;
-      state.drawerIsTarget = false;
-      state.errors = {};
-      setAnnotation("5");
-      renderAll();
-    });
-
-    el("cancelButton").addEventListener("click", () => {
-      state.drawerOpen = false;
-      state.drawerIsTarget = false;
-      state.errors = {};
-      setAnnotation("10");
-      renderAll();
-    });
-
-    el("confirmButton").addEventListener("click", () => {
-      if (!validateDrawer()) {
-        setAnnotation("11");
-        renderAll();
-        return;
-      }
-      const savedTarget = state.drawerIsTarget;
-      state.drawerOpen = false;
-      if (savedTarget) {
-        state.targetConfigs[state.productType][state.language] = clone(state.drawerSteps);
-        state.scenario = "target-filled";
-      }
-      state.drawerIsTarget = false;
-      state.errors = {};
-      setAnnotation(savedTarget ? "4" : "12");
-      renderAll();
-      showToast();
-    });
-
-    renderAll();
-  </script>
+init();
+</script>
 </body>
 </html>
