@@ -135,6 +135,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .sub-entry-btn:last-child { border-right: none; }
 .sub-entry-btn:hover { background: var(--primary-light); color: var(--primary); }
 .sub-entry-btn.active { background: var(--primary); color: #fff; }
+.ble-config-row { margin-top: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ble-config-row .sub-entry { margin: 0; }
+.priority-control { min-height: 32px; display: inline-flex; align-items: center; gap: 8px; padding: 3px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: #fafafa; }
+.priority-label { color: var(--text-tertiary); font-size: 12px; white-space: nowrap; }
+.priority-options { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: #fff; }
+.priority-btn { height: 24px; padding: 0 10px; border: 0; border-right: 1px solid var(--border); background: #fff; color: var(--text-secondary); cursor: pointer; font-size: 12px; transition: var(--transition); }
+.priority-btn:last-child { border-right: 0; }
+.priority-btn:hover { color: var(--primary); background: var(--primary-light); }
+.priority-btn.active { color: #fff; background: var(--primary); }
+.priority-hint { color: var(--text-tertiary); font-size: 11px; white-space: nowrap; }
 
 /* ===== 语言页签 ===== */
 .lang-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
@@ -529,12 +539,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                   <button class="entry-btn active" id="bleBt" onclick="selectEntry('ble','bt')">蓝牙配网</button>
                   <button class="entry-btn" id="bleScan" onclick="selectEntry('ble','scan')">蓝牙扫码配对</button>
                 </div>
-                <!-- BLE 子入口 -->
-                <div id="bleSubEntry" class="sub-entry" style="margin-top:12px;">
-                  <button class="sub-entry-btn" id="bleNew" onclick="selectBleMode('new')">单步骤配网</button>
-                  <button class="sub-entry-btn active" id="bleOld" onclick="selectBleMode('old')">多步骤配网
-                    <span class="anchor-badge" title="批注 2：BLE 仅多步骤配网扩展" style="background:#4372ff;">2</span>
-                  </button>
+                <!-- BLE 子入口与优先配置 -->
+                <div id="bleGuideConfigRow" class="ble-config-row">
+                  <div id="bleSubEntry" class="sub-entry">
+                    <button class="sub-entry-btn" id="bleNew" onclick="selectBleMode('new')">单步骤配网</button>
+                    <button class="sub-entry-btn active" id="bleOld" onclick="selectBleMode('old')">多步骤配网
+                      <span class="anchor-badge" title="批注 2：BLE 仅多步骤配网扩展" style="background:#4372ff;">2</span>
+                    </button>
+                  </div>
+                  <div id="blePriorityConfig" class="priority-control">
+                    <span class="priority-label">优先配置</span>
+                    <div class="priority-options" role="group" aria-label="BLE 配网引导优先配置">
+                      <button class="priority-btn" id="blePriorityNew" onclick="setBlePriority('new')" type="button">单步骤</button>
+                      <button class="priority-btn active" id="blePriorityOld" onclick="setBlePriority('old')" type="button">多步骤</button>
+                    </div>
+                    <span class="priority-hint" id="blePriorityHint">新版本 App 优先读取多步骤配网引导</span>
+                    <span class="anchor-badge" title="批注 13：BLE 配网引导优先配置" style="background:#fa8c16;">13</span>
+                  </div>
                 </div>
               </div>
 
@@ -661,7 +682,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
           <div class="annotation-panel">
             <div class="annotation-header">
               <div class="annotation-header-title">原型批注</div>
-              <div class="annotation-header-sub">云端多步骤配网引导扩展字段 v1.1</div>
+              <div class="annotation-header-sub">云端多步骤配网引导扩展字段 v1.2</div>
             </div>
             <div class="annotation-control">
               <div class="control-label">当前状态</div>
@@ -785,6 +806,7 @@ const state = {
   wifiEntry: 'qr',  // ap | smart | qr
   bleEntry: 'bt',   // bt | scan
   bleMode: 'old',   // new | old
+  blePriority: 'old', // new | old，供新版本 App 动态选择单步骤/多步骤配网引导
   lang: 'en',
   // 已保存的配置（模拟）
   savedData: {
@@ -854,8 +876,8 @@ const annotations = [
     id: 2, title: 'BLE 仅多步骤配网扩展', tag: '入口', group: 'entry',
     location: 'BLE 子入口区域',
     trigger: '切换到 BLE 产品 → 选择蓝牙配网',
-    response: '展示单步骤配网 / 多步骤配网。仅多步骤配网展示本期扩展字段；单步骤配网保持语言、配网引导图、配网指引、配网文案。',
-    rule: 'BLE 蓝牙配网 + 单步骤配网 不展示扩展字段，编辑抽屉标题为 "编辑配网引导"。'
+    response: '展示单步骤配网 / 多步骤配网。仅多步骤配网展示本期扩展字段；单步骤配网保持语言、配网引导图、配网指引、配网文案。同层展示优先配置项。',
+    rule: 'BLE 蓝牙配网 + 单步骤配网 不展示扩展字段，编辑抽屉标题为 "编辑配网引导"。优先配置不改变两个入口各自字段结构。'
   },
   {
     id: 3, title: '复用多语言逻辑', tag: '多语言', group: 'view',
@@ -926,6 +948,13 @@ const annotations = [
     trigger: '切换到 AP配网、SmartConfig、单步骤配网、蓝牙扫码配对',
     response: '不展示扩展字段。字段、校验、查看态、编辑态全部保持原样。',
     rule: 'BLE 单步骤配网编辑抽屉：标题"编辑配网引导"，字段：语言、配网引导图、配网指引、配网文案。'
+  },
+  {
+    id: 13, title: 'BLE 配网引导优先配置', tag: '入口', group: 'entry',
+    location: '蓝牙配网 > 单步骤/多步骤入口同层配置项',
+    trigger: 'BLE 蓝牙配网下同时存在单步骤和多步骤配网引导配置时',
+    response: '业务产品选择新版本 App 默认优先读取单步骤配网引导或多步骤配网引导。',
+    rule: '旧版本 App 若代码写死单步骤或多步骤，仍按固定逻辑读取对应配置；新版本 App 根据该优先配置动态读取并展示。'
   }
 ];
 
@@ -999,10 +1028,11 @@ function selectEntry(product, entry) {
     ['bleBt', 'bleScan'].forEach(id => document.getElementById(id)?.classList.remove('active'));
     const map = { bt: 'bleBt', scan: 'bleScan' };
     document.getElementById(map[entry])?.classList.add('active');
-    const subEntry = document.getElementById('bleSubEntry');
-    if (entry === 'bt') { subEntry.classList.remove('hidden'); }
-    else { subEntry.classList.add('hidden'); }
+    const guideConfigRow = document.getElementById('bleGuideConfigRow');
+    if (entry === 'bt') { guideConfigRow.classList.remove('hidden'); }
+    else { guideConfigRow.classList.add('hidden'); }
   }
+  renderBlePriority();
   renderView();
 }
 
@@ -1012,6 +1042,25 @@ function selectBleMode(mode) {
   ['bleNew', 'bleOld'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   document.getElementById(mode === 'new' ? 'bleNew' : 'bleOld')?.classList.add('active');
   renderView();
+}
+
+// ===== BLE 优先配置 =====
+function setBlePriority(mode) {
+  state.blePriority = mode;
+  renderBlePriority();
+  renderAnnotations();
+}
+
+function renderBlePriority() {
+  const singleBtn = document.getElementById('blePriorityNew');
+  const multiBtn = document.getElementById('blePriorityOld');
+  const hint = document.getElementById('blePriorityHint');
+  if (!singleBtn || !multiBtn || !hint) return;
+  singleBtn.classList.toggle('active', state.blePriority === 'new');
+  multiBtn.classList.toggle('active', state.blePriority === 'old');
+  hint.textContent = state.blePriority === 'new'
+    ? '新版本 App 优先读取单步骤配网引导'
+    : '新版本 App 优先读取多步骤配网引导';
 }
 
 // ===== 切换语言 =====
