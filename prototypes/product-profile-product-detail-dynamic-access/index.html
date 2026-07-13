@@ -1232,12 +1232,12 @@
     <section class="modal-card has-anchor" id="confirmModal">
       <button class="note-anchor" type="button" data-note="confirm-modal" aria-label="批注 7">7</button>
       <div class="modal-body">
-        <h2 class="modal-title">开启动态接入确认</h2>
-        <p class="modal-copy">该产品已上架。开启动态接入后不会静默线上生效，保存后需要进入发布 / gate 校验，通过后才允许 APP 动态消费 ProductProfile。</p>
+        <h2 class="modal-title">上架前发布 / gate 校验</h2>
+        <p class="modal-copy">动态接入已开启。产品上架前必须完成发布 / gate 校验；存在阻断项时不得上架，也不允许 APP 动态消费 ProductProfile。</p>
       </div>
       <footer class="modal-footer">
         <button class="btn" type="button" id="modalCancelBtn">取消</button>
-        <button class="btn primary" type="button" id="modalConfirmBtn">确认保存</button>
+        <button class="btn primary" type="button" id="modalConfirmBtn">确认进入校验</button>
       </footer>
     </section>
   </div>
@@ -1278,7 +1278,7 @@
     const scenarios = [
       { id: "codeFilled", label: "产品代码已有值" },
       { id: "codeEmpty", label: "产品代码为空" },
-      { id: "confirm", label: "已上架开启" }
+      { id: "confirm", label: "上架前 gate" }
     ];
 
     const state = {
@@ -1292,6 +1292,7 @@
       syncState: "idle",
       toastTimer: null,
       savedProductCode: "0xA10001",
+      savedDynamicAccessSupported: false,
       form: null
     };
 
@@ -1322,7 +1323,7 @@
         atomicNetConfig: "yes",
         productCode: state.savedProductCode || "0xA10001",
         productCodeEditable: false,
-        dynamicAccessSupported: false,
+        dynamicAccessSupported: state.savedDynamicAccessSupported,
         configVersion: "未生成",
         gate: "off",
         gateTitle: "动态接入未开启",
@@ -1347,11 +1348,11 @@
           ...common,
           productCode: "0xA10001",
           productCodeEditable: false,
-          dynamicAccessSupported: false,
+          dynamicAccessSupported: true,
           configVersion: "v1",
-          gate: "off",
-          gateTitle: "已上架产品尚未开启动态接入",
-          gateCopy: "从不支持切换为支持时，需要弹出确认，并进入发布 / gate 校验。"
+          gate: "blocked",
+          gateTitle: "上架前 gate 待处理",
+          gateCopy: "动态接入已开启，产品上架前必须完成发布 / gate 校验。"
         };
       }
 
@@ -1744,7 +1745,15 @@
 
     function bindPageActions(data) {
       const shelfBtn = document.getElementById("shelfBtn");
-      if (shelfBtn) shelfBtn.onclick = () => showToast("原型不展开上架流程；动态接入校验会作为发布 gate 输入。");
+      if (shelfBtn) shelfBtn.onclick = () => {
+        if (data.dynamicAccessSupported) {
+          state.modalOpen = true;
+          state.activeNote = "confirm-modal";
+          render();
+          return;
+        }
+        showToast("动态接入未开启，产品继续走已有上架链路。");
+      };
       const viewProfileBtn = document.getElementById("viewProfileBtn");
       if (viewProfileBtn) viewProfileBtn.onclick = () => {
         state.profileOpen = true;
@@ -1807,7 +1816,7 @@
             <button class="radio-card ${form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="true">支持</button>
             <button class="radio-card ${!form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="false">不支持</button>
           </div>
-          ${form.dynamicAccessSupported ? `<div class="hint warning" style="margin-top:10px;">保存后会刷新 ProductProfile、配置版本、resolved view，并执行 gate 校验。</div>` : ""}
+          ${form.dynamicAccessSupported ? `<div class="hint warning" style="margin-top:10px;">保存后刷新 ProductProfile 草稿、配置版本和 resolved view；产品上架前执行发布 / gate 校验。</div>` : ""}
         </section>
 
         <section class="card-line has-anchor" id="drawerIdentityBlock">
@@ -1855,8 +1864,8 @@
           <button class="note-anchor" type="button" data-note="drawer-save" aria-label="批注 6">6</button>
           <div class="hint ${state.scenario === "confirm" && form.dynamicAccessSupported ? "warning" : ""}">
             ${state.scenario === "confirm" && form.dynamicAccessSupported
-              ? "当前为已上架产品，确定后必须弹出确认，不允许静默线上生效。"
-              : "提交失败时保持抽屉打开；提交成功后关闭抽屉并刷新校验结果。"}
+              ? "保存不会直接线上生效；产品上架前必须完成发布 / gate 校验。"
+              : "提交失败时保持抽屉打开；提交成功后关闭抽屉并刷新 ProductProfile 草稿。"}
           </div>
         </section>
       `;
@@ -1953,22 +1962,17 @@
 
     function saveDrawer() {
       if (!state.form) return;
-      if (state.scenario === "confirm" && state.form.dynamicAccessSupported) {
-        state.modalOpen = true;
-        state.activeNote = "confirm-modal";
-        render();
-        return;
-      }
-
-      applyDrawerSave("保存成功：已刷新 ProductProfile 与配置校验");
+      applyDrawerSave("保存成功：已刷新 ProductProfile 草稿，发布 / gate 校验将在上架前执行");
     }
 
     function applyDrawerSave(message) {
       const savedProductCode = state.form?.productCode;
+      const savedDynamicAccessSupported = !!state.form?.dynamicAccessSupported;
       state.drawerOpen = false;
       state.modalOpen = false;
       state.form = null;
       state.savedProductCode = savedProductCode || "";
+      state.savedDynamicAccessSupported = savedDynamicAccessSupported;
       state.scenario = savedProductCode ? "codeFilled" : "codeEmpty";
       showToast(message);
       render();
@@ -2002,9 +2006,9 @@
 
       if (state.modalOpen) {
         return [
-          note("confirm-modal", "已上架开启确认", "开启动态接入确认弹窗", `
-            <strong>规则：</strong>已上架产品从“不支持”改为“支持”时，必须二次确认并进入发布 / gate 校验。<br>
-            <strong>边界：</strong>不允许保存后静默对线上 APP 全量生效。
+          note("confirm-modal", "上架前 gate 校验", "上架产品 > 发布 / gate 校验弹窗", `
+            <strong>规则：</strong>动态接入开启后，产品上架前必须执行发布 / gate 校验。<br>
+            <strong>边界：</strong>校验未通过时不得上架，也不允许 APP 动态消费 ProductProfile。
           `)
         ];
       }
@@ -2023,9 +2027,9 @@
             <strong>说明：</strong><code>panelCode</code>、<code>configVersion</code>、<code>resolved</code> 由后台生成或派生。<br>
             <strong>边界：</strong>这些字段不提供自由输入，不依赖扩展程序手工生成。
           `),
-          note("drawer-save", "保存与 gate", "编辑产品信息抽屉 > 保存提示", `
-            <strong>保存：</strong>开启动态接入后，保存触发 ProductProfile 刷新、版本更新、resolved 派生和 gate 校验。<br>
-            <strong>线上：</strong>已上架产品开启动态接入时，需要发布 / gate 承接。
+          note("drawer-save", "保存与上架前 gate", "编辑产品信息抽屉 > 保存提示", `
+            <strong>保存：</strong>开启动态接入后，保存触发 ProductProfile 草稿刷新、版本更新和 resolved 派生。<br>
+            <strong>上架：</strong>发布 / gate 校验在产品上架前执行，存在阻断项时不得上架。
           `)
         ];
       }
@@ -2102,7 +2106,7 @@
         `),
         note("base-layout", "字段口径校准", "产品详情 > 产品信息", `
           <strong>productType：</strong>产品分类展示名只用于展示，ProductProfile 需要稳定 <code>productType</code> key。<br>
-          <strong>productCode：</strong>用于产品身份命中；为空时不因普通保存阻断，开启动态接入后进入 gate 校验。
+          <strong>productCode：</strong>用于产品身份命中；为空时不因普通保存阻断，开启动态接入后在产品上架前进入发布 / gate 校验。
         `),
         note("dynamic-field", "新增字段：动态接入", "产品详情 > 产品信息", `
           <strong>字段：</strong>产品详情新增“动态接入：支持 / 不支持”。<br>
@@ -2184,7 +2188,10 @@
       render();
     };
     document.getElementById("modalConfirmBtn").onclick = () => {
-      applyDrawerSave("已保存：动态接入进入发布 / gate 校验");
+      state.modalOpen = false;
+      state.activeNote = null;
+      showToast("已进入上架前发布 / gate 校验");
+      render();
     };
     document.getElementById("closeProfileBtn").onclick = () => {
       state.profileOpen = false;
