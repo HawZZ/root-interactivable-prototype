@@ -2124,7 +2124,7 @@
       document.getElementById("annotationScope").textContent = state.profileOpen
         ? "查看 ProductProfile"
         : state.modalOpen
-          ? "开启动态接入确认"
+          ? "上架前发布 / gate 校验"
           : state.drawerOpen
             ? "编辑产品信息抽屉"
             : `产品详情 / ${tabs.find(item => item.id === state.tab).label}`;
