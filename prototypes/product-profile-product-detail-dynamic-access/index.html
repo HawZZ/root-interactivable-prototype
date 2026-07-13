@@ -1,0 +1,2200 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin ProductProfile 动态接入原型</title>
+  <style>
+    :root {
+      --app-aside-bg-color: #001529;
+      --app-aside-bg-active: #0b2a4a;
+      --app-bg-color: #f9f9f9;
+      --el-bg-color: #ffffff;
+      --el-color-primary: #4372ff;
+      --el-color-primary-dark-2: #2b6bd9;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-success: #67c23a;
+      --el-color-warning: #e6a23c;
+      --el-color-danger: #f56c6c;
+      --el-color-info: #909399;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --table-head-bg: #fafafa;
+      --note-bg: #fffbeb;
+      --note-border: #facc15;
+      --gap-8: 8px;
+      --gap-12: 12px;
+      --gap-16: 16px;
+      --gap-24: 24px;
+      --radius: 4px;
+      --aside-width: 208px;
+      --header-height: 54px;
+      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--app-bg-color);
+      color: var(--el-text-color-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .prototype-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(720px, 1fr) 420px;
+      background: #eef2f7;
+    }
+
+    .prototype-left {
+      overflow: auto;
+      padding: 20px;
+    }
+
+    .prototype-canvas {
+      width: 1440px;
+      min-height: calc(100vh - 40px);
+      margin: 0 auto;
+      background: var(--app-bg-color);
+      border: 1px solid #cfd6e2;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+    }
+
+    .admin-app {
+      min-height: calc(100vh - 42px);
+      display: grid;
+      grid-template-columns: var(--aside-width) minmax(0, 1fr);
+    }
+
+    .aside {
+      background: var(--app-aside-bg-color);
+      color: rgba(255, 255, 255, .78);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius);
+      background: #85b436;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    .menu {
+      padding: 8px 0 24px;
+      overflow: auto;
+    }
+
+    .menu-group-title,
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      color: rgba(255, 255, 255, .68);
+      white-space: nowrap;
+    }
+
+    .menu-group-title {
+      height: 36px;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, .38);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      height: 42px;
+      border-left: 3px solid transparent;
+      color: rgba(255, 255, 255, .76);
+    }
+
+    .menu-item.active {
+      background: var(--app-aside-bg-active);
+      border-left-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .menu-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .72;
+      flex: 0 0 auto;
+    }
+
+    .main-shell {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--header-height) minmax(0, 1fr);
+    }
+
+    .header {
+      height: var(--header-height);
+      background: var(--el-bg-color);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap-16);
+      padding: 0 24px;
+      z-index: 10;
+    }
+
+    .breadcrumb {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 22px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .breadcrumb strong {
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+    }
+
+    .userbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .product-summary,
+    .panel {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+    }
+
+    .product-summary {
+      padding: 16px 20px;
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .product-title-row,
+    .panel-title-row,
+    .drawer-title-row,
+    .field-head,
+    .gate-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .product-name {
+      font-size: 18px;
+      line-height: 28px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .summary-meta,
+    .field-grid,
+    .status-strip,
+    .condition-grid,
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px 18px;
+    }
+
+    .summary-item,
+    .kv-item {
+      min-width: 0;
+    }
+
+    .summary-label,
+    .kv-label,
+    .field-help,
+    .muted {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .summary-value,
+    .kv-value {
+      margin-top: 4px;
+      color: var(--el-text-color-primary);
+      overflow-wrap: anywhere;
+      min-height: 21px;
+    }
+
+    .top-actions,
+    .button-row,
+    .radio-row,
+    .chip-row,
+    .tabs,
+    .drawer-footer,
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tabs {
+      height: 44px;
+      border-bottom: 1px solid var(--el-border-color-light);
+      background: var(--el-bg-color);
+      padding: 0 4px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      height: 44px;
+      padding: 0 16px;
+      border: 0;
+      background: transparent;
+      color: var(--el-text-color-regular);
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+
+    .tab-btn.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+    }
+
+    .scenario-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .scenario-group-inner {
+      display: inline-flex;
+      flex-wrap: wrap;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .scenario-group button {
+      height: 32px;
+      border: 0;
+      background: #fff;
+      padding: 0 12px;
+      color: var(--el-text-color-regular);
+      border-right: 1px solid var(--el-border-color-light);
+    }
+
+    .scenario-group button:last-child {
+      border-right: 0;
+    }
+
+    .scenario-group button.active {
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      font-weight: 600;
+    }
+
+    .panel {
+      margin-bottom: 16px;
+      padding: 16px 18px;
+      position: relative;
+    }
+
+    .real-stepper {
+      background: #fff;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      padding: 18px 36px 14px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0;
+    }
+
+    .step-item {
+      position: relative;
+      text-align: center;
+      color: var(--el-text-color-secondary);
+      font-size: 14px;
+      line-height: 22px;
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .step-item::before {
+      content: "";
+      position: absolute;
+      top: 11px;
+      left: calc(-50% + 18px);
+      right: calc(50% + 18px);
+      height: 1px;
+      background: var(--el-border-color-light);
+    }
+
+    .step-item:first-child::before {
+      display: none;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .step-item.done,
+    .step-item.active {
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+
+    .step-item.done .step-num,
+    .step-item.active .step-num {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .title-bar-real {
+      height: 40px;
+      border: 1px solid var(--el-border-color-light);
+      border-bottom: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: relative;
+    }
+
+    .title-bar-real h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .description-wrap {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: #fff;
+      padding: 16px 24px 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      position: relative;
+    }
+
+    .description-col {
+      border-right: 1px solid var(--el-border-color-lighter);
+      padding: 0 18px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .description-col:first-child {
+      padding-left: 0;
+    }
+
+    .description-col:last-child {
+      border-right: 0;
+      padding-right: 0;
+    }
+
+    .desc-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 8px;
+      min-height: 23px;
+    }
+
+    .desc-label {
+      color: var(--el-text-color-secondary);
+      text-align: right;
+    }
+
+    .desc-value {
+      color: var(--el-text-color-primary);
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .whitelist-wrap,
+    .table-wrap-real {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 16px 24px;
+      margin-top: 16px;
+    }
+
+    .real-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .real-table th,
+    .real-table td {
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      padding: 10px 12px;
+      text-align: left;
+      color: var(--el-text-color-regular);
+    }
+
+    .real-table th {
+      background: var(--table-head-bg);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+    }
+
+    .pagination-real {
+      height: 48px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+
+    .panel-title-row {
+      margin-bottom: 14px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .panel-subtitle {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, .72fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .section-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .card-line,
+    .gate-item,
+    .condition-card {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+    }
+
+    .field-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .form-field {
+      min-width: 0;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    label,
+    .form-label {
+      display: block;
+      color: var(--el-text-color-primary);
+      font-size: 14px;
+      line-height: 22px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .required::before {
+      content: "* ";
+      color: var(--el-color-danger);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 5px 11px;
+      color: var(--el-text-color-primary);
+      background: #fff;
+    }
+
+    input:disabled,
+    select:disabled {
+      background: #f5f7fa;
+      color: var(--el-text-color-secondary);
+      cursor: not-allowed;
+    }
+
+    .field-error {
+      color: var(--el-color-danger);
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      min-height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      padding: 0 14px;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      color: var(--el-color-primary);
+      border-color: #a3c5ff;
+      background: var(--el-color-primary-light-9);
+    }
+
+    .btn.primary {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--el-color-primary-dark-2);
+      color: #fff;
+    }
+
+    .btn.danger {
+      border-color: #fab6b6;
+      color: var(--el-color-danger);
+    }
+
+    .btn:disabled {
+      border-color: var(--el-border-color);
+      background: #f5f7fa;
+      color: var(--el-text-color-placeholder);
+      cursor: not-allowed;
+    }
+
+    .btn.link {
+      padding: 0;
+      min-height: auto;
+      border: 0;
+      color: var(--el-color-primary);
+      background: transparent;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color-light);
+      background: #f4f4f5;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+
+    .tag.success {
+      color: #529b2e;
+      background: #f0f9eb;
+      border-color: #d1edc4;
+    }
+
+    .tag.warning {
+      color: #b88230;
+      background: #fdf6ec;
+      border-color: #faecd8;
+    }
+
+    .tag.danger {
+      color: #c45656;
+      background: #fef0f0;
+      border-color: #fde2e2;
+    }
+
+    .tag.info {
+      color: #73767a;
+      background: #f4f4f5;
+      border-color: #e9e9eb;
+    }
+
+    .gate-panel {
+      border-left: 3px solid var(--el-color-info);
+      background: #f7f8fa;
+    }
+
+    .gate-panel.pass {
+      border-left-color: var(--el-color-success);
+      background: #f7fbf4;
+    }
+
+    .gate-panel.blocked {
+      border-left-color: var(--el-color-danger);
+      background: #fff7f7;
+    }
+
+    .gate-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .gate-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .schema-box {
+      margin: 0;
+      padding: 12px;
+      background: #1f2937;
+      color: #d1d5db;
+      border-radius: var(--radius);
+      overflow: auto;
+      max-height: 360px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .schema-box .key {
+      color: #93c5fd;
+    }
+
+    .schema-box .string {
+      color: #86efac;
+    }
+
+    .schema-box .bool {
+      color: #fbbf24;
+    }
+
+    .condition-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .condition-card {
+      min-height: 82px;
+    }
+
+    .condition-card.failed {
+      border-color: #fde2e2;
+      background: #fff7f7;
+    }
+
+    .empty-block {
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fbfbfc;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--el-text-color-secondary);
+      padding: 24px;
+    }
+
+    .radio-card {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 0 12px;
+      gap: 8px;
+    }
+
+    .radio-card.active {
+      color: var(--el-color-primary);
+      border-color: #a3c5ff;
+      background: var(--el-color-primary-light-9);
+    }
+
+    .hint {
+      border-radius: var(--radius);
+      border: 1px solid #d9ecff;
+      background: #f4f9ff;
+      color: #337ecc;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .hint.warning {
+      border-color: #faecd8;
+      background: #fdf6ec;
+      color: #b88230;
+    }
+
+    .hint.danger {
+      border-color: #fde2e2;
+      background: #fef0f0;
+      color: #c45656;
+    }
+
+    .prototype-right {
+      min-width: 0;
+      background: var(--el-bg-color);
+      border-left: 1px solid #cfd6e2;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      max-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+
+    .annotation-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--el-border-color-light);
+      background: #fff;
+    }
+
+    .annotation-header h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    .annotation-header p {
+      margin: 4px 0 0;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .annotation-scenarios {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--el-border-color-lighter);
+      display: grid;
+      gap: 8px;
+    }
+
+    .annotation-list {
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .note-card {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .note-card.active {
+      border-color: var(--note-border);
+      background: var(--note-bg);
+    }
+
+    .note-number,
+    .note-anchor {
+      display: inline-grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border-radius: 999px;
+      background: #facc15;
+      color: #713f12;
+      font-size: 12px;
+      font-weight: 750;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+      flex: 0 0 auto;
+    }
+
+    .note-anchor {
+      position: absolute;
+      z-index: 4;
+      transform: translate(-10px, -10px);
+      cursor: pointer;
+      border: 1px solid rgba(113, 63, 18, .16);
+    }
+
+    .note-title {
+      margin: 0 0 4px;
+      font-size: 13px;
+      line-height: 20px;
+      font-weight: 700;
+    }
+
+    .note-location {
+      color: var(--el-color-primary);
+      font-size: 12px;
+      line-height: 18px;
+      margin-bottom: 6px;
+    }
+
+    .note-body {
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 18px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .note-body strong {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+
+    .note-body ul {
+      margin: 0;
+      padding-left: 16px;
+    }
+
+    .has-anchor {
+      position: relative;
+    }
+
+    .target-highlight {
+      outline: 2px solid var(--note-border);
+      outline-offset: 3px;
+      border-radius: 6px;
+      transition: outline-color .2s ease;
+    }
+
+    .drawer-mask,
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, .28);
+      display: none;
+    }
+
+    .drawer-mask.open,
+    .modal-mask.open {
+      display: block;
+    }
+
+    .drawer {
+      position: absolute;
+      top: 0;
+      right: 420px;
+      width: 720px;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -8px 0 22px rgba(15, 23, 42, .18);
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr) 64px;
+    }
+
+    .drawer-header,
+    .drawer-footer {
+      border-color: var(--el-border-color-light);
+      border-style: solid;
+      background: #fff;
+    }
+
+    .drawer-header {
+      border-width: 0 0 1px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-body {
+      padding: 20px;
+      overflow: auto;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .drawer-footer {
+      border-width: 1px 0 0;
+      justify-content: flex-end;
+      padding: 0 20px;
+      height: 64px;
+    }
+
+    .drawer-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: var(--el-text-color-secondary);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-card {
+      width: 460px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .24);
+      position: absolute;
+      top: 120px;
+      left: calc(50% - 230px);
+      overflow: hidden;
+    }
+
+    .profile-modal-card {
+      width: 760px;
+      left: calc(50% - 380px);
+    }
+
+    .profile-json {
+      margin: 0;
+      max-height: 520px;
+      overflow: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #1f2937;
+      color: #e5e7eb;
+      font-size: 12px;
+      line-height: 18px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .profile-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .modal-body {
+      padding: 22px 24px 18px;
+    }
+
+    .modal-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    .modal-copy {
+      margin: 0;
+      color: var(--el-text-color-regular);
+      line-height: 22px;
+    }
+
+    .modal-footer {
+      justify-content: flex-end;
+      border-top: 1px solid var(--el-border-color-light);
+      padding: 12px 16px;
+      background: #fafafa;
+    }
+
+    .toast {
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      min-width: 240px;
+      border-radius: 6px;
+      border: 1px solid #d1edc4;
+      background: #f0f9eb;
+      color: #529b2e;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .12);
+      padding: 10px 14px;
+      display: none;
+      text-align: center;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .prototype-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .prototype-right {
+        position: static;
+        max-height: 50vh;
+        border-left: 0;
+        border-top: 1px solid #cfd6e2;
+      }
+
+      .drawer {
+        right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-shell">
+    <main class="prototype-left" aria-label="IoT Admin 产品详情原型">
+      <section class="prototype-canvas">
+        <div class="admin-app">
+          <aside class="aside">
+            <div class="brand">
+              <div class="brand-mark">IoT</div>
+              <div>
+                <div>IoT Admin</div>
+                <div class="brand-subtitle">LuteOS 管理端</div>
+              </div>
+            </div>
+            <nav class="menu" aria-label="主导航">
+              <div class="menu-group-title">智能产品</div>
+              <div class="menu-item active"><span class="menu-dot"></span>产品列表</div>
+              <div class="menu-item"><span class="menu-dot"></span>产品模板</div>
+              <div class="menu-item"><span class="menu-dot"></span>产品分类</div>
+              <div class="menu-group-title">App</div>
+              <div class="menu-item"><span class="menu-dot"></span>扩展程序管理</div>
+              <div class="menu-item"><span class="menu-dot"></span>App 管理</div>
+              <div class="menu-group-title">设备管理</div>
+              <div class="menu-item"><span class="menu-dot"></span>设备列表</div>
+              <div class="menu-item"><span class="menu-dot"></span>OTA 任务</div>
+            </nav>
+          </aside>
+          <section class="main-shell">
+            <header class="header">
+              <div class="breadcrumb">智能产品 / 产品列表 / <strong>查看产品详情</strong></div>
+              <div class="userbar">
+                <span>ROOT云</span>
+                <div class="avatar">L</div>
+              </div>
+            </header>
+            <div class="content">
+              <section class="product-summary has-anchor" id="summaryBlock">
+                <button class="note-anchor" type="button" data-note="profile-entry" aria-label="批注 1">1</button>
+                <div class="product-title-row">
+                  <div>
+                    <h1 class="product-name">V3测试</h1>
+                    <div class="chip-row">
+                      <span class="tag warning">开发中</span>
+                      <span class="tag">ROOT云</span>
+                      <span class="tag">BLE</span>
+                    </div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="btn" type="button" id="viewProfileBtn">查看 ProductProfile</button>
+                    <button class="btn primary" type="button" id="shelfBtn">上架产品</button>
+                  </div>
+                </div>
+                <div class="summary-meta" id="summaryMeta"></div>
+              </section>
+              <section id="pageBody"></section>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <aside class="prototype-right" aria-label="原型批注">
+      <div class="annotation-header">
+        <h2>原型批注</h2>
+        <p id="annotationScope">产品详情 / 基础信息</p>
+        <div class="annotation-scenarios" aria-label="评审场景切换">
+          <div class="muted">评审场景（原型辅助，不属于正式产品页面）</div>
+          <div class="scenario-group" id="scenarioGroup"></div>
+        </div>
+      </div>
+      <div class="annotation-list" id="annotationList"></div>
+    </aside>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask">
+    <aside class="drawer" aria-label="编辑产品信息抽屉">
+      <header class="drawer-header">
+        <h2 class="drawer-title">编辑产品信息</h2>
+        <button class="close-btn" type="button" id="closeDrawerBtn" aria-label="关闭">×</button>
+      </header>
+      <div class="drawer-body" id="drawerBody"></div>
+      <footer class="drawer-footer">
+        <button class="btn" type="button" id="cancelDrawerBtn">取消</button>
+        <button class="btn primary" type="button" id="saveDrawerBtn">确定</button>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="modal-mask" id="modalMask">
+    <section class="modal-card has-anchor" id="confirmModal">
+      <button class="note-anchor" type="button" data-note="confirm-modal" aria-label="批注 7">7</button>
+      <div class="modal-body">
+        <h2 class="modal-title">开启动态接入确认</h2>
+        <p class="modal-copy">该产品已上架。开启动态接入后不会静默线上生效，保存后需要进入发布 / gate 校验，通过后才允许 APP 动态消费 ProductProfile。</p>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn" type="button" id="modalCancelBtn">取消</button>
+        <button class="btn primary" type="button" id="modalConfirmBtn">确认保存</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="modal-mask" id="profileModalMask">
+    <section class="modal-card profile-modal-card has-anchor" id="profileModal">
+      <button class="note-anchor" type="button" data-note="profile-view" aria-label="批注 8">8</button>
+      <div class="modal-body">
+        <h2 class="modal-title">查看 ProductProfile</h2>
+        <div class="profile-meta has-anchor">
+          <button class="note-anchor" type="button" data-note="profile-no-writeback" aria-label="批注 9">9</button>
+          <span class="tag info">只读</span>
+          <span>展示当前产品详情保存后的最新 ProductProfile，不反写产品详情。</span>
+        </div>
+        <pre class="profile-json" id="profileJsonView" aria-label="ProductProfile JSON"></pre>
+      </div>
+      <footer class="modal-footer has-anchor">
+        <button class="note-anchor" type="button" data-note="profile-copy-export" aria-label="批注 10">10</button>
+        <button class="btn" type="button" id="copyProfileBtn">复制</button>
+        <button class="btn" type="button" id="exportProfileBtn">导出 JSON</button>
+        <button class="btn primary" type="button" id="closeProfileBtn">关闭</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const tabs = [
+      { id: "base", label: "基础信息" },
+      { id: "function", label: "功能设计" },
+      { id: "extension", label: "扩展程序" },
+      { id: "debug", label: "设备调试" },
+      { id: "guide", label: "配网引导" },
+      { id: "advanced", label: "高级配置" }
+    ];
+
+    const scenarios = [
+      { id: "codeFilled", label: "产品代码已有值" },
+      { id: "codeEmpty", label: "产品代码为空" },
+      { id: "confirm", label: "已上架开启" }
+    ];
+
+    const state = {
+      tab: "base",
+      scenario: "codeFilled",
+      drawerOpen: false,
+      modalOpen: false,
+      profileOpen: false,
+      activeNote: null,
+      drawerError: false,
+      syncState: "idle",
+      toastTimer: null,
+      savedProductCode: "0xA10001",
+      form: null
+    };
+
+    const baseProduct = {
+      app: "momcozy",
+      productTypeName: "Breast Pump",
+      productType: "breast_pump",
+      model: "V300",
+      displayName: "V3测试",
+      productImage: "https://cdn.example.com/products/pump-w1.png",
+      communicationType: "BLE",
+      provisionRoute: "RN2 - LTBLEPumpGuidePage",
+      provisionInteractionMode: "CONNECT_F0_F7",
+      minAppVersion: "",
+      targetRegions: "北美、欧洲、亚太、中国",
+      panelImpType: "RN",
+      peripheralNameList: ["V300"],
+      broadcastType: "ROOT_BLE_BREAST_PUMP_V1",
+      qrPrefixList: ["V300"],
+      thingModelKey: "tm_pump_w1_v1"
+    };
+
+    function getScenarioData() {
+      const common = {
+        ...baseProduct,
+        platform: "LUTE / ROOT云",
+        provisioningMethods: ["BLE", "BLE_SCAN"],
+        atomicNetConfig: "yes",
+        productCode: state.savedProductCode || "0xA10001",
+        productCodeEditable: false,
+        dynamicAccessSupported: false,
+        configVersion: "未生成",
+        gate: "off",
+        gateTitle: "动态接入未开启",
+        gateCopy: "当前产品不生成面向 APP 动态消费的有效 ProductProfile。",
+        panelPackageVersion: "1.0.0",
+        authProfile: "triplet"
+      };
+
+      if (state.scenario === "codeEmpty") {
+        return {
+          ...common,
+          productCode: "",
+          productCodeEditable: true,
+          gate: "off",
+          gateTitle: "产品代码为空",
+          gateCopy: "产品代码为空时可在编辑态选填；一旦输入并保存，之后不可再次编辑。"
+        };
+      }
+
+      if (state.scenario === "confirm") {
+        return {
+          ...common,
+          productCode: "0xA10001",
+          productCodeEditable: false,
+          dynamicAccessSupported: false,
+          configVersion: "v1",
+          gate: "off",
+          gateTitle: "已上架产品尚未开启动态接入",
+          gateCopy: "从不支持切换为支持时，需要弹出确认，并进入发布 / gate 校验。"
+        };
+      }
+
+      return common;
+    }
+
+    function panelCodeOf(data) {
+      const productType = data.productType || "未生成";
+      return `${data.app}.${productType}.${data.model}`;
+    }
+
+    function tagClassForGate(gate) {
+      if (gate === "pass") return "success";
+      if (gate === "blocked") return "danger";
+      return "info";
+    }
+
+    function render() {
+      const data = getScenarioData();
+      renderSummary(data);
+      renderScenarioTabs();
+      renderPage(data);
+      renderDrawer(data);
+      renderModal();
+      renderProfileModal(data);
+      renderAnnotations();
+      applyActiveHighlight();
+    }
+
+    function renderSummary(data) {
+      document.getElementById("summaryMeta").innerHTML = [
+        ["产品分类", data.productTypeName],
+        ["产品型号", data.model],
+        ["产品代码", data.productCode || "--"],
+        ["产品ID", "2063********3874"],
+        ["产品模板ID", "1907********8993"]
+      ].map(([label, value]) => `
+        <div class="summary-item">
+          <div class="summary-label">${label}</div>
+          <div class="summary-value">${value}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderScenarioTabs() {
+      document.getElementById("scenarioGroup").innerHTML = scenarios.map(item => `
+        <button type="button" class="${state.scenario === item.id ? "active" : ""}" data-scenario="${item.id}">${item.label}</button>
+      `).join("");
+      document.querySelectorAll("[data-scenario]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.scenario = btn.dataset.scenario;
+          state.drawerOpen = false;
+          state.modalOpen = false;
+          state.form = null;
+          state.drawerError = false;
+          state.activeNote = null;
+          render();
+        });
+      });
+    }
+
+    function bindStepNavigation() {
+      document.querySelectorAll("[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.tab = btn.dataset.tab;
+          state.activeNote = null;
+          render();
+        });
+      });
+    }
+
+    function renderPage(data) {
+      const target = document.getElementById("pageBody");
+      if (state.tab === "extension") {
+        target.innerHTML = renderExtension(data);
+      } else if (state.tab === "debug") {
+        target.innerHTML = renderDebug(data);
+      } else if (state.tab === "guide") {
+        target.innerHTML = renderGuide(data);
+      } else if (state.tab === "function") {
+        target.innerHTML = renderFunction(data);
+      } else if (state.tab === "advanced") {
+        target.innerHTML = renderAdvanced(data);
+      } else {
+        target.innerHTML = renderBase(data);
+      }
+      bindPageActions(data);
+    }
+
+    function renderBase(data) {
+      return `
+        ${renderStepper("base")}
+        <section class="has-anchor" id="baseInfoBlock">
+          <button class="note-anchor" type="button" data-note="base-layout" aria-label="批注 3">3</button>
+          <div class="title-bar-real">
+            <h2>产品信息</h2>
+            <button class="btn" type="button" id="editProductInfoBtn">编辑产品信息</button>
+          </div>
+          <div class="description-wrap">
+            <div class="description-col">
+              ${desc("产品ID：", "2063********3874")}
+              ${desc("产品名称：", data.displayName)}
+              ${desc("创建用户：", "用户A")}
+              ${desc("创建时间：", "2026-06-08 15:30:40")}
+              ${desc("支持频段：", "--")}
+              ${desc("设备类型：", "直连设备")}
+              ${desc("产品共享：", "开启")}
+              ${desc("产品类型：", data.productTypeName)}
+            </div>
+            <div class="description-col">
+              ${desc("产品状态：", "开发中")}
+              ${desc("流程配网路由方式：", data.provisionRoute)}
+              ${desc("产品型号：", data.model)}
+              ${desc("客服型号：", "--")}
+              ${desc("绑定方式：", "弱绑定")}
+              ${desc("编辑用户：", "用户B")}
+              ${desc("最近编辑时间：", "2026-07-06 16:44:53")}
+              ${desc("所属App：", data.app)}
+            </div>
+            <div class="description-col has-anchor" id="dynamicDescCol">
+              <button class="note-anchor" type="button" data-note="dynamic-field" aria-label="批注 4">4</button>
+              ${desc("所属平台：", "ROOT云")}
+              ${desc("通讯方式：", data.communicationType)}
+              ${desc("配网方式：", "蓝牙配网,蓝牙扫码配对")}
+              ${desc("原子化配网：", "不支持")}
+              ${desc("设备是否可以编组：", "不支持")}
+              ${desc("产品代码：", data.productCode || "--")}
+              ${desc("最低支持版本：", data.minAppVersion || "--")}
+              ${desc("动态接入：", data.dynamicAccessSupported ? "支持" : "不支持", data.dynamicAccessSupported ? "success" : "")}
+              ${desc("产品图片：", "主图 / 列表图 / 原子化配网图")}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGatePanel(data) {
+      const items = gateItems(data);
+      return `
+        <section class="panel gate-panel ${data.gate}" id="gateBlock">
+          <div class="gate-title">
+            <div>
+              <h2 class="panel-title">${data.gateTitle}</h2>
+              <div class="panel-subtitle">${data.gateCopy}</div>
+            </div>
+            <span class="tag ${tagClassForGate(data.gate)}">${gateLabel(data.gate)}</span>
+          </div>
+          <div class="gate-list">
+            ${items.map(item => `
+              <div class="gate-item">
+                <div>
+                  <div class="kv-value">${item.title}</div>
+                  <div class="muted">${item.copy}</div>
+                </div>
+                <span class="tag ${item.state}">${item.label}</span>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGatePanelInner(data) {
+      const items = gateItems(data);
+      return `
+        <div class="gate-list">
+          ${items.map(item => `
+            <div class="gate-item">
+              <div>
+                <div class="kv-value">${item.title}</div>
+                <div class="muted">${item.copy}</div>
+              </div>
+              <span class="tag ${item.state}">${item.label}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderExtension(data) {
+      return `
+        ${renderStepper("extension")}
+        <section class="has-anchor" id="panelImpBlock">
+          <button class="note-anchor" type="button" data-note="step2-panel" aria-label="批注 3">3</button>
+          <div class="title-bar-real">
+            <h2>扩展程序配置</h2>
+          </div>
+          <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
+            <div class="description-col" style="border-right:0;padding:0;">
+              ${desc("控制面板实现方式：", "原生  RN")}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDebug(data) {
+      return `
+        ${renderStepper("debug")}
+        <section class="has-anchor" id="debugBlock">
+          <button class="note-anchor" type="button" data-note="step3-debug" aria-label="批注 3">3</button>
+          <div class="title-bar-real">
+            <h2>协议转换</h2>
+          </div>
+          <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
+            <div class="description-col" style="border-right:0;padding:0;">
+              ${desc("转换脚本：", "查看")}
+              ${desc("已上传：", "common.js")}
+            </div>
+          </div>
+        </section>
+        <section class="table-wrap-real has-anchor" id="debugDeviceBlock">
+          <button class="note-anchor" type="button" data-note="step3-test-device" aria-label="批注 4">4</button>
+          <div class="panel-title-row" style="margin-bottom:12px;">
+            <h2 class="panel-title">测试设备</h2>
+            <button class="btn primary" type="button">添加测试设备</button>
+          </div>
+          <table class="real-table">
+            <thead><tr><th>设备名称</th><th>状态</th><th>激活时间</th><th>最近上线时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>a9b24e9e****4dc2</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
+              <tr><td>4c5216b0****4275</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
+              <tr><td>e6cab208****4674</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination-real">共 3 条 1 10条/页</div>
+        </section>
+        <section class="table-wrap-real">
+          <div class="panel-title-row" style="margin-bottom:12px;">
+            <div><h2 class="panel-title">测试固件</h2><div class="panel-subtitle">正式固件请前往设备管理 - 固件管理 & OTA 维护。</div></div>
+            <button class="btn primary" type="button">添加测试固件</button>
+          </div>
+          <table class="real-table">
+            <thead><tr><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>上传时间</th><th>发布日志</th><th>操作</th></tr></thead>
+            <tbody><tr><td colspan="8" style="text-align:center;color:var(--el-text-color-secondary);height:120px;">暂无数据</td></tr></tbody>
+          </table>
+          <div class="pagination-real">共 0 条 1 10条/页</div>
+        </section>
+      `;
+    }
+
+    function renderGuide(data) {
+      return `
+        ${renderStepper("guide")}
+        <section class="has-anchor" id="guideBlock">
+          <button class="note-anchor" type="button" data-note="step4-qr" aria-label="批注 3">3</button>
+          <div class="title-bar-real">
+            <h2>配网引导</h2>
+          </div>
+          <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
+            <div class="description-col" style="border-right:0;padding:0;">
+              <div class="button-row" style="margin-bottom:14px;">
+                <button class="btn" type="button">蓝牙配网</button>
+                <button class="btn primary" type="button">蓝牙扫码配对</button>
+                <span style="flex:1 1 auto;"></span>
+                <button class="btn primary" type="button">新版入口</button>
+                <button class="btn" type="button">旧版入口</button>
+              </div>
+              ${desc("二维码前缀：", data.qrPrefixList.join("、"))}
+              <div class="target-tab-wrap" style="margin-top:20px;border:1px solid var(--el-border-color-light);border-radius:var(--radius);overflow:hidden;">
+                <div style="display:flex;white-space:nowrap;overflow:hidden;background:#fff;">
+                  ${["英文（默认）","法语","德语","西班牙语","意大利语","阿拉伯语","葡萄牙语","中文","繁体中文","越南语","印尼语","泰语","马来语","日语","俄语","菲律宾语"].map((lang, index) => `<div style="height:40px;padding:9px 16px;border-right:1px solid var(--el-border-color-light);color:${index === 0 ? 'var(--el-color-primary)' : 'var(--el-text-color-regular)'};">${lang}</div>`).join("")}
+                </div>
+              </div>
+              <div class="empty-block" style="margin-top:24px;min-height:220px;">未配置</div>
+              <div class="button-row" style="justify-content:flex-end;margin-top:24px;">
+                <button class="btn" type="button">编辑</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderFunction(data) {
+      return `
+        ${renderStepper("function")}
+        <section class="panel has-anchor" id="functionModelBlock">
+          <button class="note-anchor" type="button" data-note="function-thing-model" aria-label="批注 2">2</button>
+          <div class="panel-title-row">
+            <div>
+              <h2 class="panel-title">功能设计</h2>
+              <div class="panel-subtitle">本期不在原型中展开完整物模型编辑器，只展示 ProductProfile 引用功能版本。</div>
+            </div>
+            <span class="tag success">版本1 - 已发布</span>
+          </div>
+          <div class="field-grid">
+            ${kv("thingModelKey", data.dynamicAccessSupported ? data.thingModelKey : "未生成")}
+            ${kv("标准功能", "运行状态、电量、档位、软件版本等")}
+            ${kv("本期边界", "不维护完整 TSL 明细，不配置 ble_mappings 明细")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderAdvanced(data) {
+      return `
+        ${renderStepper("advanced")}
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2 class="panel-title">高级配置</h2>
+              <div class="panel-subtitle">本期只验证 ProductProfile 动态接入字段，不改高级配置结构。</div>
+            </div>
+            <span class="tag info">不在本期范围</span>
+          </div>
+          <div class="empty-block">
+            <div>
+              <div class="panel-title" style="margin-bottom:6px;">高级配置保持现状</div>
+              <div>新手指导、条件配置、语言资源等能力不进入 ProductProfile 字段新增范围。</div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function kv(label, value, mode = "") {
+      const tag = mode === "danger" ? `<span class="tag danger">需补齐</span>` : "";
+      return `
+        <div class="kv-item">
+          <div class="kv-label">${label}</div>
+          <div class="kv-value">${value} ${tag}</div>
+        </div>
+      `;
+    }
+
+    function desc(label, value, mode = "") {
+      const tag = mode === "danger"
+        ? ` <span class="tag danger">需补齐</span>`
+        : mode === "success"
+          ? ` <span class="tag success">已开启</span>`
+          : "";
+      return `
+        <div class="desc-row">
+          <div class="desc-label">${label}</div>
+          <div class="desc-value">${value}${tag}</div>
+        </div>
+      `;
+    }
+
+    function renderStepper(activeId) {
+      const order = tabs.map(item => item.id);
+      const activeIndex = Math.max(0, order.indexOf(activeId));
+      return `
+        <nav class="real-stepper" id="realStepper" aria-label="产品详情步骤">
+          ${tabs.map((item, index) => `
+            <button type="button" class="step-item ${index < activeIndex ? "done" : ""} ${index === activeIndex ? "active" : ""}" data-tab="${item.id}">
+              <span class="step-num">${index + 1}</span>
+              <span>${item.label}</span>
+            </button>
+          `).join("")}
+        </nav>
+      `;
+    }
+
+    function bindStepper() {
+      bindStepNavigation();
+    }
+
+    function gateLabel(gate) {
+      if (gate === "pass") return "通过";
+      if (gate === "blocked") return "阻断";
+      return "未开启";
+    }
+
+    function gateItems(data) {
+      if (data.gate === "pass") {
+        return [
+          { title: "Identity Gate", copy: "productCode、productType、model、app 均可用。", state: "success", label: "通过" },
+          { title: "Broadcast Gate", copy: "broadcastType 命中 APP 广播解析器。", state: "success", label: "通过" },
+          { title: "Panel Gate", copy: "panelCode 命中已发布面板包和 fallback。", state: "success", label: "通过" },
+          { title: "Auth Gate", copy: "认证方案采用 triplet，等待技术侧接口细化。", state: "warning", label: "需联调" }
+        ];
+      }
+
+      if (data.gate === "blocked") {
+        const list = [];
+        if (!data.productType) {
+          list.push({ title: "ProductType Gate", copy: "产品分类缺少稳定 productType key，不能生成 panelCode。", state: "danger", label: "阻断" });
+        }
+        list.push({ title: "Auth Gate", copy: "认证方案仍需安全 / 云端 / 固件 / APP 完成确认。", state: "warning", label: "待确认" });
+        return list;
+      }
+
+      return [
+        { title: "Dynamic Access", copy: "动态接入为不支持，不生成有效 ProductProfile。", state: "info", label: "跳过" },
+        { title: "Legacy Compatibility", copy: "产品继续走已有静态接入或历史链路。", state: "info", label: "兼容" }
+      ];
+    }
+
+    function bindPageActions(data) {
+      const shelfBtn = document.getElementById("shelfBtn");
+      if (shelfBtn) shelfBtn.onclick = () => showToast("原型不展开上架流程；动态接入校验会作为发布 gate 输入。");
+      const viewProfileBtn = document.getElementById("viewProfileBtn");
+      if (viewProfileBtn) viewProfileBtn.onclick = () => {
+        state.profileOpen = true;
+        state.activeNote = "profile-view";
+        render();
+      };
+      const editProductInfo = document.getElementById("editProductInfoBtn");
+      if (editProductInfo) editProductInfo.onclick = openDrawer;
+      bindStepNavigation();
+      bindAnchors();
+    }
+
+    function openDrawer() {
+      const data = getScenarioData();
+      state.drawerOpen = true;
+      state.drawerError = false;
+      state.form = {
+        dynamicAccessSupported: data.dynamicAccessSupported,
+        productCode: data.productCode,
+        productCodeEditable: data.productCodeEditable,
+        productType: data.productType || baseProduct.productType,
+        productTypeName: data.productTypeName,
+        model: data.model,
+        app: data.app,
+        communicationType: data.communicationType,
+        provisionInteractionMode: data.provisionInteractionMode,
+        provisionRoute: data.provisionRoute
+      };
+      state.activeNote = "drawer-dynamic";
+      render();
+    }
+
+    function closeDrawer() {
+      state.drawerOpen = false;
+      state.drawerError = false;
+      state.form = null;
+      state.activeNote = null;
+      render();
+    }
+
+    function renderDrawer(data) {
+      const mask = document.getElementById("drawerMask");
+      mask.classList.toggle("open", state.drawerOpen);
+      if (!state.drawerOpen) return;
+
+      const form = state.form;
+      const productCodeHelp = form.productCodeEditable
+        ? "产品代码为空时可选填；输入并保存后不可再编辑。"
+        : "产品代码已有值，不可编辑。";
+      document.getElementById("drawerBody").innerHTML = `
+        <section class="card-line has-anchor" id="drawerDynamicBlock">
+          <button class="note-anchor" type="button" data-note="drawer-dynamic" aria-label="批注 3">3</button>
+          <div class="field-head">
+            <div>
+              <div class="form-label required">动态接入</div>
+              <div class="field-help">新增字段，默认不支持；支持后 APP 才允许动态获取 ProductProfile。</div>
+            </div>
+          </div>
+          <div class="radio-row" style="margin-top:10px;">
+            <button class="radio-card ${form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="true">支持</button>
+            <button class="radio-card ${!form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="false">不支持</button>
+          </div>
+          ${form.dynamicAccessSupported ? `<div class="hint warning" style="margin-top:10px;">保存后会刷新 ProductProfile、配置版本、resolved view，并执行 gate 校验。</div>` : ""}
+        </section>
+
+        <section class="card-line has-anchor" id="drawerIdentityBlock">
+          <button class="note-anchor" type="button" data-note="drawer-identity" aria-label="批注 4">4</button>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="productCodeInput">产品代码</label>
+              <input id="productCodeInput" value="${form.productCode || ""}" placeholder="请输入产品代码" ${form.productCodeEditable ? "" : "disabled"}>
+              <div class="field-help">${productCodeHelp}</div>
+            </div>
+            <div class="form-field">
+              <label for="productTypeInput">产品分类</label>
+              <input id="productTypeInput" value="${form.productTypeName} / ${form.productType}" disabled>
+              <div class="field-help">展示名与稳定 key 需要同时可追溯；panelCode 使用稳定 key。</div>
+            </div>
+            <div class="form-field">
+              <label for="modelInput">产品型号</label>
+              <input id="modelInput" value="${form.model}" disabled>
+              <div class="field-help">上架后不可修改，参与 panelCode 生成。</div>
+            </div>
+            <div class="form-field">
+              <label for="appInput">所属 App</label>
+              <input id="appInput" value="${form.app}" disabled>
+              <div class="field-help">{app} 沿用当前固定事实，不新增配置项。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-line has-anchor" id="drawerGeneratedBlock">
+          <button class="note-anchor" type="button" data-note="drawer-generated" aria-label="批注 5">5</button>
+          <div class="panel-title-row">
+            <div>
+              <h3 class="panel-title">只读生成预览</h3>
+              <div class="panel-subtitle">用于保存前确认，不可手工编辑。</div>
+            </div>
+          </div>
+          <div class="field-grid">
+            ${kv("panelCode", form.dynamicAccessSupported ? `${form.app}.${form.productType}.${form.model}` : "未生成")}
+            ${kv("configVersion", form.dynamicAccessSupported ? "保存后 +1" : "不更新有效动态配置")}
+            ${kv("resolved", form.dynamicAccessSupported ? "保存后刷新" : "未生成")}
+          </div>
+        </section>
+
+        <section class="card-line has-anchor" id="drawerSaveBlock">
+          <button class="note-anchor" type="button" data-note="drawer-save" aria-label="批注 6">6</button>
+          <div class="hint ${state.scenario === "confirm" && form.dynamicAccessSupported ? "warning" : ""}">
+            ${state.scenario === "confirm" && form.dynamicAccessSupported
+              ? "当前为已上架产品，确定后必须弹出确认，不允许静默线上生效。"
+              : "提交失败时保持抽屉打开；提交成功后关闭抽屉并刷新校验结果。"}
+          </div>
+        </section>
+      `;
+
+      document.querySelectorAll("[data-dynamic-value]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.form.dynamicAccessSupported = btn.dataset.dynamicValue === "true";
+          state.drawerError = false;
+          render();
+        });
+      });
+
+      const productCodeInput = document.getElementById("productCodeInput");
+      if (productCodeInput && state.form.productCodeEditable) {
+        productCodeInput.addEventListener("change", event => {
+          state.form.productCode = event.target.value;
+          state.drawerError = false;
+        });
+      }
+
+      bindAnchors();
+    }
+
+    function renderModal() {
+      document.getElementById("modalMask").classList.toggle("open", state.modalOpen);
+    }
+
+    function buildProductProfile(data) {
+      return {
+        productCode: data.productCode || "",
+        model: data.model,
+        runtimeModel: data.model,
+        skuId: "SKU-PUMP-W1-001",
+        productType: data.productType,
+        displayName: data.displayName,
+        productImage: data.productImage,
+        dynamicAccessSupported: data.dynamicAccessSupported,
+        communicationType: data.communicationType.toLowerCase(),
+        peripheralNameList: data.peripheralNameList,
+        qrPrefixList: data.qrPrefixList,
+        broadcastType: data.broadcastType,
+        provisionRoute: "root_ble_protocol_v1",
+        provisionInteractionMode: data.provisionInteractionMode,
+        thingModelKey: data.thingModelKey,
+        panelImpType: data.panelImpType.toLowerCase(),
+        panelCode: panelCodeOf(data),
+        otaProfiles: null,
+        hardwareVersions: ["HW_V1.0"],
+        configVersion: data.configVersion,
+        minAppVersion: { ios: "3.0.0", android: "3.0.0" },
+        targetRegions: ["NA", "EU", "APAC", "CN"],
+        resolved: {
+          broadcastParser: "root_ble_parser_v1",
+          protocolFamily: "root_ble_protocol_v1",
+          provisionType: "ble_only",
+          authProfile: data.authProfile,
+          needAuth: true,
+          panelPackageVersion: data.panelPackageVersion,
+          minContainerVersion: { ios: "3.0.0", android: "3.0.0", rn: "1.8.0" },
+          fallbackPanelCode: "generic_device_fallback"
+        }
+      };
+    }
+
+    function renderProfileModal(data) {
+      const mask = document.getElementById("profileModalMask");
+      mask.classList.toggle("open", state.profileOpen);
+      if (!state.profileOpen) return;
+      document.getElementById("profileJsonView").textContent = JSON.stringify(buildProductProfile(data), null, 2);
+      bindAnchors();
+    }
+
+    async function copyProductProfile() {
+      const text = document.getElementById("profileJsonView").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("ProductProfile 已复制");
+      } catch (error) {
+        showToast("复制失败，请手动选择文本复制");
+      }
+    }
+
+    function exportProductProfile() {
+      const text = document.getElementById("profileJsonView").textContent;
+      const blob = new Blob([text], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "product-profile-V300.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("ProductProfile 已导出");
+    }
+
+    function saveDrawer() {
+      if (!state.form) return;
+      if (state.scenario === "confirm" && state.form.dynamicAccessSupported) {
+        state.modalOpen = true;
+        state.activeNote = "confirm-modal";
+        render();
+        return;
+      }
+
+      applyDrawerSave("保存成功：已刷新 ProductProfile 与配置校验");
+    }
+
+    function applyDrawerSave(message) {
+      const savedProductCode = state.form?.productCode;
+      state.drawerOpen = false;
+      state.modalOpen = false;
+      state.form = null;
+      state.savedProductCode = savedProductCode || "";
+      state.scenario = savedProductCode ? "codeFilled" : "codeEmpty";
+      showToast(message);
+      render();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(state.toastTimer);
+      state.toastTimer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function getNotes() {
+      if (state.profileOpen) {
+        return [
+          note("profile-view", "查看 ProductProfile", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>只读展示当前产品详情保存后的最新 ProductProfile。<br>
+            <strong>内容：</strong>展示后台按当前产品详情字段生成的 JSON，不提供手工编辑入口。
+          `),
+          note("profile-no-writeback", "不反写产品详情", "查看 ProductProfile 弹窗 > 只读说明", `
+            <strong>规则：</strong>查看 ProductProfile 不更新产品详情字段，不触发保存，不递增 configVersion。<br>
+            <strong>限制：</strong>不支持直接编辑 ProductProfile 内容。
+          `),
+          note("profile-copy-export", "复制与导出", "查看 ProductProfile 弹窗 > 底部操作", `
+            <strong>复制：</strong>复制 ProductProfile JSON，便于粘贴到第三方软件。<br>
+            <strong>导出：</strong>导出 ProductProfile JSON 到本地文件。
+          `)
+        ];
+      }
+
+      if (state.modalOpen) {
+        return [
+          note("confirm-modal", "已上架开启确认", "开启动态接入确认弹窗", `
+            <strong>规则：</strong>已上架产品从“不支持”改为“支持”时，必须二次确认并进入发布 / gate 校验。<br>
+            <strong>边界：</strong>不允许保存后静默对线上 APP 全量生效。
+          `)
+        ];
+      }
+
+      if (state.drawerOpen) {
+        return [
+          note("drawer-dynamic", "新增字段：动态接入", "编辑产品信息抽屉 > 动态接入", `
+            <strong>字段：</strong>新增用户可编辑字段 <code>dynamicAccessSupported</code>，取值为“支持 / 不支持”。<br>
+            <strong>规则：</strong>支持后 APP 才允许按产品身份动态获取 ProductProfile；默认不支持。
+          `),
+          note("drawer-identity", "身份字段约束", "编辑产品信息抽屉 > 产品代码 / 产品分类 / 产品型号 / 所属 App", `
+            <strong>产品代码：</strong>为空时可输入且选填；输入并保存后再次进入编辑态不可编辑。<br>
+            <strong>panelCode：</strong>使用 <code>{app}.{productType}.{model}</code>，其中 <code>productType</code> 必须是稳定 key。
+          `),
+          note("drawer-generated", "只读生成预览", "编辑产品信息抽屉 > 只读生成预览", `
+            <strong>说明：</strong><code>panelCode</code>、<code>configVersion</code>、<code>resolved</code> 由后台生成或派生。<br>
+            <strong>边界：</strong>这些字段不提供自由输入，不依赖扩展程序手工生成。
+          `),
+          note("drawer-save", "保存与 gate", "编辑产品信息抽屉 > 保存提示", `
+            <strong>保存：</strong>开启动态接入后，保存触发 ProductProfile 刷新、版本更新、resolved 派生和 gate 校验。<br>
+            <strong>线上：</strong>已上架产品开启动态接入时，需要发布 / gate 承接。
+          `)
+        ];
+      }
+
+      if (state.tab === "extension") {
+        return [
+          note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
+            <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `),
+          note("step2-panel", "面板实现类型", "产品详情 step=2 > 扩展程序配置", `
+            <strong>事实：</strong>API 已有 <code>panelImpType</code>，页面位置在产品详情 step=2。<br>
+            <strong>用途：</strong>进入 ProductProfile 后用于 Panel Gate 和 resolved 派生，不生成 <code>panelCode</code>。
+          `)
+        ];
+      }
+
+      if (state.tab === "debug") {
+        return [
+          note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
+            <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `),
+          note("step3-debug", "设备调试保持现状", "产品详情 step=3 > 设备调试", `
+            <strong>事实：</strong>step=3 当前承接协议转换、测试设备、测试固件等调试能力。<br>
+            <strong>边界：</strong>本期不在 step=3 新增蓝牙信息配置区块。
+          `),
+          note("step3-test-device", "测试设备保持现状", "产品详情 step=3 > 测试设备", `
+            <strong>说明：</strong>测试设备、测试固件用于设备调试，不进入 ProductProfile 主字段。<br>
+            <strong>映射：</strong>外设名过滤、广播类型只作为已有 API 事实进入后台映射，不在这里新增配置入口。
+          `)
+        ];
+      }
+
+      if (state.tab === "guide") {
+        return [
+          note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
+            <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `),
+          note("step4-qr", "二维码前缀", "产品详情 step=4 > 配网引导", `
+            <strong>事实：</strong>API 已有 <code>prefixQrCode</code>，页面位置在产品详情 step=4。<br>
+            <strong>规则：</strong>二维码前缀用于扫码发现 / 扫码配网识别产品，不放入 step=3 设备调试页。
+          `)
+        ];
+      }
+
+      if (state.tab === "function") {
+        return [
+          note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
+            <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `),
+          note("function-thing-model", "功能版本引用", "产品详情 step=1 > 功能设计", `
+            <strong>字段：</strong><code>thingModelKey</code> 进入 ProductProfile，用于引用产品功能版本。<br>
+            <strong>边界：</strong>本期不在产品详情内维护完整 TSL 明细，也不配置 <code>ble_mappings</code> 明细。
+          `)
+        ];
+      }
+
+      if (state.tab === "advanced") {
+        return [
+          note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+            <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
+            <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `)
+        ];
+      }
+
+      return [
+        note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
+          <strong>说明：</strong>产品详情顶部提供查看入口，用户可在产品详情或其他 step 保存后查看最新 ProductProfile。<br>
+          <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+        `),
+        note("base-layout", "字段口径校准", "产品详情 > 产品信息", `
+          <strong>productType：</strong>产品分类展示名只用于展示，ProductProfile 需要稳定 <code>productType</code> key。<br>
+          <strong>productCode：</strong>用于产品身份命中；为空时不因普通保存阻断，开启动态接入后进入 gate 校验。
+        `),
+        note("dynamic-field", "新增字段：动态接入", "产品详情 > 产品信息", `
+          <strong>字段：</strong>产品详情新增“动态接入：支持 / 不支持”。<br>
+          <strong>作用：</strong>配置为支持后，APP 才允许向 IoT 平台动态获取 ProductProfile。
+        `)
+      ];
+    }
+
+    function note(id, title, location, body) {
+      return { id, title, location, body };
+    }
+
+    function renderAnnotations() {
+      const notes = getNotes();
+      document.getElementById("annotationScope").textContent = state.profileOpen
+        ? "查看 ProductProfile"
+        : state.modalOpen
+          ? "开启动态接入确认"
+          : state.drawerOpen
+            ? "编辑产品信息抽屉"
+            : `产品详情 / ${tabs.find(item => item.id === state.tab).label}`;
+      document.getElementById("annotationList").innerHTML = notes.map((item, index) => `
+        <article class="note-card ${state.activeNote === item.id ? "active" : ""}" data-card-note="${item.id}">
+          <div class="note-number">${index + 1}</div>
+          <div>
+            <h3 class="note-title">${item.title}</h3>
+            <div class="note-location">关联位置：${item.location}</div>
+            <div class="note-body">${item.body}</div>
+          </div>
+        </article>
+      `).join("");
+      document.querySelectorAll("[data-card-note]").forEach(card => {
+        card.addEventListener("click", () => {
+          state.activeNote = card.dataset.cardNote;
+          renderAnnotations();
+          applyActiveHighlight();
+          const target = document.querySelector(`[data-note="${state.activeNote}"]`)?.parentElement;
+          if (target) target.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
+      });
+      syncAnchorNumbers(notes);
+    }
+
+    function syncAnchorNumbers(notes = getNotes()) {
+      const noteIndex = new Map(notes.map((item, index) => [item.id, index + 1]));
+      document.querySelectorAll("[data-note]").forEach(anchor => {
+        const number = noteIndex.get(anchor.dataset.note);
+        anchor.hidden = !number;
+        if (!number) return;
+        anchor.textContent = number;
+        anchor.setAttribute("aria-label", `批注 ${number}`);
+      });
+    }
+
+    function bindAnchors() {
+      document.querySelectorAll("[data-note]").forEach(anchor => {
+        anchor.addEventListener("click", event => {
+          event.stopPropagation();
+          state.activeNote = anchor.dataset.note;
+          renderAnnotations();
+          applyActiveHighlight();
+        });
+      });
+    }
+
+    function applyActiveHighlight() {
+      document.querySelectorAll(".target-highlight").forEach(item => item.classList.remove("target-highlight"));
+      if (!state.activeNote) return;
+      const anchor = document.querySelector(`[data-note="${state.activeNote}"]`);
+      if (anchor?.parentElement) anchor.parentElement.classList.add("target-highlight");
+    }
+
+    document.getElementById("closeDrawerBtn").onclick = closeDrawer;
+    document.getElementById("cancelDrawerBtn").onclick = closeDrawer;
+    document.getElementById("saveDrawerBtn").onclick = saveDrawer;
+    document.getElementById("modalCancelBtn").onclick = () => {
+      state.modalOpen = false;
+      state.activeNote = "drawer-save";
+      render();
+    };
+    document.getElementById("modalConfirmBtn").onclick = () => {
+      applyDrawerSave("已保存：动态接入进入发布 / gate 校验");
+    };
+    document.getElementById("closeProfileBtn").onclick = () => {
+      state.profileOpen = false;
+      state.activeNote = null;
+      render();
+    };
+    document.getElementById("copyProfileBtn").onclick = copyProductProfile;
+    document.getElementById("exportProfileBtn").onclick = exportProductProfile;
+
+    render();
+  </script>
+</body>
+</html>
