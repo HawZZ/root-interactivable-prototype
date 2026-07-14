@@ -1276,8 +1276,8 @@
     ];
 
     const scenarios = [
-      { id: "codeFilled", label: "产品代码已有值" },
-      { id: "codeEmpty", label: "产品代码为空" },
+      { id: "codeFilled", label: "产品唯一编码已有值" },
+      { id: "codeEmpty", label: "产品唯一编码为空" },
       { id: "confirm", label: "上架前 gate" }
     ];
 
@@ -1291,7 +1291,7 @@
       drawerError: false,
       syncState: "idle",
       toastTimer: null,
-      savedProductCode: "0xA10001",
+      savedProductUnicode: "A10001",
       savedDynamicAccessSupported: false,
       form: null
     };
@@ -1301,7 +1301,7 @@
       productTypeName: "Breast Pump",
       productType: "breast_pump",
       model: "V300",
-      displayName: "V3测试",
+      name: "V3测试",
       productImage: "https://cdn.example.com/products/pump-w1.png",
       communicationType: "BLE",
       provisionRoute: "RN2 - LTBLEPumpGuidePage",
@@ -1321,8 +1321,9 @@
         platform: "LUTE / ROOT云",
         provisioningMethods: ["BLE", "BLE_SCAN"],
         atomicNetConfig: "yes",
-        productCode: state.savedProductCode || "0xA10001",
-        productCodeEditable: false,
+        productCode: "生产端已有字段",
+        productUnicode: state.savedProductUnicode || "A10001",
+        productUnicodeEditable: false,
         dynamicAccessSupported: state.savedDynamicAccessSupported,
         configVersion: "未生成",
         gate: "off",
@@ -1335,19 +1336,19 @@
       if (state.scenario === "codeEmpty") {
         return {
           ...common,
-          productCode: "",
-          productCodeEditable: true,
+          productUnicode: "",
+          productUnicodeEditable: true,
           gate: "off",
-          gateTitle: "产品代码为空",
-          gateCopy: "产品代码为空时可在编辑态选填；一旦输入并保存，之后不可再次编辑。"
+          gateTitle: "产品唯一编码为空",
+          gateCopy: "产品唯一编码为空时可在编辑态填写 6 位十六进制字符，例如 FFFFFF。"
         };
       }
 
       if (state.scenario === "confirm") {
         return {
           ...common,
-          productCode: "0xA10001",
-          productCodeEditable: false,
+          productUnicode: "A10001",
+          productUnicodeEditable: false,
           dynamicAccessSupported: true,
           configVersion: "v1",
           gate: "blocked",
@@ -1386,7 +1387,7 @@
       document.getElementById("summaryMeta").innerHTML = [
         ["产品分类", data.productTypeName],
         ["产品型号", data.model],
-        ["产品代码", data.productCode || "--"],
+        ["产品唯一编码", data.productUnicode || "--"],
         ["产品ID", "2063********3874"],
         ["产品模板ID", "1907********8993"]
       ].map(([label, value]) => `
@@ -1454,7 +1455,7 @@
           <div class="description-wrap">
             <div class="description-col">
               ${desc("产品ID：", "2063********3874")}
-              ${desc("产品名称：", data.displayName)}
+              ${desc("产品名称：", data.name)}
               ${desc("创建用户：", "用户A")}
               ${desc("创建时间：", "2026-06-08 15:30:40")}
               ${desc("支持频段：", "--")}
@@ -1479,7 +1480,8 @@
               ${desc("配网方式：", "蓝牙配网,蓝牙扫码配对")}
               ${desc("原子化配网：", "不支持")}
               ${desc("设备是否可以编组：", "不支持")}
-              ${desc("产品代码：", data.productCode || "--")}
+              ${desc("产品代码：", data.productCode)}
+              ${desc("产品唯一编码：", data.productUnicode || "--")}
               ${desc("最低支持版本：", data.minAppVersion || "--")}
               ${desc("动态接入：", data.dynamicAccessSupported ? "支持" : "不支持", data.dynamicAccessSupported ? "success" : "")}
               ${desc("产品图片：", "主图 / 列表图 / 原子化配网图")}
@@ -1721,7 +1723,7 @@
     function gateItems(data) {
       if (data.gate === "pass") {
         return [
-          { title: "Identity Gate", copy: "productCode、productType、model、app 均可用。", state: "success", label: "通过" },
+          { title: "Identity Gate", copy: "productUnicode、productType、model、app 均可用。", state: "success", label: "通过" },
           { title: "Broadcast Gate", copy: "broadcastType 命中 APP 广播解析器。", state: "success", label: "通过" },
           { title: "Panel Gate", copy: "panelCode 命中已发布面板包和 fallback。", state: "success", label: "通过" },
           { title: "Auth Gate", copy: "认证方案采用 triplet，等待技术侧接口细化。", state: "warning", label: "需联调" }
@@ -1772,8 +1774,8 @@
       state.drawerError = false;
       state.form = {
         dynamicAccessSupported: data.dynamicAccessSupported,
-        productCode: data.productCode,
-        productCodeEditable: data.productCodeEditable,
+        productUnicode: data.productUnicode,
+        productUnicodeEditable: data.productUnicodeEditable,
         productType: data.productType || baseProduct.productType,
         productTypeName: data.productTypeName,
         model: data.model,
@@ -1800,9 +1802,9 @@
       if (!state.drawerOpen) return;
 
       const form = state.form;
-      const productCodeHelp = form.productCodeEditable
-        ? "产品代码为空时可选填；输入并保存后不可再编辑。"
-        : "产品代码已有值，不可编辑。";
+      const productUnicodeHelp = form.productUnicodeEditable
+        ? "请输入 6 位十六进制字符，例如 FFFFFF；系统展示或下发时可格式化为 0xFF FF FF。"
+        : "产品唯一编码已有值，不可编辑；如需变更 Identity 类字段，需先下架产品。";
       document.getElementById("drawerBody").innerHTML = `
         <section class="card-line has-anchor" id="drawerDynamicBlock">
           <button class="note-anchor" type="button" data-note="drawer-dynamic" aria-label="批注 3">3</button>
@@ -1823,14 +1825,14 @@
           <button class="note-anchor" type="button" data-note="drawer-identity" aria-label="批注 4">4</button>
           <div class="form-grid">
             <div class="form-field">
-              <label for="productCodeInput">产品代码</label>
-              <input id="productCodeInput" value="${form.productCode || ""}" placeholder="请输入产品代码" ${form.productCodeEditable ? "" : "disabled"}>
-              <div class="field-help">${productCodeHelp}</div>
+              <label for="productUnicodeInput">产品唯一编码</label>
+              <input id="productUnicodeInput" value="${form.productUnicode || ""}" placeholder="例如 FFFFFF" maxlength="6" ${form.productUnicodeEditable ? "" : "disabled"}>
+              <div class="field-help">${productUnicodeHelp}</div>
             </div>
             <div class="form-field">
               <label for="productTypeInput">产品分类</label>
               <input id="productTypeInput" value="${form.productTypeName} / ${form.productType}" disabled>
-              <div class="field-help">展示名与稳定 key 需要同时可追溯；panelCode 使用稳定 key。</div>
+              <div class="field-help">展示名与稳定 key 需要同时可追溯；panelCode 使用稳定 key。Identity / Display / Discovery / Provision 类字段需下架后变更。</div>
             </div>
             <div class="form-field">
               <label for="modelInput">产品型号</label>
@@ -1855,8 +1857,9 @@
           </div>
           <div class="field-grid">
             ${kv("panelCode", form.dynamicAccessSupported ? `${form.app}.${form.productType}.${form.model}` : "未生成")}
-            ${kv("configVersion", form.dynamicAccessSupported ? "保存后 +1" : "不更新有效动态配置")}
+            ${kv("configVersion", form.dynamicAccessSupported ? "保存后更新为最新版本" : "不更新有效动态配置")}
             ${kv("resolved", form.dynamicAccessSupported ? "保存后刷新" : "未生成")}
+            ${kv("变更前置", "Identity / Display / Discovery / Provision 类字段需产品下架后修改")}
           </div>
         </section>
 
@@ -1878,10 +1881,11 @@
         });
       });
 
-      const productCodeInput = document.getElementById("productCodeInput");
-      if (productCodeInput && state.form.productCodeEditable) {
-        productCodeInput.addEventListener("change", event => {
-          state.form.productCode = event.target.value;
+      const productUnicodeInput = document.getElementById("productUnicodeInput");
+      if (productUnicodeInput && state.form.productUnicodeEditable) {
+        productUnicodeInput.addEventListener("input", event => {
+          state.form.productUnicode = event.target.value.toUpperCase().replace(/[^0-9A-F]/g, "").slice(0, 6);
+          event.target.value = state.form.productUnicode;
           state.drawerError = false;
         });
       }
@@ -1895,12 +1899,12 @@
 
     function buildProductProfile(data) {
       return {
-        productCode: data.productCode || "",
+        productUnicode: data.productUnicode || "",
         model: data.model,
         runtimeModel: data.model,
         skuId: "SKU-PUMP-W1-001",
         productType: data.productType,
-        displayName: data.displayName,
+        name: data.name,
         productImage: data.productImage,
         dynamicAccessSupported: data.dynamicAccessSupported,
         communicationType: data.communicationType.toLowerCase(),
@@ -1917,6 +1921,12 @@
         configVersion: data.configVersion,
         minAppVersion: { ios: "3.0.0", android: "3.0.0" },
         targetRegions: ["NA", "EU", "APAC", "CN"],
+        changePolicy: {
+          productStatusRequiredForIdentityDisplayDiscoveryProvision: "not_listed",
+          lockedGroupsWhenListed: ["Identity", "Display", "Discovery", "Provision"],
+          mutableWhenListed: ["thingModelKey", "panelImpType", "otaProfiles", "hardwareVersions", "minAppVersion", "targetRegions", "resolved"],
+          versionStrategy: "app_fetches_latest"
+        },
         resolved: {
           broadcastParser: "root_ble_parser_v1",
           protocolFamily: "root_ble_protocol_v1",
@@ -1966,14 +1976,18 @@
     }
 
     function applyDrawerSave(message) {
-      const savedProductCode = state.form?.productCode;
+      const savedProductUnicode = state.form?.productUnicode;
       const savedDynamicAccessSupported = !!state.form?.dynamicAccessSupported;
+      if (savedProductUnicode && !/^[0-9A-F]{6}$/.test(savedProductUnicode)) {
+        showToast("产品唯一编码需为 6 位十六进制字符");
+        return;
+      }
       state.drawerOpen = false;
       state.modalOpen = false;
       state.form = null;
-      state.savedProductCode = savedProductCode || "";
+      state.savedProductUnicode = savedProductUnicode || "";
       state.savedDynamicAccessSupported = savedDynamicAccessSupported;
-      state.scenario = savedProductCode ? "codeFilled" : "codeEmpty";
+      state.scenario = savedProductUnicode ? "codeFilled" : "codeEmpty";
       showToast(message);
       render();
     }
@@ -1994,7 +2008,7 @@
             <strong>内容：</strong>展示后台按当前产品详情字段生成的 JSON，不提供手工编辑入口。
           `),
           note("profile-no-writeback", "不反写产品详情", "查看 ProductProfile 弹窗 > 只读说明", `
-            <strong>规则：</strong>查看 ProductProfile 不更新产品详情字段，不触发保存，不递增 configVersion。<br>
+            <strong>规则：</strong>查看 ProductProfile 不更新产品详情字段，不触发保存；APP 持续向平台获取最新有效版本。<br>
             <strong>限制：</strong>不支持直接编辑 ProductProfile 内容。
           `),
           note("profile-copy-export", "复制与导出", "查看 ProductProfile 弹窗 > 底部操作", `
@@ -2019,13 +2033,13 @@
             <strong>字段：</strong>新增用户可编辑字段 <code>dynamicAccessSupported</code>，取值为“支持 / 不支持”。<br>
             <strong>规则：</strong>支持后 APP 才允许按产品身份动态获取 ProductProfile；默认不支持。
           `),
-          note("drawer-identity", "身份字段约束", "编辑产品信息抽屉 > 产品代码 / 产品分类 / 产品型号 / 所属 App", `
-            <strong>产品代码：</strong>为空时可输入且选填；输入并保存后再次进入编辑态不可编辑。<br>
-            <strong>panelCode：</strong>使用 <code>{app}.{productType}.{model}</code>，其中 <code>productType</code> 必须是稳定 key。
+          note("drawer-identity", "身份字段约束", "编辑产品信息抽屉 > 产品唯一编码 / 产品分类 / 产品型号 / 所属 App", `
+            <strong>productUnicode：</strong>用于固件产品 code 与平台 <code>model</code> 的唯一映射，输入 6 位十六进制字符，例如 <code>FFFFFF</code>。<br>
+            <strong>边界：</strong>现有 <code>productCode</code> 已用于生产端，不进入 ProductProfile 身份字段。Identity / Display / Discovery / Provision 类字段需产品下架后变更。
           `),
           note("drawer-generated", "只读生成预览", "编辑产品信息抽屉 > 只读生成预览", `
             <strong>说明：</strong><code>panelCode</code>、<code>configVersion</code>、<code>resolved</code> 由后台生成或派生。<br>
-            <strong>边界：</strong>这些字段不提供自由输入，不依赖扩展程序手工生成。
+            <strong>版本：</strong><code>configVersion</code> 只代表当前最新有效配置；APP 持续向平台获取最新版本，不依赖历史快照。
           `),
           note("drawer-save", "保存与上架前 gate", "编辑产品信息抽屉 > 保存提示", `
             <strong>保存：</strong>开启动态接入后，保存触发 ProductProfile 草稿刷新、版本更新和 resolved 派生。<br>
@@ -2106,7 +2120,7 @@
         `),
         note("base-layout", "字段口径校准", "产品详情 > 产品信息", `
           <strong>productType：</strong>产品分类展示名只用于展示，ProductProfile 需要稳定 <code>productType</code> key。<br>
-          <strong>productCode：</strong>用于产品身份命中；为空时不因普通保存阻断，开启动态接入后在产品上架前进入发布 / gate 校验。
+          <strong>productUnicode：</strong>用于固件产品 code 与平台 <code>model</code> 的唯一映射；6 位十六进制格式在保存和上架前 gate 中校验。
         `),
         note("dynamic-field", "新增字段：动态接入", "产品详情 > 产品信息", `
           <strong>字段：</strong>产品详情新增“动态接入：支持 / 不支持”。<br>
