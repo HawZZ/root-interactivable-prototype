@@ -636,6 +636,164 @@
       margin-top: 4px;
     }
 
+
+    .drawer-form-real {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .drawer-section-real {
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      padding-bottom: 16px;
+    }
+
+    .drawer-section-real:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .drawer-section-title-real {
+      margin: 0 0 14px;
+      color: var(--el-text-color-primary);
+      font-size: 15px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    .drawer-form-grid-real {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 18px;
+      row-gap: 16px;
+    }
+
+    .drawer-form-item-real {
+      min-width: 0;
+    }
+
+    .drawer-form-item-real.full {
+      grid-column: 1 / -1;
+    }
+
+    .drawer-form-label-real {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--el-text-color-primary);
+      font-size: 14px;
+      line-height: 22px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .drawer-required {
+      color: var(--el-color-danger);
+      font-weight: 700;
+    }
+
+    .drawer-control-line-real,
+    .drawer-radio-line-real,
+    .drawer-check-line-real {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .drawer-radio-real,
+    .drawer-check-real {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--el-text-color-regular);
+      line-height: 22px;
+    }
+
+    .drawer-radio-dot-real {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      position: relative;
+    }
+
+    .drawer-radio-real.active .drawer-radio-dot-real {
+      border-color: var(--el-color-primary);
+    }
+
+    .drawer-radio-real.active .drawer-radio-dot-real::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--el-color-primary);
+      position: absolute;
+      left: 3px;
+      top: 3px;
+    }
+
+    .drawer-check-box-real {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      border: 1px solid var(--el-color-primary);
+      background: var(--el-color-primary);
+      color: #fff;
+      display: inline-grid;
+      place-items: center;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .drawer-upload-grid-real {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .drawer-upload-card-real {
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      min-height: 112px;
+      padding: 10px;
+      background: #fbfdff;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .drawer-upload-thumb-real {
+      width: 54px;
+      height: 54px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+      border: 1px solid #bfdbfe;
+      display: grid;
+      place-items: center;
+      color: var(--el-color-primary);
+      font-weight: 700;
+    }
+
+    .drawer-select-real {
+      position: relative;
+    }
+
+    .drawer-select-real::after {
+      content: "⌄";
+      position: absolute;
+      right: 10px;
+      top: 4px;
+      color: var(--el-text-color-secondary);
+      pointer-events: none;
+    }
+
+    .drawer-select-real input {
+      padding-right: 28px;
+    }
+
     .btn {
       min-height: 32px;
       border: 1px solid var(--el-border-color);
@@ -1180,16 +1338,17 @@
                 <button class="note-anchor" type="button" data-note="profile-entry" aria-label="批注 1">1</button>
                 <div class="product-title-row">
                   <div>
-                    <h1 class="product-name">V3测试</h1>
+                    <h1 class="product-name">W1 Lite</h1>
                     <div class="chip-row">
-                      <span class="tag warning">开发中</span>
+                      <span class="tag success">已上架</span>
                       <span class="tag">ROOT云</span>
                       <span class="tag">BLE</span>
                     </div>
                   </div>
                   <div class="top-actions">
                     <button class="btn" type="button" id="viewProfileBtn">查看 ProductProfile</button>
-                    <button class="btn primary" type="button" id="shelfBtn">上架产品</button>
+                    <button class="btn" type="button" id="newVersionBtn">新建版本</button>
+                    <button class="btn danger" type="button" id="shelfBtn">下架产品</button>
                   </div>
                 </div>
                 <div class="summary-meta" id="summaryMeta"></div>
@@ -1232,12 +1391,12 @@
     <section class="modal-card has-anchor" id="confirmModal">
       <button class="note-anchor" type="button" data-note="confirm-modal" aria-label="批注 7">7</button>
       <div class="modal-body">
-        <h2 class="modal-title">上架前发布 / gate 校验</h2>
-        <p class="modal-copy">动态接入已开启。产品上架前必须完成发布 / gate 校验；存在阻断项时不得上架，也不允许 APP 动态消费 ProductProfile。</p>
+        <h2 class="modal-title" id="confirmModalTitle">上架前发布 / gate 校验</h2>
+        <p class="modal-copy" id="confirmModalCopy">动态接入已开启。产品上架前必须完成发布 / gate 校验；存在阻断项时不得上架，也不允许 APP 动态消费 ProductProfile。</p>
       </div>
       <footer class="modal-footer">
         <button class="btn" type="button" id="modalCancelBtn">取消</button>
-        <button class="btn primary" type="button" id="modalConfirmBtn">确认进入校验</button>
+        <button class="btn primary" type="button" id="modalConfirmBtn">确定</button>
       </footer>
     </section>
   </div>
@@ -1276,7 +1435,7 @@
     ];
 
     const scenarios = [
-      { id: "codeFilled", label: "产品唯一编码已有值" },
+      { id: "codeFilled", label: "产品代码已有值" },
       { id: "codeEmpty", label: "产品唯一编码为空" },
       { id: "confirm", label: "上架前 gate" }
     ];
@@ -1286,33 +1445,37 @@
       scenario: "codeFilled",
       drawerOpen: false,
       modalOpen: false,
+      modalType: "gate",
       profileOpen: false,
       activeNote: null,
       drawerError: false,
       syncState: "idle",
       toastTimer: null,
-      savedProductUnicode: "A10001",
+      savedProductCode: "A10001",
       savedDynamicAccessSupported: false,
+      savedRuntimeModel: "W1Lite",
       form: null
     };
 
     const baseProduct = {
       app: "momcozy",
       productTypeName: "Breast Pump",
-      productType: "breast_pump",
-      model: "V300",
-      name: "V3测试",
+      productType: 1,
+      model: "W1Lite",
+      runtimeModel: state.savedRuntimeModel || "W1Lite",
+      name: "W1 Lite",
       productImage: "https://cdn.example.com/products/pump-w1.png",
-      communicationType: "BLE",
-      provisionRoute: "RN2 - LTBLEPumpGuidePage",
-      provisionInteractionMode: "CONNECT_F0_F7",
-      minAppVersion: "",
-      targetRegions: "北美、欧洲、亚太、中国",
+      communicationMethod: "BLE",
+      addFlowType: "原子化",
+      interactionType: 5,
+      interactionTypeDesc: "CONNECT_F0",
+      appVersionMin: "",
+      regions: "北美、欧洲、亚太、中国",
       panelImpType: "RN",
-      peripheralNameList: ["V300"],
-      broadcastType: "ROOT_BLE_BREAST_PUMP_V1",
-      qrPrefixList: ["V300"],
-      thingModelKey: "tm_pump_w1_v1"
+      peripheralNameList: ["W1 Lite"],
+      broadcastType: "吸奶器协议",
+      prefixQrCode: ["W1Lite"],
+      thingModelKey: "version_1_released"
     };
 
     function getScenarioData() {
@@ -1321,34 +1484,33 @@
         platform: "LUTE / ROOT云",
         provisioningMethods: ["BLE", "BLE_SCAN"],
         atomicNetConfig: "yes",
-        productCode: "生产端已有字段",
-        productUnicode: state.savedProductUnicode || "A10001",
-        productUnicodeEditable: false,
+        unicode: state.savedProductCode || "A10001",
+        unicodeEditable: false,
         dynamicAccessSupported: state.savedDynamicAccessSupported,
-        configVersion: "未生成",
+        configVersion: "latest",
         gate: "off",
         gateTitle: "动态接入未开启",
         gateCopy: "当前产品不生成面向 APP 动态消费的有效 ProductProfile。",
-        panelPackageVersion: "1.0.0",
+        panelPackageVersion: "未配置",
         authProfile: "triplet"
       };
 
       if (state.scenario === "codeEmpty") {
         return {
           ...common,
-          productUnicode: "",
-          productUnicodeEditable: true,
+          unicode: "",
+          unicodeEditable: true,
           gate: "off",
           gateTitle: "产品唯一编码为空",
-          gateCopy: "产品唯一编码为空时可在编辑态填写 6 位十六进制字符，例如 FFFFFF。"
+          gateCopy: "产品唯一编码为空时，可在编辑态补齐；动态接入开启后不得为空。"
         };
       }
 
       if (state.scenario === "confirm") {
         return {
           ...common,
-          productUnicode: "A10001",
-          productUnicodeEditable: false,
+          unicode: "A10001",
+          unicodeEditable: false,
           dynamicAccessSupported: true,
           configVersion: "v1",
           gate: "blocked",
@@ -1387,9 +1549,9 @@
       document.getElementById("summaryMeta").innerHTML = [
         ["产品分类", data.productTypeName],
         ["产品型号", data.model],
-        ["产品唯一编码", data.productUnicode || "--"],
-        ["产品ID", "2063********3874"],
-        ["产品模板ID", "1907********8993"]
+        ["产品唯一编码", data.unicode || "--"],
+        ["产品ID", "PP-DEMO-000001"],
+        ["产品模板ID", "TPL-DEMO-BREAST-PUMP"]
       ].map(([label, value]) => `
         <div class="summary-item">
           <div class="summary-label">${label}</div>
@@ -1454,37 +1616,39 @@
           </div>
           <div class="description-wrap">
             <div class="description-col">
-              ${desc("产品ID：", "2063********3874")}
+              ${desc("产品ID：", "PP-DEMO-000001")}
               ${desc("产品名称：", data.name)}
-              ${desc("创建用户：", "用户A")}
-              ${desc("创建时间：", "2026-06-08 15:30:40")}
+              ${desc("创建用户：", "创建用户A（脱敏）")}
+              ${desc("创建时间：", "2026-07-11 10:21:32")}
+              ${desc("原子化配网：", "支持")}
+              ${desc("设备是否可以编组：", "支持")}
+              ${desc("产品代码：", data.unicode)}
+              ${desc("最低支持版本：", data.appVersionMin || "--")}
+              ${desc("产品图片：", "主图 / 列表图 / 原子化配网图")}
+            </div>
+            <div class="description-col">
+              ${desc("产品状态：", "已上架")}
+              ${desc("流程配网路由方式：", data.addFlowType)}
+              ${desc("产品型号：", data.model)}
+              ${desc("runtimeModel：", data.runtimeModel || data.model)}
+              ${desc("客服型号：", "--")}
               ${desc("支持频段：", "--")}
               ${desc("设备类型：", "直连设备")}
               ${desc("产品共享：", "开启")}
               ${desc("产品类型：", data.productTypeName)}
             </div>
-            <div class="description-col">
-              ${desc("产品状态：", "开发中")}
-              ${desc("流程配网路由方式：", data.provisionRoute)}
-              ${desc("产品型号：", data.model)}
-              ${desc("客服型号：", "--")}
-              ${desc("绑定方式：", "弱绑定")}
-              ${desc("编辑用户：", "用户B")}
-              ${desc("最近编辑时间：", "2026-07-06 16:44:53")}
-              ${desc("所属App：", data.app)}
-            </div>
             <div class="description-col has-anchor" id="dynamicDescCol">
               <button class="note-anchor" type="button" data-note="dynamic-field" aria-label="批注 4">4</button>
               ${desc("所属平台：", "ROOT云")}
-              ${desc("通讯方式：", data.communicationType)}
-              ${desc("配网方式：", "蓝牙配网,蓝牙扫码配对")}
-              ${desc("原子化配网：", "不支持")}
-              ${desc("设备是否可以编组：", "不支持")}
-              ${desc("产品代码：", data.productCode)}
-              ${desc("产品唯一编码：", data.productUnicode || "--")}
-              ${desc("最低支持版本：", data.minAppVersion || "--")}
+              ${desc("通讯方式：", data.communicationMethod)}
+              ${desc("配网方式：", "蓝牙配网")}
+              ${desc("配网交互方式：", "CONNECT_F0（配网过程仅需发送一个指令）")}
+              ${desc("绑定方式：", "弱绑定")}
+              ${desc("编辑用户：", "编辑用户B（脱敏）")}
+              ${desc("最近编辑时间：", "2026-07-14 11:06:42")}
+              ${desc("所属App：", data.app)}
+              ${desc("产品代码：", data.unicode || "--")}
               ${desc("动态接入：", data.dynamicAccessSupported ? "支持" : "不支持", data.dynamicAccessSupported ? "success" : "")}
-              ${desc("产品图片：", "主图 / 列表图 / 原子化配网图")}
             </div>
           </div>
         </section>
@@ -1554,38 +1718,46 @@
     function renderDebug(data) {
       return `
         ${renderStepper("debug")}
+        <section class="has-anchor" id="bleInfoBlock">
+          <button class="note-anchor" type="button" data-note="step3-ble-info" aria-label="批注 3">3</button>
+          <div class="title-bar-real">
+            <h2>蓝牙信息</h2>
+          </div>
+          <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
+            <div class="description-col" style="border-right:0;padding:0;">
+              ${desc("蓝牙广播协议类型：", data.broadcastType)}
+              ${desc("蓝牙广播名称：", data.name)}
+            </div>
+          </div>
+        </section>
         <section class="has-anchor" id="debugBlock">
-          <button class="note-anchor" type="button" data-note="step3-debug" aria-label="批注 3">3</button>
+          <button class="note-anchor" type="button" data-note="step3-debug" aria-label="批注 4">4</button>
           <div class="title-bar-real">
             <h2>协议转换</h2>
           </div>
           <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
             <div class="description-col" style="border-right:0;padding:0;">
               ${desc("转换脚本：", "查看")}
-              ${desc("已上传：", "common.js")}
+              ${desc("当前状态：", "未配置脚本")}
             </div>
           </div>
         </section>
         <section class="table-wrap-real has-anchor" id="debugDeviceBlock">
-          <button class="note-anchor" type="button" data-note="step3-test-device" aria-label="批注 4">4</button>
+          <button class="note-anchor" type="button" data-note="step3-test-device" aria-label="批注 5">5</button>
           <div class="panel-title-row" style="margin-bottom:12px;">
-            <h2 class="panel-title">测试设备</h2>
+            <div><h2 class="panel-title">测试设备</h2><div class="panel-subtitle">已添加设备 0/99999</div></div>
             <button class="btn primary" type="button">添加测试设备</button>
           </div>
           <table class="real-table">
             <thead><tr><th>设备名称</th><th>状态</th><th>激活时间</th><th>最近上线时间</th><th>操作</th></tr></thead>
-            <tbody>
-              <tr><td>a9b24e9e****4dc2</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
-              <tr><td>4c5216b0****4275</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
-              <tr><td>e6cab208****4674</td><td>未激活</td><td>--</td><td>--</td><td><button class="btn link" type="button">设备证书</button></td></tr>
-            </tbody>
+            <tbody><tr><td colspan="5" style="text-align:center;color:var(--el-text-color-secondary);height:120px;">暂无数据</td></tr></tbody>
           </table>
-          <div class="pagination-real">共 3 条 1 10条/页</div>
+          <div class="pagination-real">共 0 条 1 10条/页</div>
         </section>
         <section class="table-wrap-real">
           <div class="panel-title-row" style="margin-bottom:12px;">
-            <div><h2 class="panel-title">测试固件</h2><div class="panel-subtitle">正式固件请前往设备管理 - 固件管理 & OTA 维护。</div></div>
-            <button class="btn primary" type="button">添加测试固件</button>
+            <div><h2 class="panel-title">测试固件</h2><div class="panel-subtitle">正式固件请前往【设备管理】-【固件管理】&【OTA】维护，此处的固件仅测试白名单用户可见</div></div>
+            <button class="btn primary" type="button" disabled>添加测试固件</button>
           </div>
           <table class="real-table">
             <thead><tr><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>上传时间</th><th>发布日志</th><th>操作</th></tr></thead>
@@ -1599,29 +1771,45 @@
     function renderGuide(data) {
       return `
         ${renderStepper("guide")}
-        <section class="has-anchor" id="guideBlock">
-          <button class="note-anchor" type="button" data-note="step4-qr" aria-label="批注 3">3</button>
+        <section class="has-anchor" id="networkSettingBlock">
+          <button class="note-anchor" type="button" data-note="step4-network-setting" aria-label="批注 3">3</button>
           <div class="title-bar-real">
-            <h2>配网引导</h2>
+            <h2>产品配网设置</h2>
+            <button class="btn primary" type="button">编辑</button>
+          </div>
+          <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
+            <div class="description-col" style="border-right:0;padding:0;">
+              ${desc("优先使用配网：", "单页面配网")}
+            </div>
+          </div>
+        </section>
+        <section class="has-anchor" id="guideBlock">
+          <button class="note-anchor" type="button" data-note="step4-qr" aria-label="批注 4">4</button>
+          <div class="title-bar-real">
+            <h2>蓝牙配网</h2>
           </div>
           <div class="description-wrap" style="grid-template-columns:minmax(0,1fr);">
             <div class="description-col" style="border-right:0;padding:0;">
               <div class="button-row" style="margin-bottom:14px;">
-                <button class="btn" type="button">蓝牙配网</button>
-                <button class="btn primary" type="button">蓝牙扫码配对</button>
+                <button class="btn primary" type="button">蓝牙配网</button>
                 <span style="flex:1 1 auto;"></span>
-                <button class="btn primary" type="button">新版入口</button>
-                <button class="btn" type="button">旧版入口</button>
+                <button class="btn" type="button">预览形态：单页面配网</button>
+                <button class="btn" type="button">多页面配网</button>
               </div>
-              ${desc("二维码前缀：", data.qrPrefixList.join("、"))}
               <div class="target-tab-wrap" style="margin-top:20px;border:1px solid var(--el-border-color-light);border-radius:var(--radius);overflow:hidden;">
                 <div style="display:flex;white-space:nowrap;overflow:hidden;background:#fff;">
                   ${["英文（默认）","法语","德语","西班牙语","意大利语","阿拉伯语","葡萄牙语","中文","繁体中文","越南语","印尼语","泰语","马来语","日语","俄语","菲律宾语"].map((lang, index) => `<div style="height:40px;padding:9px 16px;border-right:1px solid var(--el-border-color-light);color:${index === 0 ? 'var(--el-color-primary)' : 'var(--el-text-color-regular)'};">${lang}</div>`).join("")}
                 </div>
               </div>
-              <div class="empty-block" style="margin-top:24px;min-height:220px;">未配置</div>
-              <div class="button-row" style="justify-content:flex-end;margin-top:24px;">
-                <button class="btn" type="button">编辑</button>
+              <div class="panel" style="margin-top:18px;padding:16px;box-shadow:none;">
+                <div class="panel-title-row">
+                  <div><h3 class="panel-title">配网指引</h3><div class="panel-subtitle">1 / 步骤 1</div></div>
+                  <button class="btn primary" type="button">编辑配网引导</button>
+                </div>
+                <div class="field-grid" style="margin-top:14px;">
+                  ${kv("配网文案", "开始配网")}
+                  ${kv("配网引导图", "未上传")}
+                </div>
               </div>
             </div>
           </div>
@@ -1632,20 +1820,36 @@
     function renderFunction(data) {
       return `
         ${renderStepper("function")}
-        <section class="panel has-anchor" id="functionModelBlock">
+        <section class="table-wrap-real has-anchor" id="functionModelBlock">
           <button class="note-anchor" type="button" data-note="function-thing-model" aria-label="批注 2">2</button>
-          <div class="panel-title-row">
-            <div>
-              <h2 class="panel-title">功能设计</h2>
-              <div class="panel-subtitle">本期不在原型中展开完整物模型编辑器，只展示 ProductProfile 引用功能版本。</div>
-            </div>
-            <span class="tag success">版本1 - 已发布</span>
+          <div class="panel-title-row" style="margin-bottom:12px;">
+            <h2 class="panel-title">标准功能</h2>
+            <button class="btn primary" type="button" disabled>新增标准功能</button>
           </div>
-          <div class="field-grid">
-            ${kv("thingModelKey", data.dynamicAccessSupported ? data.thingModelKey : "未生成")}
-            ${kv("标准功能", "运行状态、电量、档位、软件版本等")}
-            ${kv("本期边界", "不维护完整 TSL 明细，不配置 ble_mappings 明细")}
+          <table class="real-table">
+            <thead><tr><th>功能类型</th><th>ID</th><th>名称</th><th>标识符</th><th>数据类型</th><th>数据定义</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>属性</td><td>FUNC-DEMO-ID</td><td>运行状态</td><td>runState</td><td>枚举(Enum)</td><td>0 - 停止；1 - 运行；2 - 充电；3 - 关机；5 - 吸乳结束</td><td>runState</td><td>--</td></tr>
+              <tr><td>属性</td><td>FUNC-DEMO-ID</td><td>电量</td><td>battery</td><td>整型(Int32)</td><td>范围: 0 ~ 100；步进: 1</td><td>吸奶器电池电量</td><td>--</td></tr>
+              <tr><td>属性</td><td>FUNC-DEMO-ID</td><td>档位</td><td>level</td><td>整型(Int32)</td><td>范围: 0 ~ 100；步进: 1</td><td>吸奶器运行档位</td><td>--</td></tr>
+              <tr><td>属性</td><td>FUNC-DEMO-ID</td><td>序列号</td><td>sn</td><td>字符(String)</td><td>不超过255个字符</td><td>吸奶器序列号</td><td>--</td></tr>
+              <tr><td>事件</td><td>FUNC-DEMO-ID</td><td>吸乳完成</td><td>pump_finish</td><td>消息</td><td>出参: --</td><td>--</td><td>--</td></tr>
+              <tr><td>事件</td><td>FUNC-DEMO-ID</td><td>低电量报警</td><td>low_battery_reminder</td><td>消息</td><td>出参: --</td><td>low_battery_reminder</td><td>--</td></tr>
+              <tr><td>方法</td><td>FUNC-DEMO-ID</td><td>88</td><td>ty888</td><td>--</td><td>调用方式：同步；入参: --；出参: --</td><td>--</td><td>--</td></tr>
+            </tbody>
+          </table>
+          <div class="pagination-real">共 7 条 1 10条/页</div>
+        </section>
+        <section class="table-wrap-real" style="margin-top:16px;">
+          <div class="panel-title-row" style="margin-bottom:12px;">
+            <h2 class="panel-title">自定义功能</h2>
+            <button class="btn primary" type="button" disabled>新增自定义功能</button>
           </div>
+          <table class="real-table">
+            <thead><tr><th>功能类型</th><th>ID</th><th>名称</th><th>标识符</th><th>数据类型</th><th>数据定义</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody><tr><td>事件</td><td>FUNC-DEMO-ID</td><td>溢奶提醒</td><td>spilled_milk_reminder</td><td>告警</td><td>出参: --</td><td>溢奶提醒</td><td>--</td></tr></tbody>
+          </table>
+          <div class="pagination-real">共 1 条 1 10条/页</div>
         </section>
       `;
     }
@@ -1654,18 +1858,15 @@
       return `
         ${renderStepper("advanced")}
         <section class="panel">
-          <div class="panel-title-row">
-            <div>
-              <h2 class="panel-title">高级配置</h2>
-              <div class="panel-subtitle">本期只验证 ProductProfile 动态接入字段，不改高级配置结构。</div>
-            </div>
-            <span class="tag info">不在本期范围</span>
-          </div>
-          <div class="empty-block">
-            <div>
-              <div class="panel-title" style="margin-bottom:6px;">高级配置保持现状</div>
-              <div>新手指导、条件配置、语言资源等能力不进入 ProductProfile 字段新增范围。</div>
-            </div>
+          <div class="panel-title-row"><h2 class="panel-title">高级配置</h2></div>
+          <div class="field-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            ${kv("新手指导", "未配置")}
+            ${kv("云倒计时", "未配置")}
+            ${kv("场景联动设置", "未配置")}
+            ${kv("官方模式", "已配置")}
+            ${kv("预设模式", "未配置")}
+            ${kv("耗材管理", "未配置")}
+            ${kv("音源管理", "查看当前产品已配置的音源信息和多语言配置完整度")}
           </div>
         </section>
       `;
@@ -1723,7 +1924,7 @@
     function gateItems(data) {
       if (data.gate === "pass") {
         return [
-          { title: "Identity Gate", copy: "productUnicode、productType、model、app 均可用。", state: "success", label: "通过" },
+          { title: "Identity Gate", copy: "unicode、productType、model、app 均可用。", state: "success", label: "通过" },
           { title: "Broadcast Gate", copy: "broadcastType 命中 APP 广播解析器。", state: "success", label: "通过" },
           { title: "Panel Gate", copy: "panelCode 命中已发布面板包和 fallback。", state: "success", label: "通过" },
           { title: "Auth Gate", copy: "认证方案采用 triplet，等待技术侧接口细化。", state: "warning", label: "需联调" }
@@ -1746,16 +1947,10 @@
     }
 
     function bindPageActions(data) {
+      const newVersionBtn = document.getElementById("newVersionBtn");
+      if (newVersionBtn) newVersionBtn.onclick = () => openModal("new-version");
       const shelfBtn = document.getElementById("shelfBtn");
-      if (shelfBtn) shelfBtn.onclick = () => {
-        if (data.dynamicAccessSupported) {
-          state.modalOpen = true;
-          state.activeNote = "confirm-modal";
-          render();
-          return;
-        }
-        showToast("动态接入未开启，产品继续走已有上架链路。");
-      };
+      if (shelfBtn) shelfBtn.onclick = () => openModal("down-shelf");
       const viewProfileBtn = document.getElementById("viewProfileBtn");
       if (viewProfileBtn) viewProfileBtn.onclick = () => {
         state.profileOpen = true;
@@ -1768,23 +1963,31 @@
       bindAnchors();
     }
 
+    function openModal(type) {
+      state.modalType = type;
+      state.modalOpen = true;
+      state.activeNote = "confirm-modal";
+      render();
+    }
+
     function openDrawer() {
       const data = getScenarioData();
       state.drawerOpen = true;
       state.drawerError = false;
       state.form = {
         dynamicAccessSupported: data.dynamicAccessSupported,
-        productUnicode: data.productUnicode,
-        productUnicodeEditable: data.productUnicodeEditable,
+        unicode: data.unicode,
+        unicodeEditable: data.unicodeEditable,
         productType: data.productType || baseProduct.productType,
         productTypeName: data.productTypeName,
         model: data.model,
+        runtimeModel: data.runtimeModel || data.model,
         app: data.app,
-        communicationType: data.communicationType,
-        provisionInteractionMode: data.provisionInteractionMode,
-        provisionRoute: data.provisionRoute
+        communicationMethod: data.communicationMethod,
+        interactionType: data.interactionType,
+        addFlowType: data.addFlowType
       };
-      state.activeNote = "drawer-dynamic";
+      state.activeNote = null;
       render();
     }
 
@@ -1802,75 +2005,134 @@
       if (!state.drawerOpen) return;
 
       const form = state.form;
-      const productUnicodeHelp = form.productUnicodeEditable
-        ? "请输入 6 位十六进制字符，例如 FFFFFF；系统展示或下发时可格式化为 0xFF FF FF。"
-        : "产品唯一编码已有值，不可编辑；如需变更 Identity 类字段，需先下架产品。";
+      const unicodeHelp = form.unicodeEditable
+        ? "请输入唯一编码；动态接入开启后为必填，需全局唯一。"
+        : "唯一编码已有值；动态接入开启后作为 App 命中 ProductProfile 的关键身份字段。";
+      const selectInput = (id, value, disabled = true) => `
+        <div class="drawer-select-real">
+          <input id="${id}" value="${value || ""}" ${disabled ? "disabled" : ""}>
+        </div>
+      `;
+      const textInput = (id, value, disabled = false, placeholder = "") => `
+        <input id="${id}" value="${value || ""}" placeholder="${placeholder}" ${disabled ? "disabled" : ""}>
+      `;
+      const formItem = (label, body, opts = {}) => `
+        <div class="drawer-form-item-real ${opts.full ? "full" : ""}">
+          <div class="drawer-form-label-real">${opts.required ? '<span class="drawer-required">*</span>' : ""}<span>${label}</span></div>
+          ${body}
+          ${opts.help ? `<div class="field-help">${opts.help}</div>` : ""}
+        </div>
+      `;
+      const radioLine = (items, active) => `
+        <div class="drawer-radio-line-real">
+          ${items.map(item => `<span class="drawer-radio-real ${item.value === active ? "active" : ""}"><span class="drawer-radio-dot-real"></span>${item.label}</span>`).join("")}
+        </div>
+      `;
+      const checkLine = (items) => `
+        <div class="drawer-check-line-real">
+          ${items.map(item => `<span class="drawer-check-real"><span class="drawer-check-box-real">✓</span>${item}</span>`).join("")}
+        </div>
+      `;
+
       document.getElementById("drawerBody").innerHTML = `
-        <section class="card-line has-anchor" id="drawerDynamicBlock">
-          <button class="note-anchor" type="button" data-note="drawer-dynamic" aria-label="批注 3">3</button>
-          <div class="field-head">
-            <div>
-              <div class="form-label required">动态接入</div>
-              <div class="field-help">新增字段，默认不支持；支持后 APP 才允许动态获取 ProductProfile。</div>
+        <div class="drawer-form-real">
+          <section class="drawer-section-real has-anchor" id="drawerIdentityBlock">
+            <button class="note-anchor" type="button" data-note="drawer-identity" aria-label="批注 3">3</button>
+            <h3 class="drawer-section-title-real">Identity / Access 身份与动态接入</h3>
+            <div class="drawer-form-grid-real">
+              ${formItem("动态接入", `
+                <div class="radio-row" style="margin-top:0;">
+                  <button class="radio-card ${form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="true">支持</button>
+                  <button class="radio-card ${!form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="false">不支持</button>
+                </div>
+              `, { required: true, help: "ProductProfile Identity 字段；新增字段，默认不支持；支持后 APP 才允许动态获取 ProductProfile。" })}
+              ${formItem("唯一编码", textInput("unicodeInput", form.unicode || "", !form.unicodeEditable, "例如 A10001"), { required: form.dynamicAccessSupported, help: unicodeHelp })}
+              ${formItem("产品型号", textInput("modelInput", form.model, true), { required: true, help: "Identity 字段；产品上架后不可修改，参与 panelCode 生成。" })}
+              ${formItem("显示型号", textInput("runtimeModelInput", form.runtimeModel || form.model, false, "默认与产品型号一致"), { required: true, help: "Identity 字段；新增 runtimeModel，默认与产品型号一致，可编辑为 App 运行时复用的已验证能力。" })}
+              ${formItem("产品分类", selectInput("productTypeInput", `${form.productTypeName} / ${form.productType}`), { required: true, help: "Identity 字段；当前样例 productType=1，productTypeName=Breast Pump；展示名不参与 panelCode 生成。" })}
+              ${formItem("所属App", textInput("appInput", form.app, true), { required: true, help: "{app} 沿用当前固定事实，不新增配置项。" })}
+              ${formItem("所属平台", textInput("platformInput", data.platform || "ROOT云", true), { required: true })}
+              ${formItem("产品ID", textInput("productIdInput", "PP-DEMO-000001", true), { required: true, help: "平台内部管理字段，不进入 ProductProfile。" })}
+              ${formItem("产品模板", selectInput("templateInput", "TPL-DEMO-BREAST-PUMP / 吸奶器模板"), { required: true, help: "现有产品详情字段，用于创建链路，不进入 ProductProfile 主字段。" })}
+              ${form.dynamicAccessSupported ? `<div class="drawer-form-item-real full"><div class="hint warning">Identity 字段在产品【已上架】状态时不可变更；产品详情变更后刷新 ProductProfile 草稿和配置版本。</div></div>` : ""}
             </div>
-          </div>
-          <div class="radio-row" style="margin-top:10px;">
-            <button class="radio-card ${form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="true">支持</button>
-            <button class="radio-card ${!form.dynamicAccessSupported ? "active" : ""}" type="button" data-dynamic-value="false">不支持</button>
-          </div>
-          ${form.dynamicAccessSupported ? `<div class="hint warning" style="margin-top:10px;">保存后刷新 ProductProfile 草稿、配置版本和 resolved view；产品上架前执行发布 / gate 校验。</div>` : ""}
-        </section>
+          </section>
 
-        <section class="card-line has-anchor" id="drawerIdentityBlock">
-          <button class="note-anchor" type="button" data-note="drawer-identity" aria-label="批注 4">4</button>
-          <div class="form-grid">
-            <div class="form-field">
-              <label for="productUnicodeInput">产品唯一编码</label>
-              <input id="productUnicodeInput" value="${form.productUnicode || ""}" placeholder="例如 FFFFFF" maxlength="6" ${form.productUnicodeEditable ? "" : "disabled"}>
-              <div class="field-help">${productUnicodeHelp}</div>
+          <section class="drawer-section-real has-anchor" id="drawerDisplayBlock">
+            <button class="note-anchor" type="button" data-note="drawer-display" aria-label="批注 4">4</button>
+            <h3 class="drawer-section-title-real">Display 展示信息</h3>
+            <div class="drawer-form-grid-real">
+              ${formItem("产品名称", textInput("nameInput", data.name, false, "请输入产品名称"), { required: true, help: "ProductProfile 字段 name；C 端展示产品名称。" })}
+              ${formItem("客服型号", textInput("customerModelInput", "", false, "请输入客服型号"), { help: "产品详情现有字段，不进入 ProductProfile 主字段。" })}
             </div>
-            <div class="form-field">
-              <label for="productTypeInput">产品分类</label>
-              <input id="productTypeInput" value="${form.productTypeName} / ${form.productType}" disabled>
-              <div class="field-help">展示名与稳定 key 需要同时可追溯；panelCode 使用稳定 key。Identity / Display / Discovery / Provision 类字段需下架后变更。</div>
+            <div class="drawer-upload-grid-real" style="margin-top:14px;">
+              <div class="drawer-upload-card-real">
+                <div class="drawer-upload-thumb-real">主图</div>
+                <strong>产品主图</strong>
+                <span class="field-help">推荐 108×108，png / jpg / jpeg，不大于 5M。</span>
+                <button class="btn" type="button">上传图片</button>
+              </div>
+              <div class="drawer-upload-card-real">
+                <div class="drawer-upload-thumb-real">列表</div>
+                <strong>产品列表图</strong>
+                <span class="field-help">推荐 108×108，png / jpg / jpeg，不大于 5M。</span>
+                <button class="btn" type="button">上传图片</button>
+              </div>
+              <div class="drawer-upload-card-real">
+                <div class="drawer-upload-thumb-real">配网</div>
+                <strong>原子化配网图</strong>
+                <span class="field-help">推荐 600×600，png / jpg / jpeg，不大于 5M。</span>
+                <button class="btn" type="button">上传图片</button>
+              </div>
             </div>
-            <div class="form-field">
-              <label for="modelInput">产品型号</label>
-              <input id="modelInput" value="${form.model}" disabled>
-              <div class="field-help">上架后不可修改，参与 panelCode 生成。</div>
-            </div>
-            <div class="form-field">
-              <label for="appInput">所属 App</label>
-              <input id="appInput" value="${form.app}" disabled>
-              <div class="field-help">{app} 沿用当前固定事实，不新增配置项。</div>
-            </div>
-          </div>
-        </section>
+            <div class="hint" style="margin-top:12px;">ProductProfile 的 productImage 默认使用当前系统“设备主图”；列表图、原子化配网图仍属于产品详情展示素材。</div>
+          </section>
 
-        <section class="card-line has-anchor" id="drawerGeneratedBlock">
-          <button class="note-anchor" type="button" data-note="drawer-generated" aria-label="批注 5">5</button>
-          <div class="panel-title-row">
-            <div>
-              <h3 class="panel-title">只读生成预览</h3>
-              <div class="panel-subtitle">用于保存前确认，不可手工编辑。</div>
+          <section class="drawer-section-real has-anchor" id="drawerDiscoveryBlock">
+            <button class="note-anchor" type="button" data-note="drawer-discovery" aria-label="批注 5">5</button>
+            <h3 class="drawer-section-title-real">Discovery 发现配置</h3>
+            <div class="drawer-form-grid-real">
+              ${formItem("通讯方式", textInput("communicationMethodInput", form.communicationMethod, true), { required: true, help: "Discovery 字段；产品创建后不可修改通讯方式；已上架不可变更。" })}
+              ${formItem("配网方式", checkLine(["蓝牙配网"]), { required: true, help: "现有字段，决定蓝牙相关发现 / 配网配置是否生效。" })}
+              ${formItem("蓝牙广播名称", textInput("peripheralNameListInput", data.peripheralNameList?.join(", ") || "W1 Lite", true), { required: true, help: "Discovery 字段 peripheralNameList；来源于设备调试页蓝牙信息。" })}
+              ${formItem("蓝牙广播协议类型", textInput("broadcastTypeInput", data.broadcastType, true), { required: true, help: "Discovery 字段 broadcastType；APP 技术侧基于它计算广播解析结果。" })}
+              ${formItem("二维码前缀", textInput("prefixQrCodeInput", data.qrPrefixList?.join(", ") || "", false, "当前 API 为 null"), { help: "Discovery 字段 prefixQrCode；支持扫码链路时使用。" })}
+              ${formItem("设备类型", textInput("deviceTypeInput", "直连设备", true), { required: true, help: "产品详情现有字段，不进入 ProductProfile 主字段。" })}
             </div>
-          </div>
-          <div class="field-grid">
-            ${kv("panelCode", form.dynamicAccessSupported ? `${form.app}.${form.productType}.${form.model}` : "未生成")}
-            ${kv("configVersion", form.dynamicAccessSupported ? "保存后更新为最新版本" : "不更新有效动态配置")}
-            ${kv("resolved", form.dynamicAccessSupported ? "保存后刷新" : "未生成")}
-            ${kv("变更前置", "Identity / Display / Discovery / Provision 类字段需产品下架后修改")}
-          </div>
-        </section>
+          </section>
 
-        <section class="card-line has-anchor" id="drawerSaveBlock">
-          <button class="note-anchor" type="button" data-note="drawer-save" aria-label="批注 6">6</button>
-          <div class="hint ${state.scenario === "confirm" && form.dynamicAccessSupported ? "warning" : ""}">
-            ${state.scenario === "confirm" && form.dynamicAccessSupported
-              ? "保存不会直接线上生效；产品上架前必须完成发布 / gate 校验。"
-              : "提交失败时保持抽屉打开；提交成功后关闭抽屉并刷新 ProductProfile 草稿。"}
-          </div>
-        </section>
+          <section class="drawer-section-real has-anchor" id="drawerProvisionBlock">
+            <button class="note-anchor" type="button" data-note="drawer-provision" aria-label="批注 6">6</button>
+            <h3 class="drawer-section-title-real">Provision 配网配置</h3>
+            <div class="drawer-form-grid-real">
+              ${formItem("原子化配网", radioLine([{ label: "支持", value: "yes" }, { label: "不支持", value: "no" }], "yes"), { required: true })}
+              ${formItem("配网交互方式", textInput("interactionTypeInput", "CONNECT_F0（配网过程仅需发送一个指令）", true), { required: true, help: "Provision 字段 interactionType；产品上架后不可修改。" })}
+              ${formItem("流程配网路由方式", textInput("addFlowTypeInput", form.addFlowType, true), { required: true, help: "Provision 字段 addFlowType；产品处于【已上架】状态时不可变更。" })}
+              ${formItem("动态配网最低支持版本", textInput("appVersionMinInput", data.minAppVersion || "", false, "例如 3.0.0"), { help: "Release 字段 appVersionMin；当前样例为空。" })}
+            </div>
+          </section>
+
+          <section class="drawer-section-real has-anchor" id="drawerReleaseBlock">
+            <button class="note-anchor" type="button" data-note="drawer-release" aria-label="批注 7">7</button>
+            <h3 class="drawer-section-title-real">Release / 业务治理</h3>
+            <div class="drawer-form-grid-real">
+              ${formItem("发布区域", selectInput("regionsInput", data.targetRegions || "北美、欧洲、亚太、中国"), { required: true, help: "Release 字段 regions，与上架范围联动。" })}
+              ${formItem("设备是否可以编组", radioLine([{ label: "支持", value: "yes" }, { label: "不支持", value: "no" }], "yes"), { required: true, help: "产品详情现有字段，不进入 ProductProfile 主字段。" })}
+              ${formItem("绑定类型", radioLine([{ label: "弱绑定", value: "weak" }, { label: "强绑定", value: "strong" }], "weak"), { required: true, help: "产品详情现有字段，不进入 ProductProfile 主字段。" })}
+              ${formItem("产品共享", radioLine([{ label: "开启", value: "on" }, { label: "关闭", value: "off" }], "on"), { required: true, help: "产品详情现有字段，不进入 ProductProfile 主字段。" })}
+            </div>
+          </section>
+
+          <section class="drawer-section-real has-anchor" id="drawerGeneratedBlock">
+            <button class="note-anchor" type="button" data-note="drawer-generated" aria-label="批注 8">8</button>
+            <h3 class="drawer-section-title-real">Panel / 系统生成预览</h3>
+            <div class="field-grid">
+              ${kv("panelCode", form.dynamicAccessSupported ? `${form.app}.${form.productType}.${form.model}` : "未生成")}
+              ${kv("configVersion", form.dynamicAccessSupported ? "产品详情变更后更新为最新版本" : "不更新有效动态配置")}
+              ${kv("变更前置", "Identity / Discovery / Provision 字段在产品【已上架】状态时不可变更")}
+            </div>
+          </section>
+        </div>
       `;
 
       document.querySelectorAll("[data-dynamic-value]").forEach(btn => {
@@ -1881,12 +2143,19 @@
         });
       });
 
-      const productUnicodeInput = document.getElementById("productUnicodeInput");
-      if (productUnicodeInput && state.form.productUnicodeEditable) {
-        productUnicodeInput.addEventListener("input", event => {
-          state.form.productUnicode = event.target.value.toUpperCase().replace(/[^0-9A-F]/g, "").slice(0, 6);
-          event.target.value = state.form.productUnicode;
+      const unicodeInput = document.getElementById("unicodeInput");
+      if (unicodeInput && state.form.unicodeEditable) {
+        unicodeInput.addEventListener("input", event => {
+          state.form.unicode = event.target.value.trim();
+          event.target.value = state.form.unicode;
           state.drawerError = false;
+        });
+      }
+
+      const runtimeModelInput = document.getElementById("runtimeModelInput");
+      if (runtimeModelInput) {
+        runtimeModelInput.addEventListener("input", event => {
+          state.form.runtimeModel = event.target.value.trim() || state.form.model;
         });
       }
 
@@ -1894,49 +2163,58 @@
     }
 
     function renderModal() {
-      document.getElementById("modalMask").classList.toggle("open", state.modalOpen);
+      const mask = document.getElementById("modalMask");
+      mask.classList.toggle("open", state.modalOpen);
+      if (!state.modalOpen) return;
+      const copy = {
+        "down-shelf": {
+          title: "下架确认",
+          body: "下架后会影响已经接入平台的设备，确认下架？",
+          confirm: "确定"
+        },
+        "new-version": {
+          title: "新建功能版本",
+          body: "新建版本后，可编辑、新增部分功能，是否确认新建版本？",
+          confirm: "确定"
+        },
+        gate: {
+          title: "上架前发布 / gate 校验",
+          body: "动态接入已开启。产品上架前必须完成发布 / gate 校验；存在阻断项时不得上架，也不允许 APP 动态消费 ProductProfile。",
+          confirm: "确认进入校验"
+        }
+      }[state.modalType] || {
+        title: "确认",
+        body: "请确认当前操作。",
+        confirm: "确定"
+      };
+      document.getElementById("confirmModalTitle").textContent = copy.title;
+      document.getElementById("confirmModalCopy").textContent = copy.body;
+      document.getElementById("modalConfirmBtn").textContent = copy.confirm;
     }
 
     function buildProductProfile(data) {
       return {
-        productUnicode: data.productUnicode || "",
+        unicode: data.unicode || "",
         model: data.model,
-        runtimeModel: data.model,
-        skuId: "SKU-PUMP-W1-001",
+        runtimeModel: data.runtimeModel || data.model,
         productType: data.productType,
         name: data.name,
         productImage: data.productImage,
         dynamicAccessSupported: data.dynamicAccessSupported,
-        communicationType: data.communicationType.toLowerCase(),
+        communicationMethod: data.communicationMethod.toLowerCase(),
         peripheralNameList: data.peripheralNameList,
-        qrPrefixList: data.qrPrefixList,
+        prefixQrCode: data.prefixQrCode,
         broadcastType: data.broadcastType,
-        provisionRoute: "root_ble_protocol_v1",
-        provisionInteractionMode: data.provisionInteractionMode,
+        addFlowType: 1,
+        interactionType: data.interactionType,
         thingModelKey: data.thingModelKey,
         panelImpType: data.panelImpType.toLowerCase(),
         panelCode: panelCodeOf(data),
         otaProfiles: null,
         hardwareVersions: ["HW_V1.0"],
         configVersion: data.configVersion,
-        minAppVersion: { ios: "3.0.0", android: "3.0.0" },
-        targetRegions: ["NA", "EU", "APAC", "CN"],
-        changePolicy: {
-          productStatusRequiredForIdentityDisplayDiscoveryProvision: "not_listed",
-          lockedGroupsWhenListed: ["Identity", "Display", "Discovery", "Provision"],
-          mutableWhenListed: ["thingModelKey", "panelImpType", "otaProfiles", "hardwareVersions", "minAppVersion", "targetRegions", "resolved"],
-          versionStrategy: "app_fetches_latest"
-        },
-        resolved: {
-          broadcastParser: "root_ble_parser_v1",
-          protocolFamily: "root_ble_protocol_v1",
-          provisionType: "ble_only",
-          authProfile: data.authProfile,
-          needAuth: true,
-          panelPackageVersion: data.panelPackageVersion,
-          minContainerVersion: { ios: "3.0.0", android: "3.0.0", rn: "1.8.0" },
-          fallbackPanelCode: "generic_device_fallback"
-        }
+        appVersionMin: "3.0.0",
+        regions: ["NA", "EU", "APAC", "CN"]
       };
     }
 
@@ -1964,7 +2242,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "product-profile-V300.json";
+      link.download = "product-profile-demo.json";
       link.click();
       URL.revokeObjectURL(url);
       showToast("ProductProfile 已导出");
@@ -1976,18 +2254,20 @@
     }
 
     function applyDrawerSave(message) {
-      const savedProductUnicode = state.form?.productUnicode;
+      const savedProductCode = state.form?.unicode;
       const savedDynamicAccessSupported = !!state.form?.dynamicAccessSupported;
-      if (savedProductUnicode && !/^[0-9A-F]{6}$/.test(savedProductUnicode)) {
-        showToast("产品唯一编码需为 6 位十六进制字符");
+      const savedRuntimeModel = state.form?.runtimeModel || state.form?.model;
+      if (savedDynamicAccessSupported && !savedProductCode) {
+        showToast("动态接入开启后，产品唯一编码不能为空");
         return;
       }
       state.drawerOpen = false;
       state.modalOpen = false;
       state.form = null;
-      state.savedProductUnicode = savedProductUnicode || "";
+      state.savedProductCode = savedProductCode || "";
       state.savedDynamicAccessSupported = savedDynamicAccessSupported;
-      state.scenario = savedProductUnicode ? "codeFilled" : "codeEmpty";
+      state.savedRuntimeModel = savedRuntimeModel;
+      state.scenario = savedProductCode ? "codeFilled" : "codeEmpty";
       showToast(message);
       render();
     }
@@ -2019,6 +2299,22 @@
       }
 
       if (state.modalOpen) {
+        if (state.modalType === "down-shelf") {
+          return [
+            note("confirm-modal", "下架确认", "下架产品 > 确认弹窗", `
+              <strong>事实：</strong>点击“下架产品”后出现确认弹窗，标题为“下架确认”。<br>
+              <strong>文案：</strong>下架后会影响已经接入平台的设备，确认下架？
+            `)
+          ];
+        }
+        if (state.modalType === "new-version") {
+          return [
+            note("confirm-modal", "新建功能版本", "新建版本 > 确认弹窗", `
+              <strong>事实：</strong>点击“新建版本”后出现确认弹窗，标题为“新建功能版本”。<br>
+              <strong>文案：</strong>新建版本后，可编辑、新增部分功能，是否确认新建版本？
+            `)
+          ];
+        }
         return [
           note("confirm-modal", "上架前 gate 校验", "上架产品 > 发布 / gate 校验弹窗", `
             <strong>规则：</strong>动态接入开启后，产品上架前必须执行发布 / gate 校验。<br>
@@ -2029,21 +2325,28 @@
 
       if (state.drawerOpen) {
         return [
-          note("drawer-dynamic", "新增字段：动态接入", "编辑产品信息抽屉 > 动态接入", `
-            <strong>字段：</strong>新增用户可编辑字段 <code>dynamicAccessSupported</code>，取值为“支持 / 不支持”。<br>
-            <strong>规则：</strong>支持后 APP 才允许按产品身份动态获取 ProductProfile；默认不支持。
+          note("drawer-identity", "Identity / Access", "编辑产品信息抽屉 > Identity / Access", `
+            <strong>字段：</strong><code>uniCode</code>、<code>model</code>、<code>runtimeModel</code>、<code>productType</code>、<code>dynamicAccessSupported</code> 按 ProductProfile 身份层聚合。<br>
+            <strong>规则：</strong>Identity 字段在产品【已上架】状态时不可变更。
           `),
-          note("drawer-identity", "身份字段约束", "编辑产品信息抽屉 > 产品唯一编码 / 产品分类 / 产品型号 / 所属 App", `
-            <strong>productUnicode：</strong>用于固件产品 code 与平台 <code>model</code> 的唯一映射，输入 6 位十六进制字符，例如 <code>FFFFFF</code>。<br>
-            <strong>边界：</strong>现有 <code>productCode</code> 已用于生产端，不进入 ProductProfile 身份字段。Identity / Display / Discovery / Provision 类字段需产品下架后变更。
+          note("drawer-display", "Display", "编辑产品信息抽屉 > Display", `
+            <strong>字段：</strong><code>name</code>、<code>productImage</code> 归入展示层。<br>
+            <strong>事实：</strong>抽屉包含产品主图、产品列表图、原子化配网图三个上传入口；ProductProfile 的 <code>productImage</code> 默认使用当前系统“设备主图”。
           `),
-          note("drawer-generated", "只读生成预览", "编辑产品信息抽屉 > 只读生成预览", `
-            <strong>说明：</strong><code>panelCode</code>、<code>configVersion</code>、<code>resolved</code> 由后台生成或派生。<br>
+          note("drawer-discovery", "Discovery", "编辑产品信息抽屉 > Discovery", `
+            <strong>字段：</strong><code>communicationMethod</code>、<code>peripheralNameList</code>、<code>prefixQrCode</code>、<code>broadcastType</code> 归入发现配置。<br>
+            <strong>规则：</strong>Discovery 字段在产品【已上架】状态时不可变更。
+          `),
+          note("drawer-provision", "Provision", "编辑产品信息抽屉 > Provision", `
+            <strong>字段：</strong><code>addFlowType</code>、<code>interactionType</code> 归入配网配置。<br>
+            <strong>规则：</strong>Provision 字段在产品【已上架】状态时不可变更。
+          `),
+          note("drawer-release", "Release / 业务治理", "编辑产品信息抽屉 > Release / 业务治理", `
+            <strong>说明：</strong><code>regions</code> 归入发布字段；编组、绑定、共享等保持为产品详情业务治理字段，不进入 ProductProfile 主字段。
+          `),
+          note("drawer-generated", "Panel / 系统生成预览", "编辑产品信息抽屉 > Panel / 系统生成预览", `
+            <strong>说明：</strong><code>panelCode</code>、<code>configVersion</code> 由平台生成或校验；APP 技术侧自行计算运行时结果。<br>
             <strong>版本：</strong><code>configVersion</code> 只代表当前最新有效配置；APP 持续向平台获取最新版本，不依赖历史快照。
-          `),
-          note("drawer-save", "保存与上架前 gate", "编辑产品信息抽屉 > 保存提示", `
-            <strong>保存：</strong>开启动态接入后，保存触发 ProductProfile 草稿刷新、版本更新和 resolved 派生。<br>
-            <strong>上架：</strong>发布 / gate 校验在产品上架前执行，存在阻断项时不得上架。
           `)
         ];
       }
@@ -2056,7 +2359,7 @@
           `),
           note("step2-panel", "面板实现类型", "产品详情 step=2 > 扩展程序配置", `
             <strong>事实：</strong>API 已有 <code>panelImpType</code>，页面位置在产品详情 step=2。<br>
-            <strong>用途：</strong>进入 ProductProfile 后用于 Panel Gate 和 resolved 派生，不生成 <code>panelCode</code>。
+            <strong>用途：</strong>进入 ProductProfile 后用于 Panel Gate 和 APP 技术侧结果计算，不生成 <code>panelCode</code>。
           `)
         ];
       }
@@ -2066,6 +2369,10 @@
           note("profile-entry", "查看入口", "产品详情顶部 > 查看 ProductProfile", `
             <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
             <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
+          `),
+          note("step3-ble-info", "蓝牙信息", "产品详情 step=3 > 蓝牙信息", `
+            <strong>事实：</strong>设备调试页展示蓝牙广播协议类型和蓝牙广播名称。<br>
+            <strong>当前值：</strong>W1 Lite 的蓝牙广播协议类型为“吸奶器协议”，蓝牙广播名称为“W1 Lite”。
           `),
           note("step3-debug", "设备调试保持现状", "产品详情 step=3 > 设备调试", `
             <strong>事实：</strong>step=3 当前承接协议转换、测试设备、测试固件等调试能力。<br>
@@ -2084,9 +2391,13 @@
             <strong>说明：</strong>产品详情顶部提供查看入口，可在当前 step 保存后查看最新 ProductProfile。<br>
             <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
           `),
-          note("step4-qr", "二维码前缀", "产品详情 step=4 > 配网引导", `
-            <strong>事实：</strong>API 已有 <code>prefixQrCode</code>，页面位置在产品详情 step=4。<br>
-            <strong>规则：</strong>二维码前缀用于扫码发现 / 扫码配网识别产品，不放入 step=3 设备调试页。
+          note("step4-network-setting", "产品配网设置", "产品详情 step=4 > 产品配网设置", `
+            <strong>事实：</strong>配网引导页顶部展示产品配网设置，当前优先使用配网为“单页面配网”。<br>
+            <strong>操作：</strong>页面提供“编辑”入口。
+          `),
+          note("step4-qr", "配网指引", "产品详情 step=4 > 蓝牙配网", `
+            <strong>事实：</strong>W1 Lite 当前蓝牙配网展示语言标签、预览形态和配网指引。<br>
+            <strong>当前值：</strong>配网指引为步骤 1，配网文案为“开始配网”。
           `)
         ];
       }
@@ -2119,8 +2430,8 @@
           <strong>边界：</strong>查看入口只读，不是 ProductProfile 编辑入口。
         `),
         note("base-layout", "字段口径校准", "产品详情 > 产品信息", `
-          <strong>productType：</strong>产品分类展示名只用于展示，ProductProfile 需要稳定 <code>productType</code> key。<br>
-          <strong>productUnicode：</strong>用于固件产品 code 与平台 <code>model</code> 的唯一映射；6 位十六进制格式在保存和上架前 gate 中校验。
+          <strong>productType：</strong>产品分类展示名只用于展示，ProductProfile 使用现有字段 <code>productType</code>，当前样例值为 <code>1</code>。<br>
+          <strong>unicode：</strong>用于固件 / 平台识别产品的代码与平台 <code>model</code> 的唯一映射；6 位十六进制格式在保存和上架前 gate 中校验。
         `),
         note("dynamic-field", "新增字段：动态接入", "产品详情 > 产品信息", `
           <strong>字段：</strong>产品详情新增“动态接入：支持 / 不支持”。<br>
@@ -2135,10 +2446,15 @@
 
     function renderAnnotations() {
       const notes = getNotes();
+      const modalScope = {
+        "down-shelf": "下架确认",
+        "new-version": "新建功能版本",
+        gate: "上架前发布 / gate 校验"
+      }[state.modalType] || "确认弹窗";
       document.getElementById("annotationScope").textContent = state.profileOpen
         ? "查看 ProductProfile"
         : state.modalOpen
-          ? "上架前发布 / gate 校验"
+          ? modalScope
           : state.drawerOpen
             ? "编辑产品信息抽屉"
             : `产品详情 / ${tabs.find(item => item.id === state.tab).label}`;
@@ -2198,13 +2514,19 @@
     document.getElementById("saveDrawerBtn").onclick = saveDrawer;
     document.getElementById("modalCancelBtn").onclick = () => {
       state.modalOpen = false;
-      state.activeNote = "drawer-save";
+      state.activeNote = null;
       render();
     };
     document.getElementById("modalConfirmBtn").onclick = () => {
       state.modalOpen = false;
       state.activeNote = null;
-      showToast("已进入上架前发布 / gate 校验");
+      if (state.modalType === "down-shelf") {
+        showToast("原型不执行真实下架操作");
+      } else if (state.modalType === "new-version") {
+        showToast("原型不执行真实新建版本操作");
+      } else {
+        showToast("已进入上架前发布 / gate 校验");
+      }
       render();
     };
     document.getElementById("closeProfileBtn").onclick = () => {
