@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>固件多 MCU 通道号 - 可交互原型</title>
+<style>
+:root{
+  --el-color-primary:#4372ff;--el-color-primary-light-9:#ecf5ff;--el-color-primary-light-7:#e0ecff;
+  --el-color-success:#67c23a;--el-color-warning:#e6a23c;--el-color-danger:#f56c6c;--el-color-info:#909399;
+  --app-aside-bg-color:#001529;--app-bg-color:#f9f9f9;--el-bg-color:#ffffff;
+  --el-text-color-primary:#303133;--el-text-color-regular:#606266;--el-text-color-secondary:#909399;--el-text-color-placeholder:#a8abb2;
+  --el-border-color:#dcdfe6;--el-border-color-light:#e4e7ed;--el-border-color-lighter:#ebeef5;
+  --gap-8:8px;--gap-12:12px;--gap-16:16px;--gap-24:24px;--radius:4px;
+  --aside-width:208px;--header-height:54px;--annotation-width:380px;
+  --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;min-height:100%;background:var(--app-bg-color);color:var(--el-text-color-primary);font-family:var(--sans);font-size:14px;line-height:1.5;}
+button,input,select,textarea{font:inherit;cursor:pointer;}
+.shell{display:grid;grid-template-columns:minmax(0,1fr) var(--annotation-width);min-height:100vh;}
+.prototype-pane{background:var(--app-bg-color);overflow:auto;}
+.annotation-pane{background:var(--el-bg-color);border-left:1px solid var(--el-border-color);overflow:auto;position:sticky;top:0;max-height:100vh;}
+.app{min-height:100vh;display:grid;grid-template-columns:var(--aside-width) minmax(0,1fr);}
+.aside{background:var(--app-aside-bg-color);color:rgba(255,255,255,.78);min-height:100vh;position:sticky;top:0;align-self:start;display:flex;flex-direction:column;}
+.aside-logo{padding:0 16px;height:var(--header-height);display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.aside-logo span{font-size:16px;font-weight:600;color:#fff;}
+.aside-menu{flex:1;padding:8px 0;}
+.aside-menu-item{padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;font-size:14px;color:rgba(255,255,255,.75);cursor:pointer;border-radius:0;}
+.aside-menu-item:hover{background:rgba(255,255,255,.06);}
+.aside-menu-item.active{background:var(--el-color-primary);color:#fff;}
+.aside-menu-group{padding:8px 20px 4px;font-size:12px;color:rgba(255,255,255,.35);font-weight:600;}
+.main-area{display:flex;flex-direction:column;min-width:0;}
+.nav-header{height:var(--header-height);background:var(--el-bg-color);border-bottom:1px solid var(--el-border-color-light);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:10;}
+.breadcrumb{font-size:12px;line-height:22px;color:var(--el-text-color-regular);display:flex;gap:4px;align-items:center;}
+.breadcrumb .sep{color:var(--el-text-color-placeholder);}
+.breadcrumb .current{color:var(--el-text-color-primary);font-weight:500;}
+.page-container{padding:var(--gap-24);min-width:0;}
+.screen{width:1440px;margin:0 auto;}
+.page-tabs{display:flex;gap:0;border-bottom:2px solid var(--el-border-color-light);margin-bottom:var(--gap-16);}
+.page-tab{padding:8px 20px;font-size:14px;font-weight:500;color:var(--el-text-color-regular);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.page-tab.active{color:var(--el-color-primary);border-bottom-color:var(--el-color-primary);}
+.filter-bar{display:flex;gap:var(--gap-12);align-items:center;margin-bottom:var(--gap-16);flex-wrap:wrap;}
+.filter-item{display:flex;align-items:center;gap:6px;}
+.filter-label{font-size:14px;color:var(--el-text-color-regular);white-space:nowrap;}
+.filter-input,.filter-select{height:32px;width:200px;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 10px;font-size:14px;background:var(--el-bg-color);color:var(--el-text-color-primary);}
+.btn{height:32px;padding:0 16px;border:1px solid var(--el-border-color);border-radius:var(--radius);background:var(--el-bg-color);color:var(--el-text-color-regular);font-size:14px;display:inline-flex;align-items:center;gap:4px;}
+.btn-primary{background:var(--el-color-primary);border-color:var(--el-color-primary);color:#fff;}
+.btn-primary:hover{background:#2b6bd9;}
+.btn-text{border:none;background:none;color:var(--el-color-primary);padding:0 4px;height:auto;font-size:14px;}
+.btn-text.danger{color:var(--el-color-danger);}
+.btn-text.warning{color:var(--el-color-warning);}
+.data-table{width:100%;border-collapse:collapse;background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);overflow:hidden;}
+.data-table th{background:#fafafa;color:var(--el-text-color-secondary);font-size:14px;font-weight:600;padding:10px 12px;text-align:left;border-bottom:1px solid var(--el-border-color-lighter);white-space:nowrap;}
+.data-table td{color:var(--el-text-color-regular);font-size:14px;padding:10px 12px;border-bottom:1px solid var(--el-border-color-lighter);}
+.data-table tr:hover td{background:#f5f7fa;}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--radius);font-size:12px;font-weight:400;}
+.tag-success{background:#f0f9eb;color:var(--el-color-success);border:1px solid #e1f3d8;}
+.tag-warning{background:#fdf6ec;color:var(--el-color-warning);border:1px solid #faecd8;}
+.tag-danger{background:#fef0f0;color:var(--el-color-danger);border:1px solid #fde2e2;}
+.tag-info{background:#f4f4f5;color:var(--el-color-info);border:1px solid #e9e9eb;}
+.channel-null{color:var(--el-text-color-placeholder);}
+.channel-value{color:var(--el-text-color-primary);font-weight:500;}
+.pagination{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:var(--gap-16);font-size:14px;color:var(--el-text-color-regular);}
+.pagination select{height:32px;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 8px;}
+.form-page{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-24);}
+.form-page-title{font-size:16px;font-weight:500;margin:0 0 var(--gap-24);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-16) var(--gap-24);}
+.form-field{display:flex;flex-direction:column;gap:6px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-size:14px;color:var(--el-text-color-regular);font-weight:500;}
+.form-field label .required{color:var(--el-color-danger);}
+.form-input,.form-select,.form-textarea{height:32px;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 10px;font-size:14px;color:var(--el-text-color-primary);background:var(--el-bg-color);}
+.form-input:read-only{background:#f5f7fa;color:var(--el-text-color-placeholder);}
+.form-textarea{height:52px;padding:5px 11px;resize:vertical;}
+.form-help{font-size:12px;color:var(--el-text-color-secondary);}
+.form-error{font-size:12px;color:var(--el-color-danger);display:none;}
+.form-error.show{display:block;}
+.form-footer{display:flex;justify-content:flex-end;gap:var(--gap-12);margin-top:var(--gap-24);padding-top:var(--gap-16);border-top:1px solid var(--el-border-color-lighter);}
+.upload-area{border:1px dashed var(--el-border-color);border-radius:var(--radius);padding:20px;text-align:center;color:var(--el-text-color-secondary);font-size:14px;cursor:pointer;}
+.upload-area:hover{border-color:var(--el-color-primary);color:var(--el-color-primary);}
+.fail-closed-demo{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-24);}
+.fail-closed-demo h3{margin:0 0 var(--gap-16);font-size:16px;}
+.scenario-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--gap-16);}
+.scenario-card{border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-16);background:#fafbfc;}
+.scenario-card h4{margin:0 0 8px;font-size:14px;color:var(--el-text-color-primary);}
+.scenario-card .desc{font-size:13px;color:var(--el-text-color-secondary);line-height:1.6;margin-bottom:8px;}
+.scenario-card .result{font-size:13px;}
+.pane-header{position:sticky;top:0;z-index:2;padding:16px;background:var(--el-bg-color);border-bottom:1px solid var(--el-border-color-light);}
+.pane-title{margin:0;font-size:14px;font-weight:700;}
+.pane-subtitle{font-size:12px;color:var(--el-text-color-secondary);margin-top:4px;}
+.doc{padding:16px;}
+.note-stack{display:grid;gap:10px;}
+.note-card{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:12px;border:1px solid var(--el-border-color-light);border-radius:8px;background:var(--el-bg-color);}
+.note-card.highlight{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9);}
+.note-number,.note-anchor{display:inline-grid;width:22px;height:22px;place-items:center;border-radius:999px;background:#facc15;color:#713f12;font-size:12px;font-weight:700;flex-shrink:0;}
+.note-anchor{position:absolute;}
+.note-title{margin:0 0 4px;font-size:13px;font-weight:700;}
+.note-body{font-size:13px;color:var(--el-text-color-regular);line-height:1.6;}
+.note-body ul{margin:4px 0 0;padding-left:16px;}
+.note-body li{margin-bottom:2px;}
+.note-body .field{font-size:12px;color:var(--el-text-color-secondary);margin-top:4px;}
+.note-body .label{color:var(--el-text-color-primary);font-weight:500;}
+.anchor-wrapper{position:relative;}
+.anchor-wrapper .note-anchor{position:absolute;top:-10px;right:-10px;z-index:5;}
+.sub-tabs{display:flex;gap:0;border-bottom:1px solid var(--el-border-color-light);margin-bottom:var(--gap-16);}
+.sub-tab{padding:6px 16px;font-size:13px;color:var(--el-text-color-regular);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.sub-tab.active{color:var(--el-color-primary);border-bottom-color:var(--el-color-primary);}
+.detail-header{display:flex;align-items:center;gap:var(--gap-12);margin-bottom:var(--gap-16);}
+.detail-header .product-name{font-size:16px;font-weight:500;}
+.detail-header .product-tag{font-size:12px;}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-12);margin-bottom:var(--gap-24);}
+.info-card{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-12);}
+.info-card .label{font-size:12px;color:var(--el-text-color-secondary);margin-bottom:4px;}
+.info-card .value{font-size:14px;color:var(--el-text-color-primary);font-weight:500;}
+.toast{position:fixed;top:20px;right:20px;z-index:100;padding:12px 20px;border-radius:var(--radius);font-size:14px;box-shadow:0 0 12px rgba(0,0,0,.12);display:none;}
+.toast.show{display:block;}
+.toast-success{background:#f0f9eb;color:var(--el-color-success);border:1px solid #e1f3d8;}
+.toast-error{background:#fef0f0;color:var(--el-color-danger);border:1px solid #fde2e2;}
+@media(max-width:900px){.shell{grid-template-columns:1fr;}.annotation-pane{max-height:40vh;border-left:none;border-top:1px solid var(--el-border-color);}.screen{width:100%;}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <main class="prototype-pane" aria-label="交互式 Web 原型">
+    <div class="app">
+      <aside class="aside">
+        <div class="aside-logo"><span>IoT Admin</span></div>
+        <nav class="aside-menu">
+          <div class="aside-menu-group">设备管理</div>
+          <div class="aside-menu-item" data-page="firmware-list">固件管理</div>
+          <div class="aside-menu-item" data-page="create-firmware" style="padding-left:36px;">└ 创建固件</div>
+          <div class="aside-menu-item" data-page="ota-list">OTA</div>
+          <div class="aside-menu-group">智能产品</div>
+          <div class="aside-menu-item" data-page="test-firmware">产品详情 > 设备调试</div>
+          <div class="aside-menu-group">更多</div>
+          <div class="aside-menu-item" data-page="fail-closed">fail-closed 演示</div>
+        </nav>
+      </aside>
+      <div class="main-area">
+        <header class="nav-header">
+          <div class="breadcrumb" id="breadcrumb"></div>
+        </header>
+        <div class="page-container">
+          <div class="screen" id="screen"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <aside class="annotation-pane" aria-label="原型批注">
+    <div class="pane-header">
+      <h2 class="pane-title">原型批注</h2>
+      <div class="pane-subtitle" id="pane-subtitle"></div>
+    </div>
+    <article class="doc" id="doc"></article>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// --- Page definitions ---
+const pages = {
+  'firmware-list': {
+    title: '固件管理', breadcrumb: ['设备管理','固件管理'],
+    render: renderFirmwareList, notes: firmwareListNotes
+  },
+  'create-firmware': {
+    title: '创建固件', breadcrumb: ['设备管理','固件管理','创建固件'],
+    render: renderCreateFirmware, notes: createFirmwareNotes
+  },
+  'ota-list': {
+    title: 'OTA 任务列表', breadcrumb: ['设备管理','OTA'],
+    render: renderOtaList, notes: otaListNotes
+  },
+  'test-firmware': {
+    title: '设备调试 > 测试固件', breadcrumb: ['智能产品','产品详情','设备调试'],
+    render: renderTestFirmware, notes: testFirmwareNotes
+  },
+  'fail-closed': {
+    title: 'fail-closed 演示', breadcrumb: ['设备管理','OTA','fail-closed 演示'],
+    render: renderFailClosed, notes: failClosedNotes
+  }
+};
+let activePage = 'firmware-list';
+
+// --- Sample data ---
+const firmwareData = [
+  {name:'W1Lite_MCU1_v1.2',type:'模组固件',pkgCount:1,version:'1.2.0',hw:'V1',fv:'版本1',channel:1,status:'已发布',time:'2026-07-15 10:30',remark:'MCU1 模组固件'},
+  {name:'W1Lite_MCU2_v1.0',type:'MCU固件',pkgCount:1,version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'已发布',time:'2026-07-15 10:35',remark:'MCU2 MCU固件'},
+  {name:'W1Lite_Base_v1.5',type:'模组固件',pkgCount:1,version:'1.5.0',hw:'V1',fv:'版本1',channel:null,status:'已发布',time:'2026-06-20 14:00',remark:'历史固件，无通道'},
+  {name:'W1Lite_MCU1_v1.3',type:'模组固件',pkgCount:1,version:'1.3.0',hw:'V1',fv:'版本1',channel:1,status:'待发布',time:'2026-07-21 09:00',remark:'MCU1 升级版本'},
+];
+const otaData = [
+  {name:'W1Lite MCU1 升级',fwName:'W1Lite_MCU1_v1.2',type:'模组固件',version:'1.2.0',hw:'V1',fv:'版本1',channel:1,status:'进行中',publish:'灰度发布',upgrade:'蓝牙升级',region:'北美',publishTime:'2026-07-16',createTime:'2026-07-15'},
+  {name:'W1Lite MCU2 升级',fwName:'W1Lite_MCU2_v1.0',type:'MCU固件',version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'终止',publish:'全量发布',upgrade:'蓝牙升级',region:'亚太',publishTime:'2026-07-16',createTime:'2026-07-15'},
+  {name:'W1Lite 基线升级',fwName:'W1Lite_Base_v1.5',type:'模组固件',version:'1.5.0',hw:'V1',fv:'版本1',channel:null,status:'已完成',publish:'全量发布',upgrade:'蓝牙升级',region:'欧洲',publishTime:'2026-06-21',createTime:'2026-06-20'},
+];
+const testFirmwareData = [
+  {name:'W1Lite_MCU1_v1.2',type:'模组固件',version:'1.2.0',hw:'V1',fv:'版本1',channel:1,time:'2026-07-15',log:'MCU1 测试通过'},
+  {name:'W1Lite_MCU2_v1.0',type:'MCU固件',version:'1.0.0',hw:'V1',fv:'版本1',channel:2,time:'2026-07-15',log:'MCU2 测试通过'},
+  {name:'W1Lite_Base_v1.5',type:'模组固件',version:'1.5.0',hw:'V1',fv:'版本1',channel:null,time:'2026-06-20',log:'基线测试通过'},
+];
+
+// --- Render functions ---
+function renderFirmwareList(){
+  return `
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="switchPage('firmware-list')">固件列表</button>
+    <button class="page-tab" onclick="switchPage('create-firmware')">创建固件</button>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">1</span>
+    <div class="filter-bar">
+      <div class="filter-item"><span class="filter-label">固件名称</span><input class="filter-input" placeholder="请输入固件名称"></div>
+      <div class="filter-item"><span class="filter-label">固件类型</span><select class="filter-select"><option value="">全部</option><option>模组固件</option><option>MCU固件</option></select></div>
+      <div class="filter-item"><span class="filter-label">功能版本</span><select class="filter-select"><option value="">全部</option><option>版本1</option></select></div>
+      <button class="btn btn-primary">查询</button>
+      <button class="btn">重置</button>
+      <button class="btn btn-primary" onclick="switchPage('create-firmware')">创建固件</button>
+    </div>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">2</span>
+    <table class="data-table">
+      <thead><tr>
+        <th>固件名称</th><th>固件类型</th><th>固件包数量</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th>
+        <th>通道号</th><th>状态</th><th>创建时间</th><th>备注</th><th>操作</th>
+      </tr></thead>
+      <tbody>
+        ${firmwareData.map(f=>`<tr>
+          <td>${f.name}</td><td>${f.type}</td><td>${f.pkgCount}</td><td>${f.version}</td><td>${f.hw}</td><td>${f.fv}</td>
+          <td>${f.channel!==null?`<span class="channel-value">${f.channel}</span>`:`<span class="channel-null">-</span>`}</td>
+          <td><span class="tag ${f.status==='已发布'?'tag-success':'tag-warning'}">${f.status}</span></td>
+          <td>${f.time}</td><td>${f.remark}</td>
+          <td><button class="btn-text">查看</button><button class="btn-text">编辑</button><button class="btn-text danger">删除</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">共 ${firmwareData.length} 条 <select><option>10条/页</option></select> <button class="btn">上一页</button><button class="btn">下一页</button></div>
+  `;
+}
+
+function renderCreateFirmware(){
+  return `
+  <div class="page-tabs">
+    <button class="page-tab" onclick="switchPage('firmware-list')">固件列表</button>
+    <button class="page-tab active">创建固件</button>
+  </div>
+  <div class="form-page">
+    <h3 class="form-page-title">创建固件</h3>
+    <div class="form-grid">
+      <div class="form-field anchor-wrapper">
+        <span class="note-anchor">3</span>
+        <label>产品</label>
+        <input class="form-input" value="W1 Lite (2079096534792245250)" readonly>
+        <span class="form-help">产品在固件列表页已通过产品下拉确定，进入创建页时带入，不可修改。</span>
+      </div>
+      <div class="form-field">
+        <label>功能版本 <span class="required">*</span></label>
+        <select class="form-select"><option>版本1</option></select>
+      </div>
+      <div class="form-field">
+        <label>固件类型 <span class="required">*</span></label>
+        <select class="form-select"><option value="">请选择</option><option>模组固件</option><option>MCU固件</option></select>
+      </div>
+      <div class="form-field full anchor-wrapper">
+        <span class="note-anchor">4</span>
+        <label>上传固件 <span class="required">*</span></label>
+        <div class="upload-area" id="upload-area" onclick="simulateUpload()">
+          <div id="upload-placeholder">
+            <div style="font-size:14px;margin-bottom:8px;">点击或拖拽文件上传</div>
+            <div style="text-align:left;font-size:12px;line-height:1.8;color:var(--el-text-color-secondary);max-width:560px;margin:0 auto;">
+              <div>支持格式：.ufw、.zip、.bin</div>
+              <div>文件名格式：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期].ufw</div>
+              <div>示例：Lute_M9_3.08_10_aabb_20240401.ufw</div>
+              <div>版本号规则：可为数字或数字加点组合，如 21、2.21、1.0.23</div>
+            </div>
+          </div>
+          <div id="upload-file" style="display:none;">
+            <span class="tag tag-success">已上传</span>
+            <span style="margin-left:8px;font-size:13px;" id="upload-filename"></span>
+          </div>
+        </div>
+      </div>
+      <div class="form-field anchor-wrapper">
+        <span class="note-anchor">5</span>
+        <label>固件名称 <span class="required">*</span></label>
+        <input class="form-input" id="fw-name" placeholder="上传固件后自动解析" readonly>
+        <span class="form-help">由固件文件名自动解析，不可手动修改。</span>
+      </div>
+      <div class="form-field">
+        <label>固件版本 <span class="required">*</span></label>
+        <input class="form-input" id="fw-version" placeholder="上传固件后自动解析" readonly>
+        <span class="form-help">由固件文件名自动解析。版本号可为数字或数字加点组合，如 21、2.21、1.0.23。</span>
+      </div>
+      <div class="form-field">
+        <label>硬件版本 <span class="required">*</span></label>
+        <input class="form-input" id="fw-hw" placeholder="上传固件后自动解析" readonly>
+        <span class="form-help">由固件文件名自动解析，不可手动修改。</span>
+      </div>
+      <div class="form-field anchor-wrapper">
+        <span class="note-anchor">6</span>
+        <label>通道号</label>
+        <input class="form-input" id="channel-input" type="number" min="1" step="1" placeholder="请输入正整数，留空表示无通道" oninput="validateChannel()">
+        <span class="form-help">可选字段。留空时存为 NULL，表示无显式通道的固件。非空时只接受正整数。</span>
+        <span class="form-error" id="channel-error">请输入正整数或留空</span>
+      </div>
+      <div class="form-field full">
+        <label>备注</label>
+        <textarea class="form-textarea" placeholder="请输入备注信息"></textarea>
+      </div>
+    </div>
+    <div class="anchor-wrapper" style="margin-top:16px">
+      <span class="note-anchor">7</span>
+      <div class="form-error" id="conflict-error" style="padding:8px 12px;background:#fef0f0;border:1px solid #fde2e2;border-radius:4px;font-size:13px;display:none;">
+        同一产品下已存在固件类型、硬件版本、固件版本、通道号完全一致的固件记录
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn" onclick="switchPage('firmware-list')">取消</button>
+      <button class="btn btn-primary" onclick="saveFirmware()">保存</button>
+    </div>
+  </div>
+  `;
+}
+
+function renderOtaList(){
+  return `
+  <div class="filter-bar">
+    <div class="filter-item"><span class="filter-label">固件类型</span><select class="filter-select"><option value="">全部</option><option>模组固件</option><option>MCU固件</option></select></div>
+    <div class="filter-item"><span class="filter-label">功能版本</span><select class="filter-select"><option value="">全部</option><option>版本1</option></select></div>
+    <div class="filter-item"><span class="filter-label">发布状态</span><select class="filter-select"><option value="">全部</option><option>进行中</option><option>已完成</option><option>终止</option></select></div>
+    <button class="btn btn-primary">查询</button>
+    <button class="btn">重置</button>
+    <button class="btn btn-primary">新增 OTA 任务</button>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">5</span>
+    <table class="data-table">
+      <thead><tr>
+        <th>任务名称</th><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th>
+        <th>通道号</th><th>状态</th><th>发布方式</th><th>升级方式</th><th>发布地区</th><th>发布时间</th><th>创建时间</th><th>操作</th>
+      </tr></thead>
+      <tbody>
+        ${otaData.map(o=>`<tr>
+          <td>${o.name}</td><td>${o.fwName}</td><td>${o.type}</td><td>${o.version}</td><td>${o.hw}</td><td>${o.fv}</td>
+          <td>${o.channel!==null?`<span class="channel-value">${o.channel}</span>`:`<span class="channel-null">-</span>`}</td>
+          <td>${renderOtaStatus(o.status)}</td>
+          <td>${o.publish}</td><td>${o.upgrade}</td><td>${o.region}</td><td>${o.publishTime}</td><td>${o.createTime}</td>
+          <td><button class="btn-text">查看</button><button class="btn-text">编辑</button><button class="btn-text danger">删除</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">共 ${otaData.length} 条 <select><option>10条/页</option></select></div>
+  `;
+}
+
+function renderOtaStatus(s){
+  if(s==='进行中') return `<span class="tag tag-warning">${s}</span>`;
+  if(s==='终止') return `<span class="tag tag-danger">${s}</span>`;
+  if(s==='已完成') return `<span class="tag tag-success">${s}</span>`;
+  return `<span class="tag tag-info">${s}</span>`;
+}
+
+function renderTestFirmware(){
+  return `
+  <div class="detail-header">
+    <span class="product-name">W1 Lite</span>
+    <span class="tag tag-success">已上架</span>
+    <span class="product-tag">产品分类：Breast Pump</span>
+    <span class="product-tag">功能版本：版本1 - 已发布</span>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab">基础信息</button>
+    <button class="sub-tab">功能设计</button>
+    <button class="sub-tab">扩展程序</button>
+    <button class="sub-tab active">设备调试</button>
+    <button class="sub-tab">配网引导</button>
+    <button class="sub-tab">高级配置</button>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">6</span>
+    <h4 style="margin:0 0 12px;font-size:14px;">测试固件</h4>
+    <table class="data-table">
+      <thead><tr>
+        <th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th>
+        <th>通道号</th><th>上传时间</th><th>发布日志</th><th>操作</th>
+      </tr></thead>
+      <tbody>
+        ${testFirmwareData.map(f=>`<tr>
+          <td>${f.name}</td><td>${f.type}</td><td>${f.version}</td><td>${f.hw}</td><td>${f.fv}</td>
+          <td>${f.channel!==null?`<span class="channel-value">${f.channel}</span>`:`<span class="channel-null">-</span>`}</td>
+          <td>${f.time}</td><td>${f.log}</td>
+          <td><button class="btn-text">添加测试固件</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+
+function renderFailClosed(){
+  return `
+  <div class="fail-closed-demo">
+    <h3>OTA fail-closed 场景演示</h3>
+    <p style="color:var(--el-text-color-secondary);font-size:13px;margin:0 0 16px;">
+      通道化升级场景下，若运行时缺失有效通道号、未命中显式通道桶、或解析结果与目标桶不一致，则终止升级并记录原因。不得回退 NULL 固件桶。
+    </p>
+    <div class="scenario-cards">
+      <div class="scenario-card anchor-wrapper">
+        <span class="note-anchor">7</span>
+        <h4>场景 A：通道号缺失</h4>
+        <div class="desc">OTA 任务关联固件通道号=1，但设备侧运行时未上报有效通道号。</div>
+        <div class="result">
+          <span class="tag tag-danger">终止</span>
+          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
+            terminate_reason: 通道号缺失<br>
+            不回退 NULL 桶
+          </div>
+        </div>
+      </div>
+      <div class="scenario-card anchor-wrapper">
+        <span class="note-anchor">8</span>
+        <h4>场景 B：未命中显式通道桶</h4>
+        <div class="desc">设备上报通道号=3，但平台不存在通道号=3的固件桶。</div>
+        <div class="result">
+          <span class="tag tag-danger">终止</span>
+          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
+            terminate_reason: 未命中显式通道桶<br>
+            不回退 NULL 桶
+          </div>
+        </div>
+      </div>
+      <div class="scenario-card anchor-wrapper">
+        <span class="note-anchor">9</span>
+        <h4>场景 C：通道号与目标桶不一致</h4>
+        <div class="desc">OTA 任务目标固件通道号=1，但设备上报通道号=2，解析结果与目标桶不一致。</div>
+        <div class="result">
+          <span class="tag tag-danger">终止</span>
+          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
+            terminate_reason: 通道号与目标桶不一致<br>
+            不回退 NULL 桶
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+// --- Annotation content ---
+function firmwareListNotes(){
+  return {subtitle:'固件管理列表页 /firmware-list',notes:[
+    {n:1,t:'筛选项（不含通道号）',lines:[
+      '关联位置：筛选区',
+      '说明：筛选项为固件名称、固件类型、功能版本，与现有系统一致。',
+      '交互：点击查询刷新表格，点击重置清空筛选。',
+      '状态/差异：不提供按通道号搜索、筛选、排序。用户已明确不支持（P2-1 Resolved）。'
+    ]},
+    {n:2,t:'通道号列（新增）',lines:[
+      '关联位置：表格 > 功能版本与状态之间',
+      '说明：新增通道号列。NULL 展示为 `-`（灰色），有值展示为数字（黑色加粗）。',
+      '交互：点击查看可跳转固件详情。',
+      '状态/差异：NULL 与有值通道在视觉上清晰区分，运营可一眼识别多 MCU 固件。',
+      '数据来源：固件记录的 channel 字段。'
+    ]}
+  ]};
+}
+function createFirmwareNotes(){
+  return {subtitle:'创建固件子页面 /firmware-list/{productId}/add',notes:[
+    {n:3,t:'产品（进入页面时已确定）',lines:[
+      '关联位置：创建固件表单 > 产品字段',
+      '说明：产品在固件列表页已通过产品下拉选项确定，进入创建页时通过路由参数 productId 带入，不可修改。',
+      '交互：只读字段，无下拉、无输入。',
+      '事实来源：IoT固件管理 wiki — 创建固件路由 /firmware-list/{productId}/add；用户口径确认产品在固件列表处已确定。'
+    ]},
+    {n:4,t:'上传固件（触发文件名解析）',lines:[
+      '关联位置：创建固件表单 > 上传固件区域',
+      '说明：上传固件文件后，系统从文件名中自动解析固件名称、固件版本、硬件版本。',
+      '文件名格式：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期].ufw',
+      '支持格式：.ufw、.zip、.bin',
+      '示例：Lute_M9_3.08_10_aabb_20240401.ufw',
+      '版本号规则：可为数字或数字加点组合，如 21、2.21、1.0.23',
+      '交互：点击上传区域或拖拽文件上传；上传成功后下方三个字段自动填充。',
+      '事实来源：IoT固件管理 wiki 上传规则和文件格式；用户口径确认字段依赖文件名解析。'
+    ]},
+    {n:5,t:'固件名称/版本/硬件版本（文件名自动解析，只读）',lines:[
+      '关联位置：创建固件表单 > 固件名称、固件版本、硬件版本',
+      '说明：这三个字段由上传的固件文件名自动解析，不可手动修改。',
+      '交互：上传固件后自动填充；上传前显示 placeholder "上传固件后自动解析"。',
+      '状态/差异：字段为只读（readonly），与原型的通道号输入框（可编辑）形成对比。',
+      '功能提示：版本号可为数字或数字加点组合（如 21、2.21、1.0.23），不是纯整数。'
+    ]},
+    {n:6,t:'通道号输入控件',lines:[
+      '关联位置：创建固件表单 > 硬件版本与备注之间',
+      '说明：整数输入框，可选字段。placeholder 为"请输入正整数，留空表示无通道"。',
+      '校验规则：',
+      '  · 留空 → 归一为 NULL',
+      '  · 非空 → 只接受正整数',
+      '  · 空白输入 → 归一为 NULL',
+      '  · 非整数/负数/零 → 提示"请输入正整数或留空"',
+      '落库类型：int 或 NULL',
+      '功能提示：留空不会报错，历史固件和新固件未填写时都可为 NULL。',
+      '状态/差异：通道号是创建固件页面中除备注外唯一需要用户手动输入的新增字段。'
+    ]},
+    {n:7,t:'冲突校验',lines:[
+      '关联位置：保存按钮 > 提交时触发',
+      '说明：同一产品下，若已存在固件类型+硬件版本+固件版本+通道号 完全一致的记录，阻止保存。',
+      '触发条件：点击保存时自动校验。',
+      '系统响应：在表单底部展示红色提示"同一产品下已存在固件类型、硬件版本、固件版本、通道号完全一致的固件记录"。',
+      '异常处理：阻止保存，用户需修改通道号或其他维度后重试。',
+      '规则来源：MAGI 收敛规则 3、7（版本桶内唯一）。',
+      '原型备注：点击保存按钮可演示冲突校验提示效果。'
+    ]}
+  ]};
+}
+function otaListNotes(){
+  return {subtitle:'OTA 任务列表页 /ota',notes:[
+    {n:5,t:'通道号列（新增）与终止状态',lines:[
+      '关联位置：表格 > 功能版本与状态之间',
+      '说明：OTA 任务列表新增通道号列，展示关联固件的通道号。NULL 展示为 `-`。',
+      '状态/差异：',
+      '  · 进行中 → 警告色 Tag',
+      '  · 已完成 → 成功色 Tag',
+      '  · 终止 → 危险色 Tag（fail-closed 触发）',
+      '终止状态附带 terminate_reason：通道号缺失 / 未命中显式通道桶 / 通道号与目标桶不一致。',
+      '功能提示：排障时无需打开固件详情即可在 OTA 列表定位通道号。',
+      '原型备注：终止原因的展示样式可在设计阶段细化。'
+    ]}
+  ]};
+}
+function testFirmwareNotes(){
+  return {subtitle:'产品详情 > 设备调试 > 测试固件',notes:[
+    {n:6,t:'测试固件表通道号列（新增）',lines:[
+      '关联位置：产品详情 step=3 > 设备调试 > 测试固件表 > 功能版本与上传时间之间',
+      '说明：测试固件表头新增通道号列。NULL 展示为 `-`，有值展示为数字。',
+      '交互：沿用现有测试固件表操作（添加测试固件入口）。',
+      '状态/差异：与固件管理列表和 OTA 列表的通道号列展示一致。',
+      '数据来源：测试固件记录的 channel 字段。',
+      '权限：当前可见动作为"添加测试固件"。'
+    ]}
+  ]};
+}
+function failClosedNotes(){
+  return {subtitle:'OTA fail-closed 场景演示',notes:[
+    {n:7,t:'场景 A：通道号缺失',lines:[
+      '关联位置：fail-closed 演示 > 场景 A',
+      '触发条件：OTA 任务关联固件通道号=1，但设备侧运行时未上报有效通道号。',
+      '系统响应：终止升级，terminate_reason = "通道号缺失"。',
+      '异常处理：不回退 NULL 固件桶。',
+      '规则来源：MAGI 收敛规则 4（fail-closed）。'
+    ]},
+    {n:8,t:'场景 B：未命中显式通道桶',lines:[
+      '关联位置：fail-closed 演示 > 场景 B',
+      '触发条件：设备上报通道号=3，但平台不存在通道号=3的固件桶。',
+      '系统响应：终止升级，terminate_reason = "未命中显式通道桶"。',
+      '异常处理：不回退 NULL 固件桶。',
+      '规则来源：MAGI 收敛规则 4、5（NULL 不是 wildcard）。'
+    ]},
+    {n:9,t:'场景 C：通道号与目标桶不一致',lines:[
+      '关联位置：fail-closed 演示 > 场景 C',
+      '触发条件：OTA 任务目标固件通道号=1，但设备上报通道号=2。',
+      '系统响应：终止升级，terminate_reason = "通道号与目标桶不一致"。',
+      '异常处理：不回退 NULL 固件桶。',
+      '规则来源：MAGI 收敛规则 3、4（四元组命中 + fail-closed）。'
+    ]}
+  ]};
+}
+
+// --- Navigation ---
+function switchPage(pageId){
+  activePage = pageId;
+  render();
+}
+document.querySelector('.aside').addEventListener('click',e=>{
+  const item = e.target.closest('[data-page]');
+  if(item) switchPage(item.dataset.page);
+});
+
+// --- Interactions ---
+function simulateUpload(){
+  const placeholder = document.getElementById('upload-placeholder');
+  const fileDiv = document.getElementById('upload-file');
+  const filename = document.getElementById('upload-filename');
+  if(placeholder && fileDiv){
+    placeholder.style.display='none';
+    fileDiv.style.display='block';
+    filename.textContent='Lute_M9_3.08_10_aabb_20240401.ufw';
+    // Simulate filename parsing
+    const nameEl = document.getElementById('fw-name');
+    const verEl = document.getElementById('fw-version');
+    const hwEl = document.getElementById('fw-hw');
+    if(nameEl) nameEl.value = 'Lute_M9_3.08_10_aabb_20240401';
+    if(verEl) verEl.value = '3.08';
+    if(hwEl) hwEl.value = '10';
+    showToast('success','固件文件已上传，固件名称、版本、硬件版本已自动解析');
+  }
+}
+function validateChannel(){
+  const input = document.getElementById('channel-input');
+  const error = document.getElementById('channel-error');
+  const val = input.value.trim();
+  if(val === ''){ error.classList.remove('show'); return true; }
+  const num = parseInt(val,10);
+  if(isNaN(num) || num <= 0 || !/^\d+$/.test(val)){
+    error.classList.add('show');
+    return false;
+  }
+  error.classList.remove('show');
+  return true;
+}
+function saveFirmware(){
+  if(!validateChannel()) return;
+  const conflict = document.getElementById('conflict-error');
+  conflict.classList.add('show');
+  showToast('error','冲突校验：同一产品下已存在固件类型、硬件版本、固件版本、通道号完全一致的固件记录');
+}
+function showToast(type,msg){
+  const toast = document.getElementById('toast');
+  toast.className = `toast toast-${type} show`;
+  toast.textContent = msg;
+  setTimeout(()=>toast.classList.remove('show'),3000);
+}
+
+// --- Main render ---
+function render(){
+  const p = pages[activePage];
+  document.getElementById('breadcrumb').innerHTML =
+    p.breadcrumb.map((b,i)=> i===p.breadcrumb.length-1
+      ? `<span class="current">${b}</span>`
+      : `<span>${b}</span><span class="sep">/</span>`
+    ).join('');
+  document.getElementById('screen').innerHTML = p.render();
+  const notesData = p.notes();
+  document.getElementById('pane-subtitle').textContent = notesData.subtitle;
+  document.getElementById('doc').innerHTML =
+    `<div class="note-stack">${notesData.notes.map(n=>`
+      <section class="note-card ${n.highlight?'highlight':''}">
+        <span class="note-number">${n.n}</span>
+        <div>
+          <h3 class="note-title">${n.t}</h3>
+          <div class="note-body"><ul>${n.lines.map(l=>`<li>${l}</li>`).join('')}</ul></div>
+        </div>
+      </section>`).join('')}
+    </div>`;
+}
+render();
+</script>
+</body>
+</html>
