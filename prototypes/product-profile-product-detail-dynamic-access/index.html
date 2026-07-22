@@ -1416,7 +1416,6 @@
       <footer class="modal-footer has-anchor">
         <button class="note-anchor" type="button" data-note="profile-copy-export" aria-label="批注 10">10</button>
         <button class="btn" type="button" id="copyProfileBtn">复制</button>
-        <button class="btn" type="button" id="exportProfileBtn">导出 JSON</button>
         <button class="btn primary" type="button" id="closeProfileBtn">关闭</button>
       </footer>
     </section>
@@ -1435,7 +1434,7 @@
     ];
 
     const scenarios = [
-      { id: "codeFilled", label: "产品代码已有值" },
+      { id: "codeFilled", label: "唯一编码已有值" },
       { id: "codeEmpty", label: "产品唯一编码为空" },
       { id: "confirm", label: "上架前 gate" }
     ];
@@ -1622,7 +1621,7 @@
               ${desc("创建时间：", "2026-07-11 10:21:32")}
               ${desc("原子化配网：", "支持")}
               ${desc("设备是否可以编组：", "支持")}
-              ${desc("产品代码：", data.unicode)}
+              ${desc("唯一编码：", data.unicode)}
               ${desc("最低支持版本：", data.appVersionMin || "--")}
               ${desc("产品图片：", "主图 / 列表图 / 原子化配网图")}
             </div>
@@ -1647,7 +1646,7 @@
               ${desc("编辑用户：", "编辑用户B（脱敏）")}
               ${desc("最近编辑时间：", "2026-07-14 11:06:42")}
               ${desc("所属App：", data.app)}
-              ${desc("产品代码：", data.unicode || "--")}
+              ${desc("唯一编码：", data.unicode || "--")}
               ${desc("动态接入：", data.dynamicAccessSupported ? "支持" : "不支持", data.dynamicAccessSupported ? "success" : "")}
             </div>
           </div>
@@ -2236,18 +2235,6 @@
       }
     }
 
-    function exportProductProfile() {
-      const text = document.getElementById("profileJsonView").textContent;
-      const blob = new Blob([text], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "product-profile-demo.json";
-      link.click();
-      URL.revokeObjectURL(url);
-      showToast("ProductProfile 已导出");
-    }
-
     function saveDrawer() {
       if (!state.form) return;
       applyDrawerSave("保存成功：已刷新 ProductProfile 草稿，发布 / gate 校验将在上架前执行");
@@ -2291,9 +2278,8 @@
             <strong>规则：</strong>查看 ProductProfile 不更新产品详情字段，不触发保存；APP 持续向平台获取最新有效版本。<br>
             <strong>限制：</strong>不支持直接编辑 ProductProfile 内容。
           `),
-          note("profile-copy-export", "复制与导出", "查看 ProductProfile 弹窗 > 底部操作", `
-            <strong>复制：</strong>复制 ProductProfile JSON，便于粘贴到第三方软件。<br>
-            <strong>导出：</strong>导出 ProductProfile JSON 到本地文件。
+          note("profile-copy-export", "复制", "查看 ProductProfile 弹窗 > 底部操作", `
+            <strong>复制：</strong>复制 ProductProfile JSON，便于粘贴到第三方软件。
           `)
         ];
       }
@@ -2535,7 +2521,6 @@
       render();
     };
     document.getElementById("copyProfileBtn").onclick = copyProductProfile;
-    document.getElementById("exportProfileBtn").onclick = exportProductProfile;
 
     render();
   </script>
