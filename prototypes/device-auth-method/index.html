@@ -1,0 +1,1591 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>设备验证方式配置原型（批注优化版）</title>
+  <style>
+    :root {
+      --app-aside-bg-color: #001529;
+      --app-aside-bg-active: #0b2a4a;
+      --app-bg-color: #f9f9f9;
+      --el-bg-color: #ffffff;
+      --el-color-primary: #4372ff;
+      --el-color-primary-dark-2: #2b6bd9;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-success: #67c23a;
+      --el-color-warning: #e6a23c;
+      --el-color-danger: #f56c6c;
+      --el-color-info: #909399;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --table-head-bg: #fafafa;
+      --gap-8: 8px;
+      --gap-12: 12px;
+      --gap-16: 16px;
+      --gap-24: 24px;
+      --radius: 4px;
+      --aside-width: 208px;
+      --header-height: 54px;
+      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0; min-height: 100%;
+      background: var(--app-bg-color);
+      color: var(--el-text-color-primary);
+      font-family: var(--sans);
+      font-size: 14px; line-height: 1.5;
+      max-width: 100%; overflow-x: hidden;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--aside-width) minmax(0, 1fr);
+    }
+
+    .aside {
+      background: var(--app-aside-bg-color);
+      color: rgba(255, 255, 255, .78);
+      min-height: 100vh;
+      position: sticky; top: 0;
+      align-self: start;
+      display: flex; flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff; font-weight: 700;
+    }
+
+    .brand-mark {
+      width: 30px; height: 30px;
+      border-radius: var(--radius);
+      background: #85b436;
+      display: grid; place-items: center;
+      color: #fff; font-size: 13px; font-weight: 800;
+    }
+
+    .brand-subtitle {
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px; line-height: 16px; white-space: nowrap;
+    }
+
+    .menu { padding: 8px 0 24px; overflow: auto; }
+
+    .menu-group-title, .menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 18px;
+      color: rgba(255, 255, 255, .68);
+      white-space: nowrap;
+    }
+
+    .menu-group-title {
+      height: 36px; margin-top: 8px;
+      color: rgba(255, 255, 255, .38);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      height: 42px;
+      border-left: 3px solid transparent;
+      color: rgba(255, 255, 255, .76);
+    }
+
+    .menu-item.active {
+      background: var(--app-aside-bg-active);
+      border-left-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .menu-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .72; flex: 0 0 auto;
+    }
+
+    .shell {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--header-height) minmax(0, 1fr);
+    }
+
+    .header {
+      height: var(--header-height);
+      background: var(--el-bg-color);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--gap-16); padding: 0 24px;
+      position: sticky; top: 0; z-index: 20;
+    }
+
+    .breadcrumb {
+      color: var(--el-text-color-secondary);
+      font-size: 12px; line-height: 22px;
+      display: flex; gap: 6px; align-items: center; min-width: 0;
+    }
+
+    .breadcrumb strong { color: var(--el-text-color-primary); font-weight: 500; }
+
+    .userbar {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--el-text-color-regular);
+      font-size: 13px; white-space: nowrap;
+    }
+
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      display: grid; place-items: center;
+      font-weight: 700;
+    }
+
+    .content { padding: 24px; min-width: 0; }
+
+    .product-summary {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: grid; gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .product-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; min-width: 0;
+    }
+
+    .product-name-line {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; min-width: 0;
+    }
+
+    .product-name {
+      font-size: 18px; font-weight: 600;
+      line-height: 28px; margin: 0;
+    }
+
+    .product-cloud {
+      color: var(--el-text-color-secondary);
+      font-size: 13px; white-space: nowrap;
+    }
+
+    .product-actions {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex; align-items: center;
+      height: 22px; padding: 0 8px;
+      border-radius: var(--radius);
+      font-size: 12px; font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .tag.success { background: #f0f9eb; color: #67c23a; border-color: #c2e7b0; }
+    .tag.info { background: var(--el-color-primary-light-9); color: var(--el-color-primary); border-color: #c8d7ff; }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 12px 20px;
+    }
+
+    .meta-item { min-width: 0; }
+
+    .meta-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px; margin-bottom: 4px;
+    }
+
+    .meta-value {
+      color: var(--el-text-color-regular);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .tabs {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius) var(--radius) 0 0;
+      display: flex; padding: 0 20px;
+      min-height: 44px; align-items: flex-end;
+      overflow-x: auto;
+    }
+
+    .tab {
+      height: 42px; padding: 0 16px;
+      border: 0; border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--el-text-color-regular);
+      white-space: nowrap; font-weight: 500;
+    }
+
+    .tab.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+    }
+
+    .panel {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-top: 0;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 0;
+      min-height: 460px;
+    }
+
+    .panel-header {
+      height: 56px; padding: 0 20px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+
+    .panel-title { font-size: 16px; font-weight: 600; margin: 0; }
+
+    .panel-main { padding: 16px 20px 24px; min-height: 400px; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(200px, 1fr));
+      gap: 16px 24px;
+    }
+
+    .info-item { min-width: 0; }
+
+    .info-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px; margin-bottom: 4px;
+    }
+
+    .info-value {
+      color: var(--el-text-color-regular);
+      font-size: 14px;
+    }
+
+    .info-value.highlight {
+      color: var(--el-color-primary);
+      font-weight: 600;
+    }
+
+    .btn {
+      height: 32px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      padding: 0 14px;
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; white-space: nowrap;
+      font-weight: 500; line-height: 30px;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
+    }
+
+    .btn.primary:hover {
+      background: var(--el-color-primary-dark-2);
+      border-color: var(--el-color-primary-dark-2);
+    }
+
+    .btn.text {
+      border-color: transparent;
+      background: transparent;
+      color: var(--el-color-primary);
+      padding: 0 4px;
+    }
+
+    .btn.icon {
+      width: 28px; padding: 0; font-weight: 700;
+    }
+
+    .btn.danger {
+      color: var(--el-color-danger);
+      border-color: #fab6b6;
+      background: #fef0f0;
+    }
+
+    .btn:disabled {
+      background: #f5f7fa;
+      border-color: var(--el-border-color-lighter);
+      color: var(--el-text-color-placeholder);
+      cursor: not-allowed;
+    }
+
+    /* Drawer */
+    .drawer-scrim {
+      position: fixed; inset: 0; z-index: 50;
+      pointer-events: none; opacity: 0;
+      transition: opacity .18s ease;
+      background: rgba(0, 0, 0, .18);
+    }
+
+    .drawer-scrim.open { opacity: 1; pointer-events: auto; }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(640px, 100vw);
+      background: var(--el-bg-color);
+      box-shadow: -8px 0 24px rgba(0, 0, 0, .12);
+      z-index: 60;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      transform: translateX(100%);
+      visibility: hidden;
+      transition: transform .22s ease, visibility 0s .22s;
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+      visibility: visible;
+      transition: transform .22s ease, visibility 0s;
+    }
+
+    body.drawer-open .drawer-scrim { opacity: 1; pointer-events: auto; }
+
+    .drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+
+    .drawer-title { font-size: 16px; font-weight: 600; margin: 0; }
+    .drawer-subtitle { color: var(--el-text-color-secondary); font-size: 13px; margin-top: 2px; }
+
+    .drawer-body {
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .drawer-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--el-border-color-lighter);
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      align-items: start;
+      gap: 12px;
+    }
+
+    .form-label {
+      color: var(--el-text-color-regular);
+      font-size: 14px;
+      line-height: 32px;
+    }
+
+    .form-label.required::before {
+      content: "*";
+      color: var(--el-color-danger);
+      margin-right: 4px;
+    }
+
+    .form-label.locked {
+      color: var(--el-text-color-secondary);
+    }
+
+    .form-control { min-width: 0; }
+
+    .input, .select {
+      width: 100%;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      min-height: 32px;
+      padding: 5px 11px;
+      outline: 0;
+    }
+
+    .input:focus, .select:focus {
+      border-color: var(--el-color-primary);
+    }
+
+    .input:disabled, .select:disabled {
+      background: #f5f7fa;
+      color: var(--el-text-color-secondary);
+      cursor: not-allowed;
+    }
+
+    .form-help {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 18px;
+    }
+
+    /* Radio Group for Auth Method */
+    .radio-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .radio-card {
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      cursor: pointer;
+      display: grid;
+      gap: 6px;
+      background: #fff;
+      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .radio-card:hover {
+      border-color: var(--el-color-primary);
+    }
+
+    .radio-card.active {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+    }
+
+    .radio-card-head {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .radio-dot {
+      width: 16px; height: 16px;
+      border: 2px solid var(--el-border-color);
+      border-radius: 50%;
+      flex: 0 0 auto;
+      transition: border-color .15s ease;
+    }
+
+    .radio-card.active .radio-dot {
+      border-color: var(--el-color-primary);
+      background: radial-gradient(circle, var(--el-color-primary) 40%, transparent 45%);
+    }
+
+    .radio-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--el-text-color-primary);
+    }
+
+    .radio-desc {
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .radio-meta {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .meta-tag {
+      display: inline-flex; align-items: center;
+      height: 18px; padding: 0 6px;
+      border-radius: 3px;
+      font-size: 11px; font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .meta-tag.sec-low { background: #f0f0f0; color: #909399; }
+    .meta-tag.sec-mid { background: #fdf6ec; color: #e6a23c; }
+    .meta-tag.sec-high { background: #fef0f0; color: #f56c6c; }
+    .meta-tag.warn { background: #fff7d6; color: #a77800; border: 1px solid #e6c55e; }
+
+    .form-row.locked .form-label,
+    .form-row.locked .input,
+    .form-row.locked .select {
+      color: var(--el-text-color-secondary);
+    }
+
+    /* Modal */
+    .modal-scrim {
+      position: fixed; inset: 0; z-index: 180;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, .28);
+    }
+
+    .modal-scrim.open { display: flex; }
+
+    .modal {
+      width: min(480px, calc(100vw - 40px));
+      max-height: calc(100vh - 80px);
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, .2);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 16px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .modal-title { font-size: 16px; font-weight: 600; margin: 0; }
+
+    .modal-body { padding: 16px; overflow: auto; }
+
+    .modal-footer {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 8px; padding: 14px 16px;
+      border-top: 1px solid var(--el-border-color-light);
+    }
+
+    .change-box {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fafafa;
+      margin-bottom: 12px;
+    }
+
+    .change-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .change-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .change-arrow {
+      color: var(--el-text-color-secondary);
+      font-size: 18px;
+    }
+
+    .change-impact {
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary-dark-2);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 80px; left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      z-index: 200;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
+      color: var(--el-text-color-primary);
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success { border-left: 3px solid var(--el-color-success); }
+    .toast-icon { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; }
+    .toast.success .toast-icon { background: #f0f9eb; color: var(--el-color-success); }
+
+    /* Prototype Annotation Panel */
+    .prototype-annotation-panel {
+      --annotation-accent: #f5b400;
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: var(--annotation-width, 352px);
+      background: #fffbeb;
+      border-left: 1px solid #e6c55e;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .22s ease;
+    }
+
+    body.annotation-open .prototype-annotation-panel { transform: translateX(0); }
+    body.annotation-open .app { padding-right: var(--annotation-width, 352px); }
+    body.annotation-open .drawer-scrim,
+    body.annotation-open .drawer { right: var(--annotation-width, 352px); }
+    body.annotation-open .drawer { width: min(640px, calc(100vw - var(--annotation-width, 352px) - 0px)); }
+    body.annotation-open .modal-scrim { padding-right: var(--annotation-width, 352px); }
+
+    .prototype-annotation-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e6c55e;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+    }
+
+    .prototype-annotation-title {
+      display: flex; align-items: center; gap: 8px;
+      color: #5d4100; font-weight: 700; font-size: 14px;
+    }
+
+    .prototype-annotation-caption {
+      color: #8a6d18; font-size: 12px; line-height: 18px;
+    }
+
+    .prototype-annotation-list {
+      padding: 12px; overflow: auto;
+      display: grid; gap: 10px; align-content: start;
+    }
+
+    .prototype-note-card {
+      border: 1px solid #f1d57c;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 10px;
+      color: var(--el-text-color-regular);
+      text-align: left;
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(90, 64, 0, .06);
+    }
+
+    .prototype-note-card.active {
+      border-color: #d89a00;
+      background: #fff8df;
+    }
+
+    .prototype-note-number, .prototype-note-anchor {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: inline-grid; place-items: center;
+      background: #ffd666;
+      border: 1px solid #d89a00;
+      color: #5d4100;
+      font-size: 12px; font-weight: 700; line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .prototype-note-copy {
+      min-width: 0; display: grid; gap: 4px;
+    }
+
+    .prototype-note-copy strong {
+      color: var(--el-text-color-primary);
+      font-size: 13px; line-height: 18px;
+    }
+
+    .prototype-note-copy span {
+      color: var(--el-text-color-secondary);
+      font-size: 12px; line-height: 18px;
+    }
+
+    .prototype-note-body {
+      display: grid; gap: 4px; margin: 2px 0;
+    }
+
+    .prototype-note-copy .prototype-note-section {
+      display: block; margin-top: 4px;
+      padding: 2px 6px;
+      border-left: 2px solid #e6a700;
+      border-radius: 4px;
+      background: #fff7d6;
+      color: #6f4d00;
+      font-size: 12px; font-weight: 700; line-height: 18px;
+    }
+
+    .prototype-note-copy .prototype-note-line {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      gap: 4px;
+      color: var(--el-text-color-regular);
+      font-size: 12px; line-height: 18px;
+    }
+
+    .prototype-note-copy .prototype-note-line.plain {
+      display: block;
+      font-size: 13px; line-height: 20px;
+    }
+
+    .prototype-note-copy .prototype-note-marker {
+      color: #a77800; font-weight: 700; text-align: right;
+    }
+
+    .prototype-note-copy .prototype-note-flow {
+      display: block;
+      padding: 4px 6px;
+      border: 1px dashed #e6c55e;
+      border-radius: 5px;
+      background: #fffbeb;
+      color: #5d4100;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px; line-height: 17px;
+      white-space: normal;
+    }
+
+    .prototype-note-host:not(.modal-scrim) { position: relative !important; }
+    .modal-scrim.prototype-note-host { position: fixed !important; }
+
+    .prototype-note-anchor {
+      position: absolute;
+      top: 8px; right: 8px;
+      z-index: 6; padding: 0;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(90, 64, 0, .16);
+    }
+
+    .prototype-note-target-active {
+      outline: 2px solid #f5b400;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 4px rgba(245, 180, 0, .12);
+    }
+
+    .prototype-annotation-empty {
+      border: 1px dashed #e5c76e;
+      border-radius: var(--radius);
+      padding: 12px;
+      color: #8a6d18;
+      background: #fffaf0;
+      font-size: 13px; line-height: 20px;
+    }
+
+    .prototype-annotation-toggle {
+      position: fixed;
+      right: 16px; bottom: 18px;
+      z-index: 151;
+      min-width: 96px;
+      box-shadow: 0 8px 20px rgba(48, 49, 51, .16);
+      border-color: #d89a00;
+      color: #5d4100;
+      background: #ffd666;
+    }
+
+    body.annotation-open .prototype-annotation-toggle { display: none; }
+    body.drawer-open .prototype-annotation-toggle { bottom: 82px; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .aside { display: none; }
+      .prototype-annotation-panel {
+        width: 100%;
+      }
+      body.annotation-open .app { padding-right: 0; }
+      body.annotation-open .drawer,
+      body.annotation-open .drawer-scrim { right: 0; }
+      body.annotation-open .drawer { width: 100%; }
+      .meta-grid { grid-template-columns: repeat(2, 1fr); }
+      .info-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .form-label { line-height: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" aria-label="IoT Admin">
+    <aside class="aside">
+      <div class="brand">
+        <div class="brand-mark">IoT</div>
+        <div>
+          <div>IoT Admin</div>
+          <div class="brand-subtitle">AIoT Platform</div>
+        </div>
+      </div>
+      <nav class="menu" aria-label="主菜单">
+        <div class="menu-item"><span class="menu-dot"></span>概览</div>
+        <div class="menu-group-title">智能产品</div>
+        <div class="menu-item active"><span class="menu-dot"></span>产品列表</div>
+        <div class="menu-item"><span class="menu-dot"></span>消息推送</div>
+        <div class="menu-group-title">设备管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>设备列表</div>
+        <div class="menu-group-title">固件管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>OTA</div>
+        <div class="menu-group-title">App</div>
+        <div class="menu-item"><span class="menu-dot"></span>App列表</div>
+        <div class="menu-item"><span class="menu-dot"></span>App升级</div>
+        <div class="menu-group-title">扩展程序管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>白名单管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>白名单标签组管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>日志文件</div>
+        <div class="menu-group-title">配置中心</div>
+        <div class="menu-item"><span class="menu-dot"></span>物模型池</div>
+        <div class="menu-item"><span class="menu-dot"></span>产品模板</div>
+        <div class="menu-item"><span class="menu-dot"></span>产品分类</div>
+        <div class="menu-item"><span class="menu-dot"></span>多语言</div>
+        <div class="menu-group-title">系统配置</div>
+        <div class="menu-group-title">生产管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>生产凭证</div>
+        <div class="menu-item"><span class="menu-dot"></span>生产记录</div>
+        <div class="menu-group-title">运营管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>兑换码</div>
+      </nav>
+    </aside>
+
+    <main class="shell">
+      <header class="header">
+        <div class="breadcrumb">
+          <span>智能产品</span>
+          <span>/</span>
+          <span>产品列表</span>
+          <span>/</span>
+          <strong>查看产品详情</strong>
+        </div>
+        <div class="userbar">
+          <span>ljq_driver</span>
+          <div class="avatar">L</div>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="product-summary">
+          <div class="product-title-row">
+            <div class="product-name-line">
+              <h1 class="product-name">W1 Lite</h1>
+              <span class="product-cloud">ROOT云</span>
+              <span class="tag success">已上架</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn primary" type="button">新建版本</button>
+              <button class="btn" type="button">下架产品</button>
+            </div>
+          </div>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">产品分类</div>
+              <div class="meta-value">Breast Pump</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">产品型号</div>
+              <div class="meta-value">W1Lite</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">产品代码</div>
+              <div class="meta-value">--</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">产品ID</div>
+              <div class="meta-value">2075767415740338177</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">产品模板ID</div>
+              <div class="meta-value">1907328212561108993</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">功能版本</div>
+              <div class="meta-value">版本1 - 已发布</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs" aria-label="产品详情页签">
+          <button class="tab active" type="button">基础信息</button>
+          <button class="tab" type="button">功能设计</button>
+          <button class="tab" type="button">扩展程序</button>
+          <button class="tab" type="button">设备调试</button>
+          <button class="tab" type="button">配网引导</button>
+          <button class="tab" type="button">高级配置</button>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">基础信息</h2>
+            <button class="btn primary" id="openDrawerBtn" type="button">编辑产品信息</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="info-grid" id="infoGrid">
+              <div class="info-item" id="info-productId">
+                <div class="info-label">产品ID</div>
+                <div class="info-value">2075767415740338177</div>
+              </div>
+              <div class="info-item" id="info-productName">
+                <div class="info-label">产品名称</div>
+                <div class="info-value">W1 Lite</div>
+              </div>
+              <div class="info-item" id="info-atomizedProvisioning">
+                <div class="info-label">原子化配网</div>
+                <div class="info-value">支持</div>
+              </div>
+              <div class="info-item" id="info-deviceType">
+                <div class="info-label">设备类型</div>
+                <div class="info-value">直连设备</div>
+              </div>
+              <div class="info-item" id="info-productStatus">
+                <div class="info-label">产品状态</div>
+                <div class="info-value">已上架</div>
+              </div>
+              <div class="info-item" id="info-routingMode">
+                <div class="info-label">流程配网路由方式</div>
+                <div class="info-value">原子化</div>
+              </div>
+              <div class="info-item" id="info-productModel">
+                <div class="info-label">产品型号</div>
+                <div class="info-value">W1Lite</div>
+              </div>
+              <div class="info-item" id="info-customerServiceModel">
+                <div class="info-label">客服型号</div>
+                <div class="info-value">W1 Lite</div>
+              </div>
+              <div class="info-item" id="info-platform">
+                <div class="info-label">所属平台</div>
+                <div class="info-value">ROOT云</div>
+              </div>
+              <div class="info-item" id="info-communicationMode">
+                <div class="info-label">通讯方式</div>
+                <div class="info-value">BLE</div>
+              </div>
+              <div class="info-item" id="info-provisioningMode">
+                <div class="info-label">配网方式</div>
+                <div class="info-value">蓝牙配网</div>
+              </div>
+              <div class="info-item" id="info-provisioningInteraction">
+                <div class="info-label">配网交互方式</div>
+                <div class="info-value">CONNECT_F0</div>
+              </div>
+              <div class="info-item" id="info-bindingType">
+                <div class="info-label">绑定类型</div>
+                <div class="info-value">弱绑定</div>
+              </div>
+              <div class="info-item" id="info-authMethod" data-note-target="info-authMethod">
+                <div class="info-label">验证方式</div>
+                <div class="info-value highlight" id="authMethodDisplay">不验证</div>
+              </div>
+              <div class="info-item" id="info-productSharing">
+                <div class="info-label">产品共享</div>
+                <div class="info-value">开启</div>
+              </div>
+              <div class="info-item" id="info-app">
+                <div class="info-label">所属App</div>
+                <div class="info-value">momcozy</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <aside class="prototype-annotation-panel" id="prototypeAnnotationPanel" aria-label="原型批注">
+    <div class="prototype-annotation-head">
+      <div class="prototype-annotation-title">
+        <span>原型批注</span>
+        <button class="btn text" id="closePrototypeAnnotations" type="button" style="color:#5d4100">收起</button>
+      </div>
+      <div class="prototype-annotation-caption" id="prototypeAnnotationContext">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</div>
+    </div>
+    <div class="prototype-annotation-list" id="prototypeAnnotationList"></div>
+  </aside>
+  <button class="btn prototype-annotation-toggle" id="openPrototypeAnnotations" type="button">查看批注</button>
+
+  <div class="drawer-scrim" id="drawerScrim"></div>
+  <aside class="drawer" id="drawer" aria-label="编辑产品信息抽屉">
+    <header class="drawer-header">
+      <div>
+        <h2 class="drawer-title">编辑产品信息</h2>
+        <div class="drawer-subtitle">W1 Lite / 基础信息</div>
+      </div>
+      <button class="btn icon" id="closeDrawerBtn" type="button" aria-label="关闭">×</button>
+    </header>
+
+    <div class="drawer-body">
+      <div class="form-grid" id="formGrid">
+        <div class="form-row locked">
+          <label class="form-label">产品分类</label>
+          <div class="form-control">
+            <input class="input" type="text" value="Breast Pump / 1" disabled>
+            <div class="form-help">产品创建后不可修改产品分类</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">所属平台</label>
+          <div class="form-control">
+            <select class="select" disabled>
+              <option selected>ROOT云</option>
+              <option>涂鸦云</option>
+              <option>觅睿云</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">产品ID</label>
+          <div class="form-control">
+            <input class="input" type="text" value="2075767415740338177" disabled>
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">通讯方式</label>
+          <div class="form-control">
+            <input class="input" type="text" value="BLE" disabled>
+            <div class="form-help">产品创建后不可修改通讯方式</div>
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">产品模板</label>
+          <div class="form-control">
+            <input class="input" type="text" value="根据通讯方式后自动选择" disabled>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">原子化配网</label>
+          <div class="form-control">
+            <select class="select"><option selected>支持</option><option>不支持</option></select>
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">配网交互方式</label>
+          <div class="form-control">
+            <input class="input" type="text" value="CONNECT_F0" disabled>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">流程配网路由方式</label>
+          <div class="form-control">
+            <select class="select"><option>常规</option><option selected>原子化</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">配网方式</label>
+          <div class="form-control">
+            <select class="select"><option selected>蓝牙配网</option><option>WiFi配网</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">动态配网最低支持版本</label>
+          <div class="form-control">
+            <input class="input" type="text" value="V3.0.0">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">发布区域</label>
+          <div class="form-control">
+            <input class="input" type="text" value="北美、欧洲、亚太、中国" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">设备是否可以编组</label>
+          <div class="form-control">
+            <select class="select"><option selected>支持</option><option>不支持</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">绑定类型</label>
+          <div class="form-control">
+            <select class="select"><option selected>弱绑定</option><option>强绑定</option></select>
+          </div>
+        </div>
+        <div class="form-row" id="authMethodRow" data-note-target="authMethodRow">
+          <label class="form-label required">验证方式</label>
+          <div class="form-control" data-note-target="authMethodControl">
+            <div class="radio-group" id="authRadioGroup"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">产品共享</label>
+          <div class="form-control">
+            <select class="select"><option selected>开启</option><option>关闭</option></select>
+          </div>
+        </div>
+
+        <div class="form-row locked">
+          <label class="form-label">设备类型</label>
+          <div class="form-control">
+            <input class="input" type="text" value="直连设备" disabled>
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">产品型号</label>
+          <div class="form-control">
+            <input class="input" type="text" value="W1Lite" disabled>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">产品名称</label>
+          <div class="form-control">
+            <input class="input" type="text" value="W1 Lite">
+          </div>
+        </div>
+        <div class="form-row locked">
+          <label class="form-label">产品代码</label>
+          <div class="form-control">
+            <input class="input" type="text" value="--" readonly>
+            <div class="form-help">通过选择按钮选取产品代码</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">客服型号</label>
+          <div class="form-control">
+            <input class="input" type="text" value="W1 Lite">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">所属App</label>
+          <div class="form-control">
+            <select class="select"><option selected>momcozy</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="drawer-footer">
+      <button class="btn" id="cancelDrawerBtn" type="button">取消</button>
+      <button class="btn primary" id="saveDrawerBtn" type="button">保存</button>
+    </footer>
+  </aside>
+
+  <div class="modal-scrim" id="confirmModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+      <header class="modal-header">
+        <h3 class="modal-title" id="confirmModalTitle">确认验证方式变更</h3>
+        <button class="btn icon" id="closeConfirmBtn" type="button" aria-label="关闭">×</button>
+      </header>
+      <div class="modal-body" data-note-target="confirmModalBody">
+        <div class="change-box" data-note-target="changeBox">
+          <div>
+            <div class="change-label">当前验证方式</div>
+            <div class="change-value" id="confirmOldValue">不验证</div>
+          </div>
+          <div class="change-arrow">→</div>
+          <div>
+            <div class="change-label">新验证方式</div>
+            <div class="change-value" id="confirmNewValue">一机一密</div>
+          </div>
+        </div>
+        <div class="change-impact" id="changeImpact" data-note-target="changeImpact">
+          变更仅影响新连接/重连设备；已在线设备不会断连重鉴权。审计日志将记录此次变更。
+        </div>
+      </div>
+      <footer class="modal-footer" data-note-target="confirmModalFooter">
+        <button class="btn" id="cancelConfirmBtn" type="button">取消</button>
+        <button class="btn primary" id="confirmChangeBtn" type="button">确认变更</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const authMethods = [
+      {
+        id: "none",
+        label: "不验证",
+        desc: "平台不校验设备三元组信息，默认认为设备可连接平台/是合法设备。",
+        secLevel: "最低",
+        secClass: "sec-low",
+        warning: null
+      },
+      {
+        id: "perDevice",
+        label: "一机一密",
+        desc: "平台校验设备三元组信息，该信息是设备的唯一校验值。",
+        secLevel: "中",
+        secClass: "sec-mid",
+        warning: null
+      },
+      {
+        id: "perProduct",
+        label: "一型一密",
+        desc: "平台校验设备的三元组信息，该信息是设备所属产品的唯一校验值。",
+        secLevel: "中",
+        secClass: "sec-mid",
+        warning: "泄露影响：同产品全部设备"
+      },
+      {
+        id: "certificate",
+        label: "设备证书（ECC）",
+        desc: "设备烧录证书，使用设备证书进行双向校验。",
+        secLevel: "最高",
+        secClass: "sec-high",
+        warning: "本期预留能力，暂未启用，当前不包含证书签发与校验链路"
+      }
+    ];
+
+    const state = {
+      drawerOpen: false,
+      currentAuthMethod: "none",
+      selectedAuthMethod: "none",
+      confirmModalOpen: false,
+      toastVisible: false
+    };
+
+    // Prototype annotations
+    const prototypeAnnotations = [
+      {
+        id: "info-authMethod",
+        title: "验证方式只读展示",
+        target: "#info-authMethod",
+        loc: "基础信息区 > 验证方式",
+        body: `关联位置：基础信息区 > 验证方式字段
+        - 展示当前产品的验证方式文案
+        - 新建产品默认"不验证"
+        - 抽屉关闭时以只读形式展示
+        - 字段位于"绑定类型"与"产品共享"之间`,
+        context: "page"
+      },
+      {
+        id: "authMethodRow",
+        title: "验证方式编辑字段",
+        target: "#authMethodRow",
+        loc: "编辑抽屉 > 验证方式",
+        body: `关联位置：编辑产品信息抽屉 > 验证方式
+        - 单选枚举，四方案互斥
+        - 选项：不验证 / 一机一密 / 一型一密 / 设备证书（ECC）
+        - 新建产品默认"不验证"
+        - 字段位于"绑定类型"与"产品共享"之间
+        - 沿用产品编辑权限，不设独立安全配置权限`,
+        context: "drawer"
+      },
+      {
+        id: "authMethodControl",
+        title: "四方案选项卡与描述",
+        target: "[data-note-target='authMethodControl']",
+        loc: "编辑抽屉 > 验证方式 > 选项",
+        body: `关联位置：编辑抽屉 > 验证方式 > 选项卡
+        - 每个选项含描述文案、安全性等级标签
+        - 不验证：安全性最低
+        - 一机一密：安全性中
+        - 一型一密：安全性中，附泄露影响"同产品全部设备"
+        - 设备证书（ECC）：安全性最高，附"本期预留能力，暂未启用，当前不包含证书签发与校验链路"
+        - 点击选项即选中，不影响其他字段`,
+        context: "drawer"
+      },
+      {
+        id: "saveDrawerBtn",
+        title: "保存按钮与二次确认",
+        target: "#saveDrawerBtn",
+        loc: "编辑抽屉 > 底部 > 保存",
+        body: `流程图：点击保存 → 判断是否切换验证方式 → 是则弹二次确认 → 否则直接保存
+        - 如果验证方式未变化，直接保存
+        - 如果验证方式已切换，弹出二次确认弹窗
+        - 不审批
+        - 保存后平台配置立即更新
+        - 审计日志覆盖数据库更新动作`,
+        context: "drawer"
+      },
+      {
+        id: "changeBox",
+        title: "变更前后对比",
+        target: "[data-note-target='changeBox']",
+        loc: "二次确认弹窗 > 变更对比",
+        body: `关联位置：二次确认弹窗
+        - 展示"当前验证方式 → 新验证方式"
+        - 左侧为当前值，右侧为新值
+        - 中间用箭头连接
+        - 便于用户确认变更内容`,
+        context: "confirm"
+      },
+      {
+        id: "changeImpact",
+        title: "影响说明",
+        target: "[data-note-target='changeImpact']",
+        loc: "二次确认弹窗 > 影响说明",
+        body: `关联位置：二次确认弹窗
+        - 文案："变更仅影响新连接/重连设备；已在线设备不会断连重鉴权。审计日志将记录此次变更。"
+        - 明确已在线设备不受影响
+        - 明确审计日志会记录`,
+        context: "confirm"
+      },
+      {
+        id: "confirmModalFooter",
+        title: "确认/取消操作",
+        target: "[data-note-target='confirmModalFooter']",
+        loc: "二次确认弹窗 > 底部按钮",
+        body: `关联位置：二次确认弹窗
+        - "取消"：返回抽屉编辑态，不保存，不关闭抽屉
+        - "确认变更"：提交保存，平台配置立即更新
+        - 确认后关闭弹窗和抽屉
+        - 显示保存成功 toast`,
+        context: "confirm"
+      }
+    ];
+
+    // DOM helpers
+    const $ = (sel, ctx = document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function authMethodById(id) {
+      return authMethods.find(m => m.id === id) || authMethods[0];
+    }
+
+    // Render auth radio group
+    function renderAuthRadios() {
+      const container = $("#authRadioGroup");
+      if (!container) return;
+      container.innerHTML = authMethods.map(m => `
+        <div class="radio-card ${state.selectedAuthMethod === m.id ? "active" : ""}" data-auth-id="${m.id}">
+          <div class="radio-card-head">
+            <span class="radio-dot"></span>
+            <span class="radio-label">${escapeHtml(m.label)}</span>
+          </div>
+          <div class="radio-desc">${escapeHtml(m.desc)}</div>
+          <div class="radio-meta">
+            <span class="meta-tag ${m.secClass}">安全性：${escapeHtml(m.secLevel)}</span>
+            ${m.warning ? `<span class="meta-tag warn">${escapeHtml(m.warning)}</span>` : ""}
+          </div>
+        </div>
+      `).join("");
+      $$(".radio-card", container).forEach(card => {
+        card.addEventListener("click", () => {
+          state.selectedAuthMethod = card.dataset.authId;
+          renderAuthRadios();
+          renderPrototypeAnnotations();
+        });
+      });
+    }
+
+    // Drawer
+    function openDrawer() {
+      state.drawerOpen = true;
+      state.selectedAuthMethod = state.currentAuthMethod;
+      document.body.classList.add("drawer-open");
+      $("#drawer").classList.add("open");
+      $("#drawerScrim").classList.add("open");
+      renderAuthRadios();
+      renderPrototypeAnnotations();
+    }
+
+    function closeDrawer() {
+      state.drawerOpen = false;
+      document.body.classList.remove("drawer-open");
+      $("#drawer").classList.remove("open");
+      $("#drawerScrim").classList.remove("open");
+      renderPrototypeAnnotations();
+    }
+
+    // Save
+    function handleSave() {
+      if (state.selectedAuthMethod !== state.currentAuthMethod) {
+        openConfirmModal();
+      } else {
+        executeSave();
+      }
+    }
+
+    function openConfirmModal() {
+      state.confirmModalOpen = true;
+      const oldM = authMethodById(state.currentAuthMethod);
+      const newM = authMethodById(state.selectedAuthMethod);
+      $("#confirmOldValue").textContent = oldM.label;
+      $("#confirmNewValue").textContent = newM.label;
+      $("#confirmModal").classList.add("open");
+      renderPrototypeAnnotations();
+    }
+
+    function closeConfirmModal() {
+      state.confirmModalOpen = false;
+      $("#confirmModal").classList.remove("open");
+      renderPrototypeAnnotations();
+    }
+
+    function executeSave() {
+      state.currentAuthMethod = state.selectedAuthMethod;
+      const m = authMethodById(state.currentAuthMethod);
+      $("#authMethodDisplay").textContent = m.label;
+      closeConfirmModal();
+      closeDrawer();
+      showToast("验证方式已更新，变更已记录审计日志", "success");
+    }
+
+    // Toast
+    function showToast(msg, type = "success") {
+      const toast = $("#toast");
+      toast.className = `toast ${type} show`;
+      toast.innerHTML = `<span class="toast-icon">✓</span><span>${escapeHtml(msg)}</span>`;
+      clearTimeout(state._toastTimer);
+      state._toastTimer = setTimeout(() => {
+        toast.className = `toast ${type}`;
+      }, 3000);
+    }
+
+    // Prototype Annotation Panel
+    let annotationPanelOpen = false;
+    let activePrototypeAnnotationId = null;
+
+    function annotationContextLabel() {
+      if (state.confirmModalOpen) return "二次确认弹窗";
+      if (state.drawerOpen) return "编辑产品信息抽屉";
+      return "基础信息区";
+    }
+
+    function annotationMatchesCurrentContext(note) {
+      const ctx = state.confirmModalOpen ? "confirm" : (state.drawerOpen ? "drawer" : "page");
+      return note.context === ctx;
+    }
+
+    function currentPrototypeAnnotations() {
+      return prototypeAnnotations.filter(annotationMatchesCurrentContext);
+    }
+
+    function clearPrototypeAnnotationAnchors() {
+      $$(".prototype-note-anchor").forEach(a => a.remove());
+      $$(".prototype-note-host").forEach(t => t.classList.remove("prototype-note-host"));
+      $$(".prototype-note-target-active").forEach(t => t.classList.remove("prototype-note-target-active"));
+    }
+
+    function annotationElements(note) {
+      const target = document.querySelector(note.target);
+      if (!target) return null;
+      const host = target.matches("input, select, textarea, button")
+        ? target.closest(".field, .form-row, .modal-body, .modal-footer, .info-item, .panel, .drawer-body") || target
+        : target;
+      return { target, host };
+    }
+
+    function activatePrototypeAnnotation(id, options = {}) {
+      activePrototypeAnnotationId = id;
+      const notes = currentPrototypeAnnotations();
+      $$(".prototype-note-card").forEach(card => card.classList.toggle("active", card.dataset.noteId === id));
+      $$(".prototype-note-target-active").forEach(t => t.classList.remove("prototype-note-target-active"));
+      const note = notes.find(n => n.id === id);
+      const elements = note ? annotationElements(note) : null;
+      if (!elements) return;
+      const focusTarget = elements.target.matches("input, select, textarea, button") ? elements.host : elements.target;
+      focusTarget.classList.add("prototype-note-target-active");
+      if (options.scroll !== false) {
+        focusTarget.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      }
+    }
+
+    function renderAnnotationBody(body) {
+      const lines = String(body || "").split("\n").map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return "";
+      return `<span class="prototype-note-body">${lines.map(line => {
+        if (/^流程图[:：]|^状态图[:：]|^路径[:：]/.test(line)) {
+          return `<span class="prototype-note-flow">${escapeHtml(line)}</span>`;
+        }
+        if (line.endsWith("：") || line.endsWith(":")) {
+          return `<strong class="prototype-note-section">${escapeHtml(line.replace(/[:：]$/, ""))}</strong>`;
+        }
+        if (line.startsWith("- ")) {
+          return `<span class="prototype-note-line"><span class="prototype-note-marker">•</span><span>${escapeHtml(line.slice(2))}</span></span>`;
+        }
+        return `<span class="prototype-note-line plain">${escapeHtml(line)}</span>`;
+      }).join("")}</span>`;
+    }
+
+    function renderPrototypeAnnotations() {
+      const list = $("#prototypeAnnotationList");
+      const caption = $("#prototypeAnnotationContext");
+      if (!list || !caption) return;
+      clearPrototypeAnnotationAnchors();
+      if (!annotationPanelOpen) return;
+      const notes = currentPrototypeAnnotations();
+      caption.textContent = `${annotationContextLabel()}。黄色编号是批注锚点，不属于真实 IoT Admin 页面。`;
+      if (!notes.length) {
+        list.innerHTML = `<div class="prototype-annotation-empty">当前页面没有单独批注。打开编辑抽屉或切换状态后会自动更新。</div>`;
+        activePrototypeAnnotationId = null;
+        return;
+      }
+      if (!notes.some(n => n.id === activePrototypeAnnotationId)) {
+        activePrototypeAnnotationId = notes[0].id;
+      }
+      list.innerHTML = notes.map((note, index) => `
+        <button class="prototype-note-card ${note.id === activePrototypeAnnotationId ? "active" : ""}" type="button" data-note-id="${note.id}">
+          <span class="prototype-note-number">${index + 1}</span>
+          <span class="prototype-note-copy">
+            <strong>${escapeHtml(note.title)}</strong>
+            ${renderAnnotationBody(note.body)}
+            <span>关联位置：${escapeHtml(note.loc)}</span>
+          </span>
+        </button>
+      `).join("");
+      notes.forEach((note, index) => {
+        const elements = annotationElements(note);
+        if (!elements) return;
+        elements.host.classList.add("prototype-note-host");
+        const anchor = document.createElement("button");
+        anchor.type = "button";
+        anchor.className = "prototype-note-anchor";
+        anchor.textContent = String(index + 1);
+        anchor.setAttribute("aria-label", `查看批注：${note.title}`);
+        anchor.addEventListener("click", e => {
+          e.stopPropagation();
+          activatePrototypeAnnotation(note.id);
+        });
+        elements.host.appendChild(anchor);
+      });
+      $$(".prototype-note-card").forEach(card => {
+        card.addEventListener("click", () => activatePrototypeAnnotation(card.dataset.noteId));
+      });
+      activatePrototypeAnnotation(activePrototypeAnnotationId, { scroll: false });
+    }
+
+    function setPrototypeAnnotationsOpen(open) {
+      annotationPanelOpen = open;
+      document.body.classList.toggle("annotation-open", open);
+      renderPrototypeAnnotations();
+    }
+
+    // Init
+    function init() {
+      renderAuthRadios();
+      renderPrototypeAnnotations();
+
+      $("#openDrawerBtn").addEventListener("click", openDrawer);
+      $("#closeDrawerBtn").addEventListener("click", closeDrawer);
+      $("#cancelDrawerBtn").addEventListener("click", closeDrawer);
+      $("#drawerScrim").addEventListener("click", closeDrawer);
+      $("#saveDrawerBtn").addEventListener("click", handleSave);
+
+      $("#closeConfirmBtn").addEventListener("click", closeConfirmModal);
+      $("#cancelConfirmBtn").addEventListener("click", closeConfirmModal);
+      $("#confirmChangeBtn").addEventListener("click", executeSave);
+      $("#confirmModal").addEventListener("click", e => {
+        if (e.target === $("#confirmModal")) closeConfirmModal();
+      });
+
+      $("#openPrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(true));
+      $("#closePrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(false));
+
+      // Tab clicks (demo only - active state)
+      $$(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          $$(".tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+        });
+      });
+
+      // Auto-open annotation panel
+      setTimeout(() => setPrototypeAnnotationsOpen(true), 300);
+    }
+
+    init();
+  </script>
+</body>
+</html>
