@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IoT Admin 产品同步到生产环境原型</title>
+<style>
+:root {
+  --app-aside-bg-color: #001529;
+  --app-aside-bg-active: #0b2a4a;
+  --app-bg-color: #f9f9f9;
+  --el-bg-color: #ffffff;
+  --el-color-primary: #4372ff;
+  --el-color-primary-light-9: #ecf5ff;
+  --el-color-success: #67c23a;
+  --el-color-success-light: #f0f9eb;
+  --el-color-warning: #e6a23c;
+  --el-color-warning-light: #fdf6ec;
+  --el-color-danger: #f56c6c;
+  --el-color-danger-light: #fef0f0;
+  --el-color-info: #909399;
+  --el-text-color-primary: #303133;
+  --el-text-color-regular: #606266;
+  --el-text-color-secondary: #909399;
+  --el-text-color-placeholder: #a8abb2;
+  --el-border-color: #dcdfe6;
+  --el-border-color-light: #e4e7ed;
+  --el-border-color-lighter: #ebeef5;
+  --table-head-bg: #fafafa;
+  --radius: 4px;
+  --aside-width: 208px;
+  --header-height: 54px;
+  --annotation-width: 360px;
+  --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --annotation-accent: #f5b400;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--app-bg-color);color:var(--el-text-color-primary);font-family:var(--sans);font-size:14px;line-height:1.5;overflow-x:hidden}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:var(--el-color-primary);text-decoration:none}
+
+.prototype-shell{display:grid;grid-template-columns:minmax(0,1fr) var(--annotation-width);min-height:100vh}
+.prototype-left{min-width:0;overflow-x:auto;background:var(--app-bg-color)}
+.prototype-right{background:var(--el-bg-color);border-left:1px solid var(--el-border-color-light);overflow-y:auto;position:sticky;top:0;height:100vh}
+
+.app{min-height:100vh;display:grid;grid-template-columns:var(--aside-width) minmax(0,1fr);min-width:1240px}
+.aside{background:var(--app-aside-bg-color);color:rgba(255,255,255,.78);min-height:100vh;position:sticky;top:0;align-self:start;display:flex;flex-direction:column}
+.brand{height:54px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-weight:700}
+.brand-mark{width:30px;height:30px;border-radius:var(--radius);background:#85b436;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+.brand-subtitle{color:rgba(255,255,255,.52);font-size:12px;white-space:nowrap}
+.menu{padding:8px 0 24px;overflow:auto;flex:1}
+.menu-group-title,.menu-item{display:flex;align-items:center;gap:10px;padding:0 18px;white-space:nowrap}
+.menu-group-title{height:36px;margin-top:8px;color:rgba(255,255,255,.38);font-size:12px}
+.menu-item{height:42px;border-left:3px solid transparent;color:rgba(255,255,255,.76)}
+.menu-item.active{background:var(--app-aside-bg-active);border-left-color:var(--el-color-primary);color:#fff}
+.menu-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.72;flex:0 0 auto}
+
+.shell-area{min-width:0;display:grid;grid-template-rows:var(--header-height) minmax(0,1fr)}
+.header{height:var(--header-height);background:var(--el-bg-color);box-shadow:rgba(0,0,0,.06) 0 -1px 0 0 inset;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;position:sticky;top:0;z-index:20}
+.breadcrumb{color:var(--el-text-color-secondary);font-size:12px;display:flex;gap:6px;align-items:center;min-width:0}
+.breadcrumb strong{color:var(--el-text-color-primary);font-weight:500}
+.userbar{display:flex;align-items:center;gap:12px;color:var(--el-text-color-regular);font-size:13px;white-space:nowrap}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--el-color-primary-light-9);color:var(--el-color-primary);display:grid;place-items:center;font-weight:700;font-size:12px}
+
+.content{padding:16px 24px;min-width:0}
+
+.scenario-bar{background:var(--el-color-warning-light);border:1px solid var(--el-color-warning);border-radius:var(--radius);padding:8px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.scenario-bar .label{font-size:12px;color:var(--el-text-color-regular);font-weight:500;white-space:nowrap}
+.scenario-btn{height:28px;padding:0 12px;border:1px solid var(--el-border-color);border-radius:var(--radius);background:#fff;color:var(--el-text-color-regular);font-size:12px}
+.scenario-btn.active{background:var(--el-color-warning);border-color:var(--el-color-warning);color:#fff}
+.scenario-btn:hover{border-color:var(--el-color-primary)}
+.scenario-btn.active:hover{border-color:var(--el-color-warning)}
+
+.product-summary{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px}
+.product-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;margin-bottom:14px}
+.product-name-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.product-name{font-size:18px;font-weight:600;margin:0}
+.product-cloud{color:var(--el-text-color-secondary);font-size:13px;white-space:nowrap}
+.product-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.meta-grid{display:grid;grid-template-columns:repeat(6,minmax(100px,1fr));gap:12px 20px}
+.meta-item{min-width:0}
+.meta-label{color:var(--el-text-color-secondary);font-size:12px;margin-bottom:4px}
+.meta-value{color:var(--el-text-color-regular);overflow:hidden;text-overflow:ellipsis}
+
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--radius);font-size:12px;font-weight:500;white-space:nowrap}
+.tag-success{background:var(--el-color-success-light);color:var(--el-color-success);border:1px solid var(--el-color-success)}
+.tag-warning{background:var(--el-color-warning-light);color:var(--el-color-warning);border:1px solid var(--el-color-warning)}
+.tag-danger{background:var(--el-color-danger-light);color:var(--el-color-danger);border:1px solid var(--el-color-danger)}
+.tag-info{background:var(--el-color-primary-light-9);color:var(--el-color-primary);border:1px solid var(--el-color-primary)}
+.tag-gray{background:#f4f4f5;color:var(--el-color-info);border:1px solid var(--el-border-color-light)}
+
+.tabs{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius) var(--radius) 0 0;display:flex;padding:0 20px;min-height:44px;align-items:flex-end;overflow-x:auto}
+.tab{height:42px;padding:0 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--el-text-color-regular);white-space:nowrap;font-weight:500;font-size:14px}
+.tab.active{color:var(--el-color-primary);border-bottom-color:var(--el-color-primary)}
+
+.panel{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-top:0;border-radius:0 0 var(--radius) var(--radius);min-height:460px}
+.panel-header{height:56px;padding:0 20px;border-bottom:1px solid var(--el-border-color-lighter);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.panel-title{font-size:16px;font-weight:600;margin:0}
+.panel-main{padding:16px 20px 24px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border:1px solid var(--el-border-color);border-radius:var(--radius);background:#fff;color:var(--el-text-color-regular);font-size:14px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--el-color-primary);color:var(--el-color-primary)}
+.btn-primary{background:var(--el-color-primary);border-color:var(--el-color-primary);color:#fff}
+.btn-primary:hover{background:var(--el-color-primary);color:#fff;opacity:.9}
+.btn-danger{background:var(--el-color-danger);border-color:var(--el-color-danger);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-danger:disabled{background:#fab6b6;border-color:#fab6b6;color:#fff;cursor:not-allowed;opacity:1}
+.btn-sm{height:28px;padding:0 10px;font-size:12px}
+.btn:disabled{background:#f5f7fa;border-color:#e4e7ed;color:#c0c4cc;cursor:not-allowed}
+
+.form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:18px}
+.form-item{display:grid;gap:6px}
+.form-item label{font-size:13px;font-weight:500;color:var(--el-text-color-regular)}
+.form-item .val{min-height:32px;padding:6px 11px;border:1px solid var(--el-border-color);border-radius:var(--radius);background:#f9f9f9;color:var(--el-text-color-regular);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.form-item .val.readonly{background:#f5f7fa;color:var(--el-text-color-secondary)}
+
+.kv-table{width:100%;border-collapse:collapse;font-size:13px}
+.kv-table th,.kv-table td{border:1px solid var(--el-border-color-lighter);padding:8px 12px;text-align:left}
+.kv-table th{background:var(--table-head-bg);color:var(--el-text-color-secondary);font-weight:600;width:140px}
+.kv-table td{color:var(--el-text-color-regular)}
+
+.modal-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-scrim.open{display:flex}
+.modal{background:#fff;border-radius:8px;box-shadow:0 12px 48px rgba(0,0,0,.2);max-width:560px;width:90%;max-height:85vh;display:flex;flex-direction:column}
+.modal.wide{max-width:680px}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--el-border-color-lighter);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600;margin:0}
+.modal-close{width:28px;height:28px;border:0;background:transparent;font-size:18px;color:var(--el-text-color-secondary);display:grid;place-items:center;border-radius:var(--radius)}
+.modal-close:hover{background:#f5f7fa}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--el-border-color-lighter);display:flex;justify-content:flex-end;gap:8px}
+
+.spinner{width:32px;height:32px;border:3px solid var(--el-border-color-lighter);border-top-color:var(--el-color-primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{text-align:center;color:var(--el-text-color-secondary);margin-top:12px}
+
+.progress-list{display:grid;gap:0}
+.progress-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--el-border-color-lighter)}
+.progress-item:last-child{border-bottom:0}
+.progress-icon{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;font-size:12px}
+.progress-icon.pending{background:#f4f4f5;color:var(--el-text-color-secondary)}
+.progress-icon.syncing{background:var(--el-color-primary-light-9);color:var(--el-color-primary)}
+.progress-icon.success{background:var(--el-color-success-light);color:var(--el-color-success)}
+.progress-icon.failure{background:var(--el-color-danger-light);color:var(--el-color-danger)}
+.progress-icon.syncing::before{content:"";width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;display:block}
+.progress-name{font-size:14px;color:var(--el-text-color-regular);flex:1}
+.progress-status{font-size:12px;color:var(--el-text-color-secondary)}
+.progress-error{font-size:12px;color:var(--el-color-danger);margin-left:8px}
+
+.diff-table{width:100%;border-collapse:collapse;font-size:13px}
+.diff-table th,.diff-table td{border:1px solid var(--el-border-color-lighter);padding:8px 12px;text-align:left}
+.diff-table th{background:var(--table-head-bg);color:var(--el-text-color-secondary);font-weight:600}
+.diff-table .arrow{color:var(--el-text-color-secondary);text-align:center;width:30px}
+.diff-table .from{color:var(--el-color-warning)}
+.diff-table .to{color:var(--el-color-primary)}
+
+.impact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0}
+.impact-card{border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:12px 16px;background:#fafafa}
+.impact-card .num{font-size:24px;font-weight:700;color:var(--el-text-color-primary);line-height:1.2}
+.impact-card .num.danger{color:var(--el-color-danger)}
+.impact-card .lbl{font-size:12px;color:var(--el-text-color-secondary);margin-top:4px}
+
+.warning-box{background:var(--el-color-warning-light);border:1px solid var(--el-color-warning);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13px;color:var(--el-text-color-regular);display:flex;gap:8px;align-items:flex-start}
+.warning-box .icon{flex:0 0 auto;font-size:16px}
+.danger-box{background:var(--el-color-danger-light);border:1px solid var(--el-color-danger);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13px;color:var(--el-color-danger);display:flex;gap:8px;align-items:flex-start}
+.danger-box .icon{flex:0 0 auto;font-size:16px}
+.info-box{background:var(--el-color-primary-light-9);border:1px solid var(--el-color-primary);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13px;color:var(--el-color-primary)}
+
+.checkbox-row{display:flex;align-items:center;gap:8px;margin:16px 0;cursor:pointer}
+.checkbox-row input{width:16px;height:16px;accent-color:var(--el-color-primary)}
+.checkbox-row span{font-size:14px;color:var(--el-text-color-regular)}
+
+.range-list{margin:12px 0;padding:0;list-style:none}
+.range-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:var(--el-text-color-regular)}
+.range-item .dot{width:6px;height:6px;border-radius:50%;background:var(--el-color-primary);flex:0 0 auto}
+.excl-list{margin:8px 0;padding:0;list-style:none}
+.excl-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:var(--el-text-color-secondary)}
+.excl-item .dot{width:6px;height:6px;border-radius:50%;background:var(--el-color-info);flex:0 0 auto}
+
+.result-icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px}
+.result-icon.success{background:var(--el-color-success-light);color:var(--el-color-success);font-size:28px}
+.result-icon.failure{background:var(--el-color-danger-light);color:var(--el-color-danger);font-size:28px}
+.result-text{text-align:center;font-size:15px;font-weight:600;color:var(--el-text-color-primary);margin-bottom:8px}
+.result-sub{text-align:center;font-size:13px;color:var(--el-text-color-secondary);margin-bottom:16px}
+
+.anno-header{padding:16px;position:sticky;top:0;z-index:2;background:var(--el-bg-color);border-bottom:1px solid var(--el-border-color-light)}
+.anno-title{margin:0;font-size:14px;font-weight:700}
+.anno-caption{font-size:12px;color:var(--el-text-color-secondary);margin-top:6px;line-height:1.6}
+.anno-list{padding:12px;overflow-y:auto}
+.anno-scenario{margin:0;padding:8px 16px;border-radius:0;border-left:0;border-right:0;border-top:0}
+.anno-card{margin-bottom:12px;padding:14px;background:#fff;border:1px solid var(--el-border-color-light);border-radius:var(--radius)}
+.anno-number{display:inline-grid;width:22px;height:22px;place-items:center;border-radius:50%;background:var(--annotation-accent);color:#5a3e00;font-size:12px;font-weight:700;margin-right:8px;flex:0 0 auto}
+.anno-card-title{display:flex;align-items:center;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--el-text-color-primary)}
+.anno-card-body{font-size:13px;line-height:1.7;color:var(--el-text-color-regular)}
+.anno-card-body p{margin:4px 0}
+.anno-card-body ul{margin:4px 0;padding-left:18px}
+.anno-card-body li{margin:2px 0}
+.anno-card-body .code{font-family:monospace;background:#f5f7fa;padding:1px 4px;border-radius:2px;font-size:12px}
+.anno-card-body .label-tag{display:inline-block;background:var(--el-color-primary-light-9);color:var(--el-color-primary);font-size:11px;padding:1px 6px;border-radius:2px;margin-right:4px}
+.anno-card-body .label-danger{background:var(--el-color-danger-light);color:var(--el-color-danger)}
+.anno-card-body .label-warn{background:var(--el-color-warning-light);color:var(--el-color-warning)}
+.anno-card-body .label-ok{background:var(--el-color-success-light);color:var(--el-color-success)}
+
+.anchor-badge{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;background:var(--annotation-accent);color:#5a3e00;font-size:11px;font-weight:700;margin-left:6px;vertical-align:middle;flex:0 0 auto}
+
+@media(max-width:900px){
+  .prototype-shell{grid-template-columns:1fr}
+  .prototype-right{height:auto;max-height:45vh;border-left:0;border-top:1px solid var(--el-border-color-light)}
+  .app{min-width:100%}
+  .aside{display:none}
+  .meta-grid{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .impact-grid{grid-template-columns:1fr}
+  .modal{width:95%}
+}
+</style>
+</head>
+<body>
+<div class="prototype-shell">
+<div class="prototype-left">
+<div class="app">
+<aside class="aside">
+  <div class="brand"><div class="brand-mark">L</div><div>LuteOS IoT<br><span class="brand-subtitle">Admin Platform</span></div></div>
+  <nav class="menu">
+    <div class="menu-group-title">产品管理</div>
+    <div class="menu-item active"><span class="menu-dot"></span>智能产品</div>
+    <div class="menu-item"><span class="menu-dot"></span>设备管理</div>
+    <div class="menu-item"><span class="menu-dot"></span>固件管理</div>
+    <div class="menu-item"><span class="menu-dot"></span>OTA任务</div>
+    <div class="menu-group-title">应用管理</div>
+    <div class="menu-item"><span class="menu-dot"></span>App管理</div>
+    <div class="menu-item"><span class="menu-dot"></span>消息推送</div>
+    <div class="menu-group-title">配置中心</div>
+    <div class="menu-item"><span class="menu-dot"></span>物模型池</div>
+    <div class="menu-item"><span class="menu-dot"></span>产品模板</div>
+    <div class="menu-group-title">生产管理</div>
+    <div class="menu-item"><span class="menu-dot"></span>生产凭证</div>
+    <div class="menu-item"><span class="menu-dot"></span>生产记录</div>
+  </nav>
+</aside>
+<div class="shell-area">
+<header class="header">
+  <div class="breadcrumb">IoT Admin / 智能产品 / <strong>产品详情</strong></div>
+  <div class="userbar"><span>admin@luteos</span><div class="avatar">A</div></div>
+</header>
+<div class="content" id="content"></div>
+</div>
+</div>
+</div>
+<aside class="prototype-right">
+  <div class="anno-header">
+    <h2 class="anno-title">原型批注</h2>
+    <div class="anno-caption">黄色编号是批注锚点，不属于真实 IoT Admin 页面。点击下方场景按钮切换状态。</div>
+  </div>
+ <div id="scenarioBar"></div>
+ <div class="anno-list" id="annoList"></div>
+</aside>
+</div>
+<div class="modal-scrim" id="modalScrim"></div>
+<script>
+const STATES = {
+  DEFAULT: 'default', PRECHECK: 'precheck', CONFLICT: 'conflict',
+  OVERWRITE: 'overwrite', NEW_PRODUCT: 'newProduct', SYNCING: 'syncing',
+  SUCCESS: 'success', FAILURE: 'failure'
+};
+let currentState = STATES.DEFAULT;
+let scenario = 'conflict';
+let overwriteChecked = false;
+let syncResultType = '新建产品';
+let syncTimer = null;
+let syncSteps = [
+  {name:'step0 基础信息',status:'pending'},
+  {name:'step1 功能设计',status:'pending'},
+  {name:'step2 扩展程序（panelImpType）',status:'pending'},
+  {name:'step3 设备调试（协议转换脚本）',status:'pending'},
+  {name:'step4 配网引导',status:'pending'},
+  {name:'step5 高级配置',status:'pending'},
+  {name:'产品级 secret',status:'pending'}
+];
+
+const productData = {
+  name: 'W1 Lite', productId: '2075767415740338177', productKey: 'a1b2c3d4e5f6',
+  cloud: 'ROOT云', status: '已上架', category: 'Breast Pump', model: 'W1Lite',
+  commMethod: 'BLE', provisioning: '蓝牙配网', binding: '弱绑定', app: 'momcozy',
+  funcVersion: '版本1 - 已发布', productCode: '--', templateId: '1907328212561108993'
+};
+
+const conflictData = {
+  targetName: 'W1 Lite', productKey: 'a1b2c3d4e5f6',
+  deviceCount: 128, otaTasks: 3, messageRules: 5, appBindings: 2,
+  diffs: [
+    {field:'产品状态',from:'已上架',to:'开发中'},
+    {field:'功能版本',from:'版本1 - 已发布',to:'未发布'},
+    {field:'配网交互方式',from:'CONNECT_F0',to:'CONNECT_F1'},
+    {field:'原子化配网',from:'支持',to:'不支持'}
+  ]
+};
+
+function renderContent(){
+  document.getElementById('content').innerHTML = renderDefaultPage();
+  renderModal();
+}
+
+function renderDefaultPage(){
+  var s = currentState;
+  return '' +
+  '<div class="product-summary">' +
+    '<div class="product-title-row">' +
+      '<div class="product-name-line">' +
+        '<h1 class="product-name">'+productData.name+'</h1>' +
+        '<span class="tag tag-success">'+productData.status+'</span>' +
+        '<span class="tag tag-info">'+productData.cloud+'</span>' +
+        '<span class="product-cloud">功能版本：'+productData.funcVersion+'</span>' +
+      '</div>' +
+      '<div class="product-actions">' +
+        '<button class="btn btn-sm">发布</button>' +
+        '<button class="btn btn-sm">下架</button>' +
+        '<button class="btn btn-sm btn-primary" onclick="clickSync()">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>' +
+          '同步到生产环境</button>' +
+        '<span class="anchor-badge">1</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="meta-grid">' +
+      '<div class="meta-item"><div class="meta-label">产品ID</div><div class="meta-value">'+productData.productId+'</div></div>' +
+      '<div class="meta-item"><div class="meta-label">productKey</div><div class="meta-value">'+productData.productKey+'</div></div>' +
+      '<div class="meta-item"><div class="meta-label">产品分类</div><div class="meta-value">'+productData.category+'</div></div>' +
+      '<div class="meta-item"><div class="meta-label">产品型号</div><div class="meta-value">'+productData.model+'</div></div>' +
+      '<div class="meta-item"><div class="meta-label">通讯方式</div><div class="meta-value">'+productData.commMethod+'</div></div>' +
+      '<div class="meta-item"><div class="meta-label">所属App</div><div class="meta-value">'+productData.app+'</div></div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="tabs">' +
+    '<button class="tab active">step0 基础信息</button>' +
+    '<button class="tab">step1 功能设计</button>' +
+    '<button class="tab">step2 扩展程序</button>' +
+    '<button class="tab">step3 设备调试</button>' +
+    '<button class="tab">step4 配网引导</button>' +
+    '<button class="tab">step5 高级配置</button>' +
+  '</div>' +
+  '<div class="panel">' +
+    '<div class="panel-header">' +
+      '<h2 class="panel-title">基础信息</h2>' +
+      '<div><button class="btn btn-sm">编辑产品信息</button></div>' +
+    '</div>' +
+    '<div class="panel-main">' +
+      '<div class="form-row">' +
+        '<div class="form-item"><label>产品名称</label><div class="val">'+productData.name+'</div></div>' +
+        '<div class="form-item"><label>产品ID</label><div class="val readonly">'+productData.productId+'</div></div>' +
+        '<div class="form-item"><label>productKey</label><div class="val">'+productData.productKey+'<span class="anchor-badge">2</span></div></div>' +
+        '<div class="form-item"><label>产品型号</label><div class="val">'+productData.model+'</div></div>' +
+        '<div class="form-item"><label>通讯方式</label><div class="val readonly">'+productData.commMethod+'<span style="font-size:11px;color:#909399;margin-left:6px">创建后不可修改</span></div></div>' +
+        '<div class="form-item"><label>配网方式</label><div class="val">'+productData.provisioning+'</div></div>' +
+        '<div class="form-item"><label>绑定方式</label><div class="val">'+productData.binding+'</div></div>' +
+        '<div class="form-item"><label>所属App</label><div class="val">'+productData.app+'</div></div>' +
+      '</div>' +
+      '<div style="margin-top:20px">' +
+        '<table class="kv-table">' +
+          '<tr><th>原子化配网</th><td>支持</td><th>设备类型</th><td>直连设备</td></tr>' +
+          '<tr><th>配网交互方式</th><td>CONNECT_F0</td><th>产品共享</th><td>开启</td></tr>' +
+          '<tr><th>产品模板ID</th><td>'+productData.templateId+'</td><th>产品代码</th><td>'+productData.productCode+'</td></tr>' +
+        '</table>' +
+      '</div>' +
+      '<div style="margin-top:20px">' +
+        '<span class="anchor-badge">3</span>' +
+        '<span style="font-size:13px;color:var(--el-text-color-secondary);margin-left:8px">同步范围与排除项详见右侧批注</span>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderModal(){
+  var scrim = document.getElementById('modalScrim');
+  var html = '';
+  switch(currentState){
+    case STATES.PRECHECK: html = renderPrecheckModal(); break;
+    case STATES.CONFLICT: html = renderConflictModal(); break;
+    case STATES.OVERWRITE: html = renderOverwriteModal(); break;
+    case STATES.NEW_PRODUCT: html = renderNewProductModal(); break;
+    case STATES.SYNCING: html = renderSyncingModal(); break;
+    case STATES.SUCCESS: html = renderSuccessModal(); break;
+    case STATES.FAILURE: html = renderFailureModal(); break;
+  }
+  if(html){ scrim.innerHTML = html; scrim.classList.add('open'); }
+  else { scrim.classList.remove('open'); scrim.innerHTML = ''; }
+}
+
+function renderPrecheckModal(){
+  return '<div class="modal"><div class="modal-body" style="padding:40px 20px">' +
+    '<div class="spinner"></div><div class="loading-text">正在检查生产环境…</div>' +
+    '</div></div>';
+}
+
+function renderConflictModal(){
+  var d = conflictData;
+  return '<div class="modal wide">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">5</span>产品同步冲突</h3>' +
+    '<button class="modal-close" onclick="goDefault()">×</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="warning-box"><span class="icon">⚠</span><span>生产环境已存在相同 productKey（<b>'+d.productKey+'</b>）的产品「<b>'+d.targetName+'</b>」（生产环境）</span></div>' +
+      '<div class="impact-grid">' +
+        '<div class="impact-card"><div class="num danger">'+d.deviceCount+'</div><div class="lbl">已关联设备</div></div>' +
+        '<div class="impact-card"><div class="num">'+d.otaTasks+'</div><div class="lbl">OTA 任务</div></div>' +
+        '<div class="impact-card"><div class="num">'+d.messageRules+'</div><div class="lbl">消息推送规则</div></div>' +
+        '<div class="impact-card"><div class="num">'+d.appBindings+'</div><div class="lbl">App 绑定</div></div>' +
+      '</div>' +
+      '<div style="margin-top:16px"><span class="anchor-badge" style="margin-right:8px">6</span><b style="font-size:14px">字段级差异</b></div>' +
+      '<table class="diff-table" style="margin-top:8px">' +
+        '<tr><th>字段名</th><th>源环境（dev）</th><th></th><th>目标环境（prod）</th></tr>' +
+        d.diffs.map(function(f){ return '<tr><td>'+f.field+'</td><td class="from">'+f.from+'</td><td class="arrow">→</td><td class="to">'+f.to+'</td></tr>'; }).join('') +
+      '</table>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+      '<button class="btn" onclick="goDefault()"><span class="anchor-badge" style="margin-right:6px">7</span>放弃同步</button>' +
+      '<button class="btn btn-danger" onclick="goOverwrite()">强制覆盖</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderOverwriteModal(){
+  var d = conflictData;
+  return '<div class="modal">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">8</span>确认强制覆盖</h3>' +
+    '<button class="modal-close" onclick="goConflict()">×</button></div>' +
+    '<div class="modal-body">' +
+      '<p style="font-size:14px;color:var(--el-text-color-regular)">强制覆盖将用当前产品数据替换生产环境产品「'+d.targetName+'」的配置。此操作不可撤销。</p>' +
+      '<div class="danger-box"><span class="icon">⚠</span><span>该产品已关联 <b>'+d.deviceCount+'</b> 台设备，覆盖产品配置可能影响设备认证和功能。</span><span class="anchor-badge" style="margin-left:auto">9</span></div>' +
+      '<label class="checkbox-row"><input type="checkbox" id="overwriteChk" onchange="toggleOverwrite(this)"><span>我已了解覆盖风险</span><span class="anchor-badge" style="margin-left:auto">10</span></label>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+      '<button class="btn" onclick="goConflict()">取消</button>' +
+      '<button class="btn btn-danger" id="overwriteBtn" disabled onclick="startSync(\'overwrite\')"><span class="anchor-badge" style="margin-right:6px">11</span>确认覆盖</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderNewProductModal(){
+  return '<div class="modal wide">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">12</span>确认同步到生产环境</h3>' +
+    '<button class="modal-close" onclick="goDefault()">×</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="info-box">将在生产环境新建一个产品（productKey: <b>'+productData.productKey+'</b>），并将当前产品详情同步过去。新建产品默认状态为「开发中」。</div>' +
+      '<div style="margin-top:16px"><b style="font-size:14px"><span class="anchor-badge" style="margin-right:8px">13</span>同步范围</b></div>' +
+      '<ul class="range-list">' +
+        '<li class="range-item"><span class="dot"></span>step0 基础信息（产品名称、型号、分类、productKey、配网方式等）</li>' +
+        '<li class="range-item"><span class="dot"></span>step1 功能设计（物模型功能/属性/方法/数据定义）</li>' +
+        '<li class="range-item"><span class="dot"></span>step2 扩展程序（panelImpType）</li>' +
+        '<li class="range-item"><span class="dot"></span>step3 设备调试（协议转换脚本）</li>' +
+        '<li class="range-item"><span class="dot"></span>step4 配网引导（蓝牙配网引导、多语言文案）</li>' +
+        '<li class="range-item"><span class="dot"></span>step5 高级配置（新手指导、云倒计时等子模块）</li>' +
+        '<li class="range-item"><span class="dot"></span>产品级 secret（默认直接复制 dev 值到 prod）</li>' +
+      '</ul>' +
+      '<div style="margin-top:8px"><b style="font-size:14px">以下内容不同步：</b></div>' +
+      '<ul class="excl-list">' +
+        '<li class="excl-item"><span class="dot"></span>设备三元组（deviceName / productKey / Mac / SN）</li>' +
+        '<li class="excl-item"><span class="dot"></span>测试设备 / 测试固件 / 测试白名单</li>' +
+        '<li class="excl-item"><span class="dot"></span>RN 面板包资源</li>' +
+        '<li class="excl-item"><span class="dot"></span>panelCode / 面板版本 / 最低容器版本</li>' +
+      '</ul>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+      '<button class="btn" onclick="goDefault()">取消</button>' +
+      '<button class="btn btn-primary" onclick="startSync(\'new\')"><span class="anchor-badge" style="margin-right:6px">14</span>确认同步</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderSyncingModal(){
+  var icons = {
+    pending: '<div class="progress-icon pending"></div>',
+    syncing: '<div class="progress-icon syncing"></div>',
+    success: '<div class="progress-icon success">✓</div>',
+    failure: '<div class="progress-icon failure">×</div>'
+  };
+  var labels = {pending:'等待中',syncing:'同步中…',success:'同步成功',failure:'同步失败'};
+  return '<div class="modal">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">15</span>正在同步到生产环境…</h3></div>' +
+    '<div class="modal-body"><div class="progress-list">' +
+      syncSteps.map(function(s){
+        return '<div class="progress-item">' + icons[s.status] +
+          '<span class="progress-name">'+s.name+'</span>' +
+          '<span class="progress-status">'+labels[s.status] +
+          (s.error?'<span class="progress-error">：'+s.error+'</span>':'') +
+          '</span></div>';
+      }).join('') +
+    '</div></div>' +
+    '<div class="modal-footer"><button class="btn" onclick="cancelSync()">取消同步</button></div>' +
+  '</div>';
+}
+
+function renderSuccessModal(){
+  return '<div class="modal">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">16</span>同步完成</h3>' +
+    '<button class="modal-close" onclick="goDefault()">×</button></div>' +
+    '<div class="modal-body" style="text-align:center">' +
+      '<div class="result-icon success">✓</div>' +
+      '<div class="result-text">产品「'+productData.name+'」已成功同步到生产环境</div>' +
+      '<div class="result-sub">操作类型：'+syncResultType+'</div>' +
+      '<div style="margin-top:16px;text-align:left">' +
+        '<table class="kv-table">' +
+          syncSteps.map(function(s){ return '<tr><th>'+s.name+'</th><td><span class="tag tag-success">同步成功</span></td></tr>'; }).join('') +
+        '</table>' +
+      '</div>' +
+      '<div class="info-box" style="text-align:center">同步操作已记录审计日志</div>' +
+    '</div>' +
+    '<div class="modal-footer"><button class="btn btn-primary" onclick="goDefault()">关闭</button></div>' +
+  '</div>';
+}
+
+function renderFailureModal(){
+  return '<div class="modal wide">' +
+    '<div class="modal-header"><h3 class="modal-title"><span class="anchor-badge" style="margin-right:8px">17</span>同步失败</h3>' +
+    '<button class="modal-close" onclick="goDefault()">×</button></div>' +
+    '<div class="modal-body" style="text-align:center">' +
+      '<div class="result-icon failure">×</div>' +
+      '<div class="result-text">产品同步过程中发生错误，已回滚已同步的数据</div>' +
+      '<div class="result-sub">生产环境数据已恢复</div>' +
+      '<div style="margin-top:16px;text-align:left">' +
+        '<table class="kv-table">' +
+          syncSteps.map(function(s,i){
+            if(s.status==='success') return '<tr><th>'+s.name+'</th><td><span class="tag tag-success">同步成功</span></td><td><span class="tag tag-gray">已回滚</span></td></tr>';
+            if(s.status==='failure') return '<tr><th>'+s.name+'</th><td><span class="tag tag-danger">同步失败</span></td><td>'+(s.error||'连接超时')+'</td></tr>';
+            return '<tr><th>'+s.name+'</th><td><span class="tag tag-gray">未执行</span></td><td>-</td></tr>';
+          }).join('') +
+        '</table>' +
+      '</div>' +
+      '<div class="danger-box" style="text-align:center">已自动回滚已同步的数据，生产环境数据已恢复</div>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+      '<button class="btn" onclick="goDefault()">关闭</button>' +
+      '<button class="btn btn-primary" onclick="retrySync()"><span class="anchor-badge" style="margin-right:6px">18</span>重试同步</button>' +
+    '</div>' +
+  '</div>';
+}
+var annotations = {
+  default: [
+    {n:1,title:'同步到生产环境按钮',body:'<p><span class="label-tag">功能提示</span></p><p><b>是什么</b>：产品详情页顶部工具栏区域，与「发布」「下架」等操作按钮同组的文字+图标按钮。</p><p><b>点击后</b>：前端先检查当前产品是否有有效 productKey；有则进入预检流程。</p><ul><li><b>权限可见性</b>：仅拥有「跨环境同步」权限（product:sync-to-production）的用户可见；无权限不显示</li><li><b>前置校验</b>：无 productKey 时提示「当前产品未生成 productKey，无法同步」</li><li><b>按钮样式</b>：使用同步/上传图标（lucide upload-cloud 或 refresh-cw）</li></ul>'},
+    {n:2,title:'productKey 前置校验',body:'<p><b>是什么</b>：点击「同步到生产环境」时前端先检查当前产品的 productKey 是否有效。</p><p><b>校验失败</b>：弹出提示「当前产品未生成 productKey，无法同步」，不进入预检流程。</p><p><b>数据来源</b>：产品基础信息中的 productKey 字段，样例值为 <span class="code">a1b2c3d4e5f6</span></p>'},
+    {n:3,title:'同步范围与排除项',body:'<p><span class="label-tag label-ok">同步范围</span></p><ul><li>step0 基础信息：产品名称、型号、分类、productKey、配网方式等</li><li>step1 功能设计：物模型功能/属性/方法/数据定义</li><li>step2 扩展程序：<b>仅 panelImpType</b>，panelCode/面板版本/最低容器版本后续迭代再决定</li><li>step3 设备调试：协议转换脚本（排除测试设备/固件/白名单）</li><li>step4 配网引导：蓝牙配网引导、多语言文案</li><li>step5 高级配置：子模块开关与内容</li><li>产品级 secret：<b>默认直接复制 dev 值到 prod</b>，prod 已支持手动上传/更新</li></ul><p><span class="label-tag label-danger">排除项</span></p><ul><li>设备三元组（设备级，不在产品详情范围）</li><li>测试设备/测试固件/测试白名单（dev 调试数据）</li><li>RN 面板包资源（独立技术事项，后续排期）</li><li>panelCode/面板版本/最低容器版本（后续迭代决定）</li></ul>'},
+    {n:4,title:'场景切换说明',body:'<p><span class="label-tag label-warn">原型备注</span></p><p>顶部黄色场景条为原型辅助工具，不属于真实产品 UI。点击场景按钮可快速跳转到对应状态查看批注。</p><ul><li><b>冲突弹窗</b>：模拟生产环境已存在相同 productKey</li><li><b>新建确认</b>：模拟生产环境不存在相同 productKey</li><li><b>同步执行中</b>：展示 step 级进度（自动播放）</li><li><b>同步成功/失败</b>：展示结果弹窗</li></ul><p>也可点击产品页中的「同步到生产环境」按钮体验完整流程：预检 → 冲突/新建 → 确认 → 同步 → 结果</p>'}
+  ],
+  precheck: [
+    {n:5,title:'预检加载与请求',body:'<p><b>是什么</b>：点击「同步到生产环境」后，前端以 productKey 为参数查询生产环境是否存在相同 productKey 的产品。</p><p><b>展示形态</b>：Modal 居中展示，不可关闭（无 × 按钮），展示 loading 旋转图标和文案「正在检查生产环境…」</p><p><b>预检结果</b>：</p><ul><li>生产环境已存在相同 productKey → 展示冲突弹窗</li><li>生产环境不存在相同 productKey → 展示新建确认弹窗</li></ul><p><b>预检失败</b>：请求失败时提示「无法连接生产环境，请稍后重试」并关闭 loading</p>'}
+  ],
+  conflict: [
+    {n:5,title:'冲突弹窗',body:'<p><b>是什么</b>：生产环境已存在相同 productKey 时展示的 Modal 弹窗，居中展示。</p><p><b>弹窗标题</b>：「产品同步冲突」</p><p><b>冲突说明</b>：展示文案「生产环境已存在相同 productKey（{productKey}）的产品「{targetProductName}」」</p><p><b>关闭行为</b>：点击「放弃同步」或关闭(×) → 关闭弹窗，不向生产环境写入任何数据，返回产品详情页</p>'},
+    {n:6,title:'影响展示',body:'<p><b>是什么</b>：冲突弹窗中展示的对生产环境现有产品的影响信息。</p><ul><li><b>设备数</b>：展示「已关联设备：{connectedDeviceCount} 台」，为 0 时仍展示</li><li><b>下游引用</b>：OTA 任务 {otaTaskCount} 个、消息推送规则 {messagePushRuleCount} 条、App 绑定 {appBindingCount} 个，为 0 时仍展示</li><li><b>字段 diff</b>：展示字段级差异列表，每行显示「字段名 | 源环境值 → 目标环境值」，仅展示有差异的字段</li></ul><p><span class="label-tag label-warn">原型备注</span> 字段 diff 必须展示源环境值与目标环境值的对比，不能只展示字段名。</p>'},
+    {n:7,title:'放弃同步/强制覆盖按钮',body:'<p><b>放弃同步</b>：次要按钮，位于左侧，点击后关闭弹窗，不写入数据，返回产品详情页</p><p><b>强制覆盖</b>：危险按钮，位于右侧，使用红色/警告色，点击后进入强制覆盖二次确认弹窗</p>'}
+  ],
+  overwrite: [
+    {n:8,title:'强制覆盖二次确认',body:'<p><b>触发条件</b>：用户在冲突弹窗中点击「强制覆盖」后弹出</p><p><b>弹窗标题</b>：「确认强制覆盖」</p><p><b>覆盖说明</b>：展示文案「强制覆盖将用当前产品数据替换生产环境产品「{targetProductName}」的配置。此操作不可撤销。」</p><p><b>取消按钮</b>：点击后返回冲突弹窗</p>'},
+    {n:9,title:'风险提示',body:'<p><b>是什么</b>：当生产环境产品已关联设备时展示的警告文案。</p><p><b>展示规则</b>：设备数 > 0 时展示「该产品已关联 {connectedDeviceCount} 台设备，覆盖产品配置可能影响设备认证和功能。」；设备数为 0 时不展示</p>'},
+    {n:10,title:'确认勾选与按钮状态',body:'<p><b>确认勾选</b>：展示复选框「我已了解覆盖风险」，必须勾选后「确认覆盖」按钮才可点击</p><p><b>按钮状态</b>：</p><ul><li>未勾选时：「确认覆盖」按钮禁用（disabled 灰色态）</li><li>勾选后：「确认覆盖」按钮激活为危险按钮</li></ul><p><b>确认后行为</b>：点击「确认覆盖」→ 关闭弹窗，开始同步执行流程</p>'},
+    {n:11,title:'确认覆盖按钮',body:'<p><b>是什么</b>：危险按钮，文案「确认覆盖」，位于弹窗右下角。</p><p><b>点击后</b>：关闭弹窗，开始同步执行流程，展示同步进度弹窗。</p><p><b>禁用条件</b>：未勾选「我已了解覆盖风险」复选框时按钮禁用。</p>'}
+  ],
+  newProduct: [
+    {n:12,title:'新建确认弹窗',body:'<p><b>是什么</b>：生产环境不存在相同 productKey 时展示的 Modal 弹窗。</p><p><b>弹窗标题</b>：「确认同步到生产环境」</p><p><b>新建说明</b>：展示文案「将在生产环境新建一个产品（productKey: {productKey}），并将当前产品详情同步过去。新建产品默认状态为「开发中」。」</p><p><b>关闭行为</b>：点击「取消」或关闭(×) → 关闭弹窗，返回产品详情页</p>'},
+    {n:13,title:'同步范围摘要',body:'<p><b>是什么</b>：新建确认弹窗中展示的同步范围列表。</p><p><b>列表内容</b>：</p><ul><li>step0 基础信息</li><li>step1 功能设计</li><li>step2 扩展程序（<b>panelImpType</b>）</li><li>step3 设备调试（协议转换脚本）</li><li>step4 配网引导</li><li>step5 高级配置</li><li>产品级 secret（默认直接复制 dev 值）</li></ul><p><b>排除项提示</b>：展示文案「以下内容不同步：设备三元组、测试设备/测试固件/测试白名单、RN 面板包资源、panelCode/面板版本/最低容器版本」</p>'},
+    {n:14,title:'确认同步按钮',body:'<p><b>是什么</b>：主要按钮，文案「确认同步」，位于弹窗右下角。</p><p><b>点击后</b>：关闭弹窗，开始同步执行流程，展示同步进度弹窗。</p>'}
+  ],
+  syncing: [
+    {n:15,title:'同步执行中',body:'<p><b>是什么</b>：同步执行过程中的 Modal 弹窗，不可关闭（无 × 按钮）。</p><p><b>标题</b>：「正在同步到生产环境…」</p><p><b>展示形态</b>：Modal 居中展示，展示 step 级进度列表</p>'},
+    {n:16,title:'step 级进度列表',body:'<p><b>是什么</b>：同步执行中展示的各 step 同步进度。</p><p><b>进度项顺序</b>：step0 基础信息 → step1 功能设计 → step2 扩展程序（panelImpType） → step3 设备调试 → step4 配网引导 → step5 高级配置 → 产品级 secret</p><p><b>四种状态</b>：</p><ul><li><b>等待</b>：灰色圆圈，文案「等待中」</li><li><b>同步中</b>：蓝色旋转图标，文案「同步中…」</li><li><b>成功</b>：绿色对勾，文案「同步成功」</li><li><b>失败</b>：红色叉号，文案「同步失败：{错误原因}」</li></ul>'},
+    {n:17,title:'取消同步',body:'<p><b>是什么</b>：同步执行中底部展示的「取消同步」按钮。</p><p><b>点击后</b>：弹出确认「确定要取消同步吗？已同步的数据将被回滚。」</p><p><b>取消后行为</b>：触发回滚流程，已同步的数据被回滚</p>'}
+  ],
+  success: [
+    {n:16,title:'同步完成弹窗',body:'<p><b>弹窗标题</b>：「同步完成」</p><p><b>结果摘要</b>：展示文案「产品「{productName}」已成功同步到生产环境」</p><p><b>操作类型标识</b>：展示本次操作类型：「新建产品」或「强制覆盖」</p><p><b>结果明细</b>：展示所有 step 的结果列表，每项成功</p><p><b>审计提示</b>：展示文案「同步操作已记录审计日志」</p><p><b>关闭按钮</b>：主要按钮，文案「关闭」，点击后返回产品详情页</p>'}
+  ],
+  failure: [
+    {n:17,title:'同步失败弹窗',body:'<p><b>弹窗标题</b>：「同步失败」</p><p><b>结果摘要</b>：展示文案「产品同步过程中发生错误，已回滚已同步的数据」</p><p><b>结果明细</b>：展示所有 step 的结果列表，含成功项、失败项（含错误原因）、已回滚项</p><p><b>关闭按钮</b>：次要按钮，点击后返回产品详情页</p>'},
+    {n:18,title:'回滚与重试',body:'<p><b>回滚提示</b>：展示文案「已自动回滚已同步的数据，生产环境数据已恢复」</p><p><b>回滚失败</b>：若回滚也失败，提示「同步失败且回滚异常，请联系系统管理员处理」，展示人工介入指引</p><p><b>重试按钮</b>：主要按钮，文案「重试同步」，点击后重新开始同步执行（针对失败 step），已完成 step 不重复写入（幂等）</p><p><b>网络超时</b>：同步执行中网络超时 → 自动标记当前 step 为失败，触发回滚流程</p>'}
+  ]
+};
+
+function renderScenarioBar(){
+  var s = currentState;
+  document.getElementById('scenarioBar').innerHTML =
+    '<div class="scenario-bar anno-scenario">' +
+      '<span class="label">原型场景切换</span>' +
+      '<button class="scenario-btn '+(s===STATES.DEFAULT?'active':'')+'" onclick="goDefault()">默认页面</button>' +
+      '<button class="scenario-btn '+(s===STATES.CONFLICT?'active':'')+'" onclick="goConflict()">冲突弹窗</button>' +
+      '<button class="scenario-btn '+(s===STATES.NEW_PRODUCT?'active':'')+'" onclick="goNewProduct()">新建确认</button>' +
+      '<button class="scenario-btn '+(s===STATES.SYNCING?'active':'')+'" onclick="goSyncing()">同步执行中</button>' +
+      '<button class="scenario-btn '+(s===STATES.SUCCESS?'active':'')+'" onclick="goSuccess()">同步成功</button>' +
+      '<button class="scenario-btn '+(s===STATES.FAILURE?'active':'')+'" onclick="goFailure()">同步失败</button>' +
+    '</div>';
+}
+
+function renderAnnotations(){
+  var list = annotations[currentState] || [];
+  document.getElementById('annoList').innerHTML = list.map(function(a){
+    return '<div class="anno-card">' +
+      '<div class="anno-card-title"><span class="anno-number">'+a.n+'</span>'+a.title+'</div>' +
+      '<div class="anno-card-body">'+a.body+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+function goDefault(){ cleanup(); currentState=STATES.DEFAULT; render(); }
+function goConflict(){ currentState=STATES.CONFLICT; render(); }
+function goOverwrite(){ overwriteChecked=false; currentState=STATES.OVERWRITE; render(); }
+function goNewProduct(){ currentState=STATES.NEW_PRODUCT; render(); }
+function goSyncing(){ resetSteps(); currentState=STATES.SYNCING; render(); runSyncStep(0); }
+function goSuccess(){ syncSteps=syncSteps.map(function(s){return{name:s.name,status:'success',error:null};}); currentState=STATES.SUCCESS; render(); }
+function goFailure(){ setFailureSteps(); currentState=STATES.FAILURE; render(); }
+
+function clickSync(){
+  currentState = STATES.PRECHECK;
+  render();
+  setTimeout(function(){
+    if(scenario==='conflict') goConflict();
+    else goNewProduct();
+  },1500);
+}
+
+function toggleOverwrite(el){
+  overwriteChecked = el.checked;
+  var btn = document.getElementById('overwriteBtn');
+  if(btn) btn.disabled = !overwriteChecked;
+}
+
+function resetSteps(){
+  syncSteps = syncSteps.map(function(s){return{name:s.name,status:'pending',error:null};});
+}
+
+function setFailureSteps(){
+  syncSteps = syncSteps.map(function(s,i){
+    if(i<2) return{name:s.name,status:'success',error:null};
+    if(i===2) return{name:s.name,status:'failure',error:'连接超时'};
+    return{name:s.name,status:'pending',error:null};
+  });
+}
+
+function startSync(type){
+  syncResultType = type==='overwrite'?'强制覆盖':'新建产品';
+  resetSteps();
+  currentState = STATES.SYNCING;
+  render();
+  runSyncStep(0);
+}
+
+function runSyncStep(i){
+  if(i>=syncSteps.length){
+    currentState = STATES.SUCCESS;
+    render();
+    return;
+  }
+  syncSteps[i].status = 'syncing';
+  renderModal();
+  setTimeout(function(){
+    syncSteps[i].status = 'success';
+    runSyncStep(i+1);
+  },800);
+}
+
+function cancelSync(){
+  cleanup();
+  goDefault();
+}
+
+function retrySync(){
+  resetSteps();
+  currentState = STATES.SYNCING;
+  render();
+  runSyncStep(0);
+}
+
+function cleanup(){
+  if(syncTimer){ clearTimeout(syncTimer); syncTimer=null; }
+}
+
+function render(){ renderContent(); renderScenarioBar(); renderAnnotations(); }
+render();
+</script>
+</body>
+</html>
