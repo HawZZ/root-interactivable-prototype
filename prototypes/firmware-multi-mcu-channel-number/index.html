@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>固件多 MCU 通道号 - 可交互原型</title>
+<title>固件多 MCU 通道号 + 虚拟版本 - 可交互原型</title>
 <style>
 :root{
   --el-color-primary:#4372ff;--el-color-primary-light-9:#ecf5ff;--el-color-primary-light-7:#e0ecff;
@@ -79,13 +79,6 @@ button,input,select,textarea{font:inherit;cursor:pointer;}
 .form-footer{display:flex;justify-content:flex-end;gap:var(--gap-12);margin-top:var(--gap-24);padding-top:var(--gap-16);border-top:1px solid var(--el-border-color-lighter);}
 .upload-area{border:1px dashed var(--el-border-color);border-radius:var(--radius);padding:20px;text-align:center;color:var(--el-text-color-secondary);font-size:14px;cursor:pointer;}
 .upload-area:hover{border-color:var(--el-color-primary);color:var(--el-color-primary);}
-.fail-closed-demo{background:var(--el-bg-color);border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-24);}
-.fail-closed-demo h3{margin:0 0 var(--gap-16);font-size:16px;}
-.scenario-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--gap-16);}
-.scenario-card{border:1px solid var(--el-border-color-light);border-radius:var(--radius);padding:var(--gap-16);background:#fafbfc;}
-.scenario-card h4{margin:0 0 8px;font-size:14px;color:var(--el-text-color-primary);}
-.scenario-card .desc{font-size:13px;color:var(--el-text-color-secondary);line-height:1.6;margin-bottom:8px;}
-.scenario-card .result{font-size:13px;}
 .pane-header{position:sticky;top:0;z-index:2;padding:16px;background:var(--el-bg-color);border-bottom:1px solid var(--el-border-color-light);}
 .pane-title{margin:0;font-size:14px;font-weight:700;}
 .pane-subtitle{font-size:12px;color:var(--el-text-color-secondary);margin-top:4px;}
@@ -117,6 +110,18 @@ button,input,select,textarea{font:inherit;cursor:pointer;}
 .toast.show{display:block;}
 .toast-success{background:#f0f9eb;color:var(--el-color-success);border:1px solid #e1f3d8;}
 .toast-error{background:#fef0f0;color:var(--el-color-danger);border:1px solid #fde2e2;}
+.vv-section{margin-top:var(--gap-24);}
+.vv-section-title{font-size:14px;font-weight:500;margin:0 0 var(--gap-12);color:var(--el-text-color-primary);}
+.vv-mcu-table{width:100%;border-collapse:collapse;background:#fafbfc;border:1px solid var(--el-border-color-light);border-radius:var(--radius);overflow:hidden;margin-bottom:var(--gap-12);}
+.vv-mcu-table th{background:#f0f2f5;color:var(--el-text-color-secondary);font-size:13px;font-weight:600;padding:8px 12px;text-align:left;border-bottom:1px solid var(--el-border-color-lighter);}
+.vv-mcu-table td{padding:8px 12px;border-bottom:1px solid var(--el-border-color-lighter);}
+.vv-mcu-table input{height:30px;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 8px;font-size:13px;width:100%;background:var(--el-bg-color);}
+.vv-mcu-table select{height:30px;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 8px;font-size:13px;width:100%;background:var(--el-bg-color);}
+.vv-mcu-table tr.vv-row-conflict td{background:#fef0f0 !important;}
+.vv-constraint-hint{font-size:12px;color:var(--el-text-color-secondary);margin-top:8px;line-height:1.6;}
+.vv-display{font-size:13px;color:var(--el-text-color-regular);padding:0 4px;}
+.vv-display.muted{color:var(--el-text-color-placeholder);}
+.vv-add-row{display:flex;justify-content:center;margin-bottom:var(--gap-16);}
 @media(max-width:900px){.shell{grid-template-columns:1fr;}.annotation-pane{max-height:40vh;border-left:none;border-top:1px solid var(--el-border-color);}.screen{width:100%;}}
 </style>
 </head>
@@ -130,11 +135,10 @@ button,input,select,textarea{font:inherit;cursor:pointer;}
           <div class="aside-menu-group">设备管理</div>
           <div class="aside-menu-item" data-page="firmware-list">固件管理</div>
           <div class="aside-menu-item" data-page="create-firmware" style="padding-left:36px;">└ 创建固件</div>
+          <div class="aside-menu-item" data-page="virtual-version-list" style="padding-left:36px;">└ 虚拟版本配置</div>
           <div class="aside-menu-item" data-page="ota-list">OTA</div>
           <div class="aside-menu-group">智能产品</div>
           <div class="aside-menu-item" data-page="test-firmware">产品详情 > 设备调试</div>
-          <div class="aside-menu-group">更多</div>
-          <div class="aside-menu-item" data-page="fail-closed">fail-closed 演示</div>
         </nav>
       </aside>
       <div class="main-area">
@@ -167,6 +171,14 @@ const pages = {
     title: '创建固件', breadcrumb: ['设备管理','固件管理','创建固件'],
     render: renderCreateFirmware, notes: createFirmwareNotes
   },
+  'virtual-version-list': {
+    title: '虚拟版本配置', breadcrumb: ['设备管理','固件管理','虚拟版本配置'],
+    render: renderVirtualVersionList, notes: virtualVersionListNotes
+  },
+  'virtual-version-add': {
+    title: '新建虚拟版本', breadcrumb: ['设备管理','固件管理','虚拟版本配置','新建虚拟版本'],
+    render: renderVirtualVersionAdd, notes: virtualVersionAddNotes
+  },
   'ota-list': {
     title: 'OTA 任务列表', breadcrumb: ['设备管理','OTA'],
     render: renderOtaList, notes: otaListNotes
@@ -174,24 +186,26 @@ const pages = {
   'test-firmware': {
     title: '设备调试 > 测试固件', breadcrumb: ['智能产品','产品详情','设备调试'],
     render: renderTestFirmware, notes: testFirmwareNotes
-  },
-  'fail-closed': {
-    title: 'fail-closed 演示', breadcrumb: ['设备管理','OTA','fail-closed 演示'],
-    render: renderFailClosed, notes: failClosedNotes
   }
 };
 let activePage = 'firmware-list';
 
 // --- Sample data ---
 const firmwareData = [
-  {name:'W1Lite_MCU1_v1.2',type:'模组固件',pkgCount:1,version:'1.2.0',hw:'V1',fv:'版本1',channel:1,status:'已发布',time:'2026-07-15 10:30',remark:'MCU1 模组固件'},
-  {name:'W1Lite_MCU2_v1.0',type:'MCU固件',pkgCount:1,version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'已发布',time:'2026-07-15 10:35',remark:'MCU2 MCU固件'},
+  {name:'W1Lite_MCU1_v1.2',type:'模组固件',pkgCount:1,version:'1.2.0',hw:'V1',fv:'版本1',channel:1,status:'已发布',time:'2026-07-15 10:30',remark:'MCU1 模组固件',fwUri:'https://cdn.iot.example/MCU1_v1.2.bin'},
+  {name:'W1Lite_MCU2_v1.0',type:'MCU固件',pkgCount:1,version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'已发布',time:'2026-07-15 10:35',remark:'MCU2 MCU固件',fwUri:'https://cdn.iot.example/MCU2_v1.0.bin'},
   {name:'W1Lite_Base_v1.5',type:'模组固件',pkgCount:1,version:'1.5.0',hw:'V1',fv:'版本1',channel:null,status:'已发布',time:'2026-06-20 14:00',remark:'历史固件，无通道'},
-  {name:'W1Lite_MCU1_v1.3',type:'模组固件',pkgCount:1,version:'1.3.0',hw:'V1',fv:'版本1',channel:1,status:'待发布',time:'2026-07-21 09:00',remark:'MCU1 升级版本'},
+ {name:'W1Lite_MCU1_v1.3',type:'模组固件',pkgCount:1,version:'1.3.0',hw:'V1',fv:'版本1',channel:1,status:'待发布',time:'2026-07-21 09:00',remark:'MCU1 升级版本',fwUri:'https://cdn.iot.example/MCU1_v1.3.bin'},
+  {name:'W1Lite_MCU2_v1.1',type:'MCU固件',pkgCount:1,version:'1.1.0',hw:'V2',fv:'版本1',channel:2,status:'待发布',time:'2026-07-22 16:00',remark:'MCU2 V2 硬件版本（用于演示约束）',fwUri:'https://cdn.iot.example/MCU2_v1.1.bin'},
 ];
+const virtualVersionData = [
+  {mainVersion:'1.0.0', mcuCount:2, time:'2026-07-20 10:00'},
+  {mainVersion:'1.1.0', mcuCount:3, time:'2026-07-22 14:00'},
+];
+const mcuEntries = [0, 1];
 const otaData = [
   {name:'W1Lite MCU1 升级',fwName:'W1Lite_MCU1_v1.2',type:'模组固件',version:'1.2.0',hw:'V1',fv:'版本1',channel:1,status:'进行中',publish:'灰度发布',upgrade:'蓝牙升级',region:'北美',publishTime:'2026-07-16',createTime:'2026-07-15'},
-  {name:'W1Lite MCU2 升级',fwName:'W1Lite_MCU2_v1.0',type:'MCU固件',version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'终止',publish:'全量发布',upgrade:'蓝牙升级',region:'亚太',publishTime:'2026-07-16',createTime:'2026-07-15'},
+  {name:'W1Lite MCU2 升级',fwName:'W1Lite_MCU2_v1.0',type:'MCU固件',version:'1.0.0',hw:'V1',fv:'版本1',channel:2,status:'已完成',publish:'全量发布',upgrade:'蓝牙升级',region:'亚太',publishTime:'2026-07-16',createTime:'2026-07-15'},
   {name:'W1Lite 基线升级',fwName:'W1Lite_Base_v1.5',type:'模组固件',version:'1.5.0',hw:'V1',fv:'版本1',channel:null,status:'已完成',publish:'全量发布',upgrade:'蓝牙升级',region:'欧洲',publishTime:'2026-06-21',createTime:'2026-06-20'},
 ];
 const testFirmwareData = [
@@ -206,6 +220,7 @@ function renderFirmwareList(){
   <div class="page-tabs">
     <button class="page-tab active" onclick="switchPage('firmware-list')">固件列表</button>
     <button class="page-tab" onclick="switchPage('create-firmware')">创建固件</button>
+    <button class="page-tab" onclick="switchPage('virtual-version-list')">虚拟版本配置</button>
   </div>
   <div class="anchor-wrapper">
     <span class="note-anchor">1</span>
@@ -245,6 +260,7 @@ function renderCreateFirmware(){
   <div class="page-tabs">
     <button class="page-tab" onclick="switchPage('firmware-list')">固件列表</button>
     <button class="page-tab active">创建固件</button>
+    <button class="page-tab" onclick="switchPage('virtual-version-list')">虚拟版本配置</button>
   </div>
   <div class="form-page">
     <h3 class="form-page-title">创建固件</h3>
@@ -258,6 +274,7 @@ function renderCreateFirmware(){
       <div class="form-field">
         <label>功能版本 <span class="required">*</span></label>
         <select class="form-select"><option>版本1</option></select>
+        <span class="form-help">对应物模型，表示设备升级后上报的属性/事件/服务指令版本。不参与固件唯一性和OTA命中匹配。</span>
       </div>
       <div class="form-field">
         <label>固件类型 <span class="required">*</span></label>
@@ -324,12 +341,244 @@ function renderCreateFirmware(){
   `;
 }
 
+function renderVirtualVersionList(){
+  return `
+  <div class="page-tabs">
+    <button class="page-tab" onclick="switchPage('firmware-list')">固件列表</button>
+    <button class="page-tab" onclick="switchPage('create-firmware')">创建固件</button>
+    <button class="page-tab active">虚拟版本配置</button>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">8</span>
+    <div class="filter-bar">
+      <div class="filter-item"><span class="filter-label">产品</span><input class="filter-input" value="W1 Lite" readonly></div>
+      <button class="btn btn-primary" onclick="switchPage('virtual-version-add')">新建虚拟版本</button>
+    </div>
+  </div>
+  <div class="anchor-wrapper">
+    <span class="note-anchor">9</span>
+    <table class="data-table">
+      <thead><tr>
+        <th>虚拟版本号</th><th>MCU 数量</th><th>创建时间</th><th>操作</th>
+      </tr></thead>
+      <tbody>
+        ${virtualVersionData.map((v,idx)=>`<tr>
+          <td><span class="channel-value">${v.mainVersion}</span></td>
+        <td>${v.mcuCount}</td>
+        <td>${v.time}</td>
+          <td><button class="btn-text" onclick="switchPage('virtual-version-add')">查看</button><button class="btn-text" onclick="switchPage('virtual-version-add')">编辑</button><button class="btn-text danger" onclick="deleteVirtualVersion(${idx})">删除</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">共 ${virtualVersionData.length} 条</div>
+  `;
+}
+
+function deleteVirtualVersion(idx){
+  if(!confirm('确定删除虚拟版本 '+virtualVersionData[idx].mainVersion+'？此操作不可撤销。')) return;
+  virtualVersionData.splice(idx,1);
+  showToast('success','虚拟版本已删除');
+  render();
+}
+
+function renderVirtualVersionAdd(){
+  return `
+  <div class="page-tabs">
+    <button class="page-tab" onclick="switchPage('virtual-version-list')">虚拟版本配置</button>
+    <button class="page-tab active">新建虚拟版本</button>
+  </div>
+  <div class="form-page">
+    <h3 class="form-page-title">新建虚拟版本</h3>
+    <div class="form-grid">
+      <div class="form-field anchor-wrapper">
+        <span class="note-anchor">10</span>
+        <label>产品</label>
+        <input class="form-input" value="W1 Lite (2079096534792245250)" readonly>
+        <span class="form-help">虚拟版本配置绑定到产品。</span>
+      </div>
+      <div class="form-field anchor-wrapper">
+        <span class="note-anchor">11</span>
+        <label>虚拟版本号 <span class="required">*</span></label>
+        <input class="form-input" id="vv-main-version" placeholder="请输入虚拟版本号，如 1.0.0">
+        <span class="form-help">用户设置的虚拟版本号，APP 展示设备的当前版本时使用此版本号。</span>
+      </div>
+    </div>
+    <div class="vv-section anchor-wrapper">
+      <span class="note-anchor">12</span>
+      <h4 class="vv-section-title">固件关联条目</h4>
+      <table class="vv-mcu-table" id="vv-mcu-table">
+        <thead><tr>
+          <th style="width:180px;">选择固件</th>
+          <th style="width:80px;">固件类型</th>
+          <th style="width:70px;">通道号</th>
+          <th style="width:100px;">固件版本</th>
+          <th style="width:70px;">硬件版本</th>
+          <th>固件包地址</th>
+          <th style="width:60px;">操作</th>
+        </tr></thead>
+        <tbody id="vv-mcu-body">
+          ${mcuEntries.map((m,i)=>renderMcuRow(m,i)).join('')}
+        </tbody>
+      </table>
+      <div class="vv-add-row">
+        <button class="btn" onclick="addMcuRow()">+ 添加固件行</button>
+      </div>
+      <div class="vv-constraint-hint">同一虚拟版本下，关联固件的"固件类型+通道号"组合必须唯一，且所有固件的硬件版本必须一致。冲突行将高亮标红。</div>
+    </div>
+    <div class="anchor-wrapper" style="margin-top:16px">
+      <span class="note-anchor">13</span>
+      <div class="form-error" id="vv-conflict-error" style="padding:8px 12px;background:#fef0f0;border:1px solid #fde2e2;border-radius:4px;font-size:13px;display:none;">
+        保存校验：虚拟版本号非空、每行已选择固件、固件类型+通道号组合唯一、所有固件硬件版本一致
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn" onclick="switchPage('virtual-version-list')">取消</button>
+      <button class="btn btn-primary" onclick="saveVirtualVersion()">保存</button>
+    </div>
+  </div>
+  `;
+}
+
+function renderMcuRow(fwIdx,i){
+  const fw = (fwIdx!==null && fwIdx!==undefined) ? firmwareData[fwIdx] : null;
+  const ch = fw && fw.channel!==null ? fw.channel : null;
+  const opts = firmwareData.map((f,idx)=>{
+    const label = f.channel!==null ? f.name+'（通道号:'+f.channel+'）' : f.name+'（无通道）';
+    return '<option value="'+idx+'"'+(fwIdx===idx?' selected':'')+'>'+label+'</option>';
+  }).join('');
+  return '<tr class="mcu-row" data-index="'+i+'">'
+    + '<td><select class="vv-input-firmware" onchange="onFirmwareSelect(this)"><option value="">请选择固件</option>'+opts+'</select></td>'
+    + '<td class="vv-display-type '+(fw?'vv-display':'vv-display muted')+'">'+(fw?fw.type:'-')+'</td>'
+    + '<td class="vv-display-targetid '+(ch===null?'vv-display muted':'vv-display')+'">'+(ch!==null?ch:'-')+'</td>'
+    + '<td class="vv-display-version '+(fw?'vv-display':'vv-display muted')+'">'+(fw?fw.version:'-')+'</td>'
+    + '<td class="vv-display-hw '+(fw?'vv-display':'vv-display muted')+'">'+(fw?fw.hw:'-')+'</td>'
+    + '<td class="vv-display-fwuri '+(fw&&fw.fwUri?'vv-display':'vv-display muted')+'">'+(fw&&fw.fwUri?fw.fwUri:'-')+'</td>'
+    + '<td><button class="btn-text danger" onclick="removeMcuRow(this)">删除</button></td>'
+    + '</tr>';
+}
+
+function onFirmwareSelect(sel){
+  const row = sel.closest('tr');
+  const idx = sel.value;
+  const fw = idx!=='' ? firmwareData[parseInt(idx)] : null;
+  const ch = fw && fw.channel!==null ? fw.channel : null;
+  const typeEl = row.querySelector('.vv-display-type');
+  const tidEl = row.querySelector('.vv-display-targetid');
+  const verEl = row.querySelector('.vv-display-version');
+  const hwEl = row.querySelector('.vv-display-hw');
+  const uriEl = row.querySelector('.vv-display-fwuri');
+  if(fw){
+    typeEl.textContent = fw.type;
+    typeEl.className = 'vv-display-type vv-display';
+    tidEl.textContent = ch!==null ? ch : '-';
+    tidEl.className = 'vv-display-targetid '+(ch===null?'vv-display muted':'vv-display');
+    verEl.textContent = fw.version;
+    verEl.className = 'vv-display-version vv-display';
+    hwEl.textContent = fw.hw;
+    hwEl.className = 'vv-display-hw vv-display';
+    uriEl.textContent = fw.fwUri || '-';
+    uriEl.className = 'vv-display-fwuri '+(fw.fwUri?'vv-display':'vv-display muted');
+  } else {
+    typeEl.textContent = '-'; typeEl.className = 'vv-display-type vv-display muted';
+    tidEl.textContent = '-'; tidEl.className = 'vv-display-targetid vv-display muted';
+    verEl.textContent = '-'; verEl.className = 'vv-display-version vv-display muted';
+    hwEl.textContent = '-'; hwEl.className = 'vv-display-hw vv-display muted';
+    uriEl.textContent = '-'; uriEl.className = 'vv-display-fwuri vv-display muted';
+  }
+  checkMcuConstraints();
+}
+
+function checkMcuConstraints(){
+  const tbody = document.getElementById('vv-mcu-body');
+  if(!tbody) return;
+  const rows = tbody.querySelectorAll('tr');
+  const selected = [];
+  rows.forEach(r=>{
+    r.classList.remove('vv-row-conflict');
+    const sel = r.querySelector('.vv-input-firmware');
+    if(sel && sel.value!=='') selected.push({row:r, fw:firmwareData[parseInt(sel.value)]});
+  });
+  if(selected.length===0) return;
+  // detect duplicate (type + channel)
+  const seen = {};
+  const dupRows = new Set();
+  selected.forEach(s=>{
+    const key = s.fw.type+'|'+(s.fw.channel!==null?s.fw.channel:'null');
+    if(seen[key]){ dupRows.add(s.row); dupRows.add(seen[key]); }
+    seen[key] = s.row;
+  });
+  // detect hardware version mismatch
+  const hwSet = new Set(selected.map(s=>s.fw.hw));
+  if(hwSet.size > 1) selected.forEach(s=>dupRows.add(s.row));
+  dupRows.forEach(r=>r.classList.add('vv-row-conflict'));
+}
+
+function addMcuRow(){
+  const tbody = document.getElementById('vv-mcu-body');
+  if(!tbody) return;
+  const i = tbody.querySelectorAll('tr').length;
+  tbody.insertAdjacentHTML('beforeend', renderMcuRow(null,i));
+}
+
+function removeMcuRow(btn){
+  const row = btn.closest('tr');
+  const tbody = document.getElementById('vv-mcu-body');
+  if(!tbody || tbody.querySelectorAll('tr').length <= 1){
+    showToast('error','至少保留 1 行固件条目');
+    return;
+  }
+  row.remove();
+}
+
+function saveVirtualVersion(){
+  const mainVer = document.getElementById('vv-main-version');
+  if(!mainVer || !mainVer.value.trim()){
+    showToast('error','请填写虚拟版本号');
+    return;
+  }
+  const tbody = document.getElementById('vv-mcu-body');
+  if(!tbody) return;
+  const rows = tbody.querySelectorAll('tr');
+  for(const r of rows){
+    const sel = r.querySelector('.vv-input-firmware');
+    if(!sel || !sel.value){
+      showToast('error','请为每行选择一个固件');
+      return;
+    }
+  }
+  // collect selected firmware
+  const selected = [];
+  rows.forEach(r=>{
+    const sel = r.querySelector('.vv-input-firmware');
+    if(sel && sel.value!=='') selected.push(firmwareData[parseInt(sel.value)]);
+  });
+  // type + channel uniqueness
+  const seen = {};
+  for(const fw of selected){
+    const key = fw.type+'|'+(fw.channel!==null?fw.channel:'null');
+    if(seen[key]){
+      showToast('error','固件类型与通道号组合必须唯一：'+fw.type+'（通道号 '+(fw.channel!==null?fw.channel:'无')+'）重复');
+      return;
+    }
+    seen[key] = true;
+  }
+  // hardware version consistency
+  const hwSet = new Set(selected.map(f=>f.hw));
+  if(hwSet.size > 1){
+    showToast('error','所有关联固件的硬件版本必须一致，当前存在：'+[...hwSet].join('、'));
+    return;
+  }
+  showToast('success','虚拟版本保存成功');
+  setTimeout(()=>switchPage('virtual-version-list'),800);
+}
+
 function renderOtaList(){
   return `
   <div class="filter-bar">
     <div class="filter-item"><span class="filter-label">固件类型</span><select class="filter-select"><option value="">全部</option><option>模组固件</option><option>MCU固件</option></select></div>
     <div class="filter-item"><span class="filter-label">功能版本</span><select class="filter-select"><option value="">全部</option><option>版本1</option></select></div>
-    <div class="filter-item"><span class="filter-label">发布状态</span><select class="filter-select"><option value="">全部</option><option>进行中</option><option>已完成</option><option>终止</option></select></div>
+    <div class="filter-item"><span class="filter-label">发布状态</span><select class="filter-select"><option value="">全部</option><option>进行中</option><option>已完成</option></select></div>
     <button class="btn btn-primary">查询</button>
     <button class="btn">重置</button>
     <button class="btn btn-primary">新增 OTA 任务</button>
@@ -358,7 +607,6 @@ function renderOtaList(){
 
 function renderOtaStatus(s){
   if(s==='进行中') return `<span class="tag tag-warning">${s}</span>`;
-  if(s==='终止') return `<span class="tag tag-danger">${s}</span>`;
   if(s==='已完成') return `<span class="tag tag-success">${s}</span>`;
   return `<span class="tag tag-info">${s}</span>`;
 }
@@ -400,55 +648,6 @@ function renderTestFirmware(){
   `;
 }
 
-function renderFailClosed(){
-  return `
-  <div class="fail-closed-demo">
-    <h3>OTA fail-closed 场景演示</h3>
-    <p style="color:var(--el-text-color-secondary);font-size:13px;margin:0 0 16px;">
-      通道化升级场景下，若运行时缺失有效通道号、未命中显式通道桶、或解析结果与目标桶不一致，则终止升级并记录原因。不得回退 NULL 固件桶。
-    </p>
-    <div class="scenario-cards">
-      <div class="scenario-card anchor-wrapper">
-        <span class="note-anchor">7</span>
-        <h4>场景 A：通道号缺失</h4>
-        <div class="desc">OTA 任务关联固件通道号=1，但设备侧运行时未上报有效通道号。</div>
-        <div class="result">
-          <span class="tag tag-danger">终止</span>
-          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
-            terminate_reason: 通道号缺失<br>
-            不回退 NULL 桶
-          </div>
-        </div>
-      </div>
-      <div class="scenario-card anchor-wrapper">
-        <span class="note-anchor">8</span>
-        <h4>场景 B：未命中显式通道桶</h4>
-        <div class="desc">设备上报通道号=3，但平台不存在通道号=3的固件桶。</div>
-        <div class="result">
-          <span class="tag tag-danger">终止</span>
-          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
-            terminate_reason: 未命中显式通道桶<br>
-            不回退 NULL 桶
-          </div>
-        </div>
-      </div>
-      <div class="scenario-card anchor-wrapper">
-        <span class="note-anchor">9</span>
-        <h4>场景 C：通道号与目标桶不一致</h4>
-        <div class="desc">OTA 任务目标固件通道号=1，但设备上报通道号=2，解析结果与目标桶不一致。</div>
-        <div class="result">
-          <span class="tag tag-danger">终止</span>
-          <div style="margin-top:6px;font-size:12px;color:var(--el-text-color-secondary);">
-            terminate_reason: 通道号与目标桶不一致<br>
-            不回退 NULL 桶
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  `;
-}
-
 // --- Annotation content ---
 function firmwareListNotes(){
   return {subtitle:'固件管理列表页 /firmware-list',notes:[
@@ -456,14 +655,15 @@ function firmwareListNotes(){
       '关联位置：筛选区',
       '说明：筛选项为固件名称、固件类型、功能版本，与现有系统一致。',
       '交互：点击查询刷新表格，点击重置清空筛选。',
-      '状态/差异：不提供按通道号搜索、筛选、排序。用户已明确不支持（P2-1 Resolved）。'
+      '状态/差异：不提供按通道号搜索、筛选、排序（Rule 10 + Scope）。'
     ]},
     {n:2,t:'通道号列（新增）',lines:[
       '关联位置：表格 > 功能版本与状态之间',
-      '说明：新增通道号列。NULL 展示为 `-`（灰色），有值展示为数字（黑色加粗）。',
+      '说明：新增通道号列。NULL 展示为 -（灰色），有值展示为数字（黑色加粗）。',
       '交互：点击查看可跳转固件详情。',
       '状态/差异：NULL 与有值通道在视觉上清晰区分，运营可一眼识别多 MCU 固件。',
-      '数据来源：固件记录的 channel 字段。'
+      '数据来源：固件记录的 channel 字段。',
+      '规则来源：Rule 1（通道号字段可选输入）、Rule 2（NULL 与有通道号分桶）。'
     ]}
   ]};
 }
@@ -473,7 +673,7 @@ function createFirmwareNotes(){
       '关联位置：创建固件表单 > 产品字段',
       '说明：产品在固件列表页已通过产品下拉选项确定，进入创建页时通过路由参数 productId 带入，不可修改。',
       '交互：只读字段，无下拉、无输入。',
-      '事实来源：IoT固件管理 wiki — 创建固件路由 /firmware-list/{productId}/add；用户口径确认产品在固件列表处已确定。'
+      '事实来源：IoT固件管理 wiki — 创建固件路由 /firmware-list/{productId}/add。'
     ]},
     {n:4,t:'上传固件（触发文件名解析）',lines:[
       '关联位置：创建固件表单 > 上传固件区域',
@@ -483,13 +683,13 @@ function createFirmwareNotes(){
       '示例：Lute_M9_3.08_10_aabb_20240401.ufw',
       '版本号规则：可为数字或数字加点组合，如 21、2.21、1.0.23',
       '交互：点击上传区域或拖拽文件上传；上传成功后下方三个字段自动填充。',
-      '事实来源：IoT固件管理 wiki 上传规则和文件格式；用户口径确认字段依赖文件名解析。'
+      '事实来源：IoT固件管理 wiki 上传规则和文件格式。'
     ]},
     {n:5,t:'固件名称/版本/硬件版本（文件名自动解析，只读）',lines:[
       '关联位置：创建固件表单 > 固件名称、固件版本、硬件版本',
       '说明：这三个字段由上传的固件文件名自动解析，不可手动修改。',
-      '交互：上传固件后自动填充；上传前显示 placeholder "上传固件后自动解析"。',
-      '状态/差异：字段为只读（readonly），与原型的通道号输入框（可编辑）形成对比。',
+      '交互：上传固件后自动填充；上传前显示 placeholder。',
+      '状态/差异：字段为只读（readonly），与通道号输入框（可编辑）形成对比。',
       '功能提示：版本号可为数字或数字加点组合（如 21、2.21、1.0.23），不是纯整数。'
     ]},
     {n:6,t:'通道号输入控件',lines:[
@@ -497,36 +697,81 @@ function createFirmwareNotes(){
       '说明：整数输入框，可选字段。placeholder 为"请输入正整数，留空表示无通道"。',
       '校验规则：',
       '  · 留空 → 归一为 NULL',
-      '  · 非空 → 只接受正整数',
-      '  · 空白输入 → 归一为 NULL',
+      '  · 非空 → 只接受正整数（uint）',
       '  · 非整数/负数/零 → 提示"请输入正整数或留空"',
-      '落库类型：int 或 NULL',
+      '落库类型：uint 或 NULL',
       '功能提示：留空不会报错，历史固件和新固件未填写时都可为 NULL。',
-      '状态/差异：通道号是创建固件页面中除备注外唯一需要用户手动输入的新增字段。'
+      '规则来源：Rule 1（可选输入默认NULL）、Rule 3（uint类型，用户创建固件时配置）。'
     ]},
-    {n:7,t:'冲突校验',lines:[
+    {n:7,t:'冲突校验（四元组唯一性）',lines:[
       '关联位置：保存按钮 > 提交时触发',
-      '说明：同一产品下，若已存在固件类型+硬件版本+固件版本+通道号 完全一致的记录，阻止保存。',
+      '说明：同一产品下，若已存在"固件类型 + 硬件版本 + 固件版本 + 通道号"完全一致的记录，阻止保存。',
       '触发条件：点击保存时自动校验。',
       '系统响应：在表单底部展示红色提示"同一产品下已存在固件类型、硬件版本、固件版本、通道号完全一致的固件记录"。',
       '异常处理：阻止保存，用户需修改通道号或其他维度后重试。',
-      '规则来源：MAGI 收敛规则 3、7（版本桶内唯一）。',
+      '规则来源：Rule 5（固件唯一性四元组，功能版本不参与）。',
       '原型备注：点击保存按钮可演示冲突校验提示效果。'
+    ]}
+  ]};
+}
+function virtualVersionListNotes(){
+  return {subtitle:'虚拟版本配置列表页 /firmware-list/{productId}/virtual-version',notes:[
+    {n:8,t:'产品维度 + 新建入口',lines:[
+      '关联位置：筛选区 + 新建按钮',
+      '说明：虚拟版本配置绑定到产品，进入页面时产品已确定。',
+      '交互：点击"新建虚拟版本"跳转创建页。',
+      '规则来源：Rule 7（绑定产品；一个虚拟版本关联多个 MCU 各一个固件版本）。'
+    ]},
+    {n:9,t:'虚拟版本列表',lines:[
+      '关联位置：表格',
+      '说明：展示产品下所有虚拟版本，列含虚拟版本号（mainVersion）、MCU 数量、创建时间、操作。',
+      '交互：点击"查看"或"编辑"跳转创建/编辑页；点击"删除"弹出二次确认，确认后从列表移除该虚拟版本。',
+      '状态/差异：MCU 数量反映该虚拟版本关联的 MCU 固件条目数。',
+      '规则来源：Rule 7（JSON 模型 mainVersion + mcus[targetId, version, fwUri]）。'
+    ]}
+  ]};
+}
+function virtualVersionAddNotes(){
+  return {subtitle:'虚拟版本创建/编辑页面 /firmware-list/{productId}/virtual-version/add',notes:[
+    {n:10,t:'产品（只读）',lines:[
+      '关联位置：表单 > 产品字段',
+      '说明：虚拟版本配置绑定到产品，从列表页带入，不可修改。',
+      '规则来源：Rule 7（绑定产品）。'
+    ]},
+    {n:11,t:'虚拟版本号（mainVersion）',lines:[
+      '关联位置：表单 > 虚拟版本号',
+      '说明：用户设置的虚拟版本号，如 1.0.0。',
+      '用途：APP 展示设备的当前版本时使用此版本号，而非展示多个 MCU 的独立版本。',
+      '校验规则：必填。',
+      '规则来源：Rule 7（用户设置虚拟版本号）、Rule 8（APP 只展示虚拟版本号）。'
+    ]},
+    {n:12,t:'固件关联条目（通过选择固件关联）',lines:[
+      '关联位置：表单 > 固件关联条目区',
+      '说明：动态表格，每行通过下拉选择已上传的固件进行关联。选择固件后，固件类型、通道号（targetId）、固件版本（version）、硬件版本、固件包地址（fwUri）自动从固件记录中读取并展示，无需手动输入。关联固件不限类型，可为模组固件或 MCU 固件。',
+      '交互：下拉列表展示产品下所有已上传固件，选项标签为"固件名称（通道号:X）"；选择后自动填充该行的固件类型、通道号、版本、硬件版本、固件包地址（只读展示）。',
+      '交互：点击"+ 添加固件行"新增空行；点击"删除"移除该行（至少保留 1 行）。',
+      '校验规则：每行必须选择一个固件；至少 1 行。',
+      '约束 1（唯一性）：同一虚拟版本下，关联固件的"固件类型+通道号"组合必须唯一。重复时冲突行高亮标红，保存时阻止提交。',
+      '约束 2（硬件版本一致性）：同一虚拟版本下，所有关联固件的硬件版本必须一致。不一致时冲突行高亮标红，保存时阻止提交。',
+      '数据来源：targetId = 所选固件的 channel 字段，version = 所选固件的 version 字段，fwUri = 所选固件的 fwUri 字段。',
+      '规则来源：Rule 7（一虚拟版本关联多 MCU 各一固件版本；JSON 模型 mcus[targetId, version, fwUri]）、Rule 5（targetId 即通道号，承载 MCU 目标身份）。'
+    ]},
+    {n:13,t:'保存校验',lines:[
+      '关联位置：保存按钮 > 提交时触发',
+      '说明：保存时校验 mainVersion 非空、每行已选择固件、至少 1 行、固件类型+通道号组合唯一、所有固件硬件版本一致。',
+      '系统响应：校验失败时展示红色提示，阻止保存。',
+      '原型备注：点击保存按钮可演示校验提示效果。'
     ]}
   ]};
 }
 function otaListNotes(){
   return {subtitle:'OTA 任务列表页 /ota',notes:[
-    {n:5,t:'通道号列（新增）与终止状态',lines:[
+    {n:5,t:'通道号列（新增）',lines:[
       '关联位置：表格 > 功能版本与状态之间',
-      '说明：OTA 任务列表新增通道号列，展示关联固件的通道号。NULL 展示为 `-`。',
-      '状态/差异：',
-      '  · 进行中 → 警告色 Tag',
-      '  · 已完成 → 成功色 Tag',
-      '  · 终止 → 危险色 Tag（fail-closed 触发）',
-      '终止状态附带 terminate_reason：通道号缺失 / 未命中显式通道桶 / 通道号与目标桶不一致。',
+      '说明：OTA 任务列表新增通道号列，展示关联固件的通道号。NULL 展示为 -。',
+      '状态/差异：进行中 → 警告色 Tag，已完成 → 成功色 Tag。',
       '功能提示：排障时无需打开固件详情即可在 OTA 列表定位通道号。',
-      '原型备注：终止原因的展示样式可在设计阶段细化。'
+      '规则来源：Rule 4（OTA 任务主体逻辑不变 + 新增通道号判断）、Rule 3（通道号经设备协议组装到 targetId）。'
     ]}
   ]};
 }
@@ -534,36 +779,11 @@ function testFirmwareNotes(){
   return {subtitle:'产品详情 > 设备调试 > 测试固件',notes:[
     {n:6,t:'测试固件表通道号列（新增）',lines:[
       '关联位置：产品详情 step=3 > 设备调试 > 测试固件表 > 功能版本与上传时间之间',
-      '说明：测试固件表头新增通道号列。NULL 展示为 `-`，有值展示为数字。',
+      '说明：测试固件表头新增通道号列。NULL 展示为 -，有值展示为数字。',
       '交互：沿用现有测试固件表操作（添加测试固件入口）。',
       '状态/差异：与固件管理列表和 OTA 列表的通道号列展示一致。',
       '数据来源：测试固件记录的 channel 字段。',
       '权限：当前可见动作为"添加测试固件"。'
-    ]}
-  ]};
-}
-function failClosedNotes(){
-  return {subtitle:'OTA fail-closed 场景演示',notes:[
-    {n:7,t:'场景 A：通道号缺失',lines:[
-      '关联位置：fail-closed 演示 > 场景 A',
-      '触发条件：OTA 任务关联固件通道号=1，但设备侧运行时未上报有效通道号。',
-      '系统响应：终止升级，terminate_reason = "通道号缺失"。',
-      '异常处理：不回退 NULL 固件桶。',
-      '规则来源：MAGI 收敛规则 4（fail-closed）。'
-    ]},
-    {n:8,t:'场景 B：未命中显式通道桶',lines:[
-      '关联位置：fail-closed 演示 > 场景 B',
-      '触发条件：设备上报通道号=3，但平台不存在通道号=3的固件桶。',
-      '系统响应：终止升级，terminate_reason = "未命中显式通道桶"。',
-      '异常处理：不回退 NULL 固件桶。',
-      '规则来源：MAGI 收敛规则 4、5（NULL 不是 wildcard）。'
-    ]},
-    {n:9,t:'场景 C：通道号与目标桶不一致',lines:[
-      '关联位置：fail-closed 演示 > 场景 C',
-      '触发条件：OTA 任务目标固件通道号=1，但设备上报通道号=2。',
-      '系统响应：终止升级，terminate_reason = "通道号与目标桶不一致"。',
-      '异常处理：不回退 NULL 固件桶。',
-      '规则来源：MAGI 收敛规则 3、4（四元组命中 + fail-closed）。'
     ]}
   ]};
 }
@@ -587,7 +807,6 @@ function simulateUpload(){
     placeholder.style.display='none';
     fileDiv.style.display='block';
     filename.textContent='Lute_M9_3.08_10_aabb_20240401.ufw';
-    // Simulate filename parsing
     const nameEl = document.getElementById('fw-name');
     const verEl = document.getElementById('fw-version');
     const hwEl = document.getElementById('fw-hw');
