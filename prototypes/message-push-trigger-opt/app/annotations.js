@@ -10,7 +10,7 @@ const notes={
   ],
   events:[
     ["产品隔离","事件管理 > 产品切换","事件注册、规则目录和调用方权限都绑定当前产品；不提供全局产品授权矩阵。","page-heading"],
-    ["固定信封","事件管理 > 固定信封只读区","eventType、schemaVersion、productId、occurredAt、deviceId?、userIds?、idempotencyKey、payload 为平台固定字段，页面不可修改。","fixed-envelope-summary"],
+    ["固定信封","事件管理 > 固定信封只读区","eventType、schemaVersion、productId、occurredAt、deviceId、userIds?、idempotencyKey、payload 为平台固定字段。消息推送事件必须携带 deviceId，页面不可修改。","fixed-envelope-summary"],
     ["研发预置调用方","事件管理 > 事件列表","调用方包含 callerId、凭证状态、允许产品、限流；本页只能选择允许当前产品的调用方，没有注册、签发或编辑入口。","events-table"],
     ["复制与冲突报告","事件管理 > 复制到产品","复制 Payload Schema 与直接关联规则；目标事件草稿、规则默认停用。相同 eventType、调用方无权限等冲突跳过并报告。","event-filter"]
   ],
@@ -24,13 +24,13 @@ const notes={
   rule2:[
     ["四类触发","步骤 2 > 触发类型","设备、云端、耗材、自定义事件均属于范围。结束来源会在步骤 3 按开始触发源筛选。","trigger-type"],
     ["事件 Payload","步骤 2 > 当前产品事件","自定义事件只来自当前产品已发布目录。固定信封只读，Payload Schema 可定制但受深度、大小、类型和 $ref 限制。","event-field"],
-    ["目标用户解析","步骤 2 > 固定解析规则","设备/云端/耗材：userIds 有值取其集合，否则用 deviceId 取绑定用户；自定义事件：userIds 为空时取当前产品全部绑定用户。","candidate-users"],
-    ["交集问题已收敛","步骤 2 > 目标用户","userId 与独立条件筛选不再并列配置；规则侧不维护接收人名单，不提供用户属性、地域或 B 端升级接收人入口。","audience-intersection"]
+    ["目标用户解析","步骤 2 > 固定解析规则","所有触发均必须携带 deviceId：userIds 有值时与该设备绑定用户取交集；为空时使用该设备全部绑定用户。","candidate-users"],
+    ["交集问题已收敛","步骤 2 > 目标用户","userId 仅用于收窄 deviceId 的绑定用户范围；规则侧不维护接收人名单，不提供用户属性、地域或 B 端升级接收人入口。","audience-intersection"]
   ],
   rule3:[
     ["优先级约束","步骤 3 > 优先级","P0 单次全量直发、仅 replay 幂等去重；P1/P2 单次必须选择后续丢弃或合并发送（取最后一次）。策略按规则独立设置。","priority-field"],
-    ["模式互斥","步骤 3 > 提醒模式与频控","连续提醒隐藏丢弃/合并，显示 5 分钟至 7 天提醒间隔。重复开始信号只刷新同一关联实例与最新 Payload。","delivery-mode"],
-    ["结束条件","步骤 3 > 结束条件","结束源跟随开始源，开始与结束共享 deviceId、userId 或 productId 关联键。无兼容结束事件时只能受限模式。","lifecycle-field"],
+    ["模式互斥","步骤 3 > 提醒模式与频控","连续提醒隐藏丢弃/合并，显示 5 分钟至 7 天提醒间隔。重复开始信号只刷新同一设备实例与最新 Payload。","delivery-mode"],
+    ["结束条件","步骤 3 > 结束条件","结束源跟随开始源；开始和结束事件由系统按相同 deviceId 匹配。无可用结束事件时只能受限模式。","lifecycle-field"],
     ["安全硬顶","步骤 3 > 受限模式硬上限","默认 72 小时 / 100 次，系统硬顶 168 小时 / 500 次；连续提醒必须配置结束条件或硬上限。","hard-cap"],
     ["频控时间线","步骤 3 > 投递时间线","演示首条发送、窗口内 suppressed/保留最后一次、窗口末发送最后事件内容，以及连续实例 active/closed 状态。","frequency-timeline"],
     ["P0 熔断","步骤 3 > 异常风暴保护","超过 100 unique triggers/min/rule 进入熔断；5 分钟静默后半开，首个正常触发通过后恢复。告警写审计并进入现有监控。","fuse-state"],

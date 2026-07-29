@@ -3,8 +3,8 @@ export const fixedEnvelopeFields=[
   {key:"schemaVersion",type:"string",required:true,description:"事件 Schema 版本，例如 1.0"},
   {key:"productId",type:"string",required:true,description:"产生事件的产品"},
   {key:"occurredAt",type:"date-time",required:true,description:"事件发生时间（UTC）"},
-  {key:"deviceId",type:"string",required:false,description:"设备层触发时必填"},
-  {key:"userIds",type:"string[]",required:false,description:"单点或批量用户；为空时按触发类型解析"},
+  {key:"deviceId",type:"string",required:true,description:"消息推送事件必须携带；所有触发按设备实例处理"},
+  {key:"userIds",type:"string[]",required:false,description:"可限定设备绑定用户；为空时使用该设备全部绑定用户"},
   {key:"idempotencyKey",type:"string",required:true,description:"幂等去重键"},
   {key:"payload",type:"object",required:true,description:"产品自定义 Payload"}
 ];
@@ -12,7 +12,7 @@ export const fixedEnvelopeFields=[
 export const fixedEnvelopeSchema=JSON.stringify({
   type:"object",
   additionalProperties:false,
-  required:["eventType","schemaVersion","productId","occurredAt","idempotencyKey","payload"],
+  required:["eventType","schemaVersion","productId","occurredAt","deviceId","idempotencyKey","payload"],
   properties:{
     eventType:{type:"string",minLength:1,maxLength:120},
     schemaVersion:{type:"string",pattern:"^[0-9]+\\.[0-9]+$"},
@@ -87,11 +87,11 @@ export const rules=[
 ];
 
 export const events=[
-  {id:"device.milk_overflow.v1",eventType:"device.milk_overflow",schemaVersion:"1.0",name:"设备溢奶事件",callerId:"caller.device-cloud",source:"设备云",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",correlationKey:"deviceId",payloadSchema:'{\n  "type": "object",\n  "required": ["level"],\n  "properties": {\n    "level": { "type": "integer", "minimum": 1, "maximum": 3 }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2048"],triggerKind:"device",endEventId:"device.milk_overflow.recovered.v1",updated:"2026-07-29 13:40"},
-  {id:"device.milk_overflow.recovered.v1",eventType:"device.milk_overflow.recovered",schemaVersion:"1.0",name:"设备溢奶恢复",callerId:"caller.device-cloud",source:"设备云",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",correlationKey:"deviceId",payloadSchema:'{\n  "type": "object",\n  "required": ["recoveredAt"],\n  "properties": { "recoveredAt": { "type": "string", "format": "date-time" } },\n  "additionalProperties": false\n}',linkedRules:[],triggerKind:"device",endEventId:"",updated:"2026-07-29 13:40"},
-  {id:"firmware.upgrade.completed.v1",eventType:"firmware.upgrade.completed",schemaVersion:"1.0",name:"固件升级完成",callerId:"caller.firmware-service",source:"固件服务",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",correlationKey:"deviceId",payloadSchema:'{\n  "type": "object",\n  "required": ["version", "result"],\n  "properties": {\n    "version": { "type": "string" },\n    "result": { "enum": ["success", "failed"] }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2046"],triggerKind:"event",endEventId:"",updated:"2026-07-28 14:26"},
-  {id:"consumable.filter.low.v1",eventType:"consumable.filter.low",schemaVersion:"1.0",name:"滤芯余量不足",callerId:"caller.consumable-service",source:"耗材服务",productId:"prod-air-p3",product:"Cozy Air P3",status:"已发布",correlationKey:"deviceId",payloadSchema:'{\n  "type": "object",\n  "required": ["remainValue", "unit"],\n  "properties": {\n    "remainValue": { "type": "number" },\n    "unit": { "type": "string" }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2047"],triggerKind:"consumable",endEventId:"consumable.filter.replaced.v1",updated:"2026-07-28 11:05"},
-  {id:"consumable.filter.replaced.v1",eventType:"consumable.filter.replaced",schemaVersion:"1.0",name:"滤芯已更换",callerId:"caller.consumable-service",source:"耗材服务",productId:"prod-air-p3",product:"Cozy Air P3",status:"已发布",correlationKey:"deviceId",payloadSchema:'{\n  "type": "object",\n  "required": ["replacedAt"],\n  "properties": { "replacedAt": { "type": "string", "format": "date-time" } },\n  "additionalProperties": false\n}',linkedRules:[],triggerKind:"consumable",endEventId:"",updated:"2026-07-28 11:05"}
+  {id:"device.milk_overflow.v1",eventType:"device.milk_overflow",schemaVersion:"1.0",name:"设备溢奶事件",callerId:"caller.device-cloud",source:"设备云",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",payloadSchema:'{\n  "type": "object",\n  "required": ["level"],\n  "properties": {\n    "level": { "type": "integer", "minimum": 1, "maximum": 3 }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2048"],triggerKind:"device",endEventId:"device.milk_overflow.recovered.v1",updated:"2026-07-29 13:40"},
+  {id:"device.milk_overflow.recovered.v1",eventType:"device.milk_overflow.recovered",schemaVersion:"1.0",name:"设备溢奶恢复",callerId:"caller.device-cloud",source:"设备云",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",payloadSchema:'{\n  "type": "object",\n  "required": ["recoveredAt"],\n  "properties": { "recoveredAt": { "type": "string", "format": "date-time" } },\n  "additionalProperties": false\n}',linkedRules:[],triggerKind:"device",endEventId:"",updated:"2026-07-29 13:40"},
+  {id:"firmware.upgrade.completed.v1",eventType:"firmware.upgrade.completed",schemaVersion:"1.0",name:"固件升级完成",callerId:"caller.firmware-service",source:"固件服务",productId:"prod-s12",product:"S12 Pro 吸乳器",status:"已发布",payloadSchema:'{\n  "type": "object",\n  "required": ["version", "result"],\n  "properties": {\n    "version": { "type": "string" },\n    "result": { "enum": ["success", "failed"] }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2046"],triggerKind:"event",endEventId:"",updated:"2026-07-28 14:26"},
+  {id:"consumable.filter.low.v1",eventType:"consumable.filter.low",schemaVersion:"1.0",name:"滤芯余量不足",callerId:"caller.consumable-service",source:"耗材服务",productId:"prod-air-p3",product:"Cozy Air P3",status:"已发布",payloadSchema:'{\n  "type": "object",\n  "required": ["remainValue", "unit"],\n  "properties": {\n    "remainValue": { "type": "number" },\n    "unit": { "type": "string" }\n  },\n  "additionalProperties": false\n}',linkedRules:["R-2047"],triggerKind:"consumable",endEventId:"consumable.filter.replaced.v1",updated:"2026-07-28 11:05"},
+  {id:"consumable.filter.replaced.v1",eventType:"consumable.filter.replaced",schemaVersion:"1.0",name:"滤芯已更换",callerId:"caller.consumable-service",source:"耗材服务",productId:"prod-air-p3",product:"Cozy Air P3",status:"已发布",payloadSchema:'{\n  "type": "object",\n  "required": ["replacedAt"],\n  "properties": { "replacedAt": { "type": "string", "format": "date-time" } },\n  "additionalProperties": false\n}',linkedRules:[],triggerKind:"consumable",endEventId:"",updated:"2026-07-28 11:05"}
 ];
 
 export const appState={
@@ -100,6 +100,6 @@ export const appState={
   fuseState:{status:"closed",uniquePerMinute:38,quietMinutes:0,lastAlert:"—"},
   copyReport:null,
   editingRule:false,editingEvent:null,
-  rule:{id:"R-2048",productId:"prod-s12",name:"设备溢奶紧急提醒",category:"安全",priority:"P0",triggerType:"device",eventId:"device.milk_overflow.v1",deviceCondition:"溢奶事件 · level ≥ 2",cloudCondition:"喂养提醒倒计时 ≤ 30 分钟",consumableCondition:"滤芯余量不足",strategy:"direct",minIntervalMinutes:5,lifecycle:"continuous",reminderIntervalMinutes:30,endEventId:"device.milk_overflow.recovered.v1",correlationKey:"deviceId",limited:false,maxHours:72,maxCount:100},
+  rule:{id:"R-2048",productId:"prod-s12",name:"设备溢奶紧急提醒",category:"安全",priority:"P0",triggerType:"device",eventId:"device.milk_overflow.v1",deviceCondition:"溢奶事件 · level ≥ 2",cloudCondition:"喂养提醒倒计时 ≤ 30 分钟",consumableCondition:"滤芯余量不足",strategy:"direct",minIntervalMinutes:5,lifecycle:"continuous",reminderIntervalMinutes:30,endEventId:"device.milk_overflow.recovered.v1",limited:false,maxHours:72,maxCount:100},
   message:{cozyLinkMode:"preset",cozyLink:"cozy://device/{deviceId}/safety",presetLinkId:"safety",language:"en-US",values:emptyLanguageValues()}
 };
