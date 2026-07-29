@@ -38,9 +38,9 @@ const notes={
   ],
   language:[
     ["语言选择","多语言抽屉 > 发布语言","English 始终勾选且不可取消；中文默认勾选但可取消；其余语言可复选，取消后保留草稿。","language-selector"],
-    ["KV 矩阵","多语言抽屉 > title / body","平台语言目录提供 18 行，locale code 消除同名语言歧义；发布只校验已选行。","lang-matrix"],
+    ["KV 矩阵","多语言抽屉 > title / body","平台语言目录提供 18 种语言，矩阵只渲染当前勾选语言；取消后该语言从表格隐藏但保留 title/body 草稿，重新勾选恢复原值。发布只校验已选行。","lang-matrix"],
     ["跳转一致性","多语言抽屉 > 跳转页面","跳转页面是规则顶层单值，在步骤 1 配置；语言抽屉只展示当前模式和链接。","message-link"],
-    ["发布校验","多语言抽屉 > 发布校验","校验已选语言的 title/body、10 个预设变量及当前触发可解析性；未知变量或非法链接阻断。","language-validation"]
+    ["发布校验","多语言抽屉 > 发布校验","只校验当前勾选语言的 title/body、10 个预设变量及当前触发可解析性；未勾选语言的草稿不参与完整性校验。未知变量或非法链接阻断。","language-validation"]
   ]
 };
 function placeAnchors(activeNotes){$$('.note-anchor').forEach(el=>el.remove());activeNotes.forEach((note,index)=>{const target=document.querySelector(`[data-anchor="${note[3]}"]`);if(!target)return;const anchor=document.createElement("button");anchor.className="note-anchor";anchor.textContent=String(index+1);anchor.title=note[0];anchor.addEventListener("click",()=>focusNote(index));target.appendChild(anchor)})}
