@@ -20,7 +20,7 @@ export const events=[
 
 export const appState={
   tab:"rules",scenario:"normal",readOnly:false,annotationOpen:true,context:"rules",ruleStep:1,
-  rule:{name:"设备溢奶紧急提醒",category:"安全",priority:"P0",template:"溢奶安全提醒",triggerType:"event",eventId:"device.milk_overflow.v1",targetMode:"filter",regions:["美国","德国"],start:"2026-08-01 00:00",end:"",recurrence:"每日",timezone:"市场时区",throttle:"实时",customInterval:5,lifecycle:"continuous",recoveryEvent:"device.milk_overflow.recovered.v1",limited:false,maxHours:72,maxCount:100,targets:["U-90012 产品值班员","U-90118 安全负责人"]},
+  rule:{name:"设备溢奶紧急提醒",category:"安全",priority:"P0",template:"溢奶安全提醒",triggerType:"event",eventId:"device.milk_overflow.v1",targetMode:"filter",regions:["美国","德国"],start:"2026-08-01 00:00",end:"",recurrence:"每日",timezone:"市场时区",throttle:"实时",customInterval:5,lifecycle:"continuous",recoveryEvent:"device.milk_overflow.recovered.v1",limited:false,maxHours:72,maxCount:100},
   template:{name:"溢奶安全提醒",category:"安全",cozyLink:"cozy://device/{id}/safety",priority:"P0",language:"zh-CN",values:{
     "en-US":{title:"Milk overflow detected",body:"{{deviceName}} detected overflow. Please check immediately."},
     "zh-CN":{title:"检测到溢奶风险",body:"{{deviceName}} 检测到溢奶，请立即检查。"},
@@ -32,4 +32,3 @@ export const appState={
 export const languages=[
   ["en-US","英文","美国主语言"],["zh-CN","简体中文",""],["de-DE","德语","德国主语言"],["ja-JP","日语","日本主语言"]
 ];
-
