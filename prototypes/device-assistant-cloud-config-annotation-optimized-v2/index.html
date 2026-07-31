@@ -841,7 +841,7 @@
     .tok-string { color: #032f62; }
     .tok-punct { color: #6e7781; }
 
-   .rich-text-editor {
+    .rich-text-editor {
       min-height: 112px;
       border: 1px solid var(--el-border-color);
       border-radius: var(--radius);
@@ -850,6 +850,65 @@
       color: var(--el-text-color-regular);
       line-height: 22px;
       overflow: auto;
+    }
+
+    .rich-text-field.is-single-line .rich-text-editor {
+      min-height: 42px;
+      max-height: 88px;
+      overflow-y: auto;
+    }
+
+    .rich-text-toolbar select {
+      height: 28px;
+      border: 1px solid var(--el-border-color);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+    }
+
+    .rich-text-editor mark,
+    .rich-text-preview mark {
+      display: block;
+      margin: 6px 0;
+      padding: 6px 8px;
+      border-radius: 4px;
+      background: #fff2b8;
+      white-space: pre-wrap;
+    }
+
+    .rich-text-editor [data-rich-icon],
+    .rich-text-preview [data-rich-icon] {
+      display: inline-flex;
+      width: 18px;
+      height: 18px;
+      margin: 0 3px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #eef4ff;
+      color: var(--el-color-primary);
+      font-size: 12px;
+      font-weight: 700;
+      vertical-align: text-bottom;
+    }
+
+    .rich-text-editor p[data-rich-icon-paragraph],
+    .rich-text-preview p[data-rich-icon-paragraph],
+    .rich-text-editor li[data-rich-icon-paragraph],
+    .rich-text-preview li[data-rich-icon-paragraph] {
+      position: relative;
+      padding-left: 26px;
+    }
+
+    .rich-text-editor p[data-rich-icon-paragraph] > [data-rich-icon],
+    .rich-text-preview p[data-rich-icon-paragraph] > [data-rich-icon],
+    .rich-text-editor li[data-rich-icon-paragraph] > [data-rich-icon],
+    .rich-text-preview li[data-rich-icon-paragraph] > [data-rich-icon] {
+      position: absolute;
+      left: 0;
+      top: 2px;
+      margin: 0;
     }
 
     .rich-text-editor:focus {
@@ -6613,7 +6672,7 @@
       reader.readAsText(file);
     }
 
-    function normalizeStepTemplate(step, order) {
+   function normalizeStepTemplate(step, order) {
       return {
         ...makeBlankStepTemplate(order, step.id || `step-template-${order}`),
         ...step,
@@ -6622,6 +6681,47 @@
         mediaType: step.mediaType === "video" || step.mediaType === "image" ? step.mediaType : "",
         sections: Array.isArray(step.sections) ? step.sections.slice(0, 3) : []
       };
+    }
+
+    const structurePresets = {
+      "three-step-guide": {
+        label: "三步标准引导",
+        description: "3 个 Step：第 1 步隐藏第二部分并配置 3 个第三部分；第 2 步保留 3 个第三部分但隐藏第 2 个；第 3 步仅保留基础结构。"
+      }
+    };
+
+    function presetSection(title, hidden = false) {
+      const section = makeBlankTextImageSection(1);
+      section.title = title;
+      section.titleI18n = { [state.defaultLocale]: title };
+      section.hidden = hidden;
+      return section;
+    }
+
+    function applyStructurePreset(presetKey) {
+      if (presetKey !== "three-step-guide") return;
+      const step1 = makeBlankStepTemplate(1, "step-template-1");
+      step1.title = "准备设备";
+      step1.titleI18n = { [state.defaultLocale]: step1.title };
+      step1.mediaHidden = true;
+      step1.sections = [presetSection("确认包装内容"), presetSection("准备安装位置"), presetSection("开始前检查")];
+
+      const step2 = makeBlankStepTemplate(2, "step-template-2");
+      step2.title = "安装与连接";
+      step2.titleI18n = { [state.defaultLocale]: step2.title };
+      step2.sections = [presetSection("连接设备"), presetSection("可选扩展说明", true), presetSection("完成连接")];
+
+      const step3 = makeBlankStepTemplate(3, "step-template-3");
+      step3.title = "开始使用";
+      step3.titleI18n = { [state.defaultLocale]: step3.title };
+      state.steps = [step1, step2, step3];
+      state.selectedStepId = step1.id;
+      state.selectedPage = "steps";
+      state.layer = "page";
+      state.structurePreset = presetKey;
+      setDirty();
+      renderAll();
+      showToast("已应用“三步标准引导”预设；可继续按需编辑字段和显隐项");
     }
 
     function renderSavedEntryPreview() {
@@ -7281,7 +7381,7 @@
         <div class="template-section-card">
           <div class="template-section-head">
             <strong>正文图片区 ${index + 1}</strong>
-            <button class="btn text" type="button" data-section-delete="${index}">删除</button>
+            <div><label class="check-row"><input type="checkbox" data-section-hidden="${index}" ${section.hidden ? "checked" : ""}> 隐藏该第三部分</label><button class="btn text" type="button" data-section-delete="${index}">删除</button></div>
           </div>
           <div class="field">
             <label for="sectionTitle${index}">正文标题</label>
@@ -7634,8 +7734,8 @@
           drawer: true,
           layer: "page",
           target: "#stepTitleInput",
-          title: "富文本适用范围",
-          body: "仅 bodyIntro / content / noteRichText 正文类字段支持富文本编辑器；title / subtitle 等标题类字段为普通文本输入框，无工具栏。",
+          title: "文本格式能力分级",
+          body: "title / subtitle 等单行文本支持加粗和换行；bodyIntro / content / noteRichText 多行文本框支持加粗、换行、无序列表、有序列表、高亮文本块和预设 icon。两类字段在 KV、预览和 JSON 中均保留受限 HTML 格式。",
           loc: "Step 模板 > 富文本适用范围",
           tag: "v2"
         },
@@ -7645,7 +7745,7 @@
           layer: "page",
           target: "#stepBodyIntroInput",
           title: "bodyIntro 富文本",
-          body: "V1 bodyIntro 为纯文本输入框，V2 改为富文本输入域，支持富文本工具栏。英文源内容进入 KV 表时也保留富文本格式。",
+          body: "V1 bodyIntro 为纯文本输入框，V2 改为多行富文本框，支持加粗、换行、无序列表、有序列表、高亮文本块和预设 icon。英文源内容进入 KV 表时也保留富文本格式。",
           loc: "Step 模板 > bodyIntro",
           tag: "v2"
         },
@@ -7755,6 +7855,7 @@
 
     function makeBlankTextImageSection(index) {
       return {
+        hidden: false,
         iconHidden: false,
         iconKey: "check",
         title: "",
@@ -7770,6 +7871,9 @@
         id: fixedId || `step-template-${Date.now()}`,
         order: index,
         headerIconKey: "box",
+        headerIconHidden: false,
+        titleHidden: false,
+        subtitleHidden: false,
         title: "",
         titleI18n: { [state.activeLocale || "en"]: "" },
         subtitle: "",
@@ -7894,6 +7998,7 @@
         if (step.mediaType === "image" && step.image) addMediaRows(rows, `steps.${stepIndex + 1}.image`, step, "image", `Step ${stepIndex + 1} 图片`, "image");
         if (step.mediaType === "video" && step.videoCover) addMediaRows(rows, `steps.${stepIndex + 1}.videoCover`, step, "videoCover", `Step ${stepIndex + 1} 视频封面图`, "image");
         (step.sections || []).forEach((section, sectionIndex) => {
+          if (section.hidden) return;
           addKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.title`, section, "title", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 标题`);
           addKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.content`, section, "content", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 内容`);
           addMediaRows(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.images`, section, "images", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 图片`, "image");
@@ -8401,6 +8506,9 @@
         ...step,
         order,
         headerIconKey: step.headerIconKey || "box",
+        headerIconHidden: Boolean(step.headerIconHidden),
+        titleHidden: Boolean(step.titleHidden),
+        subtitleHidden: Boolean(step.subtitleHidden),
         mediaHidden: Boolean(step.mediaHidden),
         mediaType: step.mediaType === "video" || step.mediaType === "image" ? step.mediaType : "",
         videoCover: step.videoCover || null,
@@ -9002,7 +9110,7 @@
       const headerIcon = configuredSubstepIcon(step.headerIconKey)?.mark || "S";
       return `
         <section class="assistant-page-copy">
-          <div class="abbr-item">
+          <div class="abbr-item" style="grid-template-columns:${step.headerIconHidden ? "0 minmax(0, 1fr)" : "30px minmax(0, 1fr)"};">
             <span class="abbr-icon">${escapeHtml(headerIcon)}</span>
             <span>
               <strong>${escapeHtml(textValue(step, "title") || `Step ${step.order}`)}</strong>
@@ -9165,20 +9273,20 @@
         });
       });
      normalizedSubsteps(page).forEach((item, index) => {
-        document.getElementById(`substepTitle${index}`)?.addEventListener("input", (event) => {
-         const target = normalizedSubsteps(page)[index];
-         if (!target) return;
-         setTextValue(target, "title", event.target.value);
-         setDirty();
-         renderPreviewSurfaces();
-       });
-        document.getElementById(`substepSubtitle${index}`)?.addEventListener("input", (event) => {
-         const target = normalizedSubsteps(page)[index];
-         if (!target) return;
-         setTextValue(target, "subtitle", event.target.value);
-         setDirty();
-         renderPreviewSurfaces();
-       });
+        bindRichTextField(document, `substepTitle${index}`, (value) => {
+          const target = normalizedSubsteps(page)[index];
+          if (!target) return;
+          setTextValue(target, "title", value);
+          setDirty();
+          renderPreviewSurfaces();
+        });
+        bindRichTextField(document, `substepSubtitle${index}`, (value) => {
+          const target = normalizedSubsteps(page)[index];
+          if (!target) return;
+          setTextValue(target, "subtitle", value);
+          setDirty();
+          renderPreviewSurfaces();
+        });
      });
       document.querySelectorAll("[data-substep-duration-value]").forEach((input) => {
         input.addEventListener("input", (event) => {
@@ -9306,7 +9414,7 @@
         <div class="template-section-card">
           <div class="template-section-head">
             <strong>正文图片区 ${index + 1}</strong>
-            <button class="btn text" type="button" data-section-delete="${index}">删除</button>
+            <div><label class="check-row"><input type="checkbox" data-section-hidden="${index}" ${section.hidden ? "checked" : ""}> 隐藏该第三部分</label><button class="btn text" type="button" data-section-delete="${index}">删除</button></div>
           </div>
           <div class="field">
             <label for="sectionIcon${index}">正文 icon</label>
@@ -9490,7 +9598,7 @@
       if (visibleStepListItemCount() < 1) issues.push({ level: "错误", type: "danger", text: "Step 页和说明书 PDF 至少需要保留一个非隐藏入口。" });
       if (!state.manualPdfHidden && !state.manualPdf) issues.push({ level: "错误", type: "danger", text: "说明书入口未隐藏时需要上传 PDF 说明书。" });
       visibleSteps().forEach((step) => {
-        (step.sections || []).forEach((section, index) => {
+        (step.sections || []).filter((section) => !section.hidden).forEach((section, index) => {
           if ((section.images?.length || 0) > 10) issues.push({ level: "错误", type: "danger", text: `Step ${step.order} 第三部分 ${index + 1} 图片最多 10 张。` });
         });
       });
@@ -9706,10 +9814,15 @@
       return plain || fallback;
     }
 
+   function richTextFieldMode(item, field) {
+     if (!item || !field) return "";
+     if (field === "title" || field === "subtitle") return "single";
+     if (field === "bodyIntro" || field === "content" || field === "noteRichText") return "multiline";
+     return "";
+   }
+
    function isRichTextField(item, field) {
-     if (!item || !field) return false;
-     if (field === "bodyIntro" || field === "content" || field === "noteRichText") return true;
-     return false;
+     return Boolean(richTextFieldMode(item, field));
    }
 
    function normalizeRichTextValue(value = "") {
@@ -9719,7 +9832,7 @@
      const rawText = hasHtml ? stripHtmlTags(source) : source;
      if (!rawText.trim()) return "";
      if (hasHtml) {
-       const allowed = ["p", "br", "strong", "em", "u", "ul", "ol", "li", "a"];
+       const allowed = ["p", "br", "strong", "em", "u", "ul", "ol", "li", "a", "mark", "span"];
        const cleaned = source
          .replace(/<\/?([\w-]+)(?:\s[^>]*)?\/?>/gi, (match, tag) => {
            const t = tag.toLowerCase();
@@ -9727,6 +9840,13 @@
            if (t === "a" && !match.startsWith("</")) {
              const href = match.match(/href\s*=\s*["']?([^"'\s>]+)/i);
              return href ? `<a href="${href[1]}">` : "<a>";
+           }
+           if (t === "span" && !match.startsWith("</")) {
+             const icon = match.match(/data-rich-icon\s*=\s*["']?([a-z-]+)/i);
+             return icon ? `<span data-rich-icon="${icon[1]}">` : "<span>";
+           }
+           if ((t === "p" || t === "li") && !match.startsWith("</")) {
+             return /data-rich-icon-paragraph/i.test(match) ? `<${t} data-rich-icon-paragraph>` : `<${t}>`;
            }
            const isClosing = match.startsWith("</");
            return `<${isClosing ? "/" : ""}${t}>`;
@@ -9773,6 +9893,12 @@
       return `<div class="rich-text-preview rich-text-inline">${html}</div>`;
     }
 
+    function richTextInlineHtml(item, field, fallback = "") {
+      const html = richTextHtml(item, field);
+      if (!stripHtmlTags(html).trim()) return escapeHtml(fallback);
+      return html.replace(/^<p>/i, "").replace(/<\/p>$/i, "");
+    }
+
     function renderRichTextField(options) {
       const {
         id,
@@ -9780,6 +9906,7 @@
         field,
         placeholder = "请输入内容",
         compact = false,
+        mode = richTextFieldMode(item, field) || "multiline",
         readonly = false,
         locale = state.defaultLocale,
         hint = "",
@@ -9788,16 +9915,18 @@
       const html = ensureRichTextParagraphs(value !== undefined ? value : richTextHtml(item, field, locale));
       const plain = stripHtmlTags(html);
      return `
-       <div class="rich-text-field ${readonly ? "" : "source-active"} ${compact ? "is-compact" : ""}">
+       <div class="rich-text-field ${compact ? "is-compact" : ""} ${mode === "single" ? "is-single-line" : ""}">
          ${readonly ? "" : `
             <div class="rich-text-toolbar">
               <button class="btn" type="button" data-rich-action="bold" data-rich-target="${escapeHtml(id)}">B</button>
-              <button class="btn" type="button" data-rich-action="italic" data-rich-target="${escapeHtml(id)}">I</button>
-              <button class="btn" type="button" data-rich-action="underline" data-rich-target="${escapeHtml(id)}">U</button>
-              <button class="btn" type="button" data-rich-action="insertUnorderedList" data-rich-target="${escapeHtml(id)}">•</button>
-              <button class="btn" type="button" data-rich-action="insertOrderedList" data-rich-target="${escapeHtml(id)}">1.</button>
-              <button class="btn" type="button" data-rich-action="link" data-rich-target="${escapeHtml(id)}">Link</button>
-              <button class="btn" type="button" data-rich-action="removeFormat" data-rich-target="${escapeHtml(id)}">Tx</button>
+              ${mode === "multiline" ? `
+                <button class="btn" type="button" data-rich-action="insertUnorderedList" data-rich-target="${escapeHtml(id)}">•</button>
+                <button class="btn" type="button" data-rich-action="insertOrderedList" data-rich-target="${escapeHtml(id)}">1.</button>
+                <button class="btn" type="button" data-rich-action="highlight" data-rich-target="${escapeHtml(id)}">高亮</button>
+                <select data-rich-icon-target="${escapeHtml(id)}" aria-label="插入预设 icon">
+                  <option value="">预设 icon</option><option value="info">ⓘ 提示</option><option value="check">✓ 完成</option><option value="warn">! 注意</option>
+                </select>
+              ` : ""}
              <button class="btn" type="button" data-rich-action="lineBreak" data-rich-target="${escapeHtml(id)}">↵</button>
               <button class="btn source-toggle" type="button" data-rich-action="toggleSource" data-rich-target="${escapeHtml(id)}" title="HTML 源码">&lt;/&gt;</button>
            </div>
@@ -9877,12 +10006,41 @@
           if (action === "link") {
             const url = window.prompt("请输入链接 URL", "https://");
             if (url) document.execCommand("createLink", false, url);
+          } else if (action === "highlight") {
+            const selection = window.getSelection();
+            if (selection?.rangeCount) {
+              const range = selection.getRangeAt(0);
+              if (!range.collapsed) {
+                const mark = document.createElement("mark");
+                try {
+                  range.surroundContents(mark);
+                } catch (_) {
+                  const fragment = range.extractContents();
+                  mark.appendChild(fragment);
+                  range.insertNode(mark);
+                }
+              }
+            }
           } else if (action === "lineBreak") {
             document.execCommand("insertHTML", false, "<br>");
           } else {
             document.execCommand(action, false, null);
           }
           target.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+      });
+      root.querySelectorAll("[data-rich-icon-target]").forEach((select) => {
+        select.addEventListener("change", () => {
+          const target = root.querySelector(`#${CSS.escape(select.dataset.richIconTarget)}`) || document.getElementById(select.dataset.richIconTarget);
+          const icons = { info: "ⓘ", check: "✓", warn: "!" };
+          if (!target || !icons[select.value]) return;
+          target.focus();
+          document.execCommand("insertHTML", false, `<span data-rich-icon="${select.value}">${icons[select.value]}</span>`);
+          const insertedIcons = target.querySelectorAll("[data-rich-icon]");
+          const paragraph = insertedIcons[insertedIcons.length - 1]?.closest("p, li") || target.querySelector("p, li");
+          paragraph?.setAttribute("data-rich-icon-paragraph", "");
+          target.dispatchEvent(new Event("input", { bubbles: true }));
+          select.value = "";
         });
       });
       root.querySelectorAll("[data-rich-editor]").forEach((editor) => {
@@ -10048,6 +10206,7 @@
 
     function makeBlankTextImageSection(index) {
       return {
+        hidden: false,
         iconHidden: false,
         iconKey: "check",
         title: "",
@@ -10123,6 +10282,9 @@
         ...step,
         order,
         headerIconKey: step.headerIconKey || "box",
+        headerIconHidden: Boolean(step.headerIconHidden),
+        titleHidden: Boolean(step.titleHidden),
+        subtitleHidden: Boolean(step.subtitleHidden),
         mediaHidden: Boolean(step.mediaHidden),
         mediaType: step.mediaType === "video" || step.mediaType === "image" ? step.mediaType : "",
         videoCover: step.videoCover || null,
@@ -10132,6 +10294,7 @@
             const normalized = {
               ...makeBlankTextImageSection(1),
               ...section,
+              hidden: Boolean(section.hidden),
               iconHidden: Boolean(section.iconHidden),
               iconKey: section.iconKey || "check"
             };
@@ -10187,6 +10350,7 @@
         if (step.mediaType === "image" && step.image) addMediaRows(rows, `steps.${stepIndex + 1}.image`, step, "image", `Step ${stepIndex + 1} 图片`, "image");
         if (step.mediaType === "video" && step.videoCover) addMediaRows(rows, `steps.${stepIndex + 1}.videoCover`, step, "videoCover", `Step ${stepIndex + 1} 视频封面图`, "image");
         (step.sections || []).forEach((section, sectionIndex) => {
+          if (section.hidden) return;
           addKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.title`, section, "title", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 标题`);
           addOptionalTextKvRow(rows, `steps.${stepIndex + 1}.sections.${sectionIndex + 1}.content`, section, "content", `Step ${stepIndex + 1} 正文图片区 ${sectionIndex + 1} 内容`);
           sectionImageItems(section).forEach((item, imageIndex) => {
@@ -10522,13 +10686,11 @@
               ` : ""}
              <div class="field">
                 <label for="substepTitle${index}">title<span class="required-mark">*</span></label>
-                <input class="input" id="substepTitle${index}" type="text" value="${escapeHtml(textSummary(item, "title"))}" placeholder="TBD：建议输入格式提示">
-                <div class="field-help">必填。</div>
+                ${renderRichTextField({ id: `substepTitle${index}`, item, field: "title", placeholder: "TBD：建议输入格式提示", hint: "必填。单行文本支持加粗和换行。" })}
              </div>
              <div class="field">
                 <label for="substepSubtitle${index}">subtitle</label>
-                <input class="input" id="substepSubtitle${index}" type="text" value="${escapeHtml(textSummary(item, "subtitle"))}" placeholder="TBD：建议输入格式提示">
-                <div class="field-help">选填。留空时不生成 subtitle Key。</div>
+                ${renderRichTextField({ id: `substepSubtitle${index}`, item, field: "subtitle", placeholder: "TBD：建议输入格式提示", hint: "选填。单行文本支持加粗和换行；留空时不生成 subtitle Key。" })}
              </div>
               ${showDuration ? `
                 <div class="field">
@@ -10556,7 +10718,7 @@
         <div class="template-section-card">
           <div class="template-section-head">
             <strong>正文图片区 ${index + 1}</strong>
-            <button class="btn text" type="button" data-section-delete="${index}">删除</button>
+            <div><label class="check-row"><input type="checkbox" data-section-hidden="${index}" ${section.hidden ? "checked" : ""}> 隐藏该第三部分</label><button class="btn text" type="button" data-section-delete="${index}">删除</button></div>
           </div>
           <div class="field">
             <label for="sectionIcon${index}">正文 icon</label>
@@ -10570,8 +10732,7 @@
           </div>
          <div class="field">
             <label for="sectionTitle${index}">正文标题<span class="required-mark">*</span></label>
-            <input class="input" id="sectionTitle${index}" type="text" value="${escapeHtml(textSummary(section, "title"))}" placeholder="TBD：建议输入格式提示">
-            <div class="field-help">必填。</div>
+            ${renderRichTextField({ id: `sectionTitle${index}`, item: section, field: "title", placeholder: "TBD：建议输入格式提示", hint: "必填。单行文本支持加粗和换行。" })}
          </div>
           <div class="field">
             <label>内容</label>
@@ -10598,22 +10759,35 @@
       if (!step) return `<div class="empty-state">暂无 step 模板。</div>`;
       return `
         <div class="form-grid">
+          <div class="template-section-card structure-preset-card">
+            <div class="template-section-head"><strong>结构预设</strong></div>
+            <div class="field">
+              <label for="structurePresetInput">预设值</label>
+              <select class="select" id="structurePresetInput">
+                <option value="">请选择预设值</option>
+                ${Object.entries(structurePresets).map(([key, preset]) => `<option value="${key}" ${state.structurePreset === key ? "selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}
+              </select>
+              <div class="field-help">${state.structurePreset && structurePresets[state.structurePreset] ? escapeHtml(structurePresets[state.structurePreset].description) : "预设会一次性覆盖当前英文结构源的 Step、第二/第三部分和显隐状态；已填写的内容及对应 KV 需按新结构补齐。"}</div>
+            </div>
+            <button class="btn" id="applyStructurePresetBtn" type="button" ${state.structurePreset ? "" : "disabled"}>应用预设</button>
+          </div>
           <div class="field">
             <label for="stepHeaderIconInput">第一部分 icon</label>
             <select class="select" id="stepHeaderIconInput">
               ${configuredSubstepIconOptions(step.headerIconKey || "box")}
             </select>
+            <label class="check-row"><input id="stepHeaderIconHiddenInput" type="checkbox" ${step.headerIconHidden ? "checked" : ""}> 在 Step 页隐藏 icon</label>
             <div class="field-help">Step 第一部分使用 UI 定义的预设 icon。</div>
           </div>
          <div class="field">
             <label for="stepTitleInput">第一部分 title<span class="required-mark">*</span></label>
-            <input class="input" id="stepTitleInput" type="text" value="${escapeHtml(textSummary(step, "title"))}" placeholder="TBD：建议输入格式提示">
-            <div class="field-help">必填。</div>
+            ${renderRichTextField({ id: "stepTitleInput", item: step, field: "title", placeholder: "TBD：建议输入格式提示", hint: "必填。单行文本支持加粗和换行。" })}
+            <label class="check-row"><input id="stepTitleHiddenInput" type="checkbox" ${step.titleHidden ? "checked" : ""}> 在 Step 页隐藏 title</label>
          </div>
          <div class="field">
             <label for="stepSubtitleInput">第一部分 subtitle</label>
-            <input class="input" id="stepSubtitleInput" type="text" value="${escapeHtml(textSummary(step, "subtitle"))}" placeholder="TBD：建议输入格式提示">
-            <div class="field-help">选填。留空时 APP 侧不展示 subtitle。</div>
+            ${renderRichTextField({ id: "stepSubtitleInput", item: step, field: "subtitle", placeholder: "TBD：建议输入格式提示", hint: "选填。单行文本支持加粗和换行；留空时 APP 侧不展示 subtitle。" })}
+            <label class="check-row"><input id="stepSubtitleHiddenInput" type="checkbox" ${step.subtitleHidden ? "checked" : ""}> 在 Step 页隐藏 subtitle</label>
          </div>
           <div class="template-section-card">
             <div class="template-section-head">
@@ -10676,20 +10850,47 @@
 
    function bindStepTemplateForm(step) {
      bindRichTextEditors(document);
-      $("#stepTitleInput")?.addEventListener("input", (event) => {
-        setTextValue(step, "title", event.target.value);
+      $("#structurePresetInput")?.addEventListener("change", (event) => {
+        state.structurePreset = event.target.value;
+        $("#applyStructurePresetBtn").disabled = !state.structurePreset;
+        const preset = structurePresets[state.structurePreset];
+        const help = document.querySelector(".structure-preset-card .field-help");
+        if (help && preset) help.textContent = preset.description;
+      });
+      $("#applyStructurePresetBtn")?.addEventListener("click", () => {
+        const preset = state.structurePreset;
+        if (!preset) return;
+        if (window.confirm("应用预设将覆盖当前英文结构源的 Step 结构与显隐状态，是否继续？")) applyStructurePreset(preset);
+      });
+      bindRichTextField(document, "stepTitleInput", (value) => {
+        setTextValue(step, "title", value);
        setDirty();
        renderSteps();
        renderPreviewSurfaces();
      });
-      $("#stepSubtitleInput")?.addEventListener("input", (event) => {
-        setTextValue(step, "subtitle", event.target.value);
+      bindRichTextField(document, "stepSubtitleInput", (value) => {
+        setTextValue(step, "subtitle", value);
        setDirty();
        renderSteps();
        renderPreviewSurfaces();
      });
       $("#stepHeaderIconInput")?.addEventListener("change", (event) => {
         step.headerIconKey = event.target.value;
+        setDirty();
+        renderPreviewSurfaces();
+      });
+      $("#stepHeaderIconHiddenInput")?.addEventListener("change", (event) => {
+        step.headerIconHidden = event.target.checked;
+        setDirty();
+        renderPreviewSurfaces();
+      });
+      $("#stepTitleHiddenInput")?.addEventListener("change", (event) => {
+        step.titleHidden = event.target.checked;
+        setDirty();
+        renderPreviewSurfaces();
+      });
+      $("#stepSubtitleHiddenInput")?.addEventListener("change", (event) => {
+        step.subtitleHidden = event.target.checked;
         setDirty();
         renderPreviewSurfaces();
       });
@@ -10769,11 +10970,20 @@
           renderAll();
         });
       });
+      document.querySelectorAll("[data-section-hidden]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const section = step.sections?.[Number(input.dataset.sectionHidden)];
+          if (!section) return;
+          section.hidden = input.checked;
+          setDirty();
+          renderPreviewSurfaces();
+        });
+      });
      (step.sections || []).forEach((section, index) => {
-        document.getElementById(`sectionTitle${index}`)?.addEventListener("input", (event) => {
+        bindRichTextField(document, `sectionTitle${index}`, (value) => {
          const target = step.sections?.[index];
          if (!target) return;
-         setTextValue(target, "title", event.target.value);
+         setTextValue(target, "title", value);
          setDirty();
          renderPreviewSurfaces();
        });
@@ -10865,18 +11075,18 @@
       if (!step) return `<div class="empty-preview">暂无 step 模板。</div>`;
       const headerIcon = configuredSubstepIcon(step.headerIconKey)?.mark || "S";
       return `
-        <section class="assistant-page-copy">
-          <div class="abbr-item">
-            <span class="abbr-icon">${escapeHtml(headerIcon)}</span>
+        ${step.headerIconHidden && step.titleHidden && step.subtitleHidden ? "" : `<section class="assistant-page-copy">
+          <div class="abbr-item" style="grid-template-columns:${step.headerIconHidden ? "0 minmax(0, 1fr)" : "30px minmax(0, 1fr)"};">
+            ${step.headerIconHidden ? "" : `<span class="abbr-icon">${escapeHtml(headerIcon)}</span>`}
             <div>
-              <strong>${escapeHtml(textSummary(step, "title", `Step ${step.order}`))}</strong>
-              ${textSummary(step, "subtitle") ? `<small>${escapeHtml(textSummary(step, "subtitle"))}</small>` : ""}
+              ${step.titleHidden ? "" : `<strong>${richTextInlineHtml(step, "title", `Step ${step.order}`)}</strong>`}
+              ${step.subtitleHidden || !textSummary(step, "subtitle") ? "" : `<small>${richTextInlineHtml(step, "subtitle")}</small>`}
             </div>
           </div>
-        </section>
+        </section>`}
         ${renderStepMediaPreview(step)}
         ${stripHtmlTags(richTextHtml(step, "bodyIntro")).trim() ? richTextPreview(step, "bodyIntro", "") : ""}
-        ${(step.sections || []).map((section, index) => {
+        ${(step.sections || []).filter((section) => !section.hidden).map((section, index) => {
           const items = sectionImageItems(section);
           const carouselId = `step-${step.id}-section-${index}`;
           const currentIndex = Math.min(state.carouselIndex[carouselId] || 0, Math.max(0, items.length - 1));
@@ -10887,7 +11097,7 @@
                 <div class="abbr-item" style="border:0;padding:0;grid-template-columns:${section.iconHidden ? "0 minmax(0, 1fr)" : "30px minmax(0, 1fr)"};">
                   ${section.iconHidden ? "" : `<span class="abbr-icon">${escapeHtml(configuredSubstepIcon(section.iconKey)?.mark || "I")}</span>`}
                   <div>
-                    <strong>${escapeHtml(textSummary(section, "title", `正文 ${index + 1}`))}</strong>
+                    <strong>${richTextInlineHtml(section, "title", `正文 ${index + 1}`)}</strong>
                   </div>
                 </div>
                 ${stripHtmlTags(richTextHtml(section, "content")).trim() ? richTextPreview(section, "content", "") : ""}
@@ -10917,7 +11127,7 @@
           if (step.mediaType === "video" && !step.video) issues.push({ level: "错误", type: "danger", text: `${label} 第二部分选择视频后需要上传 mp4。` });
         }
         if ((step.sections?.length || 0) > 3) issues.push({ level: "错误", type: "danger", text: `${label} 第三部分最多添加 3 个。` });
-        (step.sections || []).forEach((section, index) => {
+        (step.sections || []).filter((section) => !section.hidden).forEach((section, index) => {
           const sectionLabel = `${label} 第三部分 ${index + 1}`;
           const items = sectionImageItems(section);
           if (!textSummary(section, "title")) issues.push({ level: "错误", type: "danger", text: `${sectionLabel} 缺少正文标题。` });
@@ -11046,8 +11256,8 @@
             <div class="abbr-item">
               <span class="abbr-icon">${escapeHtml(substepMarkerLabel(item, index, markerType))}</span>
               <div>
-                <strong>${escapeHtml(textSummary(item, "title", `Substep ${index + 1}`))}</strong>
-                ${textSummary(item, "subtitle") ? `<small>${escapeHtml(textSummary(item, "subtitle"))}</small>` : `<small>未填写 subtitle</small>`}
+                <strong>${richTextInlineHtml(item, "title", `Substep ${index + 1}`)}</strong>
+                ${textSummary(item, "subtitle") ? `<small>${richTextInlineHtml(item, "subtitle")}</small>` : `<small>未填写 subtitle</small>`}
                 ${showDuration && durationLabel(item) ? `<small>预计耗时 ${escapeHtml(durationLabel(item))}</small>` : ""}
               </div>
             </div>
