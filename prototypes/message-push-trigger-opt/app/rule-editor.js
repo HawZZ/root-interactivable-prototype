@@ -3,7 +3,7 @@ import {appState,events,products,productSources,placeholders,supportedLanguages}
 import {openLanguageDrawer} from "./language-editor.js";
 import {renderAnnotations} from "./annotations.js";
 
-const steps=[[1,"基础信息与消息","内容、多语言、跳转"],[2,"触发与接收者","来源与设备绑定用户"],[3,"投递与生命周期","模式、窗口与发布校验"]];
+const steps=[[1,"触发与接收者","来源与设备绑定用户"],[2,"投递与生命周期","模式、窗口与发布校验"],[3,"基础信息与消息","内容、多语言、跳转"]];
 const product=()=>products.find(x=>x.id===appState.selectedProductId)||products[0];
 const sources=()=>productSources[appState.selectedProductId]||{properties:[],countdowns:[],consumables:[]};
 const mode=()=>appState.rule.reminderMode;
@@ -62,7 +62,7 @@ function validation(){
   return `<div class="validation-list">${items.map(([ok,t])=>`<div class="validation-item ${ok?"":"validation-fail"}"><span>${ok?"✓":"!"} ${t}</span><span class="el-tag el-tag--${ok?"success":"danger"} is-plain">${ok?"通过":"阻断"}</span></div>`).join("")}</div>`;
 }
 function invalidState(stateful,r){return stateful&&r.triggerType!=="event"}
-function content(){return appState.ruleStep===1?basic():appState.ruleStep===2?trigger():delivery()}
+function content(){return appState.ruleStep===1?trigger():appState.ruleStep===2?delivery():basic()}
 function shell(){return `<div class="drawer-host is-open" id="ruleDrawer"><div class="drawer-mask" data-close></div><aside class="drawer"><header class="drawer-header"><div class="drawer-title"><h2>${appState.editingRule?"编辑":"新建"}推送规则</h2><p>${esc(product().name)} · 设备主体消息推送</p></div><button class="icon-btn" data-close>×</button></header><div class="drawer-main">${stepNav()}<div class="drawer-body"><section class="drawer-content" id="ruleStepContent">${content()}</section></div></div><footer class="drawer-footer"><span class="save-hint">自动保存上次编辑：刚刚</span><div class="footer-actions"><button class="el-btn" data-draft>保存草稿</button><button class="el-btn" data-prev ${appState.ruleStep===1?"disabled":""}>上一步</button>${appState.ruleStep<3?'<button class="el-btn el-btn--primary" data-next>下一步</button>':'<button class="el-btn el-btn--primary" data-publish>保存并启用</button>'}</div></footer></aside></div>`}
 function rerender(){const host=$("#ruleDrawer");if(!host)return;host.outerHTML=shell();wire();renderAnnotations(`rule${appState.ruleStep}`,`规则配置 · 步骤 ${appState.ruleStep}/3`)}
 function insertToken(el){const target=$("#ruleDrawer").querySelector(`[data-content="${el.dataset.messageField}"]`);if(!target)return;const obj=el.dataset.stateful==="true"?appState.message.stateValues[appState.activeMessageState]["en-US"]:appState.message.values["en-US"];const a=target.selectionStart??target.value.length;target.value=`${target.value.slice(0,a)}${el.dataset.token}${target.value.slice(target.selectionEnd??a)}`;obj[el.dataset.messageField]=target.value;target.focus();target.selectionStart=target.selectionEnd=a+el.dataset.token.length}
