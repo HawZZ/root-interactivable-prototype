@@ -18,7 +18,7 @@ const notes={
     ["三步编辑结构","规则抽屉 > 顶部步骤条","顶部 Step Bar 显示当前步骤、已完成步骤和下一步范围；顺序为触发、投递、消息；没有起止时间、循环、时区或独立用户条件。","step-nav"],
     ["四类触发","步骤 1 > 触发类型","设备、云端、耗材、事件均属于范围。云端使用 timerCycleCompleted 周期完成事件。","trigger-source"],
     ["设备条件","步骤 1 > 设备触发","先选属性，再选兼容运算符和值，形成 if（A op b）的触发源。","trigger-source"],
-    ["云计时器周期","步骤 1 > 云端触发","阈值文案固定为 0/只读；每个周期到 0 触发一次，自动 reset 后下一周期再触发。必须验收 timerInstanceId 与 cycleId/resetGeneration。","cloud-cycle"],
+    ["云计时器周期","步骤 1 > 云端触发","用户配置剩余时长阈值，语义固定为 ≤；每个周期首次进入阈值只触发一次，离开阈值、新实例或自动 reset 后重新 arm。必须验收 timerInstanceId 与 cycleId/resetGeneration。","cloud-cycle"],
     ["目标用户解析","步骤 1 > 固定解析规则","所有触发均必须落到真实 deviceId；最终目标用户固定为 BindUsers(deviceId)，页面不维护外部接收人名单。","recipient-resolution"],
     ["事件来源","步骤 1 > 事件触发","事件选择器只列当前产品已发布事件；事件详情提供 webhook URL 与安全配置状态。","trigger-source"]
   ],
@@ -47,8 +47,8 @@ const notes={
     ["安全服务状态","事件详情 > 安全配置状态","配置、轮换、撤销均由通用 webhook 安全服务承载；认证失败 fail-closed、审计、不入队。","webhook-security"]
   ],
   "cloud-cycle":[
-    ["周期事件","步骤 1 > 云端周期","timerCycleCompleted 是唯一运行事件；每个 timerInstanceId + cycleId 到 0 仅执行一次。","cloud-cycle"],
-    ["自动重置","步骤 1 > 周期状态","到 0 后计时器自动 reset，生成下一周期；重复上报同一 occurrence 不入队、不计数。","cloud-cycle"]
+    ["周期事件","步骤 1 > 云端周期","timerCycleCompleted 携带可配置阈值命中语义；每个 timerInstanceId + cycleId 在同一周期只执行一次。","cloud-cycle"],
+    ["自动重置","步骤 1 > 周期状态","离开阈值、新实例或到 0 后自动 reset 均会重新 arm；重复上报同一 occurrence 不入队、不计数。","cloud-cycle"]
   ]
 };
 
