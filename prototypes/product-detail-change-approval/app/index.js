@@ -45,8 +45,7 @@ function approvals() {
 
 function settings() {
   if (!isAdmin()) return layout(`<section class="notice-box"><h2>无访问权限</h2><p>审批人配置仅系统管理员可访问和配置。前端隐藏不代表权限校验，服务端必须按当前 IoT 平台用户权限拦截读取与保存。</p><button class="el-btn" data-page="approvals">返回审批管理</button></section>`, 'settings');
-  const rows = Object.values(approvalConfig);
-  return layout(`<div class="page-title"><div><h1>变更审批配置 ${anchor(1, 'config-table')}</h1><p>仅系统管理员可维护；审批人从 IoT 平台用户中选择，提交时冻结当前配置快照。</p></div><button class="el-btn el-btn--primary" data-drawer="config">编辑配置</button></div><div class="notice-box"><b>配置说明</b><p>不手工录入审批人姓名或邮箱；审批人是 IoT 平台用户。机器人密钥由技术侧托管，不在此页展示。</p></div><section class="product-panel settings-panel"><div class="panel-head"><h2>按动作指定审批人</h2></div><div class="table-scroll"><table class="el-table" id="config-table"><thead><tr><th>动作</th><th>IoT 平台用户</th><th>用户账号</th><th>启用状态</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${row.action}</td><td>${row.name}</td><td>${row.account}</td><td>${tag('已启用')}</td></tr>`).join('')}</tbody></table></div></section><section class="product-panel settings-panel"><div class="panel-head"><h2>飞书通知</h2></div><div class="frozen-box"><b>待审批消息模板</b><p>｛产品名称 / 产品型号｝正在｛变更详情/上架产品/下架产品｝，待审批。<br>审批单据：｛审批单 url｝<br>@｛审批人姓名｝</p></div></section>`, 'settings');
+  return layout(`<div class="page-title"><div><h1>变更审批配置 ${anchor(1, 'config-table')}</h1><p>仅系统管理员可维护；所有纳入范围的产品详情变更、上架范围变更、产品上架和产品下架均使用同一审批人。</p></div><button class="el-btn el-btn--primary" data-drawer="config">编辑审批人</button></div><div class="notice-box"><b>需要审批的范围</b><p>上架中、已上架、已下架产品的详情/上架范围变更，以及所有产品的上架、下架，均须先由下方审批人审批。飞书待审批消息默认推送，机器人由后台统一配置。</p></div><section class="product-panel settings-panel"><div class="panel-head"><h2>已配置审批人</h2></div><div class="info-grid two" id="config-table">${info('审批人', approvalConfig.name)}${info('IoT 平台账号', approvalConfig.account)}${info('审批范围', '产品详情、上架范围、产品上架、产品下架')}${info('飞书待审批消息', '默认推送（后台统一配置）')}</div></section><section class="product-panel settings-panel"><div class="panel-head"><h2>飞书通知</h2></div><div class="frozen-box"><b>待审批消息模板</b><p>｛产品名称 / 产品型号｝正在｛变更详情/上架产品/下架产品｝，待审批。<br>审批单据：｛审批单 url｝<br>@｛审批人姓名｝</p></div></section>`, 'settings');
 }
 
 function detail(item) {
@@ -94,7 +93,7 @@ function openListingRange() {
 
 function openConfig() {
   const options = Object.values(users).map((user) => `<button class="op-link" data-select-approver="${user.id}">${user.name}（${user.role} / ${user.id}）</button>`).join('<span class="op-divider">|</span>');
-  drawer(`<div class="drawer-head"><h3>编辑变更审批配置</h3><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body"><p class="muted">从 IoT 平台用户中选择审批人；不允许手工输入姓名或邮箱。保存仅影响后续申请。</p><label class="drawer-field required-field">审批人<select class="el-select" id="approver-picker"><option value="li.na">李娜（li.na）</option><option value="wang.admin">王敏（wang.admin）</option></select></label><div class="notice-box"><b>可选 IoT 平台用户</b><p>${options}</p></div><label class="drawer-field required-field">配置动作<span class="check-row vertical"><label><input type="checkbox" checked> 产品详情 / 上架范围变更</label><label><input type="checkbox" checked> 产品上架</label><label><input type="checkbox" checked> 产品下架</label></span></label><label class="drawer-field"><span class="checkline"><input type="checkbox" checked>启用飞书机器人提醒（可选）</span></label></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn el-btn--primary" data-save-config>保存</button></div>`);
+  drawer(`<div class="drawer-head"><h3>编辑审批人</h3><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body"><p class="muted">所有纳入审批范围的变更、上架和下架均使用同一审批人；不允许手工输入姓名或邮箱。飞书待审批消息由后台统一配置并默认推送。</p><label class="drawer-field required-field">审批人<select class="el-select" id="approver-picker"><option value="li.na">李娜（li.na）</option><option value="wang.admin">王敏（wang.admin）</option></select></label><div class="notice-box"><b>可选 IoT 平台用户</b><p>${options}</p></div><div class="frozen-box"><b>审批范围</b><p>产品详情变更、产品上架范围变更、产品上架、产品下架均需提交该审批人审批。</p></div></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn el-btn--primary" data-save-config>保存</button></div>`);
 }
 
 function modal(html) { modalRoot.innerHTML = `<div class="modal-mask"><section class="modal">${html}</section></div>`; }
@@ -115,8 +114,8 @@ function renderAnnotations(kind) {
     ['1', '审批页数据隔离', '审批管理列表', '普通用户仅见“我发起的”并只可查看/撤销待审批；审批员和系统管理员可见“我审批的”全量列表。服务端必须复核权限。'],
     ['2', '审批详情操作', '审批详情', '审批员/系统管理员只可对待审批且非本人申请通过或驳回。已通过但应用失败转“未生效”，发起人可取消，系统管理员可重试。']
   ] : kind === 'settings' ? [
-    ['1', '审批人配置', '按动作指定审批人', '仅系统管理员可访问。审批人选择 IoT 平台用户，不手填姓名/邮箱；提交时冻结配置快照。'],
-    ['2', '飞书消息', '飞书通知', '消息为待审批提醒，审批单 URL 指向审批详情页，@审批人姓名；不接入飞书官方审批流。']
+    ['1', '全局审批人配置', '已配置审批人', '仅系统管理员可访问。所有纳入范围的变更、上架和下架使用同一 IoT 平台审批人，不手填姓名/邮箱；提交时冻结配置快照。'],
+    ['2', '默认飞书提醒', '飞书通知', '待审批消息由后台统一配置并默认推送，审批单 URL 指向审批详情页，@审批人姓名；不接入飞书官方审批流。']
   ] : [
     ['1', '冻结快照', '审批详情', '展示基线与目标差异；快照不可修改。'],
     ['2', '外部测试与飞书提醒', '通知投递', '测试、测试结果和通知审批人均在系统外完成；平台只记录通知投递。'],

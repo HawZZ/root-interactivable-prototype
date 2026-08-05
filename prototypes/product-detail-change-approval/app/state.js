@@ -26,11 +26,7 @@ export const apps = [
   { id: 'A-006', productId: '2042519931187200005', action: '上架', status: '未生效', product: 'M5 Monitor', model: 'M5', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-01 11:32', lock: true, outcome: '审批通过，但应用失败' }
 ];
 
-export const approvalConfig = {
-  detail: { action: '产品详情 / 上架范围变更', userId: 'li.na', name: '李娜', account: 'li.na' },
-  listing: { action: '产品上架', userId: 'li.na', name: '李娜', account: 'li.na' },
-  delisting: { action: '产品下架', userId: 'li.na', name: '李娜', account: 'li.na' }
-};
+export const approvalConfig = { userId: 'li.na', name: '李娜', account: 'li.na' };
 
 export function currentUser() {
   return Object.values(users).find((user) => user.role === state.role) || users.productManager;
