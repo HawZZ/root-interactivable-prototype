@@ -3,9 +3,56 @@ export const products=[
   {id:"prod-air-p3",name:"Cozy Air P3",model:"Air P3",presetLinks:[{id:"home",label:"设备首页",uri:"cozy://device/{deviceId}/home"},{id:"filter",label:"滤芯管理",uri:"cozy://device/{deviceId}/consumable/filter"}]}
 ];
 
+const numberOperators=[">=",">","=","<=","<"];
+const numeric=(id,name,group,unit,example,description)=>({id,name,group,type:"number",unit,example,description,operators:numberOperators});
+const enumValue=(id,name,group,options,description)=>({id,name,group,type:"enum",options,description,operators:["=","!="]});
+const boolean=(id,name,group,description)=>({id,name,group,type:"boolean",description,operators:["=","!="]});
+
+// S12 用 36 个已配置物模型属性演示大目录选择；真实环境直接读取当前产品的功能设计目录。
+const s12Properties=[
+  numeric("milkLevel","储奶量","安全与告警","ml","180","储奶容器实时液位"),
+  enumValue("overflowRiskLevel","溢奶风险等级","安全与告警",["low","medium","high"],"基于液位和姿态计算的风险等级"),
+  numeric("milkTemperature","奶液温度","安全与告警","°C","38","储奶容器温度"),
+  boolean("leakDetected","漏液检测","安全与告警","传感器检测到漏液"),
+  enumValue("cupSealStatus","罩杯密封状态","安全与告警",["sealed","loose","unknown"],"罩杯与皮肤的密封状态"),
+  numeric("motorTemperature","电机温度","安全与告警","°C","65","电机热保护监测"),
+  enumValue("tubeBlockageRisk","导管堵塞风险","安全与告警",["none","suspected","confirmed"],"导管通路诊断结果"),
+  numeric("batteryLevel","电池电量","设备状态","%","20","设备当前剩余电量"),
+  enumValue("chargeStatus","充电状态","设备状态",["charging","full","discharging"],"充电与放电状态"),
+  boolean("deviceOnline","设备在线","设备状态","设备与云端连接状态"),
+  numeric("bluetoothRssi","蓝牙信号强度","设备状态","dBm","-70","最近一次蓝牙 RSSI"),
+  numeric("storageUsage","本地存储占用","设备状态","%","85","设备本地存储使用率"),
+  boolean("childLock","童锁状态","设备状态","童锁是否已启用"),
+  boolean("sleepMode","休眠模式","设备状态","节能休眠是否已启用"),
+  numeric("screenBrightness","屏幕亮度","设备状态","%","60","屏幕当前亮度"),
+  numeric("autoShutdownMinutes","自动关机时长","设备状态","min","30","无操作自动关机时长"),
+  enumValue("pumpMode","吸乳模式","泵乳过程",["standard","stimulation","quiet"],"当前吸乳模式"),
+  numeric("pumpDuration","本次吸乳时长","泵乳过程","min","30","当前会话已持续时长"),
+  numeric("suctionLevel","吸力档位","泵乳过程","level","6","当前负压档位"),
+  numeric("cycleRate","吸乳频率","泵乳过程","rpm","50","当前周期频率"),
+  numeric("leftMotorSpeed","左侧电机转速","泵乳过程","rpm","1800","左侧电机实时转速"),
+  numeric("rightMotorSpeed","右侧电机转速","泵乳过程","rpm","1800","右侧电机实时转速"),
+  numeric("leftPressure","左侧负压","泵乳过程","kPa","16","左侧实时负压"),
+  numeric("rightPressure","右侧负压","泵乳过程","kPa","16","右侧实时负压"),
+  numeric("flowRate","流速","泵乳过程","ml/min","12","当前泵乳流速"),
+  numeric("sessionCount","今日吸乳次数","泵乳过程","次","6","自然日内完成次数"),
+  numeric("stimulationDuration","刺激模式时长","泵乳过程","min","8","当前会话刺激模式时长"),
+  boolean("paused","设备暂停","泵乳过程","当前会话是否暂停"),
+  numeric("motorRuntime","电机累计运行时长","维护与诊断","h","300","出厂以来电机累计运行时长"),
+  numeric("cleaningCycle","距上次清洁次数","维护与诊断","次","8","最近一次清洁后的运行次数"),
+  numeric("chargingCycles","累计充电循环","维护与诊断","次","120","电池累计充放电循环"),
+  enumValue("valveHealth","阀门健康度","维护与诊断",["normal","degraded","replace"],"阀门自检结果"),
+  enumValue("temperatureSensorStatus","温度传感器状态","维护与诊断",["normal","fault","calibrating"],"温度传感器诊断状态"),
+  enumValue("selfCheckStatus","最近一次自检","维护与诊断",["passed","warning","failed"],"上一次系统自检结论"),
+  numeric("firmwareUpdateProgress","固件更新进度","维护与诊断","%","100","固件升级任务进度"),
+  numeric("errorRetryCount","故障重试次数","维护与诊断","次","3","当前故障恢复重试次数")
+];
+
+export const recentPropertyIds={"prod-s12":["milkLevel","overflowRiskLevel","pumpDuration","batteryLevel"],"prod-air-p3":["pm25"]};
+
 export const productSources={
-  "prod-s12":{properties:[{id:"milkLevel",name:"储奶量",type:"number",unit:"ml",operators:[">=",">","=","<=","<"],example:"180"},{id:"pumpMode",name:"吸乳模式",type:"enum",options:["standard","stimulation","quiet"],operators:["=","!="]},{id:"paused",name:"设备暂停",type:"boolean",operators:["=","!="]}],countdowns:[{id:"feed-reminder",name:"喂养提醒",deviceCapability:"verified",cycleContract:"verified",durationMinutes:60}],consumables:[]},
-  "prod-air-p3":{properties:[{id:"pm25",name:"PM2.5",type:"number",unit:"μg/m³",operators:[">=",">","=","<=","<"],example:"75"}],countdowns:[{id:"filter-dry",name:"滤芯干燥倒计时",deviceCapability:"verified",cycleContract:"verified",durationMinutes:120}],consumables:[{id:"filter",name:"HEPA 滤芯",unit:"%",deviceCapability:"verified"},{id:"carbon",name:"活性炭滤芯",unit:"%",deviceCapability:"verified"}]}
+  "prod-s12":{properties:s12Properties,countdowns:[{id:"feed-reminder",name:"喂养提醒",deviceCapability:"verified",cycleContract:"verified",durationMinutes:60}],consumables:[]},
+  "prod-air-p3":{properties:[numeric("pm25","PM2.5","空气质量","μg/m³","75","室内颗粒物浓度"),numeric("co2","CO₂","空气质量","ppm","1000","室内二氧化碳浓度"),numeric("humidity","环境湿度","环境监测","%","70","室内相对湿度"),numeric("temperature","环境温度","环境监测","°C","28","室内环境温度"),enumValue("fanMode","风机模式","设备状态",["auto","sleep","turbo"],"净化器当前风机模式"),boolean("deviceOnline","设备在线","设备状态","设备与云端连接状态")],countdowns:[{id:"filter-dry",name:"滤芯干燥倒计时",deviceCapability:"verified",cycleContract:"verified",durationMinutes:120}],consumables:[{id:"filter",name:"HEPA 滤芯",unit:"%",deviceCapability:"verified"},{id:"carbon",name:"活性炭滤芯",unit:"%",deviceCapability:"verified"}]}
 };
 
 export const supportedLanguages=[["en-US","English"],["zh-CN","简体中文"],["de-DE","Deutsch"],["fr-FR","Français"],["zh-TW","繁體中文"],["it-IT","Italiano"],["pt-PT","Português"],["es-ES","Español"],["ar-SA","العربية"],["vi-VN","Tiếng Việt"],["id-ID","Bahasa Indonesia"],["th-TH","ไทย"],["ms-MY","Bahasa Melayu"],["ja-JP","日本語"],["ru-RU","Русский"],["fil-PH","Filipino"],["ko-KR","한국어"],["nl-NL","Nederlands"]];
