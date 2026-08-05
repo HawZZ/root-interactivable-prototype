@@ -1,144 +1,128 @@
 import { $, $$, escapeHtml } from './dom.js';
-import { state, apps, set, tagType } from './state.js';
+import { state, apps, users, approvalConfig, currentUser, isActive, set, tagType } from './state.js';
 
 const screen = $('#screen');
 const anno = $('#annotation-body');
 const modalRoot = $('#modal-root');
 const toast = $('#toast');
-
-const tag = (s) => `<span class="el-tag el-tag--${tagType(s)} is-plain">${escapeHtml(s)}</span>`;
+const W1_ID = '2075767415740338177';
+const tag = (value) => `<span class="el-tag el-tag--${tagType(value)} is-plain">${escapeHtml(value)}</span>`;
 const anchor = (n, id) => `<button class="anchor" type="button" data-anchor="${id}" aria-label="查看批注 ${n}">${n}</button>`;
-
-const supportedPages = new Set(['product-list', 'approvals', 'settings', 'changes']);
-const navGroup = (title, items, active) => `<div class="menu-title">${title}</div>${items.map(([key, label]) => { const clickable = supportedPages.has(key); const selected = key === 'product-list' ? (active === 'product' || active === 'product-list') : active === key; return `<button class="menu-item ${selected ? 'active' : ''}" ${clickable ? `data-page="${key}"` : 'data-toast="该页面不在本次原型范围内"'}><span class="nav-icon">${key === 'product-list' ? '▦' : key === 'approvals' ? '✓' : key === 'settings' ? '⚙' : key === 'changes' ? '↺' : '•'}</span>${label}</button>`; }).join('')}`;
+const isPrivileged = () => state.role === '审批员' || state.role === '系统管理员';
+const isAdmin = () => state.role === '系统管理员';
+const visibleAction = (action) => ({ '详情变更': '变更详情', '上架范围变更': '变更详情', 上架: '上架产品', 下架: '下架产品' }[action] || action);
 
 function layout(content, active) {
-  const detail = active === 'product';
-  const crumb = detail
-    ? `<button class="back-icon" data-page="product-list" aria-label="返回产品列表">‹</button><div><b>智能产品</b><small>查看产品详情　/　产品列表　/　智能产品</small></div>`
-    : active === 'product-list'
-      ? `<div><b>智能产品</b><small>产品列表　/　智能产品</small></div>`
-      : active === 'settings'
-        ? `<div><b>配置中心</b><small>变更审批配置</small></div>`
-        : active === 'approvals'
-          ? `<div><b>审批管理</b><small>审批中心　/　待处理</small></div>`
-          : `<div><b>我的变更</b><small>智能产品　/　我的变更</small></div>`;
-  return `<div class="app">
-    <aside class="aside">
-      <div class="brand"><div class="brand-wordmark"><span>路特创新</span><b>AIoT</b> Platform</div></div>
-      <nav class="menu">
-        <button class="menu-item menu-overview"><span class="nav-icon">◉</span>概览</button>
-        ${navGroup('智能产品', [['product-list', '产品列表'], ['message-push', '消息推送']], active)}
-        ${navGroup('设备管理', [['device-list', '设备列表'], ['firmware', '固件管理'], ['ota', 'OTA']], active)}
-        ${navGroup('App', [['app-list', 'App列表'], ['app-upgrade', 'App升级'], ['extension', '扩展程序管理'], ['whitelist', '白名单管理'], ['whitelist-label', '白名单标签组管理']], active)}
-        ${navGroup('配置中心', [['model-pool', '物模型池'], ['product-template', '产品模板'], ['category', '产品分类'], ['i18n', '后台多语言'], ['approvals', '审批管理'], ['changes', '我的变更'], ['settings', '变更审批配置']], active)}
-        ${navGroup('生产管理', [['certificate', '生产凭证'], ['production-record', '生产记录']], active)}
-      </nav>
-      <div class="aside-footer">☰</div>
-    </aside>
-    <section class="shell-main">
-      <header class="topbar"><div class="crumb">${crumb}</div><div class="top-actions"><span class="top-icon">?</span><span class="top-icon">●</span><span class="avatar">陈</span></div></header>
-      <main class="content">${content}</main>
-    </section>
-  </div>`;
+  const configItem = isAdmin() ? `<button class="menu-item ${active === 'settings' ? 'active' : ''}" data-page="settings"><span class="nav-icon">⚙</span>变更审批配置</button>` : '';
+  const crumb = active === 'product' ? '智能产品 / 产品列表 / 产品详情' : active === 'approvals' ? '配置中心 / 审批管理' : active === 'settings' ? '配置中心 / 变更审批配置' : '智能产品 / 产品列表';
+  return `<div class="app"><aside class="aside"><div class="brand"><div class="brand-wordmark"><span>路特创新</span><b>AIoT</b> Platform</div></div><nav class="menu"><button class="menu-item"><span class="nav-icon">◉</span>概览</button><div class="menu-title">智能产品</div><button class="menu-item ${active === 'product' || active === 'product-list' ? 'active' : ''}" data-page="product-list"><span class="nav-icon">▦</span>产品列表</button><div class="menu-title">配置中心</div><button class="menu-item ${active === 'approvals' ? 'active' : ''}" data-page="approvals"><span class="nav-icon">✓</span>审批管理</button>${configItem}</nav><div class="aside-footer">☰</div></aside><section class="shell-main"><header class="topbar"><div class="crumb"><div><b>${active === 'approvals' ? '审批管理' : active === 'settings' ? '变更审批配置' : '智能产品'}</b><small>${crumb}</small></div></div><div class="top-actions"><span class="top-icon">?</span><span class="avatar">陈</span></div></header><main class="content">${content}</main></section></div>`;
 }
-
-const productMeta = `<div class="product-meta"><span>产品分类：Breast Pump</span><i></i><span>产品型号：W1Lite</span><i></i><span>产品代码：--</span><i></i><span>产品ID：2075767415740338177</span><i></i><span>产品模板ID：1907328212561108993</span></div>`;
 
 function productList() {
-  const rows = [
-    ['Breast Pump', 'W1 Lite', 'W1Lite', 'W1L-NA', '2075767415740338177', '--', '弱绑定', '直连设备', '已上架', '版本1 - 已发布', 'ROOT云', 'momcozy', 'BLE', '2026-07-20'],
-    ['Sound Machine', 'DreamSync Tech', 'WN05', '--', '7dirq5hqba22fw5y', '--', '弱绑定', '直连设备', '已上架', '版本1 - 已发布', '涂鸦云', 'momcozy', 'WIFI+BLE', '2024-11-20'],
-    ['Baby monitor', 'BM04', 'BM04', '--', 'mzohju3minbjogwz', '--', '强绑定', '直连设备', '已上架', '版本1 - 已发布', '涂鸦云', 'momcozy', 'WIFI', '2024-06-18'],
-    ['Breast Pump', 'Grand Flow', 'G100', '--', '1773196524151373826', '--', '弱绑定', '直连设备', '开发中', '版本1 - 迭代中', 'ROOT云', 'momcozy', 'BLE', '2024-03-28']
-  ];
-  return layout(`<div class="list-head"><div><h1>智能产品</h1></div><button class="el-btn el-btn--primary">＋ 创建产品</button></div>
-    <section class="filterbar product-filter"><select class="el-select"><option>产品分类</option><option>Breast Pump</option><option>Sound Machine</option></select><select class="el-select"><option>所属 APP</option><option>momcozy</option></select><select class="el-select"><option>所属平台</option><option>ROOT云</option><option>涂鸦云</option></select><select class="el-select"><option>通讯方式</option><option>BLE</option><option>WIFI+BLE</option></select><input class="el-input" placeholder="输入产品ID..."/><button class="el-btn el-btn--primary" data-toast="已按筛选条件查询">查询</button><button class="el-btn" data-toast="筛选已重置">重置</button></section>
-    <div class="table-scroll"><table class="el-table product-table"><thead><tr><th>产品分类</th><th>产品名称</th><th>产品型号</th><th>客服型号</th><th>产品ID</th><th>产品代码</th><th>绑定类型</th><th>设备类型</th><th>产品图片</th><th>产品状态</th><th>功能版本/状态</th><th>所属平台</th><th>所属App</th><th>通讯方式</th><th>创建时间</th><th class="col-ops">操作</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td>${r[0]}</td><td><button class="op-link" data-page="product">${r[1]}</button></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td><td><span class="image-thumb">${i === 0 ? '◌' : '▧'}</span></td><td>${tag(r[8])}</td><td>${r[9].replace(' - ', ' · ')}</td><td>${r[10]}</td><td>${r[11]}</td><td>${r[12]}</td><td>${r[13]}</td><td class="col-ops"><button class="op-link">复制</button><span class="op-divider">|</span><button class="op-link" data-page="product">查看</button></td></tr>`).join('')}</tbody></table></div><div class="pagination">共 25 条　<span class="page-current">1</span>　2　3　›　<select class="page-size"><option>10条/页</option></select></div>`, 'product-list');
+  const rows = [['W1 Lite', 'W1Lite', '已上架', 'ROOT云'], ['DreamSync Tech', 'WN05', '上架中', '涂鸦云'], ['Grand Flow', 'G100', '开发中', 'ROOT云'], ['S9 Sterilizer', 'S9', '已下架', 'ROOT云']];
+  return layout(`<div class="list-head"><h1>智能产品</h1><button class="el-btn el-btn--primary" data-toast="创建产品不在本次原型范围内">＋ 创建产品</button></div><section class="filterbar"><input class="el-input" placeholder="产品名称 / 产品型号"><select class="el-select"><option>全部产品状态</option><option>开发中</option><option>上架中</option><option>已上架</option><option>已下架</option></select><button class="el-btn el-btn--primary" data-toast="已按筛选条件查询">查询</button><button class="el-btn" data-toast="筛选已重置">重置</button></section><div class="table-scroll"><table class="el-table" id="product-table"><thead><tr><th>产品名称</th><th>产品型号</th><th>产品状态</th><th>所属平台</th><th>更新时间</th><th>操作</th></tr></thead><tbody>${rows.map((row) => `<tr><td><button class="op-link" data-page="product">${row[0]}</button></td><td>${row[1]}</td><td>${tag(row[2])}</td><td>${row[3]}</td><td>2026-08-05 10:18</td><td><button class="op-link" data-page="product">查看</button></td></tr>`).join('')}</tbody></table></div><div class="pagination">共 ${rows.length} 条　<span class="page-current">1</span></div>`, 'product-list');
 }
 
-const infoField = (label, value, cls = '') => `<div class="info-field ${cls}"><label>${label}</label><span>${value}</span></div>`;
+const info = (label, value) => `<div class="info-field"><label>${label}</label><span>${value}</span></div>`;
 
 function product() {
+  const active = apps.find((item) => item.id === 'A-001');
   const locked = state.activeProductLock;
-  const activeApp = apps.find((x) => x.id === state.activeApplication) || apps[0];
-  return layout(`<section class="product-hero"><div class="product-identity"><span class="product-image-large">W1</span><div><h1>W1 Lite ${tag('ROOT云')} ${tag('已上架')}</h1>${productMeta}<p class="function-version">功能版本：<b>版本1 - 已发布</b>⌄</p></div></div><div class="product-actions"><div class="prototype-demo"><span>演示状态</span><select class="el-select" data-demo><option value="lock" ${state.demoMode === 'lock' ? 'selected' : ''}>有活动申请</option><option value="free" ${state.demoMode === 'free' ? 'selected' : ''}>无活动申请</option></select></div><button class="el-btn el-btn--danger ${locked ? 'is-disabled' : ''}" ${locked ? 'disabled' : ''} data-submit-action="下架">下架产品</button></div></section>
-    <nav class="step-tabs" aria-label="产品详情页签"><button class="step-tab active">✓ 基础信息</button><button class="step-tab" data-toast="功能设计页签沿用现有产品详情">✓ 功能设计</button><button class="step-tab" data-toast="扩展程序页签沿用现有产品详情">✓ 扩展程序</button><button class="step-tab" data-toast="设备调试页签沿用现有产品详情">✓ 设备调试</button><button class="step-tab" data-toast="配网引导页签沿用现有产品详情">✓ 配网引导</button><button class="step-tab" data-toast="高级配置页签沿用现有产品详情">✓ 高级配置</button></nav>
-    ${locked ? `<div class="lock-banner" id="lock-banner"><div><b>该产品已有冻结变更申请</b>${anchor(1, 'lock-banner')}<p>活动申请 <a href="#" data-open-app="${activeApp.id}">${activeApp.id} · ${escapeHtml(activeApp.action)} / ${escapeHtml(activeApp.status)}</a>。可继续保存草稿，但详情变更、上架、下架均不能再次提交或冻结。</p></div><button class="el-btn" data-open-app="${activeApp.id}">查看申请</button></div>` : ''}
-    <section class="product-panel" id="base-info"><div class="panel-head"><h2>产品信息 ${anchor(2, 'base-info')}</h2><div class="button-row"><button class="el-btn" data-action="new-version">新建功能版本</button><button class="el-btn" data-drawer="product-edit">编辑产品信息</button></div></div><div class="info-grid">${infoField('产品ID', '2075767415740338177')}${infoField('产品名称', 'W1 Lite')}${infoField('创建用户', '陈晓 chen.xiao@example.com')}${infoField('创建时间', '2026-07-20 10:18:07')}${infoField('支持频段', '--')}${infoField('编辑用户', '陈晓 chen.xiao@example.com')}${infoField('产品类型', 'Breast Pump')}${infoField('产品状态', tag('已上架'))}${infoField('流程配网路由方式', '原子化')}${infoField('产品型号', 'W1Lite')}${infoField('客服型号', 'W1L-NA')}${infoField('绑定方式', '弱绑定')}${infoField('产品代码', '--')}${infoField('所属App', 'momcozy')}${infoField('所属平台', tag('ROOT云'))}${infoField('通讯方式', 'BLE')}${infoField('配网方式', '蓝牙配网')}${infoField('配网交互方式', 'CONNECT_F0（配网过程仅需发送一个指令）')}${infoField('原子化配网', tag('支持'))}${infoField('设备是否可以编组', tag('支持'))}${infoField('产品共享', tag('开启'))}${infoField('最近编辑时间', '2026-07-20 10:20:42')}<div class="info-field image-field"><label>产品图片</label><span><span class="product-thumb">主图</span><span class="product-thumb">列表图</span></span></div></div><div class="test-whitelist"><h3>测试白名单</h3><p>*仅白名单用户可在未上架的功能版本中添加设备以及体验最新的功能，当功能版本发布后，所有配置项将生效</p><span>ⓘ 可见用户：<button class="op-link">全部白名单用户</button>　<button class="op-link">✎</button></span></div></section>
-    <section class="draft-panel" id="draft"><div class="panel-head"><h2>变更草稿与提交 ${anchor(3, 'draft')}</h2><span class="el-tag el-tag--info is-plain">草稿 D-028 · 未冻结</span></div><table class="diff-table"><thead><tr><th>字段</th><th>线上正式版本 v12</th><th>草稿目标值</th><th>影响</th></tr></thead><tbody><tr><td>产品名称</td><td>W1 Lite</td><td>W1 Lite Plus</td><td>App 展示名称</td></tr><tr><td>客服型号</td><td>W1L-NA</td><td>W1LP-NA</td><td>客服识别</td></tr><tr><td>发布区域</td><td>北美</td><td>北美、欧洲</td><td>区域可见性</td></tr></tbody></table><div class="draft-actions"><span class="muted">保存草稿不会改变线上正式配置；提交时才冻结快照。</span><button class="el-btn" data-toast="草稿已保存，线上正式配置未变更">保存草稿</button><button class="el-btn el-btn--primary ${locked ? 'is-disabled' : ''}" ${locked ? 'disabled' : ''} data-submit-action="详情变更">提交变更</button></div></section>`, 'product');
+  const direct = state.productStatus === '开发中';
+  const transition = ['开发中', '已下架'].includes(state.productStatus) ? '上架' : '下架';
+  const submitLabel = direct ? '保存并更新' : '保存本地草稿';
+  return layout(`<section class="product-hero"><div class="product-identity"><span class="product-image-large">W1</span><div><h1>W1 Lite ${tag('ROOT云')} ${tag(state.productStatus)}</h1><div class="product-meta"><span>产品分类：Breast Pump</span><i></i><span>产品型号：W1Lite</span><i></i><span>产品ID：${W1_ID}</span></div><p class="function-version">功能版本：<b>版本1 - 已发布</b></p></div></div><div class="product-actions"><button class="el-btn el-btn--danger ${locked ? 'is-disabled' : ''}" ${locked ? 'disabled' : ''} data-submit-action="${transition}" data-confirm-title="${transition === '上架' ? '确认提交上架审批' : '确认提交下架审批'}">${transition}产品</button></div></section><nav class="step-tabs"><button class="step-tab active">✓ 基础信息</button><button class="step-tab" data-toast="功能设计不在本次审批范围">✓ 功能设计</button><button class="step-tab" data-toast="扩展程序不在本次审批范围">✓ 扩展程序</button><button class="step-tab" data-toast="设备调试不在本次审批范围">✓ 设备调试</button><button class="step-tab" data-toast="配网引导不在本次审批范围">✓ 配网引导</button><button class="step-tab" data-toast="高级配置不在本次审批范围">✓ 高级配置</button></nav>${locked ? `<div class="lock-banner" id="product-lock"><div><b>该产品已有活跃审批单，已冻结编辑提交</b>${anchor(1, 'product-lock')}<p>当前审批单 <button class="op-link" data-open-app="${active.id}">${active.id} · ${active.action} / ${active.status}</button>。服务端以产品 ID 原子占位；后到提交请求会被拒绝。</p></div><button class="el-btn" data-open-app="${active.id}">查看审批单</button></div>` : ''}<section class="product-panel" id="base-info"><div class="panel-head"><h2>产品信息 ${anchor(2, 'base-info')}</h2><div class="button-row"><button class="el-btn" data-drawer="product-edit">编辑产品信息</button><button class="el-btn" data-drawer="listing-range">编辑上架范围</button></div></div><div class="info-grid">${info('产品名称', 'W1 Lite')}${info('产品状态', tag(state.productStatus))}${info('所属平台', tag('ROOT云'))}${info('产品型号', 'W1Lite')}${info('所属 App', 'momcozy')}${info('通讯方式', 'BLE')}${info('上架范围', '部分放开 · 北美、欧洲')}${info('配网方式', '蓝牙配网')}${info('最近编辑时间', '2026-08-05 10:18:07')}</div></section><section class="draft-panel" id="draft"><div class="panel-head"><h2>${direct ? '直接保存' : '本地草稿与审批提交'} ${anchor(3, 'draft')}</h2>${tag(direct ? '开发中可直存' : '前端草稿 · 未冻结')}</div><table class="diff-table"><thead><tr><th>字段</th><th>线上正式值</th><th>当前编辑值</th><th>影响</th></tr></thead><tbody><tr><td>产品名称</td><td>W1 Lite</td><td>W1 Lite Plus</td><td>App 展示名称</td></tr><tr><td>上架范围</td><td>北美</td><td>北美、欧洲</td><td>区域可见性</td></tr></tbody></table><div class="draft-actions"><span class="muted">${direct ? '开发中产品的详情与上架范围编辑可直接更新；草稿仅保存在当前前端会话。' : '上架中、已上架、已下架的详情或上架范围变更必须提交审批；草稿仅保存在当前前端会话。'}</span><button class="el-btn ${direct ? 'el-btn--primary' : ''}" ${direct ? 'data-save-direct' : 'data-toast="本地草稿已更新，关闭页面即清空"'}>${submitLabel}</button>${!direct ? `<button class="el-btn el-btn--primary ${locked ? 'is-disabled' : ''}" ${locked ? 'disabled' : ''} data-submit-action="详情变更">提交变更并冻结</button>` : ''}</div></section>`, 'product');
 }
 
 function approvals() {
-  const rows = apps.filter((x) => x.status === '等待外部测试');
-  return layout(`<div class="page-title"><div><h1>审批管理 ${anchor(1, 'approval-table')}</h1><p>仅显示当前审批人授权范围内的申请；“等待外部测试”不等于测试通过。</p></div></div><section class="filterbar"><input class="el-input" placeholder="产品名称 / 申请号"/><select class="el-select"><option>全部动作</option><option>详情变更</option><option>上架</option><option>下架</option></select><button class="el-btn el-btn--primary" data-toast="已按筛选条件查询">查询</button><button class="el-btn" data-toast="筛选已重置">重置</button></section><div class="tabs"><button class="tab active">待处理 <span class="badge">${rows.length}</span></button><button class="tab" data-page="changes">历史审批</button></div><div class="table-scroll"><table class="el-table" id="approval-table"><thead><tr><th>申请号</th><th>产品</th><th>动作</th><th>状态</th><th>提交人</th><th>提交时间</th><th class="col-ops">操作</th></tr></thead><tbody>${rows.map((x) => `<tr><td>${x.id}</td><td>${x.product}</td><td>${x.action}</td><td>${tag(x.status)}</td><td>${x.applicant}</td><td>${x.submitted}</td><td class="col-ops"><button class="op-link" data-open-app="${x.id}">查看审批</button></td></tr>`).join('')}</tbody></table></div><div class="pagination">共 ${rows.length} 条　10 条/页　‹　<span class="page-current">1</span>　›</div>`, 'approvals');
-}
-
-function changes() {
-  return layout(`<div class="page-title"><div><h1>我的变更 ${anchor(1, 'change-table')}</h1><p>查看本人草稿及审批结果。审批完成或驳回后释放产品活动锁。</p></div><button class="el-btn" data-page="product">返回产品详情</button></div><div class="table-scroll"><table class="el-table" id="change-table"><thead><tr><th>申请号</th><th>产品</th><th>动作</th><th>状态</th><th>提交时间</th><th>当前锁</th><th>操作</th></tr></thead><tbody>${apps.map((x) => `<tr><td>${x.id}</td><td>${x.product}</td><td>${x.action}</td><td>${tag(x.status)}</td><td>${x.submitted}</td><td>${x.lock ? '<span class="lock-dot">持有</span>' : '已释放'}</td><td><button class="op-link" data-open-app="${x.id}">查看</button>${x.status === '已驳回' ? '<span class="op-divider">|</span><button class="op-link" data-toast="已基于最新正式版本创建草稿">重新编辑</button>' : ''}</td></tr>`).join('')}</tbody></table></div>`, 'changes');
+  const me = currentUser();
+  const reviewTab = isPrivileged();
+  const rows = state.approvalTab === 'review' && reviewTab ? apps : apps.filter((item) => item.applicantId === me.id);
+  const tabBar = `${reviewTab ? `<button class="tab ${state.approvalTab === 'review' ? 'active' : ''}" data-approval-tab="review">我审批的 <span class="badge">${apps.filter((item) => item.status === '待审批').length}</span></button>` : ''}<button class="tab ${state.approvalTab === 'initiated' ? 'active' : ''}" data-approval-tab="initiated">我发起的 <span class="badge">${apps.filter((item) => item.applicantId === me.id).length}</span></button>`;
+  const help = reviewTab ? '我审批的展示全部审批单；我发起的只展示当前用户提交的审批单。禁止审批本人申请。' : '仅展示当前用户发起的审批单；可查看，且仅“待审批”可撤销。';
+  return layout(`<div class="page-title"><div><h1>审批管理 ${anchor(1, 'approval-table')}</h1><p>${help}</p></div></div><section class="filterbar"><input class="el-input" placeholder="产品名称 / 申请号"><select class="el-select"><option>全部动作</option><option>详情变更</option><option>上架范围变更</option><option>上架</option><option>下架</option></select><select class="el-select"><option>全部状态</option><option>待审批</option><option>未生效</option><option>已生效</option><option>已驳回</option></select><button class="el-btn el-btn--primary" data-toast="已按筛选条件查询">查询</button><button class="el-btn" data-toast="筛选已重置">重置</button></section><div class="tabs">${tabBar}</div><div class="table-scroll"><table class="el-table" id="approval-table"><thead><tr><th>申请号</th><th>产品</th><th>动作</th><th>状态</th><th>提交人</th><th>提交时间</th><th>操作</th></tr></thead><tbody>${rows.map((item) => `<tr><td>${item.id}</td><td>${item.product} / ${item.model}</td><td>${item.action}</td><td>${tag(item.status)}</td><td>${item.applicant}</td><td>${item.submitted}</td><td><button class="op-link" data-open-app="${item.id}">查看</button>${item.applicantId === me.id && item.status === '待审批' ? `<span class="op-divider">|</span><button class="op-link danger" data-withdraw="${item.id}">撤销</button>` : ''}</td></tr>`).join('') || `<tr><td colspan="7"><div class="empty">暂无可查看的审批单</div></td></tr>`}</tbody></table></div><div class="pagination">共 ${rows.length} 条　<span class="page-current">1</span></div>`, 'approvals');
 }
 
 function settings() {
-  return layout(`<div class="page-title"><div><h1>变更审批配置 ${anchor(1, 'config-table')}</h1><p>配置中心页面访问由 ERP 菜单权限控制；审批人仅维护姓名与企业邮箱。</p></div><button class="el-btn el-btn--primary" data-drawer="config">编辑配置</button></div><div class="notice-box"><b>权限说明</b><p>ERP 仅控制审批管理和配置入口。测试工程师邮箱与审批人邮箱均为手工输入/配置，不做 ERP 账号映射。</p></div><section class="product-panel settings-panel"><div class="panel-head"><h2>按动作指定审批人</h2></div><div class="table-scroll"><table class="el-table" id="config-table"><thead><tr><th>动作</th><th>审批人姓名</th><th>审批人企业邮箱</th><th>启用状态</th></tr></thead><tbody><tr><td>产品详情变更</td><td>李娜</td><td>li.na@example.com</td><td>${tag('已启用')}</td></tr><tr><td>上架</td><td>李娜</td><td>li.na@example.com</td><td>${tag('已启用')}</td></tr><tr><td>下架</td><td>李娜</td><td>li.na@example.com</td><td>${tag('已启用')}</td></tr></tbody></table></div></section><section class="product-panel settings-panel"><div class="panel-head"><h2>通知渠道</h2></div><div class="info-grid two">${infoField('审批人企业邮箱', '启用；每次申请必须投递')}${infoField('飞书机器人', '可选提醒；密钥由技术侧托管')}${infoField('测试工程师邮箱', '提交变更时手工输入')}${infoField('模板链接', '测试快照只读页 / 审批详情页')}</div></section>`, 'settings');
+  if (!isAdmin()) return layout(`<section class="notice-box"><h2>无访问权限</h2><p>审批人配置仅系统管理员可访问和配置。前端隐藏不代表权限校验，服务端必须按当前 IoT 平台用户权限拦截读取与保存。</p><button class="el-btn" data-page="approvals">返回审批管理</button></section>`, 'settings');
+  const rows = Object.values(approvalConfig);
+  return layout(`<div class="page-title"><div><h1>变更审批配置 ${anchor(1, 'config-table')}</h1><p>仅系统管理员可维护；审批人从 IoT 平台用户中选择，提交时冻结当前配置快照。</p></div><button class="el-btn el-btn--primary" data-drawer="config">编辑配置</button></div><div class="notice-box"><b>配置说明</b><p>不手工录入审批人姓名或邮箱；审批人是 IoT 平台用户。机器人密钥由技术侧托管，不在此页展示。</p></div><section class="product-panel settings-panel"><div class="panel-head"><h2>按动作指定审批人</h2></div><div class="table-scroll"><table class="el-table" id="config-table"><thead><tr><th>动作</th><th>IoT 平台用户</th><th>用户账号</th><th>启用状态</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${row.action}</td><td>${row.name}</td><td>${row.account}</td><td>${tag('已启用')}</td></tr>`).join('')}</tbody></table></div></section><section class="product-panel settings-panel"><div class="panel-head"><h2>飞书通知</h2></div><div class="frozen-box"><b>待审批消息模板</b><p>｛产品名称 / 产品型号｝正在｛变更详情/上架产品/下架产品｝，待审批。<br>审批单据：｛审批单 url｝<br>@｛审批人姓名｝</p></div></section>`, 'settings');
 }
 
-function detail(app) {
-  const canApprove = app.id === 'A-001';
-  return layout(`<div class="page-title"><div><h1>审批详情 ${app.id} ${tag(app.status)}</h1><p>冻结快照 v13 · 提交人：陈晓 · 测试邮箱：qa.liu@example.com · 冻结审批人：李娜（li.na@example.com）</p></div><button class="el-btn" data-page="approvals">返回审批管理</button></div><div class="detail-grid"><div><section class="product-panel" id="snapshot"><div class="panel-head"><h2>冻结快照与变更差异 ${anchor(1, 'snapshot')}</h2><span class="el-tag el-tag--info is-plain">不可修改</span></div><div class="info-grid two">${infoField('产品', 'W1 Lite')}${infoField('基线正式版本', 'v12')}${infoField('冻结快照版本', 'v13')}${infoField('申请动作', app.action)}</div><table class="diff-table"><thead><tr><th>字段</th><th>v12</th><th>v13 目标值</th></tr></thead><tbody><tr><td>产品名称</td><td class="before">W1 Lite</td><td class="after">W1 Lite Plus</td></tr><tr><td>发布区域</td><td class="before">北美</td><td class="after">北美、欧洲</td></tr></tbody></table></section>${approvalPanel(canApprove)}<section class="timeline"><h2>操作记录</h2><div class="timeline-item"><b>快照已冻结</b><small>2026-07-31 10:18 · 陈晓 · D-028 → v13</small></div><div class="timeline-item"><b>通知投递已发起</b><small>2026-07-31 10:19 · 测试邮箱、审批邮箱、飞书机器人</small></div><div class="timeline-item"><b>等待外部测试结论</b><small>测试操作、结果传达在系统外部</small></div></section></div><aside><section class="notice-box" id="notifications"><h2>通知投递 ${anchor(2, 'notifications')}</h2>${state.notifications.map((n, i) => `<div class="notice-line"><div><b>${n.name}</b><small>${n.target}<br>${n.copy}</small></div><div>${tag(n.status)}${n.status === '失败待重试' ? `<button class="op-link retry" data-retry="${i}">重试</button>` : ''}</div></div>`).join('')}<p class="muted">已受理仅表示渠道接受投递，不代表已读或测试通过。</p><button class="el-btn el-btn--small" data-test-link>预览测试快照只读页</button></section></aside></div>`, 'approvals');
+function detail(item) {
+  const me = currentUser();
+  const owner = item.applicantId === me.id;
+  const canApprove = isPrivileged() && !owner && item.status === '待审批';
+  const canWithdraw = owner && item.status === '待审批';
+  const canCancel = owner && item.status === '未生效';
+  const canRetry = isAdmin() && item.status === '未生效';
+  const notification = `${item.product} / ${item.model} 正在${visibleAction(item.action)}，待审批。<br>审批单据：/approvals/${item.id}<br>@李娜`;
+  return layout(`<div class="page-title"><div><h1>审批详情 ${item.id} ${tag(item.status)}</h1><p>提交人：${item.applicant} · 冻结审批人：李娜（IoT 平台用户） · 测试工程师邮箱：${escapeHtml(state.testerEmail)}</p></div><button class="el-btn" data-page="approvals">返回审批管理</button></div><div class="detail-grid"><div><section class="product-panel" id="snapshot"><div class="panel-head"><h2>冻结快照与变更差异 ${anchor(1, 'snapshot')}</h2>${tag('不可修改')}</div><div class="info-grid two">${info('产品', `${item.product} / ${item.model}`)}${info('申请动作', item.action)}${info('基线正式版本', 'v12')}${info('冻结快照版本', 'v13')}</div><table class="diff-table"><thead><tr><th>字段</th><th>基线正式值</th><th>冻结目标值</th></tr></thead><tbody><tr><td>产品名称</td><td class="before">W1 Lite</td><td class="after">W1 Lite Plus</td></tr><tr><td>上架范围</td><td class="before">北美</td><td class="after">北美、欧洲</td></tr></tbody></table></section>${canApprove ? approvalPanel(item) : ''}${canWithdraw ? `<section class="confirm-card"><h2>发起人操作</h2><p>你只能撤销本人处于“待审批”的申请；撤销后线上配置不变并释放产品冻结。</p><div class="button-row"><button class="el-btn el-btn--danger" data-withdraw="${item.id}">撤销申请</button></div></section>` : ''}${canCancel ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败，产品仍被冻结；发起人可取消本次变更，状态将转为“已驳回”。</p><div class="button-row"><button class="el-btn el-btn--danger" data-cancel-unapplied="${item.id}">取消本次变更</button></div></section>` : ''}${canRetry ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败。系统管理员可在不重新开放编辑的情况下重试应用冻结快照。</p><div class="button-row"><button class="el-btn el-btn--primary" data-retry-apply="${item.id}">重试应用</button></div></section>` : ''}${!canApprove && !canWithdraw && !canCancel && !canRetry ? `<section class="notice-box"><b>只读详情</b><p>${owner ? '提交人不可通过或驳回本人申请。' : '当前状态或角色不支持审批操作。'}</p></section>` : ''}<section class="timeline"><h2>操作记录</h2><div class="timeline-item"><b>快照已冻结</b><small>${item.submitted} · ${item.applicant} · v12 → v13</small></div><div class="timeline-item"><b>飞书待审批提醒已投递</b><small>消息仅提醒审批，不承载审批动作；测试在系统外完成。</small></div><div class="timeline-item"><b>${item.outcome || '等待审批结果'}</b><small>申请状态：${item.status}</small></div></section></div><aside><section class="notice-box" id="notifications"><h2>通知投递 ${anchor(2, 'notifications')}</h2><div class="notice-line"><div><b>测试工程师企业邮箱</b><small>${escapeHtml(state.testerEmail)}<br>冻结快照只读链接与测试提醒</small></div>${tag('已受理')}</div><div class="notice-line"><div><b>飞书机器人</b><small>${notification}</small></div>${tag('已受理')}</div><p class="muted">外部测试、测试结果与通知审批人均在系统外完成；“待审批”不代表测试通过。</p><button class="el-btn el-btn--small" data-test-link>预览测试快照只读页</button></section></aside></div>`, 'approvals');
 }
 
-function approvalPanel(canApprove) {
-  const ready = state.testConfirmed && state.evidence.trim();
-  return `<section class="confirm-card" id="approval-action"><h2>外部测试确认与审批 ${anchor(3, 'approval-action')}</h2><p>测试工程师在系统外完成测试并通知审批人。平台仅要求审批人确认结论及依据。</p><label class="checkline"><input type="checkbox" data-confirm-test ${state.testConfirmed ? 'checked' : ''}>我已核验当前冻结快照的外部测试通过结论</label><label class="field">外部测试依据引用（必填）<input class="el-input" data-evidence value="${escapeHtml(state.evidence)}" placeholder="邮件主题、报告链接或编号"></label><label class="field">审批意见（可选）<textarea class="el-input textarea" placeholder="请输入审批意见"></textarea></label><div class="button-row"><button class="el-btn el-btn--danger" data-reject>驳回并撤销</button><button class="el-btn el-btn--primary ${ready && canApprove ? '' : 'is-disabled'}" ${ready && canApprove ? '' : 'disabled'} data-approve>通过并应用</button></div>${!ready ? '<p class="muted">完成勾选并填写依据后，才可通过并应用。</p>' : ''}</section>`;
+function approvalPanel(item) {
+  const ready = state.evidence.trim();
+  return `<section class="confirm-card" id="approval-action"><h2>审批操作 ${anchor(3, 'approval-action')}</h2><p>审批员/系统管理员需在系统外取得测试结论后，再核验当前冻结快照。</p><label class="field"><span>外部测试依据引用 <span class="required">*</span></span><textarea class="el-input textarea" data-evidence placeholder="填写邮件主题、报告链接或编号">${escapeHtml(state.evidence)}</textarea></label><div class="button-row"><button class="el-btn el-btn--danger" data-reject="${item.id}">驳回</button><button class="el-btn el-btn--primary ${ready ? '' : 'is-disabled'}" ${ready ? '' : 'disabled'} data-approve="${item.id}">通过并应用</button></div></section>`;
 }
 
 function testSnapshot() {
-  return `<div class="test-page"><div class="test-head"><b>LuteOS · 测试快照</b><span class="el-tag el-tag--warning is-plain">链接 7 天有效</span></div><h2>W1 Lite · 冻结快照 v13</h2><p>该页面由邮件中的限时链接打开，无需 ERP 登录。仅供指定测试协作查看，不能审批或下载敏感附件。</p><div class="test-warning">测试完成后，请在系统外部将结果通知审批人：李娜（li.na@example.com）。</div><table class="diff-table" id="snapshot"><thead><tr><th>字段</th><th>变更前</th><th>冻结目标</th></tr></thead><tbody><tr><td>产品名称</td><td>W1 Lite</td><td>W1 Lite Plus</td></tr><tr><td>发布区域</td><td>北美</td><td>北美、欧洲</td></tr></tbody></table><button class="el-btn" data-close-test>关闭预览</button></div>`;
+  return `<section class="test-page"><div class="test-head"><div><b>产品变更测试快照</b><small>只读链接 · 有效期 7 天</small></div><span>${tag('待审批')}</span></div><h2>W1 Lite / W1Lite · 详情变更</h2><p>本页只展示冻结快照与字段差异，不提供审批或测试结论录入。</p><table class="el-table"><thead><tr><th>字段</th><th>基线正式值</th><th>冻结目标值</th></tr></thead><tbody><tr><td>产品名称</td><td>W1 Lite</td><td>W1 Lite Plus</td></tr><tr><td>上架范围</td><td>北美</td><td>北美、欧洲</td></tr></tbody></table><div class="test-warning">请在系统外完成测试并通知审批人。平台不记录测试过程或结论。</div><button class="el-btn" data-close-test>返回审批详情</button></section>`;
 }
 
-function renderAnnotations(kind) {
-  const sets = {
-    'product-list': [{ n: 1, t: '现状列表模板', loc: '智能产品 > 产品列表 > 筛选与表格', body: '沿用现有产品列表的筛选项、宽表字段、状态 Tag、复制/查看操作和分页。' }],
-    product: [{ n: 1, t: '活动变更锁', loc: '产品详情 > 页签下方提示', body: '同一产品的详情变更、上架、下架共享一把锁。锁存在时仍可保存草稿，但提交按钮和状态动作禁用。' }, { n: 2, t: '线上正式信息', loc: '产品详情 > 产品信息', body: '字段、三列布局、产品图片和测试白名单贴合 IoT Admin 现状；审批前线上正式信息不变。' }, { n: 3, t: '提交与冻结', loc: '产品详情 > 变更草稿与提交', body: '提交时原子获取产品锁，冻结前后差异、测试邮箱、审批人及通知模板。邮箱为手工输入，不映射 ERP。' }],
-    approvals: [{ n: 1, t: '审批待办范围', loc: '审批管理 > 待处理表格', body: '使用现有 ERP 菜单权限控制入口；列表采用现有筛选、表格、状态 Tag 和分页模板。' }],
-    detail: [{ n: 1, t: '冻结快照与差异', loc: '审批详情 > 冻结快照', body: '审批人只能查看冻结版本，比较基线正式版本与目标值，避免审批中读取可变草稿。' }, { n: 2, t: '通知投递', loc: '审批详情 > 通知投递', body: '状态为待发送、发送中、已受理、失败待重试、重试耗尽；渠道已受理不等于已读或测试通过。' }, { n: 3, t: '审批前置确认', loc: '审批详情 > 外部测试确认与审批', body: '审批人必须勾选已核验外部测试通过，并填写邮件主题、报告链接或编号。' }],
-    approve: [{ n: 4, t: '核对信息弹窗', loc: '审批详情 > 通过并应用 > 核对信息弹窗', body: '点击“通过并应用”直接弹窗核对当前申请，不新建额外审批单据，也不跳转独立状态页。' }, { n: 5, t: '确认应用', loc: '核对信息弹窗 > 确认应用', body: '确认后沿用当前 applicationId 按冻结快照应用，当前申请直接反馈已生效或应用失败。' }],
-    test: [{ n: 1, t: '限时只读测试快照', loc: '测试快照 > 冻结差异', body: '邮件链接固定 7 个自然日有效；不要求 ERP 登录，不提供审批或敏感附件下载。' }],
-    settings: [{ n: 1, t: '按动作配置审批人', loc: '配置中心 > 变更审批配置', body: '每个租户按详情变更、上架、下架配置一名审批人；仅保存姓名、企业邮箱、启用状态，提交时冻结配置。' }],
-    changes: [{ n: 1, t: '我的变更与锁状态', loc: '我的变更 > 表格', body: '已生效、已驳回和应用失败（未生效）均为终态并释放产品锁。' }]
-  };
-  const cards = sets[kind] || sets.approvals;
-  anno.innerHTML = `<p class="annotation-intro">点击批注卡或黄色编号，可定位并高亮左侧对应区域。页面结构与字段已按 IoT Admin Wiki 现状恢复。</p>${cards.map((x) => `<button class="anno" data-anchor="${x.loc.includes('页签下方') ? 'lock-banner' : x.loc.includes('产品信息') ? 'base-info' : x.loc.includes('草稿') ? 'draft' : x.loc.includes('待处理') ? 'approval-table' : x.loc.includes('通知') ? 'notifications' : x.loc.includes('前置') ? 'approval-action' : x.loc.includes('确认应用') ? 'approve-confirm-button' : x.loc.includes('核对信息') ? 'approval-modal' : x.loc.includes('列表') ? 'product-table' : x.loc.includes('配置') ? 'config-table' : x.loc.includes('我的变更') ? 'change-table' : 'snapshot'}"><h3><span class="anno-n">${x.n}</span>${x.t}</h3><p><b>关联位置：</b>${x.loc}</p><p><b>说明 / 交互：</b>${x.body}</p></button>`).join('')}<div class="assumption"><b>原型假设</b><p>演示仅模拟页面状态，不发送真实邮件或飞书消息。测试链接令牌、安全签名与机器人密钥由技术侧实现。</p></div>`;
-  bindAnnotationAnchors();
+function openSubmit(action) {
+  if (state.activeProductLock) return showToast('提交被拒绝：该产品已有活跃审批单', false);
+  const actionText = visibleAction(action);
+  modal(`<h3>确认提交${actionText}审批</h3><div class="modal-body"><div class="submit-summary">确认后将冻结产品快照，并向测试工程师发送邮件提醒、向审批人发送飞书待审批消息。</div><label class="field"><span>指定测试工程师邮箱 <span class="required">*</span></span><input class="el-input" id="tester-email" value="${escapeHtml(state.testerEmail)}" placeholder="例如 qa.liu@example.com"><span class="form-help">仅手工输入，不映射 ERP 账号。</span><span class="error" id="email-error"></span></label><div class="frozen-box"><b>冻结的审批配置</b><p>审批人：李娜（IoT 平台用户 / li.na）</p><p>动作：${actionText}；飞书消息将链接至本审批详情页。</p></div></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--primary" data-confirm-submit="${action}">确认提交并冻结</button></div>`);
+}
+
+function openApprove(id) {
+  const item = apps.find((app) => app.id === id);
+  modal(`<h3 id="approval-modal">核对信息 ${anchor(4, 'approval-modal')}</h3><div class="modal-body"><div class="approval-check-grid"><div class="check-item"><label>申请号</label><strong>${item.id}</strong></div><div class="check-item"><label>动作</label><strong>${item.action}</strong></div><div class="check-item"><label>产品</label><strong>${item.product} / ${item.model}</strong></div><div class="check-item"><label>审批人</label><strong>李娜（IoT 平台用户）</strong></div><div class="check-item"><label>冻结快照</label><strong>v13（不可修改）</strong></div><div class="check-item"><label>外部测试依据</label><strong>${escapeHtml(state.evidence)}</strong></div><div class="check-item check-item--wide"><label>目标变更</label><strong>产品名称：W1 Lite → W1 Lite Plus；上架范围：北美 → 北美、欧洲</strong></div></div><div class="warning-box">确认后在当前审批单内应用冻结快照，并直接返回“已生效”或“未生效”的结果。</div></div><div class="modal-foot"><button class="el-btn" data-close-modal>返回修改</button><button class="el-btn el-btn--primary" data-confirm-approve="${id}">确认应用</button></div>`);
+}
+
+function openReject(id) { modal(`<h3>驳回申请</h3><div class="modal-body"><p>驳回后不应用冻结快照，线上正式配置保持不变，产品冻结释放。</p><label class="field"><span>驳回原因 <span class="required">*</span></span><textarea class="el-input textarea" id="reject-reason" placeholder="请填写驳回原因"></textarea><span class="error" id="reject-error"></span></label></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--danger" data-confirm-reject="${id}">确认驳回</button></div>`); }
+
+function openProductEdit() {
+  const direct = state.productStatus === '开发中';
+  drawer(`<div class="drawer-head"><h3>编辑产品信息</h3><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body"><div class="drawer-form"><div class="drawer-readonly"><label>产品分类</label><span>Breast Pump / 1</span></div><label class="drawer-field required-field">产品名称<input class="el-input" value="W1 Lite Plus"></label><label class="drawer-field">客服型号<input class="el-input" value="W1LP-NA"></label><label class="drawer-field required-field">所属平台<select class="el-select"><option>ROOT云</option><option>涂鸦云</option></select></label><label class="drawer-field required-field">通讯方式<select class="el-select" disabled><option>BLE</option></select><small>产品创建后不可修改通讯方式</small></label><label class="drawer-field required-field">所属 App<select class="el-select"><option>momcozy</option></select></label><label class="drawer-field">产品图片<div class="upload-row"><span class="upload-box">＋<small>产品主图</small></span><span class="upload-box"><small>列表图</small></span></div></label></div></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn ${direct ? 'el-btn--primary' : ''}" ${direct ? 'data-save-direct' : 'data-toast="本地草稿已更新，关闭页面即清空"'}>${direct ? '保存并更新' : '保存本地草稿'}</button>${!direct ? `<button class="el-btn el-btn--primary ${state.activeProductLock ? 'is-disabled' : ''}" ${state.activeProductLock ? 'disabled' : ''} data-submit-action="详情变更">提交变更并冻结</button>` : ''}</div>`);
+}
+
+function openListingRange() {
+  const direct = state.productStatus === '开发中';
+  drawer(`<div class="drawer-head"><h3>编辑产品上架范围</h3><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body"><div class="drawer-form"><label class="drawer-field required-field">上架方式<select class="el-select"><option>部分放开</option><option>全面放开</option></select></label><label class="drawer-field required-field">范围模式<select class="el-select"><option>国家 / 地区</option><option>数据中心</option></select></label><label class="drawer-field required-field">国家 / 地区<span class="check-row"><label><input type="checkbox" checked> 北美</label><label><input type="checkbox" checked> 欧洲</label><label><input type="checkbox"> 亚太</label></span></label><label class="drawer-field required-field">生效时间<select class="el-select"><option>立即生效</option><option>定时生效</option></select><small>上架中产品仍须先通过本审批；定时生效沿用产品上架范围需求。</small></label></div></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn ${direct ? 'el-btn--primary' : ''}" ${direct ? 'data-save-direct' : 'data-toast="本地草稿已更新，关闭页面即清空"'}>${direct ? '保存并更新' : '保存本地草稿'}</button>${!direct ? `<button class="el-btn el-btn--primary ${state.activeProductLock ? 'is-disabled' : ''}" ${state.activeProductLock ? 'disabled' : ''} data-submit-action="上架范围变更">提交变更并冻结</button>` : ''}</div>`);
+}
+
+function openConfig() {
+  const options = Object.values(users).map((user) => `<button class="op-link" data-select-approver="${user.id}">${user.name}（${user.role} / ${user.id}）</button>`).join('<span class="op-divider">|</span>');
+  drawer(`<div class="drawer-head"><h3>编辑变更审批配置</h3><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body"><p class="muted">从 IoT 平台用户中选择审批人；不允许手工输入姓名或邮箱。保存仅影响后续申请。</p><label class="drawer-field required-field">审批人<select class="el-select" id="approver-picker"><option value="li.na">李娜（li.na）</option><option value="wang.admin">王敏（wang.admin）</option></select></label><div class="notice-box"><b>可选 IoT 平台用户</b><p>${options}</p></div><label class="drawer-field required-field">配置动作<span class="check-row vertical"><label><input type="checkbox" checked> 产品详情 / 上架范围变更</label><label><input type="checkbox" checked> 产品上架</label><label><input type="checkbox" checked> 产品下架</label></span></label><label class="drawer-field"><span class="checkline"><input type="checkbox" checked>启用飞书机器人提醒（可选）</span></label></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn el-btn--primary" data-save-config>保存</button></div>`);
 }
 
 function modal(html) { modalRoot.innerHTML = `<div class="modal-mask"><section class="modal">${html}</section></div>`; }
 function drawer(html) { modalRoot.innerHTML = `<div class="drawer-mask"><section class="drawer">${html}</section></div>`; }
 function closeOverlay() { modalRoot.innerHTML = ''; renderAnnotations(state.page); }
-function showToast(msg, good = true) { toast.textContent = msg; toast.style.background = good ? '#67c23a' : '#f56c6c'; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2200); }
+function showToast(message, success = true) { toast.textContent = message; toast.style.background = success ? '#67c23a' : '#f56c6c'; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2200); }
 
-function openSubmit(action = state.pendingAction || '详情变更') {
-  set({ pendingAction: action });
-  const target = action === '详情变更' ? '冻结草稿 D-028 为快照 v13，线上正式版本 v12 不会立即变化' : `提交“${action}”申请；审批通过后才会改变产品线上状态`;
-  modal(`<h3>提交${escapeHtml(action)}并冻结快照</h3><div class="modal-body"><div class="submit-summary">${target}</div><label class="field">指定测试工程师邮箱<span class="required"> *</span><input class="el-input" id="tester-email" value="${escapeHtml(state.testerEmail)}" placeholder="例如 qa.liu@example.com"><span class="form-help">仅支持手工输入；不映射 ERP 账号。</span><span class="error" id="email-error"></span></label><div class="frozen-box"><b>将被冻结的审批与通知配置</b><p>审批人：李娜（li.na@example.com）</p><p>动作：${escapeHtml(action)}；渠道：测试企业邮箱、审批人企业邮箱、飞书机器人（可选）</p></div></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--primary" data-confirm-submit>确认提交</button></div>`);
+function prototypeControls() {
+  return `<section class="prototype-controls"><h2>演示条件</h2><p>仅用于切换原型场景，不属于 IoT Admin 实际页面字段。</p><label>原型角色<select class="el-select" data-role><option ${state.role === '普通用户' ? 'selected' : ''}>普通用户</option><option ${state.role === '审批员' ? 'selected' : ''}>审批员</option><option ${state.role === '系统管理员' ? 'selected' : ''}>系统管理员</option></select></label><label>产品状态<select class="el-select" data-product-status><option ${state.productStatus === '开发中' ? 'selected' : ''}>开发中</option><option ${state.productStatus === '上架中' ? 'selected' : ''}>上架中</option><option ${state.productStatus === '已上架' ? 'selected' : ''}>已上架</option><option ${state.productStatus === '已下架' ? 'selected' : ''}>已下架</option></select></label><label>活动审批<select class="el-select" data-lock-demo><option value="locked" ${state.activeProductLock ? 'selected' : ''}>有</option><option value="free" ${!state.activeProductLock ? 'selected' : ''}>无</option></select></label></section>`;
 }
 
-function openReject() { modal(`<h3>驳回并撤销变更</h3><div class="modal-body"><p>驳回后冻结快照不会应用，线上正式配置保持不变；产品活动锁将释放。</p><label class="field">驳回原因<span class="required"> *</span><textarea class="el-input textarea" id="reject-reason" placeholder="请填写驳回原因"></textarea><span class="error" id="reject-error"></span></label></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--danger" data-confirm-reject>确认驳回</button></div>`); }
-
-function openApprove() {
-  const app = apps.find((x) => x.id === state.activeApplication) || apps[0];
-  modal(`<h3 id="approval-modal">核对信息 ${anchor(4, 'approval-modal')}</h3><div class="modal-body"><div class="approval-check-grid"><div class="check-item"><label>申请号</label><strong>${escapeHtml(app.id)}</strong></div><div class="check-item"><label>动作</label><strong>${escapeHtml(app.action)}</strong></div><div class="check-item"><label>产品</label><strong>${escapeHtml(app.product)} / 2075767415740338177</strong></div><div class="check-item"><label>审批人</label><strong>李娜（li.na@example.com）</strong></div><div class="check-item"><label>基线正式版本</label><strong>v12</strong></div><div class="check-item"><label>冻结快照</label><strong>v13（不可修改）</strong></div><div class="check-item check-item--wide"><label>目标变更</label><strong>产品名称：W1 Lite → W1 Lite Plus；发布区域：北美 → 北美、欧洲</strong></div><div class="check-item check-item--wide"><label>外部测试依据</label><strong>${escapeHtml(state.evidence)}</strong></div></div><div class="warning-box">确认后将沿用当前申请 ${escapeHtml(app.id)} 按冻结快照更新线上配置，不会新建额外审批单据。系统将在当前申请内完成应用并直接反馈生效或失败结果。</div></div><div class="modal-foot"><button class="el-btn" data-close-modal>返回修改</button><button class="el-btn el-btn--primary" id="approve-confirm-button" data-confirm-approve>确认应用</button>${anchor(5, 'approve-confirm-button')}</div>`);
-  renderAnnotations('approve');
-}
-
-function openVersion() { modal(`<h3>新建功能版本</h3><div class="modal-body"><p>将基于当前已发布版本创建新的功能版本草稿。版本创建后仍需走产品变更审批。</p><label class="field">版本说明（可选）<textarea class="el-input textarea" placeholder="请输入版本说明"></textarea></label></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--primary" data-toast="功能版本草稿已创建">确定</button></div>`); }
-
-function openProductEdit() {
-  drawer(`<div class="drawer-head"><h3>编辑产品信息</h3><button class="icon-btn" data-close-drawer aria-label="关闭">×</button></div><div class="drawer-body"><div class="drawer-form"><div class="drawer-readonly"><label>产品分类</label><span>Breast Pump / 1</span></div><label class="drawer-field required-field">所属平台<span class="radio-row"><label><input type="radio" checked name="platform"> ROOT云</label><label><input type="radio" name="platform"> 涂鸦云</label><label><input type="radio" name="platform"> 觅睿云</label></span></label><label class="drawer-field">产品ID<input class="el-input" value="2075767415740338177" disabled></label><label class="drawer-field">产品模板<input class="el-input" value="根据通讯方式后自动选择" disabled></label><label class="drawer-field required-field">流程配网路由方式<select class="el-select"><option>原子化</option><option>RN1 - LTPairAddPage</option></select></label><label class="drawer-field">配网交互方式<input class="el-input" value="CONNECT_F0（配网过程仅需发送一个指令）" disabled></label><label class="drawer-field required-field">通讯方式<select class="el-select" disabled><option>BLE</option></select><small>产品创建后不可修改通讯方式</small></label><label class="drawer-field required-field">配网方式<select class="el-select"><option>蓝牙配网</option><option>AP配网</option><option>SmartConfig配网</option></select></label><label class="drawer-field required-field">原子化配网<span class="radio-row"><label><input type="radio" name="atom" checked> 支持</label><label><input type="radio" name="atom"> 不支持</label></span></label><label class="drawer-field">动态配网最低支持版本<input class="el-input" placeholder="请输入最低支持版本"></label><hr><label class="drawer-field required-field">发布区域<span class="check-row"><label><input type="checkbox" checked> 北美</label><label><input type="checkbox" checked> 欧洲</label><label><input type="checkbox"> 亚太</label><label><input type="checkbox"> 中国</label></span></label><label class="drawer-field required-field">设备是否可以编组<span class="radio-row"><label><input type="radio" name="group" checked> 支持</label><label><input type="radio" name="group"> 不支持</label></span></label><label class="drawer-field required-field">绑定类型<span class="radio-row"><label><input type="radio" name="binding"> 强绑定</label><label><input type="radio" name="binding" checked> 弱绑定</label></span></label><label class="drawer-field required-field">产品共享<span class="radio-row"><label><input type="radio" name="share" checked> 开启</label><label><input type="radio" name="share"> 关闭</label></span></label><label class="drawer-field required-field">设备类型<span class="radio-row"><label><input type="radio" name="device" checked> 直连设备</label><label><input type="radio" name="device"> 网关设备</label></span></label><label class="drawer-field required-field">产品型号<input class="el-input" value="W1Lite" disabled><small>产品上架后不可修改</small></label><label class="drawer-field required-field">产品名称<input class="el-input" value="W1 Lite"></label><label class="drawer-field">产品代码<div class="input-action"><input class="el-input" placeholder="请选择产品代码"><button class="el-btn">⌕</button></div></label><label class="drawer-field">客服型号<input class="el-input" value="W1L-NA"></label><label class="drawer-field required-field">所属App<select class="el-select"><option>momcozy</option></select></label><label class="drawer-field required-field">产品图片<div class="upload-row"><span class="upload-box">＋<small>产品主图</small></span><span class="upload-box"><small>列表图</small></span><span class="upload-box"><small>详情图</small></span></div><small>主图/列表图推荐 108*108，详情图推荐 600*600；均不可大于5M，支持 png、jpg、jpeg 格式</small></label></div></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn" data-save-draft>保存草稿</button><button class="el-btn el-btn--primary" data-submit-action="详情变更">提交变更并冻结</button></div>`);
-}
-
-function openConfig() {
-  drawer(`<div class="drawer-head"><h3>编辑变更审批配置</h3><button class="icon-btn" data-close-drawer aria-label="关闭">×</button></div><div class="drawer-body"><p class="muted">ERP 仅控制本页面访问；审批人配置不做 ERP 账号映射。</p><label class="drawer-field required-field">审批人姓名<input class="el-input" value="李娜"></label><label class="drawer-field required-field">审批人企业邮箱<input class="el-input" value="li.na@example.com"></label><label class="drawer-field required-field">配置动作<span class="check-row vertical"><label><input type="checkbox" checked disabled> 产品详情变更</label><label><input type="checkbox" checked disabled> 上架</label><label><input type="checkbox" checked disabled> 下架</label></span></label><label class="drawer-field"><span class="checkline"><input type="checkbox" checked>启用飞书机器人提醒（可选）</span></label><p class="muted">保存后只影响后续提交；已冻结申请继续使用原配置。</p></div><div class="drawer-foot"><button class="el-btn" data-close-drawer>取消</button><button class="el-btn el-btn--primary" data-save-config>保存</button></div>`);
+function renderAnnotations(kind) {
+  const cards = kind === 'product' ? [
+    ['1', '产品状态与活跃审批锁', '产品详情页头部 / 冻结提示', '开发中编辑详情与上架范围直接保存；上架中、已上架、已下架的详情或上架范围需审批。任一产品最多一个待审批或未生效单，后到提交由服务端拒绝。'],
+    ['2', '基础信息与上架范围入口', '产品信息', '保留 IoT Admin 基础信息布局。上架范围归属产品详情内上架动作，编辑入口使用抽屉。'],
+    ['3', '前端草稿和提交', '本地草稿与审批提交', '草稿只保存在前端会话，不持久化；非开发中提交后才冻结快照。上下架均经二次确认后提交审批。']
+  ] : kind === 'approvals' ? [
+    ['1', '审批页数据隔离', '审批管理列表', '普通用户仅见“我发起的”并只可查看/撤销待审批；审批员和系统管理员可见“我审批的”全量列表。服务端必须复核权限。'],
+    ['2', '审批详情操作', '审批详情', '审批员/系统管理员只可对待审批且非本人申请通过或驳回。已通过但应用失败转“未生效”，发起人可取消，系统管理员可重试。']
+  ] : kind === 'settings' ? [
+    ['1', '审批人配置', '按动作指定审批人', '仅系统管理员可访问。审批人选择 IoT 平台用户，不手填姓名/邮箱；提交时冻结配置快照。'],
+    ['2', '飞书消息', '飞书通知', '消息为待审批提醒，审批单 URL 指向审批详情页，@审批人姓名；不接入飞书官方审批流。']
+  ] : [
+    ['1', '冻结快照', '审批详情', '展示基线与目标差异；快照不可修改。'],
+    ['2', '外部测试与飞书提醒', '通知投递', '测试、测试结果和通知审批人均在系统外完成；平台只记录通知投递。'],
+    ['3', '通过并应用', '审批操作 / 核对弹窗', '点击通过并应用直接弹出核对信息，确认后在原单据内应用，不创建额外状态。']
+  ];
+  anno.innerHTML = `${prototypeControls()}<p class="annotation-intro">原型角色、产品状态与活动审批仅在本批注栏切换，不属于左侧真实产品页面。切换仅用于展示，不替代真实服务端鉴权。</p>${cards.map(([n, title, location, body]) => `<button class="anno"><h3><span class="anno-n">${n}</span>${title}</h3><p><b>关联位置：</b>${location}</p><p><b>说明 / 交互：</b>${body}</p></button>`).join('')}<div class="assumption"><b>原型备注</b><p>审批员可见全量审批单，但默认禁止审批本人发起的申请；未生效重试由系统管理员执行，发起人只能取消本次变更。</p></div>`;
 }
 
 function render() {
@@ -146,47 +130,67 @@ function render() {
   if (state.page === 'product-list') html = productList();
   else if (state.page === 'product') html = product();
   else if (state.page === 'approvals') html = approvals();
-  else if (state.page === 'changes') html = changes();
   else if (state.page === 'settings') html = settings();
-  else html = detail(apps.find((x) => x.id === state.activeApplication) || apps[0]);
+  else html = detail(apps.find((item) => item.id === state.activeApplication) || apps[0]);
   screen.innerHTML = html;
   renderAnnotations(state.page);
   bind();
 }
 
 function bind() {
-  $$('[data-page]').forEach((b) => b.addEventListener('click', () => set({ page: b.dataset.page })));
-  $$('[data-open-app]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); set({ page: 'detail', activeApplication: b.dataset.openApp }); }));
-  $$('[data-toast]').forEach((b) => b.addEventListener('click', () => showToast(b.dataset.toast)));
-  $('[data-demo]')?.addEventListener('change', (e) => { const mode = e.target.value; set({ demoMode: mode, activeProductLock: mode !== 'free', activeApplication: 'A-001' }); });
-  $$('[data-submit-action]').forEach((b) => b.addEventListener('click', () => openSubmit(b.dataset.submitAction)));
-  $('[data-action="new-version"]')?.addEventListener('click', openVersion);
+  $$('[data-page]').forEach((button) => button.addEventListener('click', () => set({ page: button.dataset.page })));
+  $$('[data-open-app]').forEach((button) => button.addEventListener('click', () => set({ page: 'detail', activeApplication: button.dataset.openApp })));
+  $$('[data-toast]').forEach((button) => button.addEventListener('click', () => showToast(button.dataset.toast)));
+  anno.querySelector('[data-role]')?.addEventListener('change', (event) => { const role = event.target.value; set({ role, approvalTab: role === '普通用户' ? 'initiated' : 'review' }); });
+  anno.querySelector('[data-product-status]')?.addEventListener('change', (event) => { const productStatus = event.target.value; set({ productStatus, activeProductLock: productStatus === '已上架' }); });
+  anno.querySelector('[data-lock-demo]')?.addEventListener('change', (event) => set({ activeProductLock: event.target.value === 'locked' }));
+  $$('[data-approval-tab]').forEach((button) => button.addEventListener('click', () => set({ approvalTab: button.dataset.approvalTab })));
+  $$('[data-submit-action]').forEach((button) => button.addEventListener('click', () => openSubmit(button.dataset.submitAction)));
   $('[data-drawer="product-edit"]')?.addEventListener('click', openProductEdit);
+  $('[data-drawer="listing-range"]')?.addEventListener('click', openListingRange);
   $('[data-drawer="config"]')?.addEventListener('click', openConfig);
-  $('[data-confirm-test]')?.addEventListener('change', (e) => set({ testConfirmed: e.target.checked }));
-  $('[data-evidence]')?.addEventListener('input', (e) => set({ evidence: e.target.value }));
-  $('[data-approve]')?.addEventListener('click', openApprove);
-  $('[data-reject]')?.addEventListener('click', openReject);
-  $$('[data-retry]').forEach((b) => b.addEventListener('click', () => { state.notifications[+b.dataset.retry].status = '发送中'; render(); setTimeout(() => { state.notifications[+b.dataset.retry].status = '已受理'; render(); showToast('通知已重新受理'); }, 500); }));
-  $('[data-test-link]')?.addEventListener('click', () => { screen.innerHTML = testSnapshot(); renderAnnotations('test'); bindTest(); });
-  bindAnnotationAnchors();
+  $$('[data-save-direct]').forEach((button) => button.addEventListener('click', () => { closeOverlay(); showToast('开发中产品已直接保存并更新'); }));
+  $$('[data-withdraw]').forEach((button) => button.addEventListener('click', () => withdraw(button.dataset.withdraw)));
+  $$('[data-cancel-unapplied]').forEach((button) => button.addEventListener('click', () => cancelUnapplied(button.dataset.cancelUnapplied)));
+  $$('[data-retry-apply]').forEach((button) => button.addEventListener('click', () => retryApply(button.dataset.retryApply)));
+  $('[data-evidence]')?.addEventListener('input', (event) => {
+    state.evidence = event.target.value;
+    const approve = $('[data-approve]');
+    if (approve) { approve.disabled = !state.evidence.trim(); approve.classList.toggle('is-disabled', !state.evidence.trim()); }
+  });
+  $$('[data-approve]').forEach((button) => button.addEventListener('click', () => openApprove(button.dataset.approve)));
+  $$('[data-reject]').forEach((button) => button.addEventListener('click', () => openReject(button.dataset.reject)));
+  $('[data-test-link]')?.addEventListener('click', () => { screen.innerHTML = testSnapshot(); renderAnnotations('test'); $('[data-close-test]')?.addEventListener('click', () => set({ page: 'detail' })); });
 }
 
-function bindTest() { $('[data-close-test]')?.addEventListener('click', () => set({ page: 'detail' })); }
-function bindAnnotationAnchors() { $$('[data-anchor]').forEach((b) => { b.onclick = () => highlight(b.dataset.anchor); }); }
-function highlight(id) { const el = document.getElementById(id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('highlight'); setTimeout(() => el.classList.remove('highlight'), 1300); } $$('.anno').forEach((x) => x.classList.toggle('active', x.dataset.anchor === id)); }
+function withdraw(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '待审批') return; item.status = '已驳回'; item.lock = false; item.outcome = '发起人撤销'; if (item.productId === W1_ID) state.activeProductLock = false; showToast('申请已撤销，线上配置未变更'); render(); }
+function cancelUnapplied(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; item.status = '已驳回'; item.lock = false; item.outcome = '未生效后取消变更'; showToast('本次变更已取消，产品冻结已释放'); render(); }
+function retryApply(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; item.status = '已生效'; item.lock = false; item.outcome = '重试应用成功'; showToast('冻结快照已重试应用并生效'); render(); }
 
-modalRoot.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal-mask') || e.target.matches('[data-close-modal]') || e.target.matches('.drawer-mask') || e.target.matches('[data-close-drawer]')) closeOverlay();
-  if (e.target.matches('[data-submit-action]')) { const action = e.target.dataset.submitAction || '详情变更'; closeOverlay(); openSubmit(action); return; }
-  if (e.target.matches('[data-confirm-submit]')) { const email = $('#tester-email').value.trim(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('#email-error').textContent = '请输入有效的企业邮箱'; return; } const app = apps.find((x) => x.id === state.activeApplication) || apps[0]; app.action = state.pendingAction; set({ testerEmail: email, activeProductLock: true, demoMode: 'lock', page: 'detail', activeApplication: 'A-001' }); closeOverlay(); showToast(`申请 ${app.id} 已创建，快照与通知配置已冻结`); }
-  if (e.target.matches('[data-confirm-reject]')) { if (!$('#reject-reason').value.trim()) { $('#reject-error').textContent = '请填写驳回原因'; return; } const a = apps.find((x) => x.id === state.activeApplication); a.status = '已驳回'; a.lock = false; set({ activeProductLock: false, page: 'changes' }); closeOverlay(); showToast('已驳回并撤销，线上配置未变更'); }
-  if (e.target.matches('[data-confirm-approve]')) { const a = apps.find((x) => x.id === state.activeApplication); a.status = '已生效'; a.lock = false; set({ activeProductLock: false, page: 'changes' }); closeOverlay(); showToast('冻结快照已应用，已向产品经理发送结果通知'); }
-  if (e.target.matches('[data-save-config]')) { closeOverlay(); showToast('审批配置已保存，仅对后续提交生效'); }
-  if (e.target.matches('[data-save-draft]')) { closeOverlay(); showToast('草稿已保存，线上正式配置未变更'); }
-  if (e.target.matches('[data-toast]')) { closeOverlay(); showToast(e.target.dataset.toast); }
+modalRoot.addEventListener('click', (event) => {
+  if (event.target.classList.contains('modal-mask') || event.target.matches('[data-close-modal]') || event.target.matches('.drawer-mask') || event.target.matches('[data-close-drawer]')) return closeOverlay();
+  const drawerSubmit = event.target.closest('[data-submit-action]');
+  if (drawerSubmit) { openSubmit(drawerSubmit.dataset.submitAction); return; }
+  const drawerToast = event.target.closest('[data-toast]');
+  if (drawerToast) { showToast(drawerToast.dataset.toast); return; }
+  if (event.target.closest('[data-save-direct]')) { closeOverlay(); showToast('开发中产品已直接保存并更新'); return; }
+  const submit = event.target.closest('[data-confirm-submit]');
+  if (submit) {
+    const email = $('#tester-email')?.value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email || '')) { $('#email-error').textContent = '请输入有效邮箱地址'; return; }
+    if (state.activeProductLock) { closeOverlay(); showToast('提交被拒绝：已有活跃审批单', false); return; }
+    const action = submit.dataset.confirmSubmit;
+    apps.unshift({ id: `A-${String(7 + apps.length).padStart(3, '0')}`, productId: W1_ID, action, status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 11:20', lock: true, outcome: '' });
+    state.testerEmail = email; state.activeProductLock = true; state.activeApplication = apps[0].id; closeOverlay(); set({ page: 'detail', approvalTab: 'initiated' }); showToast('审批单已创建，产品已冻结'); return;
+  }
+  const reject = event.target.closest('[data-confirm-reject]');
+  if (reject) { const reason = $('#reject-reason')?.value.trim(); if (!reason) { $('#reject-error').textContent = '请填写驳回原因'; return; } const item = apps.find((app) => app.id === reject.dataset.confirmReject); item.status = '已驳回'; item.lock = false; item.outcome = `审批驳回：${reason}`; if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('申请已驳回，线上配置未变更'); return; }
+  const approve = event.target.closest('[data-confirm-approve]');
+  if (approve) { const item = apps.find((app) => app.id === approve.dataset.confirmApprove); item.status = '已生效'; item.lock = false; item.outcome = '审批通过，应用成功'; if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('冻结快照已应用，申请已生效'); return; }
+  if (event.target.closest('[data-save-config]')) { closeOverlay(); showToast('审批人配置已保存，仅影响后续提交'); return; }
+  const select = event.target.closest('[data-select-approver]');
+  if (select) { const picker = $('#approver-picker'); if (picker) picker.value = select.dataset.selectApprover; showToast('已选择 IoT 平台用户'); }
 });
 
 window.addEventListener('prototype:change', render);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOverlay(); });
 render();
