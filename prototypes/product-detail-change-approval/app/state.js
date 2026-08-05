@@ -11,6 +11,7 @@ export const state = {
   role: '普通用户',
   productStatus: '已上架',
   activeProductLock: true,
+  retryOutcome: 'success',
   pendingAction: '详情变更',
   testerEmail: 'qa.liu@example.com',
   evidence: '',
