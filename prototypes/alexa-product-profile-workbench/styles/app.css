@@ -58,6 +58,20 @@ body { overflow-x: hidden; }
 .metric--wide { position: relative; }
 .metric--wide strong { font-size: 15px; }
 .metric small { margin-top: 3px; color: var(--el-text-color-secondary); font-family: "IBM Plex Mono", monospace; font-size: 10px; }
+.metric-delta { color: var(--el-color-success); }
+
+.dash-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding: 10px 14px; border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
+.dash-region-tabs { display: flex; gap: 4px; }
+.dash-region-tab { height: 28px; padding: 0 12px; color: var(--el-text-color-regular); border: 1px solid transparent; border-radius: var(--radius); background: transparent; font-size: 12px; }
+.dash-region-tab.is-active { color: var(--el-color-primary); border-color: var(--el-color-primary-light-3); background: var(--el-color-primary-light-9); font-weight: 500; }
+.dash-range-group { display: flex; gap: 2px; }
+.dash-range-btn { height: 26px; padding: 0 10px; color: var(--el-text-color-secondary); border: 0; background: transparent; font-size: 12px; }
+.dash-range-btn.is-active { color: var(--el-color-primary); background: var(--el-color-primary-light-9); border-radius: var(--radius); font-weight: 500; }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.share-cell { display: flex; align-items: center; gap: 8px; }
+.share-bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--el-color-primary-light-3); }
+.share-cell span:last-child { color: var(--el-text-color-secondary); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+.cell-code { padding: 1px 5px; color: #506476; border-radius: 2px; background: #f5f7fa; font-family: "IBM Plex Mono", monospace; font-size: 11px; }
 
 .admin-panel { border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
 .panel-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; padding: 14px 16px; border-bottom: 1px solid var(--el-border-color-light); }

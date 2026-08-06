@@ -4,9 +4,13 @@ import {
   closeModal,
   completeAuth,
   completeDiscovery,
+  dashboard,
   filteredProfiles,
   getProfile,
+  handlerData,
+  logData,
   openEditor,
+  productData,
   publishDraft,
   rollbackProfile,
   runValidation,
@@ -29,7 +33,7 @@ import {
   approveSafetyGate,
   beginAuth,
   beginDiscovery
-} from "./state.js";
+} from "./state.js?v=20260806";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -65,6 +69,37 @@ const annotations = {
       { n: 9, title: "OAuth / App-to-App 绑定", location: "关联位置：连接与发现测试 > Step 1", fields: [["说明", "使用真实 Alexa 测试账号与 Momcozy 测试环境授权，平台只保存脱敏状态和 request id。"], ["交互", "开始绑定后进入 loading；可演示成功、用户拒绝和 redirect callback 错误。"], ["异常处理", "错误态须给出回调/客户端登记问题与重试入口，不展示 token 明文。"]] },
       { n: 10, title: "真实 Discovery 请求", location: "关联位置：连接与发现测试 > Step 2", fields: [["说明", "绑定成功才可调用测试环境的 Alexa.Discovery；生产请求不在此原型范围内。"], ["交互", "请求显示 loading、trace id、Endpoint 数和 Profile 对比结果。"], ["状态/差异", "可切换“能力不一致”和“超时”场景，用于验收错误日志与重试。"]] },
       { n: 11, title: "Discovery Diff 与 Trace", location: "关联位置：连接与发现测试 > 响应对比", fields: [["说明", "逐项对比 endpointId、interface、instance；发现少报或错报时阻断发布前验收。"], ["数据来源", "测试环境 Discovery response 与当前 Profile 草稿快照。"], ["原型备注", "正式接入需补充 OAuth Client、redirect URI、测试账号、地区和日志保留策略。"]] }
+    ]
+  },
+  dashboard: {
+    context: "工作台 / 概览",
+    summary: "工作台是平台级概览，用于查看用户、设备与产品排行的趋势，是进入 Alexa 配置前的数据入口。",
+    items: [
+      { n: 12, title: "数据中心与时间窗口", location: "关联位置：工作台 > 顶部筛选", fields: [["说明", "按数据中心页签（测试/北美/亚太/欧洲/中国）和时间窗口（近7/14/30天）聚合概览指标。"], ["交互", "切换数据中心或时间窗口会刷新指标、排行与趋势。"], ["数据来源", "概览配置 / 用户汇总 / 设备汇总面板接口。"]] },
+      { n: 13, title: "指标与排行", location: "关联位置：工作台 > 指标卡 / 地区·产品排行", fields: [["说明", "注册用户、活跃用户、绑定设备、活跃设备四类核心指标；地区与产品排行展示占比。"], ["状态/差异", "指标名称与图表标题需保持一致口径，避免多套命名。"], ["原型备注", "此处为虚拟演示数据，正式接入取自概览快照接口。"]] }
+    ]
+  },
+  products: {
+    context: "智能产品 / 产品列表",
+    summary: "智能产品是承载产品定义与 Alexa Profile 关联状态的核心对象；列表负责检索、复制与进入详情。",
+    items: [
+      { n: 14, title: "产品列表与检索", location: "关联位置：智能产品 > 列表", fields: [["说明", "按产品分类、所属App、通讯方式、产品ID 检索；字段覆盖产品型号、状态、功能版本、所属平台。"], ["交互", "行内展示 Alexa 关联列（未配置/草稿/门禁阻断/已发布），引导进入 Profile 配置。"], ["数据来源", "产品列表接口；Alexa 列由 Profile 状态映射。"]] },
+      { n: 15, title: "产品与 Alexa 关联", location: "关联位置：智能产品 > Alexa 关联列", fields: [["说明", "明确产品是否已建立 Alexa Profile 及当前状态，作为配置闭环的入口。"], ["异常处理", "门禁阻断的产品在此标记，避免误以为可通过 Alexa 控制。"]] }
+    ]
+  },
+  handlers: {
+    context: "Handler 注册",
+    summary: "Handler 是受管而不是自由函数：注册登记契约版本、适用范围与审核状态，Profile 只能绑定已登记、已审核的 Handler。",
+    items: [
+      { n: 16, title: "Handler 登记与契约", location: "关联位置：Handler 注册 > 列表", fields: [["说明", "每条 Handler 绑定固定输入输出契约版本，禁止任意函数地址；平台内置通用 Handler 与产品专用 Handler 并列。"], ["交互", "新增/停用走 Adapter Contract 评审；产品专用 Handler 需显示适用原因与审核状态。"], ["状态/差异", "generic-direct-directive 为平台内置，多产品复用；crib-motion-handler 为单产品专用。"]] },
+      { n: 17, title: "审核与适用范围", location: "关联位置：Handler 注册 > 审核 / 适用范围列", fields: [["说明", "未审核的 Handler 不可被 Profile 绑定；适用范围说明 Handler 承担的云侧语义。"], ["异常处理", "待审核 Handler 在 Profile 校验中视为未通过，阻止发布。"]] }
+    ]
+  },
+  logs: {
+    context: "调用日志",
+    summary: "调用日志记录 Alexa 的 Discovery / Directive / State·Change Report 调用，用于排查授权、发现与状态上报问题。",
+    items: [
+      { n: 18, title: "调用链路与 trace", location: "关联位置：调用日志 > 列表", fields: [["说明", "按 Profile、通道与结果展示每次 Alexa 调用；每条带 traceId 与结果摘要。"], ["交互", "异常记录（拒绝/失败）需可定位到 Profile、通道与 Safety Gate 或回调原因。"], ["数据来源", "Sandbox 调用日志；生产调用日志不在本原型范围。"]] }
     ]
   },
   drawer: {
@@ -107,11 +142,22 @@ const annotations = {
   }
 };
 
+const pageRenderers = {
+  profiles: renderProfilesPage,
+  catalog: renderCatalogPage,
+  connect: renderConnectPage,
+  dashboard: renderDashboardPage,
+  products: renderProductsPage,
+  handlers: renderHandlersPage,
+  logs: renderLogsPage
+};
+
 function render() {
   document.documentElement.dataset.mobileView = state.mobileView;
   $(".prototype-shell").dataset.mobileView = state.mobileView;
   renderPageHeader();
-  $("#pageRoot").innerHTML = state.page === "catalog" ? renderCatalogPage() : state.page === "connect" ? renderConnectPage() : renderProfilesPage();
+  const renderPage = pageRenderers[state.page] || renderProfilesPage;
+  $("#pageRoot").innerHTML = renderPage();
   renderAnnotations();
   renderDrawer();
   renderModal();
@@ -122,13 +168,17 @@ function render() {
 }
 
 function renderPageHeader() {
-  const meta = state.page === "catalog"
-    ? { crumb: "Alexa 能力目录", title: "Alexa Capability Catalog", copy: "维护共享 Adapter 已实现且允许被 Product Profile 选择的 capability。", action: "" }
-    : state.page === "connect"
-      ? { crumb: "连接与发现测试", title: "连接与发现测试", copy: "在 Sandbox 使用测试账号验证 OAuth/App-to-App 回调和真实 Discovery 响应。", action: "" }
-      : { crumb: "Alexa Product Profile", title: "Alexa Product Profile", copy: "管理 Momcozy 产品物模型到 Alexa Endpoint 的受控映射。", action: `<button class="el-btn el-btn--primary" data-action="new-profile">+ 新建 Profile</button>` };
+  const meta = {
+    profiles: { crumb: "Alexa Product Profile", title: "Alexa Product Profile", copy: "管理 Momcozy 产品物模型到 Alexa Endpoint 的受控映射。", action: `<button class="el-btn el-btn--primary" data-action="new-profile">+ 新建 Profile</button>`, anchor: 1 },
+    catalog: { crumb: "Alexa 能力目录", title: "Alexa Capability Catalog", copy: "维护共享 Adapter 已实现且允许被 Product Profile 选择的 capability。", action: "", anchor: 4 },
+    connect: { crumb: "连接与发现测试", title: "连接与发现测试", copy: "在 Sandbox 使用测试账号验证 OAuth/App-to-App 回调和真实 Discovery 响应。", action: "", anchor: 9 },
+    dashboard: { crumb: "工作台", title: "工作台", copy: "查看平台级用户、绑定设备与产品排行的概览数据。", action: "", anchor: 12 },
+    products: { crumb: "智能产品", title: "智能产品", copy: "维护产品定义、功能版本与 Alexa Profile 关联状态。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="创建产品走既有 IoT 产品流程，此处为原型入口" data-toast-type="info">+ 创建产品</button>`, anchor: 13 },
+    handlers: { crumb: "Handler 注册", title: "Handler 注册", copy: "登记受管 Alexa Handler 的契约版本、适用范围与审核状态。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="Handler 新增需走 Adapter Contract 评审" data-toast-type="info">+ 注册 Handler</button>`, anchor: 14 },
+    logs: { crumb: "调用日志", title: "调用日志", copy: "查询 Alexa Discovery / Directive / State·Change Report 的调用 trace 记录。", action: "", anchor: 15 }
+  }[state.page] || { crumb: "Alexa Product Profile", title: "Alexa Product Profile", copy: "", action: "", anchor: 1 };
   $("#breadcrumb").innerHTML = `<span>配置中心</span><span class="breadcrumb-slash">/</span><strong>${meta.crumb}</strong>`;
-  $("#pageHeader").innerHTML = `<div><div class="page-title-line"><h1>${meta.title}</h1>${state.page === "profiles" ? anchor(1) : state.page === "catalog" ? anchor(4) : anchor(9)}</div><p>${meta.copy}</p></div><div class="page-header-actions">${meta.action}</div>`;
+  $("#pageHeader").innerHTML = `<div><div class="page-title-line"><h1>${meta.title}</h1>${anchor(meta.anchor)}</div><p>${meta.copy}</p></div><div class="page-header-actions">${meta.action}</div>`;
 }
 
 function renderProfilesPage() {
@@ -203,6 +253,42 @@ function renderConnectPage() {
 function renderDiff(connection) {
   if (!connection.diff.length) return `<div class="discovery-empty"><div class="empty-state__mark">?</div><strong>尚未获得 Discovery 响应</strong><p>先完成测试账号授权，再发起 Discovery 请求。</p></div>`;
   return `<table class="el-table diff-table"><thead><tr><th>字段</th><th>Profile 期望</th><th>Discovery 实际</th><th>结果</th></tr></thead><tbody>${connection.diff.map((row) => `<tr><td>${row.field}</td><td><code>${row.expected}</code></td><td><code>${row.actual}</code></td><td>${tag(row.type === "success" ? "一致" : "差异", row.type)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+function renderDashboardPage() {
+  return `<section class="dash-topbar"><div class="dash-region-tabs" role="tablist">${dashboard.regions.map((region, index) => `<button class="dash-region-tab ${index === 0 ? "is-active" : ""}" data-action="show-toast" data-toast="数据中心：${region}（原型演示数据）" data-toast-type="info" role="tab" aria-selected="${index === 0}">${region}</button>`).join("")}</div><div class="dash-range-group">${dashboard.ranges.map((range, index) => `<button class="dash-range-btn ${index === 0 ? "is-active" : ""}" data-action="show-toast" data-toast="时间窗口：${range}（原型演示数据）" data-toast-type="info">${range}</button>`).join("")}</div></section>
+    <section class="metrics-strip">${dashboard.metrics.map((metric) => `<div class="metric"><span>${metric.label}</span><strong>${metric.value}</strong><small class="metric-delta">${metric.delta} 较上周期</small></div>`).join("")}</section>
+    <section class="dash-grid">
+      <section class="admin-panel"><div class="panel-heading"><div><h2>地区用户排行</h2><p>按国家或地区聚合的用户数量与占比。</p></div></div><table class="el-table"><thead><tr><th>地区</th><th>用户数量</th><th>占比</th></tr></thead><tbody>${dashboard.regionRank.map((row) => `<tr><td>${row.region}</td><td>${row.users}</td><td><div class="share-cell"><span class="share-bar" style="width:${row.share}"></span><span>${row.share}</span></div></td></tr>`).join("")}</tbody></table></section>
+      <section class="admin-panel"><div class="panel-heading"><div><h2>产品绑定设备排行</h2><p>按产品聚合的设备数量与占比。</p></div></div><table class="el-table"><thead><tr><th>产品名称</th><th>产品ID</th><th>设备数量</th><th>占比</th></tr></thead><tbody>${dashboard.productRank.map((row) => `<tr><td>${row.name}</td><td><code class="cell-code">${row.id}</code></td><td>${row.devices}</td><td><div class="share-cell"><span class="share-bar" style="width:${row.share}"></span><span>${row.share}</span></div></td></tr>`).join("")}</tbody></table></section>
+    </section>`;
+}
+
+function renderProductsPage() {
+  const alexaTag = (value) => value === "已发布" ? tag("Ax 已发布", "success") : value === "已配置" ? tag("Ax 已配置", "info") : value === "门禁阻断" ? tag("Ax 门禁阻断", "danger") : tag("Ax 草稿", "warning");
+  return `<section class="admin-panel">
+    <div class="panel-toolbar"><div class="filter-row"><input class="el-input filter-search" placeholder="搜索产品名称 / 型号 / 产品ID" /><select class="el-select" style="width:120px"><option>全部分类</option><option>Breast Pump</option><option>Night Light</option><option>Smart Crib</option><option>Sound Device</option></select><select class="el-select" style="width:120px"><option>全部通讯方式</option><option>BLE</option><option>Wi-Fi</option></select></div><div class="toolbar-note"><span class="status-dot status-dot--success"></span> 共 ${productData.length} 个产品</div></div>
+    <table class="el-table"><thead><tr><th>产品名称</th><th>产品型号</th><th>产品ID</th><th>产品分类</th><th>产品状态</th><th>功能版本 / 状态</th><th>所属平台</th><th>通讯方式</th><th>Alexa 关联</th></tr></thead><tbody>${productData.map((row) => `<tr><td><strong>${row.name}</strong></td><td>${row.model}</td><td><code class="cell-code">${row.id}</code></td><td>${row.category}</td><td>${tag(row.status, row.status === "已上架" ? "success" : "warning")}</td><td>${row.version}</td><td>${row.platform}</td><td>${row.comm}</td><td>${alexaTag(row.alexa)}</td></tr>`).join("")}</tbody></table>
+    <footer class="table-footer"><span>共 ${productData.length} 条</span></footer>
+  </section>`;
+}
+
+function renderHandlersPage() {
+  const statusTag = (status) => status === "已审核" ? tag(status, "success") : tag(status, "warning");
+  return `<section class="admin-panel">
+    <div class="panel-toolbar"><div class="filter-row"><input class="el-input filter-search" placeholder="搜索 Handler 名称" /><select class="el-select" style="width:120px"><option>全部状态</option><option>已审核</option><option>待审核</option></select></div><div class="toolbar-note"><span class="status-dot status-dot--success"></span> Handler 仅可绑定已登记、已审核的契约版本</div></div>
+    <table class="el-table"><thead><tr><th>Handler 名称</th><th>契约版本</th><th>输入输出契约</th><th>绑定产品数</th><th>审核状态</th><th>适用范围</th><th>最近更新</th><th>更新人</th></tr></thead><tbody>${handlerData.map((row) => `<tr><td><strong>${row.id}</strong></td><td><code class="cell-code">${row.version}</code></td><td>${row.contract}</td><td>${row.products}</td><td>${statusTag(row.status)}</td><td>${row.scope}</td><td>${row.updatedAt}</td><td>${row.updatedBy}</td></tr>`).join("")}</tbody></table>
+    <footer class="table-footer"><span>共 ${handlerData.length} 条</span></footer>
+  </section>`;
+}
+
+function renderLogsPage() {
+  const resultTag = (row) => row.status === "success" ? tag(row.result, "success") : tag(row.result, "danger");
+  return `<section class="admin-panel">
+    <div class="panel-toolbar"><div class="filter-row"><input class="el-input filter-search" placeholder="搜索 Profile / traceId" /><select class="el-select" style="width:120px"><option>全部通道</option><option>Discovery</option><option>Directive</option><option>StateReport</option><option>ChangeReport</option></select><select class="el-select" style="width:120px"><option>全部结果</option><option>成功</option><option>拒绝</option><option>失败</option></select></div><div class="toolbar-note"><span class="status-dot status-dot--success"></span> Sandbox 调用日志，保留 trace 维度便于排障</div></div>
+    <table class="el-table"><thead><tr><th>时间</th><th>Profile</th><th>通道</th><th>结果</th><th>Trace ID</th><th>摘要</th></tr></thead><tbody>${logData.map((row) => `<tr><td>${row.time}</td><td><code class="cell-code">${row.profile}</code></td><td>${row.channel}</td><td>${resultTag(row)}</td><td><code class="cell-code">${row.traceId}</code></td><td>${row.detail}</td></tr>`).join("")}</tbody></table>
+    <footer class="table-footer"><span>共 ${logData.length} 条</span></footer>
+  </section>`;
 }
 
 function renderDrawer() {

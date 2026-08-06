@@ -83,6 +83,52 @@ const profiles = [
   }
 ];
 
+export const dashboard = {
+  regions: ["测试数据", "北美", "亚太", "欧洲", "中国"],
+  ranges: ["近7天", "近14天", "近30天"],
+  metrics: [
+    { label: "注册用户", value: "128,430", delta: "+4.2%" },
+    { label: "活跃用户", value: "38,215", delta: "+2.8%" },
+    { label: "绑定设备", value: "96,780", delta: "+5.1%" },
+    { label: "活跃设备", value: "22,904", delta: "+1.6%" }
+  ],
+  regionRank: [
+    { region: "北美", users: "48,210", share: "37.5%" },
+    { region: "欧洲", users: "31,845", share: "24.8%" },
+    { region: "亚太", users: "24,672", share: "19.2%" },
+    { region: "中国", users: "16,903", share: "13.2%" },
+    { region: "其它", users: "6,800", share: "5.3%" }
+  ],
+  productRank: [
+    { name: "W1 Lite", id: "momcozy.w1_lite", devices: "24,108", share: "24.9%" },
+    { name: "Smart Crib Motion", id: "momcozy.smart_crib.motion", devices: "18,540", share: "19.2%" },
+    { name: "Bedside Light v1", id: "momcozy.bedside_light", devices: "15,232", share: "15.7%" },
+    { name: "White Noise Pro v2", id: "momcozy.white_noise.pro", devices: "9,876", share: "10.2%" },
+    { name: "其它", id: "momcozy.others", devices: "29,024", share: "30.0%" }
+  ]
+};
+
+export const productData = [
+  { id: "momcozy.w1_lite", name: "W1 Lite", model: "W1Lite", category: "Breast Pump", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "BLE", alexa: "已配置", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
+  { id: "momcozy.bedside_light", name: "Bedside Light v1", model: "BL-01", category: "Night Light", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexa: "已发布", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
+  { id: "momcozy.smart_crib.motion", name: "Smart Crib Motion", model: "CB-M", category: "Smart Crib", status: "内部测试", platform: "ROOT云", app: "momcozy", comm: "BLE", alexa: "门禁阻断", version: "版本2 / 草稿", updatedAt: "2026-08-04" },
+  { id: "momcozy.white_noise.pro", name: "White Noise Pro v2", model: "WN-P2", category: "Sound Device", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexa: "草稿", version: "版本1 / 已发布", updatedAt: "2026-08-01" }
+];
+
+export const handlerData = [
+  { id: "crib-motion-handler", version: "1.1.0", contract: "controller:1.2", products: 1, status: "已审核", scope: "Smart Crib 运动模式编排 / 安全校验", updatedAt: "2026-08-04", updatedBy: "陈静" },
+  { id: "multi-zone-handler", version: "0.9.0", contract: "controller:1.2", products: 0, status: "待审核", scope: "多温区组合动作与异步确认", updatedAt: "2026-08-01", updatedBy: "王琪" },
+  { id: "generic-direct-directive", version: "2.4.0", contract: "adapter:2.4", products: 12, status: "已审核", scope: "标准属性 / 单位转换（平台内置）", updatedAt: "2026-07-28", updatedBy: "林宇" }
+];
+
+export const logData = [
+  { time: "2026-08-04 14:28:11", profile: "smart-crib-motion-v1", channel: "Discovery", result: "一致", status: "success", traceId: "disc-5c3f71d2", detail: "endpoint 3 / capability 一致" },
+  { time: "2026-08-04 14:28:09", profile: "bedside-light-v1", channel: "StateReport", result: "成功", status: "success", traceId: "state-2a9f1180", detail: "brightness -> 80" },
+  { time: "2026-08-04 14:27:58", profile: "smart-crib-motion-v1", channel: "Directive", result: "拒绝", status: "danger", traceId: "dir-77c1e04a", detail: "ModeController 未通过 Safety Gate" },
+  { time: "2026-08-04 14:27:41", profile: "white-noise-pro-v2", channel: "ChangeReport", result: "成功", status: "success", traceId: "chg-9b20d3cc", detail: "volume 7 -> 12" },
+  { time: "2026-08-04 14:27:33", profile: "bedside-light-v1", channel: "Directive", result: "成功", status: "success", traceId: "dir-5e8f21b7", detail: "PowerController ON" }
+];
+
 export const state = {
   page: "profiles",
   profiles: clone(profiles),
@@ -130,7 +176,7 @@ export function filteredProfiles() {
 }
 
 export function setPage(page) {
-  state.page = ["profiles", "catalog", "connect"].includes(page) ? page : "profiles";
+  state.page = ["profiles", "catalog", "connect", "dashboard", "products", "handlers", "logs"].includes(page) ? page : "profiles";
   state.editor.open = false;
   state.modal = { type: "", profileId: "" };
   emit();
