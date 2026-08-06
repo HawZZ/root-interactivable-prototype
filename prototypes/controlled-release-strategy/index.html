@@ -123,6 +123,7 @@
     .field .hint { display: block; color: #9aa4b2; margin-top: 5px; line-height: 1.5; }
     .field .error-text { display: block; color: var(--red); margin-top: 5px; line-height: 1.5; }
     .field input.invalid { border-color: var(--red); background: #fffafa; }
+    .field input:disabled, .field select:disabled, .field textarea:disabled { background: #f8fafc; color: #56616f; cursor: not-allowed; }
     .field-inline { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 8px; }
     .tip-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #d9dfe9; background: #fff; color: #315efb; padding: 0; font-weight: 600; line-height: 16px; display: inline-grid; place-items: center; cursor: pointer; }
     .tip-open > .tip-icon, .tip-open > .label-row .tip-icon { border-color: #315efb; background: #eef4ff; }
