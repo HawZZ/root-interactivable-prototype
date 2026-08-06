@@ -6692,17 +6692,9 @@
         label: "简单版本1",
         description: "第一部分(icon/title/subtitle) + 第二部分(视频/图片) + 第三部分仅 title（无正文图片区）。"
       },
-      "simple-2": {
-        label: "简单版本2",
-        description: "第一部分隐藏 + 第二部分(视频/图片) + 第三部分仅 title。"
-      },
       "simple-3": {
         label: "简单版本3",
         description: "第一部分(icon/title/subtitle) + 第二部分隐藏 + 第三部分 title + 2 个正文图片区（每个含 icon/title/content/图片×1/说明）。"
-      },
-      "simple-4": {
-        label: "简单版本4",
-        description: "第一部分隐藏 + 第二部分隐藏 + 第三部分 title + 2 个正文图片区（每个含 icon/title/content/图片×1/说明）。"
       }
     };
 
@@ -6724,7 +6716,6 @@
       const preset = structurePresets[presetKey];
       if (!step || !preset) return;
 
-      let headerHidden = false;
       let mediaHidden = false;
       let sections = [];
 
@@ -6738,15 +6729,7 @@
           break;
         case "simple-1":
           break;
-        case "simple-2":
-          headerHidden = true;
-          break;
         case "simple-3":
-          mediaHidden = true;
-          sections = [presetBodySection("check", 1), presetBodySection("info", 1)];
-          break;
-        case "simple-4":
-          headerHidden = true;
           mediaHidden = true;
           sections = [presetBodySection("check", 1), presetBodySection("info", 1)];
           break;
@@ -6756,9 +6739,6 @@
       step.titleI18n = { [state.defaultLocale]: "" };
       step.subtitle = "";
       step.subtitleI18n = { [state.defaultLocale]: "" };
-      step.headerIconHidden = headerHidden;
-      step.titleHidden = headerHidden;
-      step.subtitleHidden = headerHidden;
       step.mediaHidden = mediaHidden;
       step.mediaType = mediaHidden ? "" : "image";
       step.bodyIntro = "";
@@ -7918,9 +7898,6 @@
         id: fixedId || `step-template-${Date.now()}`,
         order: index,
         headerIconKey: "box",
-        headerIconHidden: false,
-        titleHidden: false,
-        subtitleHidden: false,
         title: "",
         titleI18n: { [state.activeLocale || "en"]: "" },
         subtitle: "",
@@ -8553,9 +8530,6 @@
         ...step,
         order,
         headerIconKey: step.headerIconKey || "box",
-        headerIconHidden: Boolean(step.headerIconHidden),
-        titleHidden: Boolean(step.titleHidden),
-        subtitleHidden: Boolean(step.subtitleHidden),
         mediaHidden: Boolean(step.mediaHidden),
         mediaType: step.mediaType === "video" || step.mediaType === "image" ? step.mediaType : "",
         videoCover: step.videoCover || null,
@@ -9157,7 +9131,7 @@
       const headerIcon = configuredSubstepIcon(step.headerIconKey)?.mark || "S";
       return `
         <section class="assistant-page-copy">
-          <div class="abbr-item" style="grid-template-columns:${step.headerIconHidden ? "0 minmax(0, 1fr)" : "30px minmax(0, 1fr)"};">
+          <div class="abbr-item" style="grid-template-columns:30px minmax(0, 1fr);">
             <span class="abbr-icon">${escapeHtml(headerIcon)}</span>
             <span>
               <strong>${escapeHtml(textValue(step, "title") || `Step ${step.order}`)}</strong>
@@ -10329,9 +10303,6 @@
         ...step,
         order,
         headerIconKey: step.headerIconKey || "box",
-        headerIconHidden: Boolean(step.headerIconHidden),
-        titleHidden: Boolean(step.titleHidden),
-        subtitleHidden: Boolean(step.subtitleHidden),
         mediaHidden: Boolean(step.mediaHidden),
         mediaType: step.mediaType === "video" || step.mediaType === "image" ? step.mediaType : "",
         videoCover: step.videoCover || null,
@@ -10823,18 +10794,15 @@
             <select class="select" id="stepHeaderIconInput">
               ${configuredSubstepIconOptions(step.headerIconKey || "box")}
             </select>
-            <label class="check-row"><input id="stepHeaderIconHiddenInput" type="checkbox" ${step.headerIconHidden ? "checked" : ""}> 在 Step 页隐藏 icon</label>
             <div class="field-help">Step 第一部分使用 UI 定义的预设 icon。</div>
           </div>
          <div class="field">
             <label for="stepTitleInput">第一部分 title<span class="required-mark">*</span></label>
             ${renderRichTextField({ id: "stepTitleInput", item: step, field: "title", placeholder: "TBD：建议输入格式提示", hint: "必填。单行文本支持加粗和换行。" })}
-            <label class="check-row"><input id="stepTitleHiddenInput" type="checkbox" ${step.titleHidden ? "checked" : ""}> 在 Step 页隐藏 title</label>
          </div>
          <div class="field">
             <label for="stepSubtitleInput">第一部分 subtitle</label>
             ${renderRichTextField({ id: "stepSubtitleInput", item: step, field: "subtitle", placeholder: "TBD：建议输入格式提示", hint: "选填。单行文本支持加粗和换行；留空时 APP 侧不展示 subtitle。" })}
-            <label class="check-row"><input id="stepSubtitleHiddenInput" type="checkbox" ${step.subtitleHidden ? "checked" : ""}> 在 Step 页隐藏 subtitle</label>
          </div>
           <div class="template-section-card">
             <div class="template-section-head">
@@ -10924,21 +10892,6 @@
      });
       $("#stepHeaderIconInput")?.addEventListener("change", (event) => {
         step.headerIconKey = event.target.value;
-        setDirty();
-        renderPreviewSurfaces();
-      });
-      $("#stepHeaderIconHiddenInput")?.addEventListener("change", (event) => {
-        step.headerIconHidden = event.target.checked;
-        setDirty();
-        renderPreviewSurfaces();
-      });
-      $("#stepTitleHiddenInput")?.addEventListener("change", (event) => {
-        step.titleHidden = event.target.checked;
-        setDirty();
-        renderPreviewSurfaces();
-      });
-      $("#stepSubtitleHiddenInput")?.addEventListener("change", (event) => {
-        step.subtitleHidden = event.target.checked;
         setDirty();
         renderPreviewSurfaces();
       });
@@ -11123,15 +11076,15 @@
       if (!step) return `<div class="empty-preview">暂无 step 模板。</div>`;
       const headerIcon = configuredSubstepIcon(step.headerIconKey)?.mark || "S";
       return `
-        ${step.headerIconHidden && step.titleHidden && step.subtitleHidden ? "" : `<section class="assistant-page-copy">
-          <div class="abbr-item" style="grid-template-columns:${step.headerIconHidden ? "0 minmax(0, 1fr)" : "30px minmax(0, 1fr)"};">
-            ${step.headerIconHidden ? "" : `<span class="abbr-icon">${escapeHtml(headerIcon)}</span>`}
+        <section class="assistant-page-copy">
+          <div class="abbr-item" style="grid-template-columns:30px minmax(0, 1fr);">
+            <span class="abbr-icon">${escapeHtml(headerIcon)}</span>
             <div>
-              ${step.titleHidden ? "" : `<strong>${richTextInlineHtml(step, "title", `Step ${step.order}`)}</strong>`}
-              ${step.subtitleHidden || !textSummary(step, "subtitle") ? "" : `<small>${richTextInlineHtml(step, "subtitle")}</small>`}
+              <strong>${richTextInlineHtml(step, "title", `Step ${step.order}`)}</strong>
+              ${textSummary(step, "subtitle") ? `<small>${richTextInlineHtml(step, "subtitle")}</small>` : ""}
             </div>
           </div>
-        </section>`}
+        </section>
         ${renderStepMediaPreview(step)}
         ${stripHtmlTags(richTextHtml(step, "bodyIntro")).trim() ? richTextPreview(step, "bodyIntro", "") : ""}
         ${(step.sections || []).filter((section) => !section.hidden).map((section, index) => {
