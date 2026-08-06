@@ -812,7 +812,7 @@
         { id: "firmware-state", title: "固件配置业务流程", body: "流程为新建固件版本，生成开发中记录；进入测试后由白名单命中；点击发布并配置全面发布或自动发布。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布。", loc: "产品详情 > 固件配置" },
         { id: "firmware-state", title: "固件版本字段定义", body: "固件版本字段包含固件名称、固件类型、固件版本、硬件版本、功能版本、APP版本号条件、状态、上传时间、发布日志和操作。新建时只选择功能版本、固件类型、上传文件、APP版本号条件和备注，文件解析字段只读。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "测试中固件统一入口", body: "原设备调试页内的测试固件能力与固件版本管理中的测试中状态是同一业务对象，不再拆成独立测试固件表。测试中、发布中、已发布都是候选来源，并在共同筛选满足后按固件版本号取最高版本。", loc: "产品详情 > 固件配置 > 固件版本" },
-        { id: "firmware-state", title: "固件状态由行内操作流转", body: "开发中可进入测试或删除；测试中可停止或发布；发布中可暂停发布、停止或修改发布；暂停发布可继续或停止；已发布可修改发布配置或查看详情，已停止仅保留详情查看。暂停发布和已停止版本仅作为历史信息来源，不再匹配命中条件。", loc: "产品详情 > 固件配置 > 固件版本操作" },
+        { id: "firmware-state", title: "固件状态由行内操作流转", body: "开发中可进入测试或删除；测试中可停止或发布；发布中可暂停发布、停止或修改发布；暂停发布可继续或停止；已发布不可暂停，仅可停止（二次确认）或修改发布配置、查看详情；已停止仅保留详情查看。暂停发布和已停止版本仅作为历史信息来源，不再匹配命中条件。", loc: "产品详情 > 固件配置 > 固件版本操作" },
         { id: "versionImpactModal", title: "什么叫「同一个固件」？什么叫「同一系列固件」？", body: "同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同。同一个固件在列表中有且仅有一个，重复上传会被阻断。\n\n同一系列固件：固件类型 + 硬件版本相同，但固件版本不同（比如 v1.2 和 v1.5 是同一系列）。同一系列的不同固件版本可以同时并存于任何状态（测试中/发布中/已发布），互不干扰，由命中规则决定每台设备命中哪个版本。\n\n举例：MCU固件 / 硬件版本10 下，v1.2（测试中）、v1.3（发布中）、v1.5（已发布）可以同时存在，不会触发任何阻断或弹窗。", loc: "产品详情 > 固件配置 > 版本操作" },
         { id: "versionImpactModal", title: "多个版本并存时，设备怎么命中？", body: "同一系列（固件类型+硬件版本相同）的多个版本可以同时运行，系统按 APP 版本条件决定每台设备命中哪一个：\n\n① 精确条件（=v）比范围条件（≥v）优先\n   例：=1.2.0 比 ≥1.0.0 先命中\n\n② 同为范围条件时，要求 APP 版本越高的越优先\n   例：≥1.2.0 比 ≥1.0.0 先命中\n\n③ APP 条件过滤后仍有多个版本同时命中时，版本号更高的先命中\n\n白名单用户可以看到「测试中」版本；普通用户只能收到「发布中/已发布」版本。", loc: "产品详情 > 固件配置 > 版本操作" },
         { id: "firmware-state", title: "固件版本编辑边界（MAGI修正）", body: "开发中状态只支持编辑备注。功能版本、固件类型、固件文件、固件版本、硬件版本、APP版本号条件保存后不可在编辑入口修改；配置填错需删除开发中版本重新新建。", loc: "产品详情 > 固件配置 > 固件版本操作" },
@@ -871,7 +871,7 @@
       ],
       otaForm: [
         { id: "ota-gray-config", title: "行内发布配置并生效", body: "从固件版本行点击发布时，进入配置升级方式。发布方式仅支持全面发布和自动发布；自动发布配置自动发布总天数。配置定时生效时，生效前版本保持测试中，到达生效时间后按发布方式进入发布中/已发布。", loc: "固件版本行 > 配置升级方式" },
-        { id: "ota-gray-config", title: "OTA 发布配置字段定义", body: "字段包含发布名称、发布方式、升级方式、生效时间、发布范围、范围子集和自动发布总天数。发布范围默认同步当前产品上架范围，也可选择其中一部分（子集），即只在已上架范围内再挑一部分生效。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；可以暂停/停止发布、切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "固件版本行 > 配置升级方式" }
+        { id: "ota-gray-config", title: "OTA 发布配置字段定义", body: "字段包含发布名称、发布方式、升级方式、生效时间、发布范围、范围子集和自动发布总天数。发布范围默认同步当前产品上架范围，也可选择其中一部分（子集），即只在已上架范围内再挑一部分生效。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "固件版本行 > 配置升级方式" }
       ],
       firmwareVersionAdd: [
         { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
@@ -888,7 +888,7 @@
       ],
       releaseConfig: [
         { id: "drawer-release-config", title: "发布配置", body: "扩展程序发布配置由版本行操作进入。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布；发布中可暂停发布、继续或停止。配置定时生效时，保存后版本保持测试中，到达生效时间后按发布方式进入发布中/已发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
-        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、范围子集、自动发布总天数、兼容性和生效时间。选择定时生效时必须填写定时生效时间，生效前版本保持测试中。发布方式仅支持全面发布和自动发布。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；可以暂停/停止发布、切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
+        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、范围子集、自动发布总天数、兼容性和生效时间。选择定时生效时必须填写定时生效时间，生效前版本保持测试中。发布方式仅支持全面发布和自动发布。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
         { id: "releaseMode", title: "发布方式", body: "全面发布一次开放到 100%，保存后版本进入已发布；自动发布按配置天数逐步提高开放覆盖度，例如 5 天时每天约增加 20%，开放覆盖度不等于实际用户命中或升级比例。", loc: "发布配置 > 发布方式" },
         { id: "releaseRangeMode", title: "发布范围跟随产品上架范围", body: "RN 版本发布范围可同步当前产品上架范围，或只选择其中一部分（子集），也就是只在已上架范围内再挑一部分生效；国家/地区子集使用按洲分类的可搜索点击式多选。产品上架范围缩小时，已配置的 OTA / RN 子范围会按交集同步收缩。", loc: "发布配置 > 发布范围" }
       ],
@@ -1464,7 +1464,7 @@
       if (item.status === "测试中") return `<button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn primary" data-firmware-action="publish" data-fw-id="${item.id}">发布</button>`;
       if (item.status === "发布中") return `<button class="btn" data-firmware-action="pause" data-fw-id="${item.id}">暂停发布</button><button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布</button>`;
       if (item.status === "暂停发布") return `<button class="btn primary" data-firmware-action="resume" data-fw-id="${item.id}">继续</button><button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button>`;
-      if (item.status === "已发布") return `<button class="btn" data-firmware-action="pause" data-fw-id="${item.id}">暂停发布</button><button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布配置</button><button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
+      if (item.status === "已发布") return `<button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布配置</button><button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
       return `<button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
     }
 
@@ -1906,7 +1906,7 @@
         return `${versionButton}<button class="btn primary" data-extension-version-action="resume" data-version="${item.version}">继续</button><button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button>`;
       }
       if (item.status === "已发布") {
-        return `${versionButton}<button class="btn" data-extension-version-action="pause" data-version="${item.version}">暂停发布</button><button class="btn" data-extension-version-action="configure" data-version="${item.version}">修改发布配置</button>`;
+        return `${versionButton}<button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button><button class="btn" data-extension-version-action="configure" data-version="${item.version}">修改发布配置</button>`;
       }
       if (item.status === "已停止") {
         return `${versionButton}<button class="btn" disabled>已停止</button>`;
