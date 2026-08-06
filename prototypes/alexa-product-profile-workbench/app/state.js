@@ -134,6 +134,7 @@ export const state = {
   profiles: clone(profiles),
   filters: { keyword: "", status: "all" },
   editor: { open: false, section: "basic", sourceId: "", draft: null, validation: null, isSaving: false },
+  handlerEditor: { open: false, draft: null },
   modal: { type: "", profileId: "" },
   connection: {
     scenario: "match",
@@ -191,6 +192,29 @@ export function openEditor(id = "", section = "basic") {
   const source = id ? getProfile(id) : createEmptyProfile();
   state.editor = { open: true, section, sourceId: id, draft: clone(source), validation: null, isSaving: false };
   emit();
+}
+
+export function openHandlerEditor() {
+  state.handlerEditor = { open: true, draft: createEmptyHandler() };
+  emit();
+}
+
+export function closeHandlerEditor() {
+  state.handlerEditor.open = false;
+  emit();
+}
+
+export function updateHandlerDraft(path, value) {
+  state.handlerEditor.draft[path] = value;
+}
+
+export function submitHandler() {
+  const draft = state.handlerEditor.draft;
+  if (!draft.id.trim() || !draft.contract.trim() || !draft.scope.trim()) return { ok: false, reason: "必填项缺失：Handler 名称、输入输出契约与适用范围" };
+  handlerData.unshift({ id: draft.id, version: draft.version || "1.0.0", contract: draft.contract, products: 0, status: "待审核", scope: draft.scope, updatedAt: "2026-08-04 15:02", updatedBy: "林宇" });
+  state.handlerEditor.open = false;
+  emit();
+  return { ok: true };
 }
 
 export function closeEditor() {
@@ -389,6 +413,10 @@ export function setHighlightedAnchor(id) {
 export function setMobileView(view) {
   state.mobileView = view;
   emit();
+}
+
+function createEmptyHandler() {
+  return { id: "", version: "1.0.0", contract: "controller:1.2", scope: "", products: "" };
 }
 
 function createEmptyProfile() {

@@ -1,6 +1,7 @@
 import {
   capabilityCatalog,
   closeEditor,
+  closeHandlerEditor,
   closeModal,
   completeAuth,
   completeDiscovery,
@@ -10,6 +11,7 @@ import {
   handlerData,
   logData,
   openEditor,
+  openHandlerEditor,
   productData,
   publishDraft,
   rollbackProfile,
@@ -26,14 +28,16 @@ import {
   state,
   statusMeta,
   subscribe,
+  submitHandler,
   updateCapability,
   updateDraft,
+  updateHandlerDraft,
   addCapability,
   removeCapability,
   approveSafetyGate,
   beginAuth,
   beginDiscovery
-} from "./state.js?v=20260806";
+} from "./state.js?v=20260806h";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -93,6 +97,13 @@ const annotations = {
     items: [
       { n: 16, title: "Handler 登记与契约", location: "关联位置：Handler 注册 > 列表", fields: [["说明", "每条 Handler 绑定固定输入输出契约版本，禁止任意函数地址；平台内置通用 Handler 与产品专用 Handler 并列。"], ["交互", "新增/停用走 Adapter Contract 评审；产品专用 Handler 需显示适用原因与审核状态。"], ["状态/差异", "generic-direct-directive 为平台内置，多产品复用；crib-motion-handler 为单产品专用。"]] },
       { n: 17, title: "审核与适用范围", location: "关联位置：Handler 注册 > 审核 / 适用范围列", fields: [["说明", "未审核的 Handler 不可被 Profile 绑定；适用范围说明 Handler 承担的云侧语义。"], ["异常处理", "待审核 Handler 在 Profile 校验中视为未通过，阻止发布。"]] }
+    ]
+  },
+  handlerRegister: {
+    context: "Handler 注册 / 登记抽屉",
+    summary: "Handler 是受管而不是自由函数：登记时锁定契约版本与适用范围，提交后进入待审核，禁止登记任意函数地址。",
+    items: [
+      { n: 19, title: "受管登记与评审", location: "关联位置：Handler 注册 > 登记抽屉", fields: [["说明", "Handler 名称、契约版本、输入输出契约与适用范围为必填；契约版本固定，禁止任意函数地址或脚本。"], ["交互", "提交后进入「待审核」；未审核不可被 Profile 绑定，Profile 校验视为未通过。"], ["状态/差异", "平台内置 generic-direct-directive 由平台维护，不在此登记；此处仅登记产品专用 Handler。"]] }
     ]
   },
   logs: {
@@ -174,7 +185,7 @@ function renderPageHeader() {
     connect: { crumb: "连接与发现测试", title: "连接与发现测试", copy: "在 Sandbox 使用测试账号验证 OAuth/App-to-App 回调和真实 Discovery 响应。", action: "", anchor: 9 },
     dashboard: { crumb: "工作台", title: "工作台", copy: "查看平台级用户、绑定设备与产品排行的概览数据。", action: "", anchor: 12 },
     products: { crumb: "智能产品", title: "智能产品", copy: "维护产品定义、功能版本与 Alexa Profile 关联状态。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="创建产品走既有 IoT 产品流程，此处为原型入口" data-toast-type="info">+ 创建产品</button>`, anchor: 13 },
-    handlers: { crumb: "Handler 注册", title: "Handler 注册", copy: "登记受管 Alexa Handler 的契约版本、适用范围与审核状态。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="Handler 新增需走 Adapter Contract 评审" data-toast-type="info">+ 注册 Handler</button>`, anchor: 14 },
+    handlers: { crumb: "Handler 注册", title: "Handler 注册", copy: "登记受管 Alexa Handler 的契约版本、适用范围与审核状态。", action: `<button class="el-btn el-btn--primary" data-action="open-handler-editor">+ 注册 Handler</button>`, anchor: 14 },
     logs: { crumb: "调用日志", title: "调用日志", copy: "查询 Alexa Discovery / Directive / State·Change Report 的调用 trace 记录。", action: "", anchor: 15 }
   }[state.page] || { crumb: "Alexa Product Profile", title: "Alexa Product Profile", copy: "", action: "", anchor: 1 };
   $("#breadcrumb").innerHTML = `<span>配置中心</span><span class="breadcrumb-slash">/</span><strong>${meta.crumb}</strong>`;
@@ -293,9 +304,15 @@ function renderLogsPage() {
 
 function renderDrawer() {
   const mount = $("#drawerMount");
+  if (state.handlerEditor.open) { renderHandlerDrawer(mount); return; }
   if (!state.editor.open) { mount.innerHTML = ""; return; }
   const draft = state.editor.draft;
   mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-editor"></div><aside class="el-drawer alexa-drawer" role="dialog" aria-modal="true" aria-label="${state.editor.sourceId ? "编辑" : "新建"} Alexa Product Profile"><header class="el-drawer__header"><div><h2 class="el-drawer__title">${state.editor.sourceId ? "编辑" : "新建"} Alexa Product Profile</h2><p class="drawer-subtitle">${escapeHtml(draft.name || "未命名 Profile")} <span>/</span> ${escapeHtml(draft.productKey || "草稿")}</p></div><button class="el-drawer__close" data-action="close-editor" aria-label="关闭">x</button></header><div class="drawer-shell"><nav class="drawer-section-nav">${sections.map(([key, label], index) => `<button class="drawer-section-item ${state.editor.section === key ? "is-active" : ""}" data-action="drawer-section" data-section="${key}"><span>${index + 1}</span>${label}</button>`).join("")}</nav><div class="el-drawer__body">${renderDrawerBody(draft)}</div></div><footer class="el-drawer__footer"><button class="el-btn" data-action="close-editor">取消</button><button class="el-btn" data-action="save-draft">保存草稿</button><button class="el-btn el-btn--primary" data-action="run-validation">运行校验</button><button class="el-btn el-btn--primary" data-action="publish" ${state.editor.validation?.passed ? "" : "disabled"}>发布</button></footer></aside></div>`;
+}
+
+function renderHandlerDrawer(mount) {
+  const draft = state.handlerEditor.draft;
+  mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-handler-editor"></div><aside class="el-drawer alexa-drawer" role="dialog" aria-modal="true" aria-label="注册 Alexa Handler"><header class="el-drawer__header"><div><h2 class="el-drawer__title">注册 Alexa Handler</h2><p class="drawer-subtitle">受管 Handler 登记，须通过 Adapter Contract 评审后可用</p></div><button class="el-drawer__close" data-action="close-handler-editor" aria-label="关闭">x</button></header><div class="el-drawer__body"><section class="drawer-section"><div class="section-heading"><h3>Handler 登记信息</h3><p>Handler 只能绑定已登记的契约版本，禁止登记任意函数地址或脚本来完成接入。</p></div><div class="form-grid"><label class="form-row"><span>Handler 名称 <b>*</b></span><input class="el-input" data-handler-field="id" value="${escapeHtml(draft.id)}" placeholder="例如 crib-motion-handler" /><em>作为 Profile «mapping=handler» 绑定的受管标识。</em></label><label class="form-row"><span>契约版本 <b>*</b></span><input class="el-input" data-handler-field="version" value="${escapeHtml(draft.version)}" placeholder="1.0.0" /></label><label class="form-row"><span>输入输出契约 <b>*</b></span><input class="el-input" data-handler-field="contract" value="${escapeHtml(draft.contract)}" placeholder="controller:1.2" /><em>固定输入输出契约，禁止任意函数地址。</em></label><label class="form-row"><span>适用产品 / SKU</span><input class="el-input" data-handler-field="products" value="${escapeHtml(draft.products)}" placeholder="momcozy.smart_crib.motion" /></label><label class="form-row form-row--wide"><span>适用范围 <b>*</b></span><input class="el-input" data-handler-field="scope" value="${escapeHtml(draft.scope)}" placeholder="说明 Handler 承担的云侧语义与安全校验" /></label></div><div class="handler-notice"><span class="notice-mark">i</span><span>提交后进入「待审核」。未审核的 Handler 不可被 Profile 绑定，Profile 校验视为未通过。</span></div></section></div><footer class="el-drawer__footer"><button class="el-btn" data-action="close-handler-editor">取消</button><button class="el-btn el-btn--primary" data-action="submit-handler">提交评审</button></footer></aside></div>`;
 }
 
 function renderDrawerBody(draft) {
@@ -331,7 +348,7 @@ function renderValidation(validation) {
 }
 
 function renderAnnotations() {
-  const scope = state.editor.open ? annotations.drawer[state.editor.section] : annotations[state.page];
+  const scope = state.editor.open ? annotations.drawer[state.editor.section] : state.handlerEditor.open ? annotations.handlerRegister : annotations[state.page];
   $("#annotationContext").textContent = scope.context;
   $("#annotationSummary").textContent = scope.summary;
   $("#annotationCount").textContent = String(scope.items.length);
@@ -395,6 +412,9 @@ function handleAction(event) {
   const { action, profileId, section, index, toast, toastType } = trigger.dataset;
   if (action === "nav") setPage(trigger.dataset.page);
   if (action === "new-profile") openEditor();
+  if (action === "open-handler-editor") openHandlerEditor();
+  if (action === "close-handler-editor") closeHandlerEditor();
+  if (action === "submit-handler") { const result = submitHandler(); if (result.ok) setToast("Handler 已提交评审，进入待审核", "success"); else setToast(result.reason, "danger"); }
   if (action === "edit-profile") openEditor(profileId);
   if (action === "validate-profile") { openEditor(profileId, "release"); window.setTimeout(() => { runValidation(); setToast("已完成 Profile 配置校验", state.editor.validation.passed ? "success" : "danger"); }, 0); }
   if (action === "close-editor") closeEditor();
@@ -441,6 +461,7 @@ function handleInput(event) {
   if (target.dataset.field && state.editor.open) updateDraft(target.dataset.field, target.value);
   if (target.dataset.capabilityIndex !== undefined && state.editor.open) updateCapability(Number(target.dataset.capabilityIndex), target.dataset.capabilityField, target.value);
   if (target.dataset.reporting && state.editor.open) updateDraft(`reporting.${target.dataset.reporting}`, target.type === "checkbox" ? target.checked : target.value);
+  if (target.dataset.handlerField && state.handlerEditor.open) updateHandlerDraft(target.dataset.handlerField, target.value);
 }
 
 function handleChange(event) {
@@ -457,7 +478,7 @@ function handleChange(event) {
 document.addEventListener("click", handleAction);
 document.addEventListener("input", handleInput);
 document.addEventListener("change", handleChange);
-document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeModal(); closeEditor(); } });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeModal(); closeEditor(); closeHandlerEditor(); } });
 document.querySelectorAll("[data-mobile-view-target]").forEach((button) => button.addEventListener("click", () => setMobileView(button.dataset.mobileViewTarget)));
 subscribe(render);
 render();
