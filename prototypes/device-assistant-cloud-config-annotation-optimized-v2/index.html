@@ -6684,44 +6684,91 @@
     }
 
     const structurePresets = {
-      "three-step-guide": {
-        label: "三步标准引导",
-        description: "3 个 Step：第 1 步隐藏第二部分并配置 3 个第三部分；第 2 步保留 3 个第三部分但隐藏第 2 个；第 3 步仅保留基础结构。"
+      "complex": {
+        label: "复杂版本",
+        description: "第一部分(icon/title/subtitle) + 第二部分(视频/图片) + 第三部分 title + 3 个正文图片区（每个含 icon/title/content/图片×3/说明）。"
+      },
+      "simple-1": {
+        label: "简单版本1",
+        description: "第一部分(icon/title/subtitle) + 第二部分(视频/图片) + 第三部分仅 title（无正文图片区）。"
+      },
+      "simple-2": {
+        label: "简单版本2",
+        description: "第一部分隐藏 + 第二部分(视频/图片) + 第三部分仅 title。"
+      },
+      "simple-3": {
+        label: "简单版本3",
+        description: "第一部分(icon/title/subtitle) + 第二部分隐藏 + 第三部分 title + 2 个正文图片区（每个含 icon/title/content/图片×1/说明）。"
+      },
+      "simple-4": {
+        label: "简单版本4",
+        description: "第一部分隐藏 + 第二部分隐藏 + 第三部分 title + 2 个正文图片区（每个含 icon/title/content/图片×1/说明）。"
       }
     };
 
-    function presetSection(title, hidden = false) {
+    function presetBodySection(iconKey, imageCount, hidden = false) {
       const section = makeBlankTextImageSection(1);
-      section.title = title;
-      section.titleI18n = { [state.defaultLocale]: title };
+      section.title = "";
+      section.titleI18n = { [state.defaultLocale]: "" };
+      section.content = "";
+      section.contentI18n = { [state.defaultLocale]: "" };
+      section.iconKey = iconKey;
+      section.iconHidden = false;
       section.hidden = hidden;
+      section.imageItems = Array.from({ length: imageCount }, () => makeBlankImageItem());
       return section;
     }
 
     function applyStructurePreset(presetKey) {
-      if (presetKey !== "three-step-guide") return;
-      const step1 = makeBlankStepTemplate(1, "step-template-1");
-      step1.title = "准备设备";
-      step1.titleI18n = { [state.defaultLocale]: step1.title };
-      step1.mediaHidden = true;
-      step1.sections = [presetSection("确认包装内容"), presetSection("准备安装位置"), presetSection("开始前检查")];
+      const step = selectedStep();
+      const preset = structurePresets[presetKey];
+      if (!step || !preset) return;
 
-      const step2 = makeBlankStepTemplate(2, "step-template-2");
-      step2.title = "安装与连接";
-      step2.titleI18n = { [state.defaultLocale]: step2.title };
-      step2.sections = [presetSection("连接设备"), presetSection("可选扩展说明", true), presetSection("完成连接")];
+      let headerHidden = false;
+      let mediaHidden = false;
+      let sections = [];
 
-      const step3 = makeBlankStepTemplate(3, "step-template-3");
-      step3.title = "开始使用";
-      step3.titleI18n = { [state.defaultLocale]: step3.title };
-      state.steps = [step1, step2, step3];
-      state.selectedStepId = step1.id;
-      state.selectedPage = "steps";
-      state.layer = "page";
-      state.structurePreset = presetKey;
+      switch (presetKey) {
+        case "complex":
+          sections = [
+            presetBodySection("check", 3),
+            presetBodySection("info", 3),
+            presetBodySection("question", 3)
+          ];
+          break;
+        case "simple-1":
+          break;
+        case "simple-2":
+          headerHidden = true;
+          break;
+        case "simple-3":
+          mediaHidden = true;
+          sections = [presetBodySection("check", 1), presetBodySection("info", 1)];
+          break;
+        case "simple-4":
+          headerHidden = true;
+          mediaHidden = true;
+          sections = [presetBodySection("check", 1), presetBodySection("info", 1)];
+          break;
+      }
+
+      step.title = "";
+      step.titleI18n = { [state.defaultLocale]: "" };
+      step.subtitle = "";
+      step.subtitleI18n = { [state.defaultLocale]: "" };
+      step.headerIconHidden = headerHidden;
+      step.titleHidden = headerHidden;
+      step.subtitleHidden = headerHidden;
+      step.mediaHidden = mediaHidden;
+      step.mediaType = mediaHidden ? "" : "image";
+      step.bodyIntro = "";
+      step.bodyIntroI18n = { [state.defaultLocale]: "" };
+      step.sections = sections;
+      step.structurePreset = presetKey;
+
       setDirty();
       renderAll();
-      showToast("已应用“三步标准引导”预设；可继续按需编辑字段和显隐项");
+      showToast(`已应用“${preset.label}”结构预设到当前 Step 页；可继续逐字段编辑`);
     }
 
     function renderSavedEntryPreview() {
@@ -10765,9 +10812,9 @@
               <label for="structurePresetInput">预设值</label>
               <select class="select" id="structurePresetInput">
                 <option value="">请选择预设值</option>
-                ${Object.entries(structurePresets).map(([key, preset]) => `<option value="${key}" ${state.structurePreset === key ? "selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}
+                ${Object.entries(structurePresets).map(([key, preset]) => `<option value="${key}" ${step.structurePreset === key ? "selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}
               </select>
-              <div class="field-help">${state.structurePreset && structurePresets[state.structurePreset] ? escapeHtml(structurePresets[state.structurePreset].description) : "预设会一次性覆盖当前英文结构源的 Step、第二/第三部分和显隐状态；已填写的内容及对应 KV 需按新结构补齐。"}</div>
+              <div class="field-help">${step.structurePreset && structurePresets[step.structurePreset] ? escapeHtml(structurePresets[step.structurePreset].description) : "预设模板的生效范围是当前 Step 页；如需控制不同 Step 页的预设，逐页选择并应用。应用后覆盖当前 Step 页的第一/第二/第三部分结构与显隐状态，可继续逐字段编辑。"}</div>
             </div>
             <button class="btn" id="applyStructurePresetBtn" type="button" ${state.structurePreset ? "" : "disabled"}>应用预设</button>
           </div>
@@ -10850,6 +10897,7 @@
 
    function bindStepTemplateForm(step) {
      bindRichTextEditors(document);
+      state.structurePreset = step.structurePreset || "";
       $("#structurePresetInput")?.addEventListener("change", (event) => {
         state.structurePreset = event.target.value;
         $("#applyStructurePresetBtn").disabled = !state.structurePreset;
@@ -10860,7 +10908,7 @@
       $("#applyStructurePresetBtn")?.addEventListener("click", () => {
         const preset = state.structurePreset;
         if (!preset) return;
-        if (window.confirm("应用预设将覆盖当前英文结构源的 Step 结构与显隐状态，是否继续？")) applyStructurePreset(preset);
+        if (window.confirm("应用预设将覆盖当前 Step 页的第一/第二/第三部分结构与显隐状态（其他 Step 页不受影响），是否继续？")) applyStructurePreset(preset);
       });
       bindRichTextField(document, "stepTitleInput", (value) => {
         setTextValue(step, "title", value);
