@@ -1,5 +1,6 @@
 import {
   capabilityCatalog,
+  alexaLocales,
   closeEditor,
   closeHandlerEditor,
   closeModal,
@@ -36,8 +37,9 @@ import {
   removeCapability,
   approveSafetyGate,
   beginAuth,
-  beginDiscovery
-} from "./state.js?v=20260806h";
+  beginDiscovery,
+  unbindAuth
+} from "./state.js?v=20260806i";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -63,7 +65,8 @@ const annotations = {
     summary: "目录是 Adapter 的 allowlist。Profile 只能选择已经实现、通过回归的 interface，不能配置任意协议调用。",
     items: [
       { n: 4, title: "受控 Capability Catalog", location: "关联位置：能力目录 > Interface 列表", fields: [["说明", "每条能力定义 Discovery Schema、Directive Router、属性转换和状态报告要求。"], ["交互", "新增产品优先复用目录项；目录不存在时进入 Adapter 能力扩展评审。"], ["权限", "仅平台管理员可以新增或停用目录项。"]] },
-      { n: 5, title: "配置边界", location: "关联位置：能力目录 > 使用边界", fields: [["说明", "配置可声明字段映射、值域、实例和已登记 Handler，不允许任意 URL、脚本、循环或跨设备编排。"], ["异常处理", "不在 allowlist 的 interface 或参数在校验阶段直接拒绝。"]] }
+      { n: 5, title: "配置边界", location: "关联位置：能力目录 > 使用边界", fields: [["说明", "配置可声明字段映射、值域、实例和已登记 Handler，不允许任意 URL、脚本、循环或跨设备编排。"], ["异常处理", "不在 allowlist 的 interface 或参数在校验阶段直接拒绝。"]] },
+      { n: 20, title: "Alexa 支持语言", location: "关联位置：能力目录 > Alexa Capability 支持语言", fields: [["说明", "展示 Alexa Smart Home 能力可用的官方语言 / 区域清单，用于校对 Profile 的 supportedLocales 是否覆盖目标市场。"], ["状态/差异", "Amazon Custom Skills 官方 17 个 locale；涂鸦口径为 8 语言 15 区域（不含 nl-NL / ar-SA）。"], ["原型备注", "Smart Home 实际可用语言以 Alexa Developer Console 当前支持为准，发布前需复核。"]] }
     ]
   },
   connect: {
@@ -230,7 +233,7 @@ function renderProfileRow(profile) {
     <td><div class="capability-cell">${escapeHtml(capabilityText)}</div><span class="cell-secondary">${profile.capabilities.length} 项能力</span></td>
     <td>${tag(status.label, status.type)}</td>
     <td><div>${escapeHtml(profile.updatedAt)}</div><span class="cell-secondary">${escapeHtml(profile.updatedBy)}</span></td>
-    <td class="col-ops"><button class="op-link" data-action="edit-profile" data-profile-id="${profile.id}">编辑</button><span class="op-divider">|</span><button class="op-link" data-action="validate-profile" data-profile-id="${profile.id}">校验${profile.id === "smart-crib-motion-v1" ? anchor(3) : ""}</button><span class="op-divider">|</span><button class="op-link ${profile.status === "published" ? "danger" : "is-disabled"}" data-action="rollback-open" data-profile-id="${profile.id}" ${profile.status === "published" ? "" : "disabled"}>回滚</button></td>
+    <td class="col-ops"><button class="op-link" data-action="edit-profile" data-profile-id="${profile.id}">编辑</button><span class="op-divider">|</span><button class="op-link" data-action="validate-profile" data-profile-id="${profile.id}">校验${profile.id === "smart-crib-motion-v1" ? anchor(3) : ""}</button><span class="op-divider">|</span><button class="op-link ${profile.status === "published" ? "danger" : "is-disabled"}" data-action="rollback-open" data-profile-id="${profile.id}" ${profile.status === "published" ? "" : "disabled"}>回滚</button><span class="op-divider">|</span><button class="op-link ${profile.status === "published" ? "danger" : "is-disabled"}" data-action="delist-open" data-profile-id="${profile.id}" ${profile.status === "published" ? "" : "disabled"}>下架</button></td>
   </tr>`;
 }
 
@@ -241,7 +244,8 @@ function renderCatalogPage() {
       <table class="el-table"><thead><tr><th>Alexa Interface</th><th>能力组</th><th>配置要求</th><th>Adapter 支持</th><th>使用边界</th></tr></thead><tbody>${capabilityCatalog.map((item, index) => `<tr><td><strong>${item.id}</strong>${index === 0 ? anchor(4) : ""}</td><td>${item.group}</td><td>${item.support}</td><td>${tag("已实现", "success")}</td><td>${item.hint}${index === 2 ? anchor(5) : ""}</td></tr>`).join("")}</tbody></table>
     </section>
     <aside class="catalog-aside"><div class="notice-card"><div class="notice-card__title">Profile 配置允许</div><ul><li>标准字段映射与值域转换</li><li>已登记 Handler 的版本绑定</li><li>State/Change Report 策略</li></ul></div><div class="notice-card notice-card--muted"><div class="notice-card__title">Profile 配置禁止</div><ul><li>任意 HTTP URL 或外部脚本</li><li>跨设备循环与编排逻辑</li><li>覆盖 OAuth、权限与安全门禁</li></ul></div></aside>
-  </section>`;
+  </section>
+  <section class="admin-panel locale-panel"><div class="panel-heading"><div><h2>Alexa Capability 支持语言</h2><p>Alexa Smart Home 能力可用的官方语言 / 区域清单，用于校对 Profile 的 supportedLocales。</p></div><span class="locale-count">${alexaLocales.languages.reduce((sum, item) => sum + item.locales.length, 0)} 个 locale</span></div><div class="locale-grid">${alexaLocales.languages.map((item) => `<div class="locale-group"><strong>${escapeHtml(item.lang)}</strong><div class="locale-tags">${item.locales.map((locale) => `<code class="locale-tag">${locale}</code>`).join("")}</div></div>`).join("")}</div><p class="locale-note">${escapeHtml(alexaLocales.note)}</p></section>`;
 }
 
 function renderConnectPage() {
@@ -257,6 +261,7 @@ function renderConnectPage() {
       <div class="flow-connector"></div>
       <div class="flow-step"><div class="step-index">2</div><div class="flow-step__content"><div class="flow-step__title">请求 Alexa Discovery ${anchor(10)} ${tag(discoveryLabel, discoveryType)}</div><p>成功授权后才可从测试环境获得 endpoint 响应，并与当前 Product Profile 快照比对。</p><div class="status-surface ${statusClass(discoveryType)}"><strong>${connection.discoveryDetail}</strong>${connection.discoveryRequestId ? `<span>Trace ID: ${connection.discoveryRequestId}</span>` : ""}</div><div class="flow-actions"><button class="el-btn el-btn--primary" data-action="discovery-start" ${connection.authStatus !== "connected" || connection.discoveryStatus === "loading" ? "disabled" : ""}>${connection.discoveryStatus === "loading" ? "请求中..." : "发起 Discovery"}</button><button class="el-btn" data-action="show-toast" data-toast="生产环境调用须经发布变更单审批" data-toast-type="info">查看请求范围</button></div></div></div>
     </section>
+    <section class="admin-panel bind-panel"><div class="panel-heading"><div><h2>App 内授权关系管理</h2><p>用户可在 Momcozy App 内查看并管理已建立的 Alexa 授权关系，含解绑入口。</p></div></div><div class="bind-row"><div><span class="bind-label">绑定账号</span><strong>alexa.sandbox+momcozy@example.com</strong></div>${tag(authLabel, authType)}<button class="el-btn el-btn--danger el-btn--small" data-action="unbind-alexa" ${connection.authStatus === "connected" ? "" : "disabled"}>解绑 Alexa</button></div><div class="bind-devices"><span class="bind-direct">已授权可控制设备</span>${state.profiles.filter((profile) => profile.status === "published").map((profile) => `<code class="cell-code">${escapeHtml(profile.name)}</code>`).join("")}</div></section>
     <section class="admin-panel discovery-panel"><div class="panel-heading"><div><h2>Discovery 响应对比 ${anchor(11)}</h2><p>Profile 快照与测试响应在 endpoint、interface 和 instance 维度的最小差异。</p></div><div class="response-counter">Endpoint ${connection.endpointCount}</div></div>${renderDiff(connection)}</section>
   </section>`;
 }
@@ -357,6 +362,11 @@ function renderAnnotations() {
 
 function renderModal() {
   const mount = $("#modalMount");
+  if (state.modal.type === "delist") {
+    const profile = getProfile(state.modal.profileId);
+    mount.innerHTML = `<div class="modal-host"><div class="modal-mask" data-action="close-modal"></div><section class="confirm-modal" role="dialog" aria-modal="true" aria-label="确认下架 Profile"><header><h2>确认下架 Profile</h2><button class="el-drawer__close" data-action="close-modal">x</button></header><div class="modal-body"><p>下架 <strong>${escapeHtml(profile?.name || "")}</strong> 后，已绑定该 Profile 的 Alexa 用户将失去对该设备的语音控制；未绑定用户不再发现该设备。</p><div class="modal-alert">此操作影响已绑定用户的授权关系，请确认影响范围后再执行。</div></div><footer><button class="el-btn" data-action="close-modal">取消</button><button class="el-btn el-btn--danger" data-action="delist-confirm" data-profile-id="${profile?.id || ""}">确认下架</button></footer></section></div>`;
+    return;
+  }
   if (state.modal.type !== "rollback") { mount.innerHTML = ""; return; }
   const profile = getProfile(state.modal.profileId);
   mount.innerHTML = `<div class="modal-host"><div class="modal-mask" data-action="close-modal"></div><section class="confirm-modal" role="dialog" aria-modal="true" aria-label="确认回滚"><header><h2>确认回滚 Profile</h2><button class="el-drawer__close" data-action="close-modal">x</button></header><div class="modal-body"><p>将 <strong>${escapeHtml(profile?.name || "")}</strong> 从 Production 回滚到 Sandbox。Alexa 发现配置将在下一次发布同步中恢复到上一个可用版本。</p><div class="modal-alert">此操作不会删除 Profile 或物模型映射，但会停止当前 Production 版本。</div></div><footer><button class="el-btn" data-action="close-modal">取消</button><button class="el-btn el-btn--danger" data-action="rollback-confirm" data-profile-id="${profile?.id || ""}">确认回滚</button></footer></section></div>`;
@@ -426,6 +436,8 @@ function handleAction(event) {
   if (action === "approve-gate") { approveSafetyGate(); setToast("已模拟 Safety Gate 审批通过；请重新运行校验", "info"); }
   if (action === "publish") { if (publishDraft()) { setToast("Profile 已发布到 Production", "success"); closeEditor(); } else setToast("发布前必须先通过校验", "danger"); }
   if (action === "rollback-open") showModal("rollback", profileId);
+  if (action === "delist-open") showModal("delist", profileId);
+  if (action === "delist-confirm") { closeModal(); setToast("Profile 已下架，已绑定用户将失去 Alexa 语音控制", "danger"); }
   if (action === "close-modal") closeModal();
   if (action === "rollback-confirm") { rollbackProfile(profileId); closeModal(); setToast("Profile 已回滚至 Sandbox", "success"); }
   if (action === "reset-filters") { state.filters.keyword = ""; state.filters.status = "all"; render(); }
@@ -438,6 +450,7 @@ function handleAction(event) {
   }
   if (action === "auth-denied") completeAuth("denied");
   if (action === "auth-callback-error") completeAuth("callback_error");
+  if (action === "unbind-alexa") { unbindAuth(); setToast("已解绑 Alexa，授权关系已移除", "success"); }
   if (action === "discovery-start") {
     const selectedScenario = document.querySelector("[data-connection-scenario]")?.value;
     if (selectedScenario && selectedScenario !== state.connection.scenario) setConnectionScenario(selectedScenario);

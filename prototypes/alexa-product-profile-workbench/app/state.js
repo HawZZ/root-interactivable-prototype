@@ -129,6 +129,22 @@ export const logData = [
   { time: "2026-08-04 14:27:33", profile: "bedside-light-v1", channel: "Directive", result: "成功", status: "success", traceId: "dir-5e8f21b7", detail: "PowerController ON" }
 ];
 
+export const alexaLocales = {
+  note: "Amazon 官方支持语言（Custom Skills 多语言文档，17 个 locale）。Smart Home 实际可用语言以 Alexa Developer Console 当前支持为准。",
+  languages: [
+    { lang: "English", locales: ["en-US", "en-GB", "en-AU", "en-CA", "en-IN"] },
+    { lang: "Deutsch", locales: ["de-DE"] },
+    { lang: "Español", locales: ["es-ES", "es-MX", "es-US"] },
+    { lang: "Français", locales: ["fr-FR", "fr-CA"] },
+    { lang: "Italiano", locales: ["it-IT"] },
+    { lang: "日本語", locales: ["ja-JP"] },
+    { lang: "हिन्दी", locales: ["hi-IN"] },
+    { lang: "Português", locales: ["pt-BR"] },
+    { lang: "Nederlands", locales: ["nl-NL"] },
+    { lang: "العربية", locales: ["ar-SA"] }
+  ]
+};
+
 export const state = {
   page: "profiles",
   profiles: clone(profiles),
@@ -361,6 +377,18 @@ export function completeAuth(outcome) {
     connection.authStatus = "connected";
     connection.authDetail = "测试账号已完成授权，access token 已安全托管。";
   }
+  emit();
+}
+
+export function unbindAuth() {
+  const connection = state.connection;
+  connection.authStatus = "not_connected";
+  connection.authDetail = "已解绑 Alexa 授权，用户无权再控制该设备。";
+  connection.authRequestId = "";
+  connection.discoveryStatus = "idle";
+  connection.discoveryDetail = "完成授权后可发起测试环境 Discovery 请求。";
+  connection.diff = [];
+  connection.endpointCount = 0;
   emit();
 }
 
