@@ -124,6 +124,7 @@
     .field .error-text { display: block; color: var(--red); margin-top: 5px; line-height: 1.5; }
     .field input.invalid { border-color: var(--red); background: #fffafa; }
     .field input:disabled, .field select:disabled, .field textarea:disabled { background: #f8fafc; color: #56616f; cursor: not-allowed; }
+    .field .lock { pointer-events: none; opacity: .6; }
     .field-inline { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 8px; }
     .tip-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #d9dfe9; background: #fff; color: #315efb; padding: 0; font-weight: 600; line-height: 16px; display: inline-grid; place-items: center; cursor: pointer; }
     .tip-open > .tip-icon, .tip-open > .label-row .tip-icon { border-color: #315efb; background: #eef4ff; }
@@ -871,7 +872,7 @@
       ],
       otaForm: [
         { id: "ota-gray-config", title: "行内发布配置并生效", body: "从固件版本行点击发布时，进入配置升级方式。发布方式仅支持全面发布和自动发布；自动发布配置自动发布总天数。配置定时生效时，生效前版本保持测试中，到达生效时间后按发布方式进入发布中/已发布。", loc: "固件版本行 > 配置升级方式" },
-        { id: "ota-gray-config", title: "OTA 发布配置字段定义", body: "字段包含发布名称、发布方式、升级方式、生效时间、发布范围、范围子集和自动发布总天数。发布范围默认同步当前产品上架范围，也可选择其中一部分（子集），即只在已上架范围内再挑一部分生效。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "固件版本行 > 配置升级方式" }
+        { id: "ota-gray-config", title: "OTA 发布配置字段定义", body: "字段包含发布名称、发布方式、升级方式、生效时间、发布范围、范围子集和自动发布总天数。发布范围默认同步当前产品上架范围，也可选择其中一部分（子集），即只在已上架范围内再挑一部分生效。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布；发布中不支持修改发布范围，已发布可修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "固件版本行 > 配置升级方式" }
       ],
       firmwareVersionAdd: [
         { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
@@ -888,7 +889,7 @@
       ],
       releaseConfig: [
         { id: "drawer-release-config", title: "发布配置", body: "扩展程序发布配置由版本行操作进入。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布；发布中可暂停发布、继续或停止。配置定时生效时，保存后版本保持测试中，到达生效时间后按发布方式进入发布中/已发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
-        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、范围子集、自动发布总天数、兼容性和生效时间。选择定时生效时必须填写定时生效时间，生效前版本保持测试中。发布方式仅支持全面发布和自动发布。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布、修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
+        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、范围子集、自动发布总天数、兼容性和生效时间。选择定时生效时必须填写定时生效时间，生效前版本保持测试中。发布方式仅支持全面发布和自动发布。发布中 / 已发布状态不允许修改自动发布总天数、生效时间，不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停/停止，已发布不支持暂停、仅可停止（二次确认）；可以切换全面发布；发布中不支持修改发布范围，已发布可修改发布范围。已发布状态不允许由全面发布切换为自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
         { id: "releaseMode", title: "发布方式", body: "全面发布一次开放到 100%，保存后版本进入已发布；自动发布按配置天数逐步提高开放覆盖度，例如 5 天时每天约增加 20%，开放覆盖度不等于实际用户命中或升级比例。", loc: "发布配置 > 发布方式" },
         { id: "releaseRangeMode", title: "发布范围跟随产品上架范围", body: "RN 版本发布范围可同步当前产品上架范围，或只选择其中一部分（子集），也就是只在已上架范围内再挑一部分生效；国家/地区子集使用按洲分类的可搜索点击式多选。产品上架范围缩小时，已配置的 OTA / RN 子范围会按交集同步收缩。", loc: "发布配置 > 发布范围" }
       ],
@@ -1704,6 +1705,7 @@
       const isReleased = Boolean(target && ["发布中", "暂停发布", "已发布"].includes(target.status));
       const currentMode = isReleased ? (otaTasks.find(t => t.firmwareVersionId === target?.id && ["发布中", "已发布"].includes(t.status))?.publishMode || "自动发布") : "自动发布";
       const lockMode = isReleased && currentMode === "全面发布";
+      const lockRange = target?.status === "发布中";
       const listingRangeText = currentProductListingRangeText();
       const listingRangeOptions = currentProductListingRangeOptions();
       const listingRangePickerOptions = groupedCountryOptionsFor(listingRangeOptions);
@@ -1715,11 +1717,11 @@
           <div class="field"><label>升级方式</label><select id="otaUpgradeMode"><option>提示升级</option><option>强制升级</option></select></div>
           <div class="field"><label>生效时间</label><select id="otaEffectiveAt" ${isReleased ? "disabled" : ""}><option selected>立即生效</option><option>定时生效</option></select></div>
           <div class="field hide" id="otaEffectiveTimeField"><label>定时生效时间</label><input id="otaEffectiveTime" value="2026-06-05 10:00" ${isReleased ? "disabled" : ""}><span class="hint">选择定时生效时必填，到达该时间后发布配置开始生效；生效前版本保持测试中。</span></div>
-          <div class="field"><label>发布范围</label><select id="otaRangeMode"><option value="sync">同步上架范围</option><option value="custom">选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。</span></div>
-          <div class="field hide" id="otaRangeSubset"><label>范围子集</label>${rangeOptionsHtml("otaRangeSelect", listingRangePickerOptions, [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
+          <div class="field"><label>发布范围</label><select id="otaRangeMode" ${lockRange ? "disabled" : ""}><option value="sync">同步上架范围</option><option value="custom">选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。${lockRange ? "发布中状态不支持修改发布范围。" : ""}</span></div>
+          <div class="field hide ${lockRange ? "lock" : ""}" id="otaRangeSubset"><label>范围子集</label>${rangeOptionsHtml("otaRangeSelect", listingRangePickerOptions, [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
           <div class="field" id="otaBatchDaysField"><label>自动发布总天数</label><input id="otaBatchDays" value="5" inputmode="numeric" ${isReleased ? "disabled" : ""}><span class="hint">N 天逐步达到 100%，例如 5 天时开放覆盖度每天约增加 20%。开放覆盖度不是实际命中或升级比例。</span></div>
         </div>
-        ${isReleased ? `<div class="notice">发布中 / 已发布状态：不允许修改自动发布总天数、不允许修改生效时间、不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；允许暂停发布、停止发布、将自动发布切换为全面发布、修改发布范围。已发布状态下不允许由全面发布切换为自动发布。</div>` : ""}
+        ${isReleased ? `<div class="notice">发布中 / 已发布状态：均不允许修改自动发布总天数、不允许修改生效时间、不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停发布、可停止、可切换全面发布、不支持修改发布范围；已发布不支持暂停发布（仅可停止，二次确认）、不允许全面→自动切换、可修改发布范围。</div>` : ""}
         <div class="form-foot"><button class="btn" data-ota-action="cancel">取消</button>${isReleaseTarget ? "" : `<button class="btn" data-ota-action="prev">上一步</button>`}<button class="btn primary" data-ota-action="submit">提交</button></div>
       </div>`;
     }
@@ -1974,20 +1976,21 @@
       const product = products[state.product];
       const isReleased = ["发布中", "暂停发布", "已发布"].includes(item?.status);
       const lockMode = isReleased && normalizeReleaseMode(existing.mode) === "全面发布";
+      const lockRange = item?.status === "发布中";
       return `<div id="drawer-release-config" data-note-anchor="drawer-release-config">
         <div class="form-grid">
           <div class="field"><label>版本</label><div class="readonly"><span>${item ? item.version : version}</span><span class="tag ${extensionStatusClass(item?.status)}">${item?.status || "未选择"}</span></div></div>
           <div class="field"><label>PanelCode</label><div class="readonly"><span>morn.breast-pump.v3</span><span class="tag blue">产品模块</span></div></div>
           <div class="field"><label>当前产品</label><div class="readonly"><span>${product.name} / ${product.id}</span><span class="tag green">${product.status}</span></div></div>
           <div class="field"><label>发布方式</label><select id="releaseMode" ${lockMode ? "disabled" : ""}><option ${data.mode === "全面发布" ? "selected" : ""}>全面发布</option><option ${data.mode === "自动发布" ? "selected" : ""}>自动发布</option></select><span class="hint">全面发布会按当前上架范围直接开放给所有线上用户，保存后版本进入已发布；自动发布会按批次逐步开放，保存后版本进入发布中。${lockMode ? "已发布状态不允许由全面发布切换为自动发布。" : ""}</span></div>
-          <div class="field"><label for="releaseRangeMode">发布范围</label><select id="releaseRangeMode"><option value="sync" ${data.rangeMode === "sync" ? "selected" : ""}>同步上架范围</option><option value="custom" ${data.rangeMode === "custom" ? "selected" : ""}>选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。</span></div>
-          <div class="field ${data.rangeMode === "custom" ? "" : "hide"}" id="releaseRangeSubset"><label>范围子集</label>${rangeOptionsHtml("releaseRangeSelect", listingRangePickerOptions, data.rangeMode === "custom" ? data.range : [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
+          <div class="field"><label for="releaseRangeMode">发布范围</label><select id="releaseRangeMode" ${lockRange ? "disabled" : ""}><option value="sync" ${data.rangeMode === "sync" ? "selected" : ""}>同步上架范围</option><option value="custom" ${data.rangeMode === "custom" ? "selected" : ""}>选择上架范围中的一部分（子集）</option></select><span class="hint">当前产品已上架范围：${listingRangeText}；可直接跟随，也可以只发布给其中一部分范围。${lockRange ? "发布中状态不支持修改发布范围。" : ""}</span></div>
+          <div class="field ${data.rangeMode === "custom" ? "" : "hide"} ${lockRange ? "lock" : ""}" id="releaseRangeSubset"><label>范围子集</label>${rangeOptionsHtml("releaseRangeSelect", listingRangePickerOptions, data.rangeMode === "custom" ? data.range : [], 2)}<span class="hint">点击选项即可增删，可搜索；若为国家 / 地区范围，则按洲分类并支持按洲批量选择。</span></div>
           <div class="field" id="releaseBatchDaysField"><label>自动发布总天数</label><input id="releaseBatchDays" value="${data.batchDays}" inputmode="numeric" ${isReleased ? "disabled" : ""}><span class="hint">N 天逐步达到 100%，例如 5 天时开放覆盖度每天约增加 20%。开放覆盖度不是实际用户命中或升级比例。</span></div>
           <div class="field"><label>兼容性</label><div class="readonly"><span>App 5.2+，iOS / Android 文件均可用</span><span class="tag green">通过</span></div></div>
           <div class="field"><label>生效时间</label><select id="releaseEffectiveAt" ${isReleased ? "disabled" : ""}><option ${data.effectiveAt !== "定时生效" ? "selected" : ""}>立即生效</option><option ${data.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>
           <div class="field ${data.effectiveAt === "定时生效" ? "" : "hide"}" id="releaseEffectiveTimeField"><label>定时生效时间</label><input id="releaseEffectiveTime" value="${data.effectiveTime}" placeholder="YYYY-MM-DD HH:mm" ${isReleased ? "disabled" : ""}><span class="hint">选择定时生效时必填，到达该时间后发布配置开始生效；生效前版本保持测试中。</span></div>
         </div>
-        ${isReleased ? `<div class="notice">发布中 / 已发布状态：不允许修改自动发布总天数、不允许修改生效时间、不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；允许暂停发布、停止发布、将自动发布切换为全面发布、修改发布范围。已发布状态下不允许由全面发布切换为自动发布。</div>` : ""}
+        ${isReleased ? `<div class="notice">发布中 / 已发布状态：均不允许修改自动发布总天数、不允许修改生效时间、不允许降低当前开放覆盖度（已开放覆盖比例只增不减）；发布中可暂停发布、可停止、可切换全面发布、不支持修改发布范围；已发布不支持暂停发布（仅可停止，二次确认）、不允许全面→自动切换、可修改发布范围。</div>` : ""}
         <div class="impact-preview">影响预览：保存后配置按生效时间执行${isReleased ? "，并重新计算该版本的发布命中范围。" : "。"}全面发布进入已发布；自动发布进入发布中，开放覆盖度达到 100% 后转为已发布。</div>
       </div>`;
     }
