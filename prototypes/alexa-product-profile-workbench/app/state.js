@@ -1,6 +1,9 @@
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
 
+// Skill 发布治理维护此集合；产品 Profile 只能继承并补齐自定义语义。
+export const enabledSkillLocales = ["en-US", "de-DE"];
+
 export const statusMeta = {
   published: { label: "已发布", type: "success" },
   draft: { label: "草稿", type: "info" },
@@ -45,7 +48,7 @@ export const modelPropertyCatalog = [
   { id: "power", label: "电源开关", type: "Boolean", unit: "-" },
   { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%" },
   { id: "color_hsb", label: "彩灯颜色", type: "ColorHSB", unit: "HSB" },
-  { id: "motion_mode", label: "运动模式", type: "Enum", unit: "-" },
+  { id: "motion_mode", label: "运动模式", type: "Enum", unit: "-", enumValues: ["SLEEP", "SOOTHING", "PLAY"] },
   { id: "motion_level", label: "运动强度", type: "Integer", unit: "level" },
   { id: "volume_0_100", label: "扬声器音量", type: "Integer", unit: "%" },
   { id: "playback_command", label: "播放控制命令", type: "Command", unit: "-" },
@@ -86,8 +89,8 @@ const profiles = [
     updatedBy: "陈静",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modes: "SLEEP, SOOTHING, PLAY" },
-      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5" }
+      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, capabilityResources: { source: "custom", localizedNames: { "en-US": { primary: "Motion", aliases: "Movement" }, "de-DE": { primary: "Bewegung", aliases: "" } } }, modeMappings: [{ modelValue: "SLEEP", alexaValue: "Crib.MotionMode.Sleep", modeResources: { source: "custom", localizedNames: { "en-US": { primary: "Sleep", aliases: "" }, "de-DE": { primary: "Schlaf", aliases: "" } } } }, { modelValue: "SOOTHING", alexaValue: "Crib.MotionMode.Soothing", modeResources: { source: "custom", localizedNames: { "en-US": { primary: "Soothing", aliases: "" }, "de-DE": { primary: "Beruhigend", aliases: "" } } } }, { modelValue: "PLAY", alexaValue: "Crib.MotionMode.Play", modeResources: { source: "custom", localizedNames: { "en-US": { primary: "Play", aliases: "" }, "de-DE": { primary: "Spiel", aliases: "" } } } }] },
+      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5", capabilityResources: { source: "custom", localizedNames: { "en-US": { primary: "Motion intensity", aliases: "Rocking intensity" }, "de-DE": { primary: "Bewegungsstärke", aliases: "" } } } }
     ]
   },
   {
@@ -287,6 +290,7 @@ export function runValidation() {
   const errors = [];
   const warnings = [];
   const instanceOwners = new Map();
+  const capabilityResourceOwners = new Map();
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
   if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
   if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
@@ -302,8 +306,29 @@ export function runValidation() {
       else if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
       else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
       else instanceOwners.set(instance, capability.id);
+      const resourceSource = capability.capabilityResources?.source || "custom";
+      const localizedNames = capability.capabilityResources?.localizedNames || {};
+      const assetId = capability.capabilityResources?.assetId?.trim() || "";
+      const missingLocale = enabledSkillLocales.find((locale) => !localizedNames[locale]?.primary?.trim());
+      const primaryName = localizedNames["en-US"]?.primary?.trim() || "";
+      const uniqueResourceKey = resourceSource === "asset" ? assetId.toLowerCase() : primaryName.toLowerCase();
+      if (resourceSource === "asset" && !assetId) errors.push(`能力与映射：${capability.id} 选择官方 Asset 后必须从平台 Catalog 选择 Asset。`);
+      else if (resourceSource === "custom" && missingLocale) errors.push(`能力与映射：${capability.id} 必须补齐 ${missingLocale} 的能力语音主名称（capabilityResources）。`);
+      else if (capabilityResourceOwners.has(uniqueResourceKey)) errors.push(`能力与映射：能力语音主名称或 Asset “${resourceSource === "asset" ? assetId : primaryName}” 已被 ${capabilityResourceOwners.get(uniqueResourceKey)} 使用；同一 Endpoint 不可重复。`);
+      else capabilityResourceOwners.set(uniqueResourceKey, capability.id);
     }
-    if (capability.id === "ModeController" && !capability.modes?.trim()) errors.push("能力与映射：ModeController 必须至少配置一个 supported mode。");
+    if (capability.id === "ModeController") {
+      const mappings = capability.modeMappings || [];
+      if (mappings.length < 2) errors.push("能力与映射：ModeController 至少需要两个完整的模式映射。");
+      const modeValues = new Set();
+      mappings.forEach((mapping) => {
+        const modeSource = mapping.modeResources?.source || "custom";
+        const modeSemantics = modeSource === "asset" ? mapping.modeResources?.assetId?.trim() : enabledSkillLocales.every((locale) => mapping.modeResources?.localizedNames?.[locale]?.primary?.trim());
+        if (!mapping.modelValue || !mapping.alexaValue?.trim() || !modeSemantics) errors.push("能力与映射：每个模式都必须配置物模型枚举值、Alexa mode 值，以及每个已启用 Locale 的模式语义（官方 Asset 或自定义 Friendly Name）。");
+        else if (modeValues.has(mapping.alexaValue.trim())) errors.push(`能力与映射：Alexa mode 值 “${mapping.alexaValue.trim()}” 不可重复。`);
+        else modeValues.add(mapping.alexaValue.trim());
+      });
+    }
     if (capability.id === "PlaybackController" && !["Play", "Pause"].every((operation) => capability.supportedOperations?.split(",").map((item) => item.trim()).includes(operation))) errors.push("能力与映射：PlaybackController 必须声明 Play 和 Pause 操作。");
   });
   if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
