@@ -30,7 +30,7 @@ import {
   updateProductAlexaSupport,
   addCapability,
   removeCapability
-} from "./state.js?v=20260810s";
+} from "./state.js?v=20260810t";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -125,6 +125,7 @@ function render() {
   $("#pageRoot").innerHTML = renderPage();
   renderAnnotations();
   renderDrawer();
+  applyInstanceFieldHints();
   renderModal();
   renderToast();
   refreshNav();
@@ -236,6 +237,18 @@ function renderDrawerBody(draft) {
   if (state.editor.section === "reporting") return renderReportingSection(draft);
   if (state.editor.section === "publish") return renderPublishSection(draft);
   return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；定义 Alexa endpoint 类型和标准物模型映射。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /></label><label class="form-row"><span>Alexa Endpoint 类型</span><select class="el-select" data-field="endpointType"><option ${draft.endpointType === "LIGHT" ? "selected" : ""}>LIGHT</option><option ${draft.endpointType === "OTHER" ? "selected" : ""}>OTHER</option></select></label></div><div class="lifecycle-notice"><strong>设备路由与呈现规则</strong><span>连接方式、设备类型和网关关系继承产品与设备主数据；Alexa Profile 不重复配置。App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后保留在基础信息，完成产品级 endpoint 定义后再进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
+}
+
+function applyInstanceFieldHints() {
+  document.querySelectorAll('[data-capability-field="instance"]').forEach((input) => {
+    input.placeholder = "例如 Crib.MotionMode（可自定义）";
+    const row = input.closest(".form-row");
+    if (!row || row.querySelector(".instance-help")) return;
+    const hint = document.createElement("em");
+    hint.className = "instance-help";
+    hint.textContent = "稳定机器标识，不是语音名称。建议 <对象>.<能力>，如 Crib.MotionMode；限 1-64 位英文字母开头，可含字母、数字、点、下划线和连字符；同一 Endpoint 的 Mode/Range/Toggle 不可重复，发布后变更需新版本。";
+    input.insertAdjacentElement("afterend", hint);
+  });
 }
 
 function requiresInstance(interfaceId) {

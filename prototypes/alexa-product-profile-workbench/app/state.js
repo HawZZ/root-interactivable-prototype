@@ -1,4 +1,5 @@
 const clone = (value) => JSON.parse(JSON.stringify(value));
+const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
 
 export const statusMeta = {
   published: { label: "已发布", type: "success" },
@@ -285,6 +286,7 @@ export function runValidation() {
   const draft = state.editor.draft;
   const errors = [];
   const warnings = [];
+  const instanceOwners = new Map();
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
   if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
   if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
@@ -294,7 +296,13 @@ export function runValidation() {
     if (!capability.id) errors.push("能力与映射：请选择与物模型属性匹配的 Alexa capability。");
     else if (!catalogItem || catalogItem.status !== "profile_ready") errors.push(`能力与映射：${capability.id} 尚未完成通用 Adapter 能力包，不能发布。`);
     if (!capability.property.trim()) errors.push(`能力与映射：${capability.id} 未绑定 Momcozy 物模型属性。`);
-    if (catalogItem?.instanceRequired && !capability.instance.trim()) errors.push(`能力与映射：${capability.id} 必须声明 instance。`);
+    if (catalogItem?.instanceRequired) {
+      const instance = capability.instance?.trim() || "";
+      if (!instance) errors.push(`能力与映射：${capability.id} 必须声明 instance。`);
+      else if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
+      else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
+      else instanceOwners.set(instance, capability.id);
+    }
     if (capability.id === "ModeController" && !capability.modes?.trim()) errors.push("能力与映射：ModeController 必须至少配置一个 supported mode。");
     if (capability.id === "PlaybackController" && !["Play", "Pause"].every((operation) => capability.supportedOperations?.split(",").map((item) => item.trim()).includes(operation))) errors.push("能力与映射：PlaybackController 必须声明 Play 和 Pause 操作。");
   });
