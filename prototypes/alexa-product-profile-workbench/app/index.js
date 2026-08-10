@@ -1,7 +1,6 @@
 import {
   capabilityCatalog,
   modelPropertyCatalog,
-  alexaLocales,
   closeEditor,
   closeModal,
   dashboard,
@@ -32,7 +31,7 @@ import {
   addCapability,
   removeCapability,
   approveSafetyGate
-} from "./state.js?v=20260810g";
+} from "./state.js?v=20260810r";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -50,16 +49,7 @@ const annotations = {
     items: [
       { n: 1, title: "Profile 列表与范围", location: "关联位置：Alexa Product Profile > 页面标题", fields: [["说明", "按产品型号维护 Alexa Endpoint、能力集合与发布状态；不是为每个产品复制一套 Lambda。"], ["交互", "点击“新建 Profile”创建草稿；点击行操作进入配置抽屉。"], ["数据来源", "IoT 产品模板、物模型和已登记的 Adapter 契约。"]] },
       { n: 2, title: "共享 Adapter 契约", location: "关联位置：统计区 > Shared Adapter", fields: [["说明", "Adapter 统一处理 OAuth、Discovery、Directive、StateReport 与官方 ErrorResponse；首期 ChangeReport 仅预留。"], ["状态/差异", "标准属性映射仅配置；出现新 Alexa interface 才扩展 Adapter；复杂业务进入二期评审。"], ["原型备注", "部署拆分按区域、容量、隔离或合规决定，不按单一产品决定。"]] },
-      { n: 3, title: "校验与发布状态", location: "关联位置：列表 > 校验 / 状态列", fields: [["说明", "草稿、待发布、门禁阻断、已发布、已回滚是独立的可追溯状态。"], ["交互", "校验会检查物模型映射、instance、产品 Error Policy、上报策略与 Safety Gate；通过后才允许发布。"], ["异常处理", "阻断原因须可定位到字段或门禁项，不能只显示“发布失败”。"]] }
-    ]
-  },
-  catalog: {
-    context: "Capability Catalog / 受控能力目录",
-    summary: "目录是 Adapter 的 allowlist。Profile 只能选择已经实现、通过回归的 interface，不能配置任意协议调用。",
-    items: [
-      { n: 4, title: "受控 Capability Catalog", location: "关联位置：能力目录 > Interface 列表", fields: [["说明", "Catalog 收录 Alexa 官方 capability/type 元数据；平台 allowlist 决定可被 Product Profile 选择的已实现能力。"], ["交互", "新增产品优先复用 allowlist；目录不存在或尚未实现时进入 Adapter 能力扩展评审。"], ["权限", "仅平台管理员可以新增或停用目录项。"]] },
-      { n: 5, title: "配置边界", location: "关联位置：能力目录 > 使用边界", fields: [["说明", "首期配置仅声明字段映射、值域和 instance，不允许任意 URL、脚本、循环、跨设备编排或产品专用 Handler。"], ["异常处理", "不在 allowlist 的 interface 或参数在校验阶段直接拒绝。"]] },
-      { n: 20, title: "Alexa 支持语言", location: "关联位置：能力目录 > Alexa Capability 支持语言", fields: [["说明", "展示 Alexa Smart Home 能力可用的官方语言 / 区域清单，用于校对 Profile 的 supportedLocales 是否覆盖目标市场。"], ["状态/差异", "Amazon Custom Skills 官方 17 个 locale；涂鸦口径为 8 语言 15 区域（不含 nl-NL / ar-SA）。"], ["原型备注", "Smart Home 实际可用语言以 Alexa Developer Console 当前支持为准，发布前需复核。"]] }
+      { n: 3, title: "校验与发布状态", location: "关联位置：列表 > 校验 / 状态列", fields: [["说明", "草稿、待发布、门禁阻断、已发布、已回滚是独立的可追溯状态。"], ["交互", "校验会检查物模型映射、instance、上报策略与 Safety Gate；通过后才允许发布。"], ["异常处理", "阻断原因须可定位到字段或门禁项，不能只显示“发布失败”。"]] }
     ]
   },
   dashboard: {
@@ -94,16 +84,16 @@ const annotations = {
   drawer: {
     basic: {
       context: "配置抽屉 / 基础信息",
-      summary: "Profile 是产品级声明。Adapter 名称不可由产品配置任意替换；endpoint 的组成和生命周期遵循全局规则。",
+      summary: "Profile 是产品级声明。产品团队只维护 endpoint 与物模型映射；运行时 Adapter、错误映射和 Skill 地区由平台统一治理。",
       items: [
-        { n: 4, title: "产品与 Adapter 绑定", location: "关联位置：配置抽屉 > 基础信息", fields: [["说明", "产品 Key 必须绑定既有 IoT 产品；Endpoint 类型决定 Alexa Discovery 分类；BLE 与 Wi-Fi 复用同一物模型控制语义。"], ["校验规则", "名称和 Product Key 必填；Adapter 使用受控版本 smart-home-adapter-v2。"], ["状态/差异", "多路开关为单一 endpoint；网关及子设备独立呈现；解绑再绑定生成新 endpointId；虚拟设备和 Group 不暴露。"]] }
+        { n: 4, title: "产品与 Endpoint 定义", location: "关联位置：配置抽屉 > 基础信息", fields: [["说明", "产品 Key 必须绑定既有 IoT 产品；Endpoint 类型决定 Alexa Discovery 分类；BLE 与 Wi-Fi 复用同一物模型控制语义。"], ["校验规则", "名称和 Product Key 必填；启用 Alexa 后仍停留在本步骤，待基础信息完成后再进入能力映射。"], ["状态/差异", "多路开关为单一 endpoint；网关及子设备独立呈现；解绑再绑定生成新 endpointId；虚拟设备和 Group 不暴露。"]] }
       ]
     },
     mapping: {
       context: "配置抽屉 / 能力与映射",
       summary: "每个 capability 明确绑定到注册物模型属性或标准命令，支持不同产品在同一 Adapter 下复用。",
       items: [
-        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "一行对应一个 Alexa interface；Mode、Range、Toggle 必须有 instance；属性只能来自物模型注册表。"], ["交互", "可添加 allowlist 内能力、选择注册属性和可选的 capability 错误例外，并删除未使用能力。"], ["校验规则", "ModeController 必须配置 supported modes；属性或 instance 缺失时阻断。"]] },
+        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "一行对应一个 Alexa interface；Mode、Range、Toggle 必须有 instance；属性只能来自物模型注册表。"], ["交互", "可添加 allowlist 内能力、选择注册属性，并删除未使用能力。"], ["校验规则", "ModeController 必须配置 supported modes；属性或 instance 缺失时阻断。"]] },
         { n: 6, title: "首期标准映射边界", location: "关联位置：配置抽屉 > 映射方式", fields: [["说明", "首期只支持布尔、枚举、数值和单位转换；一条 directive 必须映射到一个物模型属性或标准命令。"], ["异常处理", "多属性编排、异步确认、安全状态机、跨设备动作和非标准云接口不在首期范围，Profile 不可发布。"]] }
       ]
     },
@@ -202,17 +192,6 @@ function renderProfileRow(profile) {
   </tr>`;
 }
 
-function renderCatalogPage() {
-  return `<section class="catalog-layout">
-    <section class="admin-panel">
-      <div class="panel-heading"><div><h2>受控能力目录 ${anchor(4)}</h2><p>Catalog 收录官方元数据；仅已实现、已回归的 allowlist 能被 Product Profile 引用。</p></div><button class="el-btn" data-action="show-toast" data-toast="目录变更需走 Adapter Contract 评审" data-toast-type="info">查看准入规则</button></div>
-      <table class="el-table"><thead><tr><th>Alexa Interface</th><th>属性类型</th><th>能力组</th><th>配置要求</th><th>Adapter 支持</th><th>使用边界</th></tr></thead><tbody>${capabilityCatalog.map((item, index) => `<tr><td><strong>${item.id}</strong>${index === 0 ? anchor(4) : ""}</td><td><code class="cell-code">${item.type}</code></td><td>${item.group}</td><td>${item.support}</td><td>${tag("已实现", "success")}</td><td>${item.hint}${index === 2 ? anchor(5) : ""}</td></tr>`).join("")}</tbody></table>
-    </section>
-    <aside class="catalog-aside"><div class="notice-card"><div class="notice-card__title">产品 Profile 配置允许</div><ul><li>注册属性映射与值域转换</li><li>产品级 Error Policy 与少量 capability 例外</li><li>StateReport 策略</li></ul></div><div class="notice-card notice-card--muted"><div class="notice-card__title">首期配置禁止</div><ul><li>任意 HTTP URL 或外部脚本</li><li>多属性/跨设备编排与异步确认</li><li>产品专用 Handler、ChangeReport 或覆盖 OAuth / 安全门禁</li></ul></div></aside>
-  </section>
-  <section class="admin-panel locale-panel"><div class="panel-heading"><div><h2>Alexa Capability 支持语言</h2><p>Alexa Smart Home 能力可用的官方语言 / 区域清单，用于校对 Profile 的 supportedLocales。</p></div><span class="locale-count">${alexaLocales.languages.reduce((sum, item) => sum + item.locales.length, 0)} 个 locale</span></div><div class="locale-grid">${alexaLocales.languages.map((item) => `<div class="locale-group"><strong>${escapeHtml(item.lang)}</strong><div class="locale-tags">${item.locales.map((locale) => `<code class="locale-tag">${locale}</code>`).join("")}</div></div>`).join("")}</div><p class="locale-note">${escapeHtml(alexaLocales.note)}</p></section>`;
-}
-
 function renderDashboardPage() {
   return `<section class="dash-topbar"><div class="dash-region-tabs" role="tablist">${dashboard.regions.map((region, index) => `<button class="dash-region-tab ${index === 0 ? "is-active" : ""}" data-action="show-toast" data-toast="数据中心：${region}（原型演示数据）" data-toast-type="info" role="tab" aria-selected="${index === 0}">${region}</button>`).join("")}</div><div class="dash-range-group">${dashboard.ranges.map((range, index) => `<button class="dash-range-btn ${index === 0 ? "is-active" : ""}" data-action="show-toast" data-toast="时间窗口：${range}（原型演示数据）" data-toast-type="info">${range}</button>`).join("")}</div></section>
     <section class="metrics-strip">${dashboard.metrics.map((metric) => `<div class="metric"><span>${metric.label}</span><strong>${metric.value}</strong><small class="metric-delta">${metric.delta} 较上周期</small></div>`).join("")}</section>
@@ -266,11 +245,59 @@ function renderDrawerBody(draft) {
   if (state.editor.section === "reporting") return renderReportingSection(draft);
   if (state.editor.section === "gate") return renderGateSection(draft);
   if (state.editor.section === "release") return renderReleaseSection(draft);
-  return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；定义 endpoint、连接路径、产品 Error Policy 和共享 Adapter 版本。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /></label><label class="form-row"><span>Alexa Endpoint 类型</span><select class="el-select" data-field="endpointType"><option ${draft.endpointType === "LIGHT" ? "selected" : ""}>LIGHT</option><option ${draft.endpointType === "OTHER" ? "selected" : ""}>OTHER</option></select></label><label class="form-row"><span>设备连接路径</span><select class="el-select" data-field="transport"><option value="wifi_direct" ${draft.transport === "wifi_direct" ? "selected" : ""}>Wi-Fi 直连</option><option value="ble_gateway_relay" ${draft.transport === "ble_gateway_relay" ? "selected" : ""}>BLE 网关透传</option></select><em>均调用平台物模型控制接口；平台编码，BLE 网关仅负责透传。</em></label><label class="form-row"><span>Endpoint 拓扑</span><select class="el-select" data-field="topology"><option value="single_endpoint_components" ${draft.topology === "single_endpoint_components" ? "selected" : ""}>单 endpoint（含子组件）</option><option value="gateway_and_child_separate" ${draft.topology === "gateway_and_child_separate" ? "selected" : ""}>网关与子设备独立</option></select></label><label class="form-row"><span>产品 Error Policy <b>*</b></span><select class="el-select" data-field="errorPolicy"><option value="device-standard-v1" ${draft.errorPolicy === "device-standard-v1" ? "selected" : ""}>device-standard-v1（标准设备控制）</option><option value="gateway-device-v1" ${draft.errorPolicy === "gateway-device-v1" ? "selected" : ""}>gateway-device-v1（网关与设备）</option></select><em>默认处理 endpoint 不存在、不可达、参数非法和内部错误。</em></label><label class="form-row"><span>产品错误描述 <b>*</b></span><input class="el-input" data-field="errorDescription" value="${escapeHtml(draft.errorDescription)}" placeholder="例如设备当前不可连接或暂不可控制" /><em>技术侧将内部错误映射到此策略；不要每个 capability 重复维护。</em></label><label class="form-row"><span>共享 Adapter</span><input class="el-input is-readonly" value="${escapeHtml(draft.adapter)}" readonly /><em>由平台 Adapter Contract 管理，不允许产品自定义入口。</em></label><label class="form-row"><span>支持地区 / Locale</span><input class="el-input" data-field="locale" value="${escapeHtml(draft.locale)}" placeholder="en-US, en-GB" /></label></div><div class="lifecycle-notice"><strong>Endpoint 生命周期规则</strong><span>App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。生成算法和 trace 字段由技术侧实现。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后会直接进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
+  return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；定义 Alexa endpoint 类型和标准物模型映射。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /></label><label class="form-row"><span>Alexa Endpoint 类型</span><select class="el-select" data-field="endpointType"><option ${draft.endpointType === "LIGHT" ? "selected" : ""}>LIGHT</option><option ${draft.endpointType === "OTHER" ? "selected" : ""}>OTHER</option></select></label></div><div class="lifecycle-notice"><strong>设备路由与呈现规则</strong><span>连接方式、设备类型和网关关系继承产品与设备主数据；Alexa Profile 不重复配置。App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后保留在基础信息，完成产品级 endpoint 定义后再进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
+}
+
+function requiresInstance(interfaceId) {
+  return Boolean(capabilityCatalog.find((item) => item.id === interfaceId)?.instanceRequired);
+}
+
+function compatibleCapabilities(propertyId) {
+  const property = modelPropertyCatalog.find((item) => item.id === propertyId);
+  if (!property) return [];
+  return capabilityCatalog.filter((item) => item.id !== "EndpointHealth" && item.status === "profile_ready" && (
+    item.propertyIds?.includes(property.id) || item.propertyTypes?.includes(property.type)
+  ));
+}
+
+function capabilityStatusLabel(status) {
+  if (status === "profile_ready") return ["可用于产品 Profile", "success"];
+  if (status === "adapter_ready") return ["Adapter 已实现 / 待准入", "warning"];
+  return ["官方已收录 / Adapter 待实现", "info"];
+}
+
+function mappingTemplateLabel(template) {
+  return {
+    direct_property: "direct - 标准属性转换",
+    structured_hsb: "structured_hsb - HSB 结构化转换",
+    speaker_volume: "speaker_volume - 连续音量转换",
+    playback_operations: "playback_operations - 播放操作转换",
+    playback_state: "playback_state - 播放状态转换",
+    endpoint_health: "endpoint_health - 在线状态转换"
+  }[template] || "pending - 等待通用能力包";
+}
+
+function renderCapabilityOptions(selectedId, propertyId) {
+  if (!propertyId) return `<option value="">请先选择 Momcozy 物模型属性</option>`;
+  const entries = compatibleCapabilities(propertyId);
+  if (!entries.length) return `<option value="">当前属性没有已发布的匹配 capability</option>`;
+  return `<option value="" ${selectedId ? "" : "selected"}>请选择匹配的 Alexa capability</option>${entries.map((item) => `<option value="${item.id}" ${selectedId === item.id ? "selected" : ""}>${item.id}</option>`).join("")}`;
+}
+
+function renderFieldTags(tags) {
+  return `<div class="field-type-tags">${tags.map(([label, type]) => `<span class="field-type-tag field-type-tag--${type}">${escapeHtml(label)}</span>`).join("")}</div>`;
 }
 
 function renderMappingSection(draft) {
-  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>首期只支持 allowlist 内 capability 到单一注册物模型属性或标准命令的直接映射。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => `<article class="mapping-item"><header><strong>${capability.id} ${index === 0 ? anchor(5) : ""}</strong><span>${tag("标准映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Alexa interface</span><select class="el-select" data-capability-index="${index}" data-capability-field="id">${capabilityCatalog.filter((item) => item.id !== "EndpointHealth").map((item) => `<option value="${item.id}" ${capability.id === item.id ? "selected" : ""}>${item.id}</option>`).join("")}</select></label><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select></label>${["ModeController", "RangeController", "ToggleController"].includes(capability.id) ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">不适用</div></div>`}<div class="form-row"><span>映射方式 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">direct - 标准属性 / 命令转换</div><em>不支持 Handler、多属性编排、异步确认或非标准云接口。</em></div><label class="form-row"><span>错误策略例外（可选）</span><select class="el-select" data-capability-index="${index}" data-capability-field="errorOverride"><option value="" ${!capability.errorOverride ? "selected" : ""}>继承产品 Error Policy</option><option value="INVALID_VALUE" ${capability.errorOverride === "INVALID_VALUE" ? "selected" : ""}>INVALID_VALUE</option><option value="NOT_SUPPORTED_IN_CURRENT_MODE" ${capability.errorOverride === "NOT_SUPPORTED_IN_CURRENT_MODE" ? "selected" : ""}>NOT_SUPPORTED_IN_CURRENT_MODE</option></select><em>仅 capability 有专属语义时覆盖产品默认策略。</em></label>${capability.id === "ModeController" ? `<label class="form-row form-row--wide"><span>Supported modes <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="modes" value="${escapeHtml(capability.modes || "")}" placeholder="SLEEP, SOOTHING, PLAY" /><em>枚举值会写入 Discovery capabilityConfiguration。</em></label>` : ""}</div></article>`).join("")}</div></section>`;
+  const readyCount = capabilityCatalog.filter((item) => item.status === "profile_ready").length;
+  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>先选择产品已有物模型属性，再从匹配的已发布 capability 中选择；覆盖范围以能力覆盖决策清单为准。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
+    const capabilityMeta = capabilityCatalog.find((item) => item.id === capability.id);
+    const propertyMeta = modelPropertyCatalog.find((item) => item.id === capability.property);
+    const matchingCapabilities = compatibleCapabilities(capability.property);
+    const instanceRequired = requiresInstance(capability.id);
+    const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
+    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>模板由匹配的通用 Adapter 能力包决定，产品不能改写协议处理逻辑。</em></div>${capability.id === "ModeController" ? `<label class="form-row form-row--wide"><span>Supported modes <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="modes" value="${escapeHtml(capability.modes || "")}" placeholder="SLEEP, SOOTHING, PLAY" /><em>枚举值会写入 Discovery capabilityConfiguration。</em></label>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
+  }).join("")}</div></section>`;
 }
 
 function renderReportingSection(draft) {
@@ -284,7 +311,7 @@ function renderGateSection(draft) {
 
 function renderReleaseSection(draft) {
   const validation = state.editor.validation;
-  return `<section class="drawer-section"><div class="section-heading"><h3>发布策略 ${anchor(3)}</h3><p>先运行配置校验，再把当前产品 Profile 发布到 Production；每个 Profile 保留可回滚版本。</p></div><div class="release-grid"><label class="form-row"><span>目标环境</span><select class="el-select" data-field="release"><option value="sandbox" ${draft.release === "sandbox" ? "selected" : ""}>Sandbox</option><option value="production" ${draft.release === "production" ? "selected" : ""}>Production</option></select></label><div class="release-readonly"><span>回滚基线</span><strong>smart-home-adapter-v2 / 2.4.0</strong></div></div>${validation ? renderValidation(validation) : `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查产品 Error Policy、字段映射、instance、上报策略与 Safety Gate。</p></div>`}</section>`;
+  return `<section class="drawer-section"><div class="section-heading"><h3>发布策略 ${anchor(3)}</h3><p>先运行配置校验，再把当前产品 Profile 发布到 Production；每个 Profile 保留可回滚版本。</p></div><div class="release-grid"><label class="form-row"><span>目标环境</span><select class="el-select" data-field="release"><option value="sandbox" ${draft.release === "sandbox" ? "selected" : ""}>Sandbox</option><option value="production" ${draft.release === "production" ? "selected" : ""}>Production</option></select></label><div class="release-readonly"><span>回滚基线</span><strong>已发布 Profile 版本</strong></div></div>${validation ? renderValidation(validation) : `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查字段映射、instance、上报策略与 Safety Gate。</p></div>`}</section>`;
 }
 
 function renderValidation(validation) {
@@ -369,7 +396,6 @@ function handleAction(event) {
   if (action === "toggle-alexa-support") {
     const enabling = !state.editor.productAlexaSupported;
     updateProductAlexaSupport(enabling);
-    if (enabling) setEditorSection("mapping");
   }
   if (action === "edit-profile") openEditor(profileId);
   if (action === "validate-profile") { openEditor(profileId, "release"); window.setTimeout(() => { runValidation(); setToast("已完成 Profile 配置校验", state.editor.validation.passed ? "success" : "danger"); }, 0); }
@@ -408,7 +434,33 @@ function handleInput(event) {
     return;
   }
   if (target.dataset.field && state.editor.open) updateDraft(target.dataset.field, target.value);
-  if (target.dataset.capabilityIndex !== undefined && state.editor.open) updateCapability(Number(target.dataset.capabilityIndex), target.dataset.capabilityField, target.value);
+  if (target.dataset.capabilityIndex !== undefined && state.editor.open) {
+    const index = Number(target.dataset.capabilityIndex);
+    const field = target.dataset.capabilityField;
+    updateCapability(index, field, target.value);
+    if (field === "property") {
+      updateCapability(index, "id", "");
+      updateCapability(index, "instance", "");
+      updateCapability(index, "mapping", "pending");
+      updateCapability(index, "modes", undefined);
+      updateCapability(index, "supportedOperations", undefined);
+      state.editor.validation = null;
+      render();
+      return;
+    }
+    if (field === "id") {
+      const catalogItem = capabilityCatalog.find((item) => item.id === target.value);
+      updateCapability(index, "instance", requiresInstance(target.value) ? "" : "");
+      updateCapability(index, "mapping", catalogItem?.template || "pending");
+      if (target.value === "ModeController") updateCapability(index, "modes", "");
+      else updateCapability(index, "modes", undefined);
+      if (target.value === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");
+      else updateCapability(index, "supportedOperations", undefined);
+      state.editor.validation = null;
+      render();
+      return;
+    }
+  }
   if (target.dataset.reporting && state.editor.open) updateDraft(`reporting.${target.dataset.reporting}`, target.type === "checkbox" ? target.checked : target.value);
 }
 

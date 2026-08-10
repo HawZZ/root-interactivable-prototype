@@ -9,21 +9,46 @@ export const statusMeta = {
   rolledback: { label: "已回滚", type: "info" }
 };
 
-export const capabilityCatalog = [
-  { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性" },
-  { id: "BrightnessController", group: "基础控制", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持数值范围校验" },
-  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "必须声明 instance 与 supportedModes" },
-  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "需实例", hint: "适用于等级、强度、音量等离散范围" },
-  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "需实例", hint: "单设备内独立开关能力" },
-  { id: "EndpointHealth", group: "状态", type: "Connectivity", support: "必选", hint: "设备在线状态上报" }
+const profileReadyCapabilities = [
+  { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", propertyIds: ["power"] },
+  { id: "BrightnessController", group: "灯光", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持设置和增减亮度", directives: ["SetBrightness", "AdjustBrightness"], status: "profile_ready", template: "direct_property", propertyIds: ["brightness"] },
+  { id: "ColorController", group: "灯光", type: "Color HSB Object", support: "结构化映射", hint: "彩灯颜色，保持当前亮度", directives: ["SetColor"], status: "profile_ready", template: "structured_hsb", propertyIds: ["color_hsb"] },
+  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "必须声明 instance 与 supportedModes", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceRequired: true, propertyIds: ["motion_mode"] },
+  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "需实例", hint: "适用于等级、强度等通用范围", directives: ["SetRangeValue", "AdjustRangeValue"], status: "profile_ready", template: "direct_property", instanceRequired: true, propertyIds: ["motion_level"] },
+  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "需实例", hint: "单设备内独立开关能力", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", instanceRequired: true, propertyTypes: ["Boolean"] },
+  { id: "Speaker", group: "音频", type: "Integer 0-100", support: "标准音量", hint: "连续音量 0-100", directives: ["SetVolume", "AdjustVolume"], status: "profile_ready", template: "speaker_volume", propertyIds: ["volume_0_100"] },
+  { id: "PlaybackController", group: "音频", type: "Command", support: "操作映射", hint: "按已声明操作控制播放", directives: ["Play", "Pause", "Stop"], status: "profile_ready", template: "playback_operations", propertyIds: ["playback_command"] },
+  { id: "PlaybackStateReporter", group: "音频状态", type: "Enum", support: "状态映射", hint: "上报 PLAYING / PAUSED / STOPPED", directives: [], status: "profile_ready", template: "playback_state", propertyIds: ["playback_state"] },
+  { id: "EndpointHealth", group: "状态", type: "Connectivity", support: "必选", hint: "设备在线状态上报", directives: [], status: "profile_ready", template: "endpoint_health", propertyIds: ["device_online"] }
 ];
+
+const officialMetadataOnlyCapabilities = [
+  "AutomationManagement", "CameraStreamController", "ChannelController", "ColorTemperatureController", "Commissionable", "ContactSensor", "Cooking", "DataController", "DeviceUsage", "DoorbellEventSource", "EqualizerController", "HumiditySensor", "InputController", "InventoryLevelSensor", "InventoryLevelUsageSensor", "InventoryUsageSensor", "KeypadController", "Launcher", "LockController", "MotionSensor", "PercentageController", "PowerLevelController", "ProactiveNotificationSource", "RecordController", "RemoteVideoPlayer", "RTCSessionController", "SceneController", "SecurityPanelController", "SeekController", "SimpleEventSource", "SmartVision.ObjectDetectionSensor", "SmartVision.SnapshotProvider", "StepSpeaker", "TemperatureSensor", "ThermostatController", "ThermostatController.Configuration", "ThermostatController.HVAC.Components", "ThermostatController.Schedule", "TimeHoldController", "UIController", "WakeOnLANController"
+].map((id) => {
+  const adapterReady = false;
+  return {
+    id,
+    group: "官方预置",
+    type: "待同步 schema",
+    support: adapterReady ? "待发布准入" : "仅元数据",
+    hint: adapterReady ? "通用 Adapter 已实现，待完成产品发布准入" : "已收录官方 capability，待通用 Adapter 能力包实现",
+    directives: [],
+    status: adapterReady ? "adapter_ready" : "metadata_only",
+    template: "pending"
+  };
+});
+
+export const capabilityCatalog = [...profileReadyCapabilities, ...officialMetadataOnlyCapabilities];
 
 export const modelPropertyCatalog = [
   { id: "power", label: "电源开关", type: "Boolean", unit: "-" },
   { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%" },
+  { id: "color_hsb", label: "彩灯颜色", type: "ColorHSB", unit: "HSB" },
   { id: "motion_mode", label: "运动模式", type: "Enum", unit: "-" },
   { id: "motion_level", label: "运动强度", type: "Integer", unit: "level" },
-  { id: "volume", label: "白噪音音量", type: "Integer", unit: "level" },
+  { id: "volume_0_100", label: "扬声器音量", type: "Integer", unit: "%" },
+  { id: "playback_command", label: "播放控制命令", type: "Command", unit: "-" },
+  { id: "playback_state", label: "播放状态", type: "Enum", unit: "-" },
   { id: "device_online", label: "设备在线状态", type: "Boolean", unit: "-" }
 ];
 
@@ -38,19 +63,14 @@ const profiles = [
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "published",
-    locale: "en-US, en-GB",
     release: "production",
     updatedAt: "2026-08-02 15:18",
     updatedBy: "林宇",
     safetyApproved: true,
-    errorPolicy: "device-standard-v1",
-    errorDescription: "设备当前不可连接或暂不可控制",
-    transport: "wifi_direct",
-    topology: "single_endpoint_components",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" },
-      { id: "BrightnessController", instance: "", property: "brightness", mapping: "direct", readOnly: false, errorOverride: "INVALID_VALUE" }
+      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
+      { id: "BrightnessController", instance: "", property: "brightness", mapping: "direct", readOnly: false }
     ]
   },
   {
@@ -63,19 +83,14 @@ const profiles = [
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "blocked",
-    locale: "en-US",
     release: "sandbox",
     updatedAt: "2026-08-04 10:42",
     updatedBy: "陈静",
     safetyApproved: false,
-    errorPolicy: "device-standard-v1",
-    errorDescription: "设备或网关当前不可连接，或当前状态不支持该操作",
-    transport: "ble_gateway_relay",
-    topology: "gateway_and_child_separate",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modes: "SLEEP, SOOTHING, PLAY", errorOverride: "NOT_SUPPORTED_IN_CURRENT_MODE" },
-      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5", errorOverride: "" }
+      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modes: "SLEEP, SOOTHING, PLAY" },
+      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5" }
     ]
   },
   {
@@ -88,19 +103,16 @@ const profiles = [
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
-    locale: "en-US",
     release: "sandbox",
     updatedAt: "2026-08-01 16:06",
     updatedBy: "王琪",
     safetyApproved: true,
-    errorPolicy: "device-standard-v1",
-    errorDescription: "设备当前不可连接或参数不在支持范围内",
-    transport: "wifi_direct",
-    topology: "single_endpoint_components",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" },
-      { id: "RangeController", instance: "Sound.Volume", property: "volume", mapping: "direct", readOnly: false, range: "0-15", errorOverride: "INVALID_VALUE" }
+      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
+      { id: "Speaker", instance: "", property: "volume_0_100", mapping: "speaker_volume", readOnly: false },
+      { id: "PlaybackController", instance: "", property: "playback_command", mapping: "playback_operations", readOnly: false, supportedOperations: "Play, Pause" },
+      { id: "PlaybackStateReporter", instance: "", property: "playback_state", mapping: "playback_state", readOnly: true }
     ]
   }
 ];
@@ -265,9 +277,7 @@ export function updateCapability(index, key, value) {
 }
 
 export function addCapability() {
-  const existing = state.editor.draft.capabilities.map((item) => item.id);
-  const candidate = capabilityCatalog.find((item) => item.id !== "EndpointHealth" && !existing.includes(item.id)) || capabilityCatalog[0];
-  state.editor.draft.capabilities.push({ id: candidate.id, instance: candidate.id === "PowerController" || candidate.id === "BrightnessController" ? "" : "New.Instance", property: "", mapping: "direct", readOnly: false, errorOverride: "" });
+  state.editor.draft.capabilities.push({ id: "", instance: "", property: "", mapping: "pending", readOnly: false });
   state.editor.section = "mapping";
   emit();
 }
@@ -286,14 +296,17 @@ export function runValidation() {
   if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
   if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个可发现的 Alexa capability。");
   draft.capabilities.forEach((capability) => {
+    const catalogItem = capabilityCatalog.find((item) => item.id === capability.id);
+    if (!capability.id) errors.push("能力与映射：请选择与物模型属性匹配的 Alexa capability。");
+    else if (!catalogItem || catalogItem.status !== "profile_ready") errors.push(`能力与映射：${capability.id} 尚未完成通用 Adapter 能力包，不能发布。`);
     if (!capability.property.trim()) errors.push(`能力与映射：${capability.id} 未绑定 Momcozy 物模型属性。`);
-    if (["ModeController", "RangeController", "ToggleController"].includes(capability.id) && !capability.instance.trim()) errors.push(`能力与映射：${capability.id} 必须声明 instance。`);
+    if (catalogItem?.instanceRequired && !capability.instance.trim()) errors.push(`能力与映射：${capability.id} 必须声明 instance。`);
     if (capability.id === "ModeController" && !capability.modes?.trim()) errors.push("能力与映射：ModeController 必须至少配置一个 supported mode。");
+    if (capability.id === "PlaybackController" && !["Play", "Pause"].every((operation) => capability.supportedOperations?.split(",").map((item) => item.trim()).includes(operation))) errors.push("能力与映射：PlaybackController 必须声明 Play 和 Pause 操作。");
   });
   if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
   if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport，Profile 不能打开该开关。");
   if (draft.category === "Smart Crib" && !draft.safetyApproved) errors.push("发布门禁：Smart Crib 的远程运动能力尚未通过 Safety Gate，不能向 Alexa 发现为可写能力。");
-  if (!draft.errorPolicy || !draft.errorDescription.trim()) errors.push("产品 Error Policy：必须配置默认 Alexa ErrorResponse 策略与产品错误描述。");
   state.editor.validation = { errors, warnings, passed: errors.length === 0, checkedAt: "刚刚" };
   emit();
   return state.editor.validation;
@@ -407,16 +420,11 @@ function createEmptyProfile() {
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
-    locale: "en-US",
     release: "sandbox",
     updatedAt: "未保存",
     updatedBy: "林宇",
     safetyApproved: false,
-    errorPolicy: "device-standard-v1",
-    errorDescription: "设备当前不可连接或暂不可控制",
-    transport: "wifi_direct",
-    topology: "single_endpoint_components",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
-    capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" }]
+    capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false }]
   };
 }
