@@ -4,22 +4,33 @@ export const statusMeta = {
   published: { label: "已发布", type: "success" },
   draft: { label: "草稿", type: "info" },
   blocked: { label: "门禁阻断", type: "danger" },
+  disabled: { label: "已停用", type: "warning" },
   ready: { label: "待发布", type: "warning" },
   rolledback: { label: "已回滚", type: "info" }
 };
 
 export const capabilityCatalog = [
-  { id: "PowerController", group: "基础控制", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性" },
-  { id: "BrightnessController", group: "基础控制", support: "标准映射", hint: "亮度 0-100，支持数值范围校验" },
-  { id: "ModeController", group: "通用控制", support: "需实例", hint: "必须声明 instance 与 supportedModes" },
-  { id: "RangeController", group: "通用控制", support: "需实例", hint: "适用于等级、强度、音量等离散范围" },
-  { id: "ToggleController", group: "通用控制", support: "需实例", hint: "单设备内独立开关能力" },
-  { id: "EndpointHealth", group: "状态", support: "必选", hint: "设备在线状态上报" }
+  { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性" },
+  { id: "BrightnessController", group: "基础控制", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持数值范围校验" },
+  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "必须声明 instance 与 supportedModes" },
+  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "需实例", hint: "适用于等级、强度、音量等离散范围" },
+  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "需实例", hint: "单设备内独立开关能力" },
+  { id: "EndpointHealth", group: "状态", type: "Connectivity", support: "必选", hint: "设备在线状态上报" }
+];
+
+export const modelPropertyCatalog = [
+  { id: "power", label: "电源开关", type: "Boolean", unit: "-" },
+  { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%" },
+  { id: "motion_mode", label: "运动模式", type: "Enum", unit: "-" },
+  { id: "motion_level", label: "运动强度", type: "Integer", unit: "level" },
+  { id: "volume", label: "白噪音音量", type: "Integer", unit: "level" },
+  { id: "device_online", label: "设备在线状态", type: "Boolean", unit: "-" }
 ];
 
 const profiles = [
   {
     id: "bedside-light-v1",
+    productId: "momcozy.bedside_light",
     name: "Bedside Light v1",
     productKey: "momcozy.bedside_light.v1",
     category: "Night Light",
@@ -32,15 +43,19 @@ const profiles = [
     updatedAt: "2026-08-02 15:18",
     updatedBy: "林宇",
     safetyApproved: true,
-    handler: "",
-    reporting: { source: "device_reported", stateReport: true, changeReport: true, endpointHealth: true },
+    errorPolicy: "device-standard-v1",
+    errorDescription: "设备当前不可连接或暂不可控制",
+    transport: "wifi_direct",
+    topology: "single_endpoint_components",
+    reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
-      { id: "BrightnessController", instance: "", property: "brightness", mapping: "direct", readOnly: false }
+      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" },
+      { id: "BrightnessController", instance: "", property: "brightness", mapping: "direct", readOnly: false, errorOverride: "INVALID_VALUE" }
     ]
   },
   {
     id: "smart-crib-motion-v1",
+    productId: "momcozy.smart_crib.motion",
     name: "Smart Crib Motion v1",
     productKey: "momcozy.smart_crib.motion.v1",
     category: "Smart Crib",
@@ -53,15 +68,19 @@ const profiles = [
     updatedAt: "2026-08-04 10:42",
     updatedBy: "陈静",
     safetyApproved: false,
-    handler: "crib-motion-handler@1.1.0",
-    reporting: { source: "device_reported", stateReport: true, changeReport: true, endpointHealth: true },
+    errorPolicy: "device-standard-v1",
+    errorDescription: "设备或网关当前不可连接，或当前状态不支持该操作",
+    transport: "ble_gateway_relay",
+    topology: "gateway_and_child_separate",
+    reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "handler", readOnly: false, modes: "SLEEP, SOOTHING, PLAY" },
-      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5" }
+      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modes: "SLEEP, SOOTHING, PLAY", errorOverride: "NOT_SUPPORTED_IN_CURRENT_MODE" },
+      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5", errorOverride: "" }
     ]
   },
   {
     id: "white-noise-pro-v2",
+    productId: "momcozy.white_noise.pro",
     name: "White Noise Pro v2",
     productKey: "momcozy.white_noise.pro.v2",
     category: "Sound Device",
@@ -74,11 +93,14 @@ const profiles = [
     updatedAt: "2026-08-01 16:06",
     updatedBy: "王琪",
     safetyApproved: true,
-    handler: "",
+    errorPolicy: "device-standard-v1",
+    errorDescription: "设备当前不可连接或参数不在支持范围内",
+    transport: "wifi_direct",
+    topology: "single_endpoint_components",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
-      { id: "RangeController", instance: "Sound.Volume", property: "volume", mapping: "direct", readOnly: false, range: "0-15" }
+      { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" },
+      { id: "RangeController", instance: "Sound.Volume", property: "volume", mapping: "direct", readOnly: false, range: "0-15", errorOverride: "INVALID_VALUE" }
     ]
   }
 ];
@@ -109,23 +131,17 @@ export const dashboard = {
 };
 
 export const productData = [
-  { id: "momcozy.w1_lite", name: "W1 Lite", model: "W1Lite", category: "Breast Pump", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "BLE", alexa: "已配置", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
-  { id: "momcozy.bedside_light", name: "Bedside Light v1", model: "BL-01", category: "Night Light", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexa: "已发布", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
-  { id: "momcozy.smart_crib.motion", name: "Smart Crib Motion", model: "CB-M", category: "Smart Crib", status: "内部测试", platform: "ROOT云", app: "momcozy", comm: "BLE", alexa: "门禁阻断", version: "版本2 / 草稿", updatedAt: "2026-08-04" },
-  { id: "momcozy.white_noise.pro", name: "White Noise Pro v2", model: "WN-P2", category: "Sound Device", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexa: "草稿", version: "版本1 / 已发布", updatedAt: "2026-08-01" }
-];
-
-export const handlerData = [
-  { id: "crib-motion-handler", version: "1.1.0", contract: "controller:1.2", products: 1, status: "已审核", scope: "Smart Crib 运动模式编排 / 安全校验", updatedAt: "2026-08-04", updatedBy: "陈静" },
-  { id: "multi-zone-handler", version: "0.9.0", contract: "controller:1.2", products: 0, status: "待审核", scope: "多温区组合动作与异步确认", updatedAt: "2026-08-01", updatedBy: "王琪" },
-  { id: "generic-direct-directive", version: "2.4.0", contract: "adapter:2.4", products: 12, status: "已审核", scope: "标准属性 / 单位转换（平台内置）", updatedAt: "2026-07-28", updatedBy: "林宇" }
+  { id: "momcozy.w1_lite", name: "W1 Lite", model: "W1Lite", category: "Breast Pump", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "BLE", alexaSupported: false, alexa: "不支持", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
+  { id: "momcozy.bedside_light", name: "Bedside Light v1", model: "BL-01", category: "Night Light", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexaSupported: true, alexa: "已发布", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
+  { id: "momcozy.smart_crib.motion", name: "Smart Crib Motion", model: "CB-M", category: "Smart Crib", status: "内部测试", platform: "ROOT云", app: "momcozy", comm: "BLE", alexaSupported: true, alexa: "门禁阻断", version: "版本2 / 草稿", updatedAt: "2026-08-04" },
+  { id: "momcozy.white_noise.pro", name: "White Noise Pro v2", model: "WN-P2", category: "Sound Device", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexaSupported: true, alexa: "草稿", version: "版本1 / 已发布", updatedAt: "2026-08-01" }
 ];
 
 export const logData = [
   { time: "2026-08-04 14:28:11", profile: "smart-crib-motion-v1", channel: "Discovery", result: "一致", status: "success", traceId: "disc-5c3f71d2", detail: "endpoint 3 / capability 一致" },
   { time: "2026-08-04 14:28:09", profile: "bedside-light-v1", channel: "StateReport", result: "成功", status: "success", traceId: "state-2a9f1180", detail: "brightness -> 80" },
   { time: "2026-08-04 14:27:58", profile: "smart-crib-motion-v1", channel: "Directive", result: "拒绝", status: "danger", traceId: "dir-77c1e04a", detail: "ModeController 未通过 Safety Gate" },
-  { time: "2026-08-04 14:27:41", profile: "white-noise-pro-v2", channel: "ChangeReport", result: "成功", status: "success", traceId: "chg-9b20d3cc", detail: "volume 7 -> 12" },
+  { time: "2026-08-04 14:27:41", profile: "white-noise-pro-v2", channel: "ReportingPolicy", result: "预留", status: "success", traceId: "cfg-9b20d3cc", detail: "ChangeReport 首期禁用，保留 schema 扩展" },
   { time: "2026-08-04 14:27:33", profile: "bedside-light-v1", channel: "Directive", result: "成功", status: "success", traceId: "dir-5e8f21b7", detail: "PowerController ON" }
 ];
 
@@ -146,23 +162,12 @@ export const alexaLocales = {
 };
 
 export const state = {
-  page: "profiles",
+  page: "products",
+  detailProductId: "momcozy.w1_lite",
   profiles: clone(profiles),
   filters: { keyword: "", status: "all" },
-  editor: { open: false, section: "basic", sourceId: "", draft: null, validation: null, isSaving: false },
-  handlerEditor: { open: false, draft: null },
-  modal: { type: "", profileId: "" },
-  connection: {
-    scenario: "match",
-    authStatus: "not_connected",
-    authDetail: "尚未为测试账号建立 Alexa 授权。",
-    authRequestId: "",
-    discoveryStatus: "idle",
-    discoveryDetail: "完成授权后可发起测试环境 Discovery 请求。",
-    discoveryRequestId: "",
-    diff: [],
-    endpointCount: 0
-  },
+  editor: { open: false, section: "basic", sourceId: "", draft: null, productAlexaSupported: false, validation: null, isSaving: false },
+  modal: { type: "", profileId: "", productId: "", draft: null },
   toast: null,
   highlightedAnchor: "",
   mobileView: "product"
@@ -193,9 +198,17 @@ export function filteredProfiles() {
 }
 
 export function setPage(page) {
-  state.page = ["profiles", "catalog", "connect", "dashboard", "products", "handlers", "logs"].includes(page) ? page : "profiles";
+  state.page = ["products", "product-detail"].includes(page) ? page : "products";
   state.editor.open = false;
-  state.modal = { type: "", profileId: "" };
+  state.modal = { type: "", profileId: "", productId: "", draft: null };
+  emit();
+}
+
+export function openProductDetail(productId) {
+  if (!productData.some((product) => product.id === productId)) return;
+  state.detailProductId = productId;
+  state.page = "product-detail";
+  state.editor.open = false;
   emit();
 }
 
@@ -206,31 +219,25 @@ export function setFilter(key, value) {
 
 export function openEditor(id = "", section = "basic") {
   const source = id ? getProfile(id) : createEmptyProfile();
-  state.editor = { open: true, section, sourceId: id, draft: clone(source), validation: null, isSaving: false };
+  const product = productData.find((item) => item.id === source.productId);
+  state.editor = { open: true, section, sourceId: id, draft: clone(source), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false };
   emit();
 }
 
-export function openHandlerEditor() {
-  state.handlerEditor = { open: true, draft: createEmptyHandler() };
+export function openProductProfile(productId) {
+  const source = state.profiles.find((profile) => profile.productId === productId);
+  const product = productData.find((item) => item.id === productId);
+  const draft = clone(source || createEmptyProfile());
+  if (!source && product) {
+    draft.productId = product.id;
+    draft.productKey = product.id;
+    draft.name = `${product.name} Alexa Profile`;
+    draft.category = product.category;
+    draft.endpointType = product.category === "Night Light" ? "LIGHT" : "OTHER";
+  }
+  state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft, productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false };
   emit();
-}
-
-export function closeHandlerEditor() {
-  state.handlerEditor.open = false;
-  emit();
-}
-
-export function updateHandlerDraft(path, value) {
-  state.handlerEditor.draft[path] = value;
-}
-
-export function submitHandler() {
-  const draft = state.handlerEditor.draft;
-  if (!draft.id.trim() || !draft.contract.trim() || !draft.scope.trim()) return { ok: false, reason: "必填项缺失：Handler 名称、输入输出契约与适用范围" };
-  handlerData.unshift({ id: draft.id, version: draft.version || "1.0.0", contract: draft.contract, products: 0, status: "待审核", scope: draft.scope, updatedAt: "2026-08-04 15:02", updatedBy: "林宇" });
-  state.handlerEditor.open = false;
-  emit();
-  return { ok: true };
+  return true;
 }
 
 export function closeEditor() {
@@ -240,6 +247,7 @@ export function closeEditor() {
 }
 
 export function setEditorSection(section) {
+  if (!state.editor.productAlexaSupported && section !== "basic") return;
   state.editor.section = section;
   emit();
 }
@@ -259,7 +267,7 @@ export function updateCapability(index, key, value) {
 export function addCapability() {
   const existing = state.editor.draft.capabilities.map((item) => item.id);
   const candidate = capabilityCatalog.find((item) => item.id !== "EndpointHealth" && !existing.includes(item.id)) || capabilityCatalog[0];
-  state.editor.draft.capabilities.push({ id: candidate.id, instance: candidate.id === "PowerController" || candidate.id === "BrightnessController" ? "" : "New.Instance", property: "", mapping: "direct", readOnly: false });
+  state.editor.draft.capabilities.push({ id: candidate.id, instance: candidate.id === "PowerController" || candidate.id === "BrightnessController" ? "" : "New.Instance", property: "", mapping: "direct", readOnly: false, errorOverride: "" });
   state.editor.section = "mapping";
   emit();
 }
@@ -275,6 +283,7 @@ export function runValidation() {
   const warnings = [];
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
   if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
+  if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
   if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个可发现的 Alexa capability。");
   draft.capabilities.forEach((capability) => {
     if (!capability.property.trim()) errors.push(`能力与映射：${capability.id} 未绑定 Momcozy 物模型属性。`);
@@ -282,8 +291,9 @@ export function runValidation() {
     if (capability.id === "ModeController" && !capability.modes?.trim()) errors.push("能力与映射：ModeController 必须至少配置一个 supported mode。");
   });
   if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
+  if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport，Profile 不能打开该开关。");
   if (draft.category === "Smart Crib" && !draft.safetyApproved) errors.push("发布门禁：Smart Crib 的远程运动能力尚未通过 Safety Gate，不能向 Alexa 发现为可写能力。");
-  if (draft.capabilities.some((capability) => capability.mapping === "handler") && !draft.handler.trim()) errors.push("Handler：当前能力选择了业务 Handler，但未绑定受管 Handler 版本。");
+  if (!draft.errorPolicy || !draft.errorDescription.trim()) errors.push("产品 Error Policy：必须配置默认 Alexa ErrorResponse 策略与产品错误描述。");
   state.editor.validation = { errors, warnings, passed: errors.length === 0, checkedAt: "刚刚" };
   emit();
   return state.editor.validation;
@@ -291,12 +301,28 @@ export function runValidation() {
 
 export function saveDraft() {
   const draft = clone(state.editor.draft);
+  const product = productData.find((item) => item.id === draft.productId);
+  if (!product) return;
   const existingIndex = state.profiles.findIndex((profile) => profile.id === draft.id);
+  product.alexaSupported = state.editor.productAlexaSupported;
+  product.updatedAt = "2026-08-10";
+  if (!product.alexaSupported) {
+    product.alexa = "不支持";
+    if (existingIndex >= 0) {
+      state.profiles[existingIndex].status = "disabled";
+      state.profiles[existingIndex].release = "sandbox";
+    }
+    state.editor.validation = null;
+    emit();
+    return;
+  }
+  if (existingIndex >= 0 && state.profiles[existingIndex].status === "disabled") draft.status = "draft";
   draft.status = draft.status === "published" ? "ready" : draft.status;
   draft.updatedAt = "2026-08-04 14:26";
   draft.updatedBy = "林宇";
   if (existingIndex >= 0) state.profiles.splice(existingIndex, 1, draft);
   else state.profiles.unshift(draft);
+  product.alexa = "草稿";
   state.editor.sourceId = draft.id;
   state.editor.draft = clone(draft);
   emit();
@@ -306,6 +332,11 @@ export function publishDraft() {
   const validation = state.editor.validation || runValidation();
   if (!validation.passed) return false;
   const draft = clone(state.editor.draft);
+  const product = productData.find((item) => item.id === draft.productId);
+  if (!product || !state.editor.productAlexaSupported) return false;
+  product.alexaSupported = true;
+  product.alexa = "已发布";
+  product.updatedAt = "2026-08-10";
   draft.status = "published";
   draft.release = "production";
   draft.updatedAt = "2026-08-04 14:28";
@@ -317,6 +348,13 @@ export function publishDraft() {
   state.editor.sourceId = draft.id;
   emit();
   return true;
+}
+
+export function updateProductAlexaSupport(value) {
+  if (!state.editor.open) return;
+  state.editor.productAlexaSupported = Boolean(value);
+  state.editor.validation = null;
+  emit();
 }
 
 export function approveSafetyGate() {
@@ -335,101 +373,17 @@ export function rollbackProfile(id) {
 }
 
 export function showModal(type, profileId = "") {
-  state.modal = { type, profileId };
+  state.modal = { type, profileId, productId: "", draft: null };
   emit();
 }
 
 export function closeModal() {
-  state.modal = { type: "", profileId: "" };
+  state.modal = { type: "", profileId: "", productId: "", draft: null };
   emit();
 }
 
 export function setToast(message, type = "success") {
   state.toast = { message, type, id: Date.now() };
-  emit();
-}
-
-export function setConnectionScenario(scenario) {
-  state.connection.scenario = scenario;
-  state.connection.discoveryStatus = "idle";
-  state.connection.discoveryDetail = "完成授权后可发起测试环境 Discovery 请求。";
-  state.connection.diff = [];
-  state.connection.endpointCount = 0;
-  emit();
-}
-
-export function beginAuth() {
-  state.connection.authStatus = "loading";
-  state.connection.authDetail = "正在打开 Momcozy App-to-App 授权通道…";
-  state.connection.authRequestId = "auth-9f6a23a1";
-  emit();
-}
-
-export function completeAuth(outcome) {
-  const connection = state.connection;
-  if (outcome === "denied") {
-    connection.authStatus = "denied";
-    connection.authDetail = "用户在 Alexa 授权页拒绝授权，请重新发起绑定。";
-  } else if (outcome === "callback_error") {
-    connection.authStatus = "error";
-    connection.authDetail = "授权回调校验失败：redirect_uri 与测试环境登记值不一致。";
-  } else {
-    connection.authStatus = "connected";
-    connection.authDetail = "测试账号已完成授权，access token 已安全托管。";
-  }
-  emit();
-}
-
-export function unbindAuth() {
-  const connection = state.connection;
-  connection.authStatus = "not_connected";
-  connection.authDetail = "已解绑 Alexa 授权，用户无权再控制该设备。";
-  connection.authRequestId = "";
-  connection.discoveryStatus = "idle";
-  connection.discoveryDetail = "完成授权后可发起测试环境 Discovery 请求。";
-  connection.diff = [];
-  connection.endpointCount = 0;
-  emit();
-}
-
-export function beginDiscovery() {
-  const connection = state.connection;
-  if (connection.authStatus !== "connected") return false;
-  connection.discoveryStatus = "loading";
-  connection.discoveryDetail = "正在调用 Alexa.Discovery（测试环境）…";
-  connection.discoveryRequestId = "disc-5c3f71d2";
-  emit();
-  return true;
-}
-
-export function completeDiscovery() {
-  const connection = state.connection;
-  const isMismatch = connection.scenario === "capability_mismatch";
-  const isTimeout = connection.scenario === "timeout";
-  if (isTimeout) {
-    connection.discoveryStatus = "error";
-    connection.discoveryDetail = "请求在 8s 后超时，未收到 Discovery response。可查看 trace 并重试。";
-    connection.diff = [{ field: "request", expected: "200 response", actual: "timeout", type: "danger" }];
-    connection.endpointCount = 0;
-  } else if (isMismatch) {
-    connection.discoveryStatus = "warning";
-    connection.discoveryDetail = "返回成功，但 Smart Crib 缺少 Profile 中声明的 RangeController。";
-    connection.diff = [
-      { field: "endpointId", expected: "smart-crib-motion-v1", actual: "smart-crib-motion-v1", type: "success" },
-      { field: "ModeController.instance", expected: "Crib.MotionMode", actual: "Crib.MotionMode", type: "success" },
-      { field: "RangeController.instance", expected: "Crib.MotionIntensity", actual: "missing", type: "danger" }
-    ];
-    connection.endpointCount = 3;
-  } else {
-    connection.discoveryStatus = "success";
-    connection.discoveryDetail = "Discovery response 与三个已选 Product Profile 的 endpoint/capability 声明一致。";
-    connection.diff = [
-      { field: "endpointId", expected: "bedside-light-v1", actual: "bedside-light-v1", type: "success" },
-      { field: "PowerController", expected: "declared", actual: "declared", type: "success" },
-      { field: "ModeController.instance", expected: "Crib.MotionMode", actual: "Crib.MotionMode", type: "success" }
-    ];
-    connection.endpointCount = 3;
-  }
   emit();
 }
 
@@ -441,10 +395,6 @@ export function setHighlightedAnchor(id) {
 export function setMobileView(view) {
   state.mobileView = view;
   emit();
-}
-
-function createEmptyHandler() {
-  return { id: "", version: "1.0.0", contract: "controller:1.2", scope: "", products: "" };
 }
 
 function createEmptyProfile() {
@@ -462,8 +412,11 @@ function createEmptyProfile() {
     updatedAt: "未保存",
     updatedBy: "林宇",
     safetyApproved: false,
-    handler: "",
-    reporting: { source: "device_reported", stateReport: true, changeReport: true, endpointHealth: true },
-    capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false }]
+    errorPolicy: "device-standard-v1",
+    errorDescription: "设备当前不可连接或暂不可控制",
+    transport: "wifi_direct",
+    topology: "single_endpoint_components",
+    reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
+    capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false, errorOverride: "" }]
   };
 }
