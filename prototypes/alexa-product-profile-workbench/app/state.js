@@ -3,7 +3,7 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 export const statusMeta = {
   published: { label: "已发布", type: "success" },
   draft: { label: "草稿", type: "info" },
-  blocked: { label: "门禁阻断", type: "danger" },
+  blocked: { label: "校验阻断", type: "danger" },
   disabled: { label: "已停用", type: "warning" },
   ready: { label: "待发布", type: "warning" },
   rolledback: { label: "已回滚", type: "info" }
@@ -63,10 +63,8 @@ const profiles = [
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "published",
-    release: "production",
     updatedAt: "2026-08-02 15:18",
     updatedBy: "林宇",
-    safetyApproved: true,
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
       { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
@@ -82,11 +80,9 @@ const profiles = [
     endpointType: "OTHER",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
-    status: "blocked",
-    release: "sandbox",
+    status: "draft",
     updatedAt: "2026-08-04 10:42",
     updatedBy: "陈静",
-    safetyApproved: false,
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
       { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modes: "SLEEP, SOOTHING, PLAY" },
@@ -103,10 +99,8 @@ const profiles = [
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
-    release: "sandbox",
     updatedAt: "2026-08-01 16:06",
     updatedBy: "王琪",
-    safetyApproved: true,
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
       { id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false },
@@ -145,14 +139,14 @@ export const dashboard = {
 export const productData = [
   { id: "momcozy.w1_lite", name: "W1 Lite", model: "W1Lite", category: "Breast Pump", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "BLE", alexaSupported: false, alexa: "不支持", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
   { id: "momcozy.bedside_light", name: "Bedside Light v1", model: "BL-01", category: "Night Light", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexaSupported: true, alexa: "已发布", version: "版本1 / 已发布", updatedAt: "2026-08-02" },
-  { id: "momcozy.smart_crib.motion", name: "Smart Crib Motion", model: "CB-M", category: "Smart Crib", status: "内部测试", platform: "ROOT云", app: "momcozy", comm: "BLE", alexaSupported: true, alexa: "门禁阻断", version: "版本2 / 草稿", updatedAt: "2026-08-04" },
+  { id: "momcozy.smart_crib.motion", name: "Smart Crib Motion", model: "CB-M", category: "Smart Crib", status: "内部测试", platform: "ROOT云", app: "momcozy", comm: "BLE", alexaSupported: true, alexa: "草稿", version: "版本2 / 草稿", updatedAt: "2026-08-04" },
   { id: "momcozy.white_noise.pro", name: "White Noise Pro v2", model: "WN-P2", category: "Sound Device", status: "已上架", platform: "ROOT云", app: "momcozy", comm: "Wi-Fi", alexaSupported: true, alexa: "草稿", version: "版本1 / 已发布", updatedAt: "2026-08-01" }
 ];
 
 export const logData = [
   { time: "2026-08-04 14:28:11", profile: "smart-crib-motion-v1", channel: "Discovery", result: "一致", status: "success", traceId: "disc-5c3f71d2", detail: "endpoint 3 / capability 一致" },
   { time: "2026-08-04 14:28:09", profile: "bedside-light-v1", channel: "StateReport", result: "成功", status: "success", traceId: "state-2a9f1180", detail: "brightness -> 80" },
-  { time: "2026-08-04 14:27:58", profile: "smart-crib-motion-v1", channel: "Directive", result: "拒绝", status: "danger", traceId: "dir-77c1e04a", detail: "ModeController 未通过 Safety Gate" },
+  { time: "2026-08-04 14:27:58", profile: "smart-crib-motion-v1", channel: "Directive", result: "拒绝", status: "danger", traceId: "dir-77c1e04a", detail: "设备处于不可执行状态" },
   { time: "2026-08-04 14:27:41", profile: "white-noise-pro-v2", channel: "ReportingPolicy", result: "预留", status: "success", traceId: "cfg-9b20d3cc", detail: "ChangeReport 首期禁用，保留 schema 扩展" },
   { time: "2026-08-04 14:27:33", profile: "bedside-light-v1", channel: "Directive", result: "成功", status: "success", traceId: "dir-5e8f21b7", detail: "PowerController ON" }
 ];
@@ -306,7 +300,6 @@ export function runValidation() {
   });
   if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
   if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport，Profile 不能打开该开关。");
-  if (draft.category === "Smart Crib" && !draft.safetyApproved) errors.push("发布门禁：Smart Crib 的远程运动能力尚未通过 Safety Gate，不能向 Alexa 发现为可写能力。");
   state.editor.validation = { errors, warnings, passed: errors.length === 0, checkedAt: "刚刚" };
   emit();
   return state.editor.validation;
@@ -323,7 +316,6 @@ export function saveDraft() {
     product.alexa = "不支持";
     if (existingIndex >= 0) {
       state.profiles[existingIndex].status = "disabled";
-      state.profiles[existingIndex].release = "sandbox";
     }
     state.editor.validation = null;
     emit();
@@ -351,7 +343,6 @@ export function publishDraft() {
   product.alexa = "已发布";
   product.updatedAt = "2026-08-10";
   draft.status = "published";
-  draft.release = "production";
   draft.updatedAt = "2026-08-04 14:28";
   draft.updatedBy = "林宇";
   const existingIndex = state.profiles.findIndex((profile) => profile.id === draft.id);
@@ -370,17 +361,10 @@ export function updateProductAlexaSupport(value) {
   emit();
 }
 
-export function approveSafetyGate() {
-  state.editor.draft.safetyApproved = true;
-  state.editor.validation = null;
-  emit();
-}
-
 export function rollbackProfile(id) {
   const profile = getProfile(id);
   if (!profile) return;
   profile.status = "rolledback";
-  profile.release = "sandbox";
   profile.updatedAt = "2026-08-04 14:31";
   emit();
 }
@@ -420,10 +404,8 @@ function createEmptyProfile() {
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
-    release: "sandbox",
     updatedAt: "未保存",
     updatedBy: "林宇",
-    safetyApproved: false,
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false }]
   };

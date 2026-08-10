@@ -29,17 +29,15 @@ import {
   updateDraft,
   updateProductAlexaSupport,
   addCapability,
-  removeCapability,
-  approveSafetyGate
-} from "./state.js?v=20260810r";
+  removeCapability
+} from "./state.js?v=20260810s";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
   ["basic", "基础信息"],
   ["mapping", "能力与映射"],
   ["reporting", "状态报告"],
-  ["gate", "发布门禁"],
-  ["release", "发布策略"]
+  ["publish", "校验与发布"]
 ];
 
 const annotations = {
@@ -49,7 +47,7 @@ const annotations = {
     items: [
       { n: 1, title: "Profile 列表与范围", location: "关联位置：Alexa Product Profile > 页面标题", fields: [["说明", "按产品型号维护 Alexa Endpoint、能力集合与发布状态；不是为每个产品复制一套 Lambda。"], ["交互", "点击“新建 Profile”创建草稿；点击行操作进入配置抽屉。"], ["数据来源", "IoT 产品模板、物模型和已登记的 Adapter 契约。"]] },
       { n: 2, title: "共享 Adapter 契约", location: "关联位置：统计区 > Shared Adapter", fields: [["说明", "Adapter 统一处理 OAuth、Discovery、Directive、StateReport 与官方 ErrorResponse；首期 ChangeReport 仅预留。"], ["状态/差异", "标准属性映射仅配置；出现新 Alexa interface 才扩展 Adapter；复杂业务进入二期评审。"], ["原型备注", "部署拆分按区域、容量、隔离或合规决定，不按单一产品决定。"]] },
-      { n: 3, title: "校验与发布状态", location: "关联位置：列表 > 校验 / 状态列", fields: [["说明", "草稿、待发布、门禁阻断、已发布、已回滚是独立的可追溯状态。"], ["交互", "校验会检查物模型映射、instance、上报策略与 Safety Gate；通过后才允许发布。"], ["异常处理", "阻断原因须可定位到字段或门禁项，不能只显示“发布失败”。"]] }
+      { n: 3, title: "校验与发布状态", location: "关联位置：列表 > 校验 / 状态列", fields: [["说明", "草稿、待发布、校验阻断、已发布、已回滚是独立的可追溯状态。"], ["交互", "校验会检查物模型映射、instance、上报策略与版本兼容；通过后才允许发布。"], ["异常处理", "阻断原因须可定位到字段或契约项，不能只显示“发布失败”。"]] }
     ]
   },
   dashboard: {
@@ -78,7 +76,7 @@ const annotations = {
     context: "调用日志",
     summary: "调用日志记录 Alexa 的 Discovery / Directive / State·Change Report 调用，用于排查授权、发现与状态上报问题。",
     items: [
-      { n: 18, title: "调用链路与 trace", location: "关联位置：调用日志 > 列表", fields: [["说明", "按 Profile、通道与结果展示每次 Alexa 调用；每条带 traceId 与结果摘要。"], ["交互", "异常记录（拒绝/失败）需可定位到 Profile、通道与 Safety Gate 或回调原因。"], ["数据来源", "Sandbox 调用日志；trace 字段由技术方案定义，不作为产品配置项。"]] }
+      { n: 18, title: "调用链路与 trace", location: "关联位置：调用日志 > 列表", fields: [["说明", "按 Profile、通道与结果展示每次 Alexa 调用；每条带 traceId 与结果摘要。"], ["交互", "异常记录（拒绝/失败）需可定位到 Profile、通道与物模型/设备回调原因。"], ["数据来源", "测试域名调用日志；trace 字段由技术方案定义，不作为产品配置项。"]] }
     ]
   },
   drawer: {
@@ -104,18 +102,11 @@ const annotations = {
         { n: 7, title: "StateReport 策略", location: "关联位置：配置抽屉 > 状态报告", fields: [["说明", "StateReport 用于 Alexa 主动查询；权威状态必须来自已登记的设备或云端状态源。"], ["交互", "ChangeReport 显示为首期预留且不可启用；StateReport 与 EndpointHealth 缺失会触发校验提示。"], ["异常处理", "不能把“云已受理”报告为“设备已完成”；EndpointHealth 关闭时不允许发布。"]] }
       ]
     },
-    gate: {
-      context: "配置抽屉 / 发布门禁",
-      summary: "Safety Gate 是对可写高风险能力的发布限制，而不是通过 UI 文案替代真实安全审查。",
+    publish: {
+      context: "配置抽屉 / 校验与发布",
+      summary: "发布操作要求最近一次自动契约校验通过；Profile 在当前环境生效并保留可回滚版本。",
       items: [
-        { n: 8, title: "Safety Gate", location: "关联位置：配置抽屉 > 发布门禁", fields: [["说明", "Smart Crib 的远程运动能力在安全批准前不得被 Discovery 为可写 endpoint。"], ["交互", "原型中的“模拟审批通过”仅验证状态机；真实审批来自硬件/安全流程。"], ["异常处理", "门禁未通过时校验明确失败，发布按钮不可用。"]] }
-      ]
-    },
-    release: {
-      context: "配置抽屉 / 发布策略",
-      summary: "发布操作要求最近一次校验通过，并支持受控回滚到 Sandbox 版本。",
-      items: [
-        { n: 3, title: "校验、发布与回滚", location: "关联位置：配置抽屉 > 底部操作栏", fields: [["说明", "先运行校验，再发布到 Production；不通过时展示具体错误。"], ["按钮状态", "默认可保存草稿；发布仅在校验通过时可用；发布成功后列表状态变为已发布。"], ["异常处理", "回滚需二次确认，回滚后 Profile 回到 Sandbox 而非删除配置。"]] }
+        { n: 3, title: "校验、发布与回滚", location: "关联位置：配置抽屉 > 底部操作栏", fields: [["说明", "当前环境由部署域名确定；先运行自动校验，再发布当前产品 Profile。测试验证使用独立测试域名，不在 Profile 内选环境。"], ["按钮状态", "默认可保存草稿；发布仅在校验通过时可用；发布成功后列表状态变为已发布。"], ["异常处理", "回滚需二次确认，在当前环境恢复上一个已发布版本而非删除配置。"]] }
       ]
     }
   }
@@ -157,7 +148,7 @@ function renderProfilesPage() {
     <section class="metrics-strip" aria-label="Profile 概览">
       <div class="metric"><span>已发布 Profile</span><strong>${count("published")}</strong></div>
       <div class="metric"><span>待校验 / 待发布</span><strong>${count("draft") + count("ready")}</strong></div>
-      <div class="metric metric--alert"><span>安全门禁阻断</span><strong>${count("blocked")}</strong></div>
+      <div class="metric metric--alert"><span>校验阻断</span><strong>${count("blocked")}</strong></div>
       <div class="metric metric--wide"><span>Shared Adapter</span><strong>smart-home-adapter-v2</strong><small>Contract v2.4.0</small>${anchor(2)}</div>
     </section>
     <section class="admin-panel">
@@ -219,15 +210,15 @@ function renderProductDetail() {
     ["场景联动设置", "未配置", "管理产品场景联动规则"],
     ["耗材管理", "未配置", "管理耗材服务配置"]
   ];
-  const alexaStatus = !product.alexaSupported ? "不支持" : profile?.status === "published" ? "已发布" : profile?.status === "blocked" ? "门禁阻断" : profile?.status === "disabled" ? "已停用" : "待配置";
-  const statusType = alexaStatus === "已发布" ? "success" : alexaStatus === "门禁阻断" ? "danger" : alexaStatus === "不支持" ? "info" : "warning";
+  const alexaStatus = !product.alexaSupported ? "不支持" : profile?.status === "published" ? "已发布" : profile?.status === "blocked" ? "校验阻断" : profile?.status === "disabled" ? "已停用" : "待配置";
+  const statusType = alexaStatus === "已发布" ? "success" : alexaStatus === "校验阻断" ? "danger" : alexaStatus === "不支持" ? "info" : "warning";
   return `<section class="product-detail-shell"><section class="product-detail-summary"><div><div class="product-detail-title"><h2>${escapeHtml(product.name)}</h2>${tag(product.status, product.status === "已上架" ? "success" : "warning")}</div><p>${escapeHtml(product.platform)} <span>/</span> 产品分类：${escapeHtml(product.category)} <span>/</span> 产品型号：${escapeHtml(product.model)} <span>/</span> 功能版本：${escapeHtml(product.version)}</p></div></section><nav class="product-tabs" aria-label="产品详情页签">${tabs.map((label, index) => `<button class="product-tab ${index === 5 ? "is-active" : ""}" ${index === 5 ? "" : "disabled"}>${label}</button>`).join("")}</nav><section class="advanced-config"><div class="advanced-heading"><div><h2>高级配置 ${anchor(15)}</h2><p>沿用产品详情现有高级配置卡片；Alexa 作为同级配置入口。</p></div></div><div class="advanced-card-grid">${cards.map(([title, status, description]) => `<article class="advanced-card"><div><h3>${title}</h3><p>${description}</p></div>${tag(status, "info")}</article>`).join("")}<article class="advanced-card advanced-card--alexa"><div><div class="card-title-line"><h3>Alexa</h3>${tag(alexaStatus, statusType)}</div><p>维护产品是否支持 Alexa 及其标准 capability 到物模型映射。</p><small>${product.alexaSupported ? "启用后通过产品级 Profile 发布到 Alexa。" : "当前未启用；可在配置中切换为支持。"}</small></div><button class="el-btn el-btn--primary" data-action="open-product-profile" data-product-id="${product.id}">编辑 Alexa 配置</button></article></div></section></section>`;
 }
 
 function renderLogsPage() {
   const resultTag = (row) => row.status === "success" ? tag(row.result, "success") : tag(row.result, "danger");
   return `<section class="admin-panel">
-    <div class="panel-toolbar"><div class="filter-row"><input class="el-input filter-search" placeholder="搜索 Profile / traceId" /><select class="el-select" style="width:120px"><option>全部通道</option><option>Discovery</option><option>Directive</option><option>StateReport</option><option>ReportingPolicy</option></select><select class="el-select" style="width:120px"><option>全部结果</option><option>成功</option><option>拒绝</option><option>失败</option></select></div><div class="toolbar-note"><span class="status-dot status-dot--success"></span> Sandbox 调用日志，保留 trace 维度便于排障</div></div>
+    <div class="panel-toolbar"><div class="filter-row"><input class="el-input filter-search" placeholder="搜索 Profile / traceId" /><select class="el-select" style="width:120px"><option>全部通道</option><option>Discovery</option><option>Directive</option><option>StateReport</option><option>ReportingPolicy</option></select><select class="el-select" style="width:120px"><option>全部结果</option><option>成功</option><option>拒绝</option><option>失败</option></select></div><div class="toolbar-note"><span class="status-dot status-dot--success"></span> 测试域名调用日志，保留 trace 维度便于排障</div></div>
     <table class="el-table"><thead><tr><th>时间</th><th>Profile</th><th>通道</th><th>结果</th><th>Trace ID</th><th>摘要</th></tr></thead><tbody>${logData.map((row) => `<tr><td>${row.time}</td><td><code class="cell-code">${row.profile}</code></td><td>${row.channel}</td><td>${resultTag(row)}</td><td><code class="cell-code">${row.traceId}</code></td><td>${row.detail}</td></tr>`).join("")}</tbody></table>
     <footer class="table-footer"><span>共 ${logData.length} 条</span></footer>
   </section>`;
@@ -243,8 +234,7 @@ function renderDrawer() {
 function renderDrawerBody(draft) {
   if (state.editor.section === "mapping") return renderMappingSection(draft);
   if (state.editor.section === "reporting") return renderReportingSection(draft);
-  if (state.editor.section === "gate") return renderGateSection(draft);
-  if (state.editor.section === "release") return renderReleaseSection(draft);
+  if (state.editor.section === "publish") return renderPublishSection(draft);
   return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；定义 Alexa endpoint 类型和标准物模型映射。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /></label><label class="form-row"><span>Alexa Endpoint 类型</span><select class="el-select" data-field="endpointType"><option ${draft.endpointType === "LIGHT" ? "selected" : ""}>LIGHT</option><option ${draft.endpointType === "OTHER" ? "selected" : ""}>OTHER</option></select></label></div><div class="lifecycle-notice"><strong>设备路由与呈现规则</strong><span>连接方式、设备类型和网关关系继承产品与设备主数据；Alexa Profile 不重复配置。App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后保留在基础信息，完成产品级 endpoint 定义后再进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
 }
 
@@ -304,20 +294,15 @@ function renderReportingSection(draft) {
   return `<section class="drawer-section"><div class="section-heading"><h3>状态报告 ${anchor(7)}</h3><p>首期统一由 Adapter 支持 Alexa 主动状态查询；最终状态不能由“云已受理”替代。</p></div><div class="reporting-card"><label class="form-row"><span>状态数据源</span><select class="el-select" data-reporting="source"><option value="device_reported" ${draft.reporting.source === "device_reported" ? "selected" : ""}>device_reported（设备上报）</option><option value="cloud_derived" ${draft.reporting.source === "cloud_derived" ? "selected" : ""}>cloud_derived（云端派生）</option></select><em>仅允许平台登记的状态源；不允许配置外部请求。</em></label><label class="switch-row"><input type="checkbox" data-reporting="stateReport" ${draft.reporting.stateReport ? "checked" : ""}/><span class="switch-control"></span><span><strong>StateReport</strong><small>Alexa 查询状态时从物模型读取并转换。</small></span></label><label class="switch-row switch-row--disabled"><input type="checkbox" disabled/><span class="switch-control"></span><span><strong>ChangeReport（首期预留）</strong><small>schema 保留；首期不可启用，平台不向 Alexa 主动发送。</small></span></label><label class="switch-row"><input type="checkbox" data-reporting="endpointHealth" ${draft.reporting.endpointHealth ? "checked" : ""}/><span class="switch-control"></span><span><strong>EndpointHealth</strong><small>设备可达性为发布必需项。</small></span></label></div></section>`;
 }
 
-function renderGateSection(draft) {
-  const gateType = draft.safetyApproved ? "success" : "danger";
-  return `<section class="drawer-section"><div class="section-heading"><h3>发布门禁 ${anchor(8)}</h3><p>平台配置只能引用已经批准的安全能力；门禁结论来自外部审查流程。</p></div><div class="gate-card gate-card--${gateType}"><div><span class="gate-label">Safety Gate</span>${tag(draft.safetyApproved ? "已批准" : "未批准", gateType)}<h4>${draft.category === "Smart Crib" ? "远程运动能力审查" : "标准远程控制审查"}</h4><p>${draft.safetyApproved ? "当前产品 Profile 可以进入发布校验。" : "Smart Crib 远程运动仍未获得安全批准，Discovery 不得暴露可写运动能力。"}</p></div>${draft.safetyApproved ? `<span class="gate-check">PASS</span>` : `<button class="el-btn el-btn--primary" data-action="approve-gate">模拟审批通过</button>`}</div><div class="lifecycle-notice"><strong>首期能力边界</strong><span>发现或控制需要多属性编排、异步确认、跨设备动作、安全状态机或非标准云接口时，当前产品 Profile 不可发布，进入二期评审。</span></div></section>`;
-}
-
-function renderReleaseSection(draft) {
+function renderPublishSection(draft) {
   const validation = state.editor.validation;
-  return `<section class="drawer-section"><div class="section-heading"><h3>发布策略 ${anchor(3)}</h3><p>先运行配置校验，再把当前产品 Profile 发布到 Production；每个 Profile 保留可回滚版本。</p></div><div class="release-grid"><label class="form-row"><span>目标环境</span><select class="el-select" data-field="release"><option value="sandbox" ${draft.release === "sandbox" ? "selected" : ""}>Sandbox</option><option value="production" ${draft.release === "production" ? "selected" : ""}>Production</option></select></label><div class="release-readonly"><span>回滚基线</span><strong>已发布 Profile 版本</strong></div></div>${validation ? renderValidation(validation) : `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查字段映射、instance、上报策略与 Safety Gate。</p></div>`}</section>`;
+  return `<section class="drawer-section"><div class="section-heading"><h3>校验与发布 ${anchor(3)}</h3><p>当前环境由部署域名确定。测试验证使用独立测试域名；无需在产品 Profile 选择目标环境。</p></div><div class="release-grid"><div class="release-readonly"><span>生效环境</span><strong>当前部署环境</strong><em>测试域名与生产域名由平台部署配置维护。</em></div><div class="release-readonly"><span>回滚基线</span><strong>上一个已发布 Profile 版本</strong><em>回滚仅恢复当前环境版本，不删除映射。</em></div></div>${validation ? renderValidation(validation) : `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查字段映射、instance、类型/单位、报告策略与版本兼容。</p></div>`}</section>`;
 }
 
 function renderValidation(validation) {
   const errors = validation.errors.map((item) => `<li class="validation-error">${escapeHtml(item)}</li>`).join("");
   const warnings = validation.warnings.map((item) => `<li class="validation-warning">${escapeHtml(item)}</li>`).join("");
-  return `<div class="validation-result ${validation.passed ? "is-passed" : "is-failed"}"><div class="validation-result__head"><strong>${validation.passed ? "校验通过" : `校验未通过 (${validation.errors.length})`}</strong>${tag(validation.passed ? "可发布" : "需处理", validation.passed ? "success" : "danger")}</div>${validation.passed ? `<p>已满足 Adapter Contract、能力映射与发布门禁要求。</p>` : `<ul>${errors}</ul>`}${warnings ? `<div class="validation-warning-group"><strong>建议处理</strong><ul>${warnings}</ul></div>` : ""}</div>`;
+  return `<div class="validation-result ${validation.passed ? "is-passed" : "is-failed"}"><div class="validation-result__head"><strong>${validation.passed ? "校验通过" : `校验未通过 (${validation.errors.length})`}</strong>${tag(validation.passed ? "可发布" : "需处理", validation.passed ? "success" : "danger")}</div>${validation.passed ? `<p>已满足 Adapter Contract、能力映射、报告策略与版本兼容要求。</p>` : `<ul>${errors}</ul>`}${warnings ? `<div class="validation-warning-group"><strong>建议处理</strong><ul>${warnings}</ul></div>` : ""}</div>`;
 }
 
 function renderAnnotations() {
@@ -337,7 +322,7 @@ function renderModal() {
   }
   if (state.modal.type !== "rollback") { mount.innerHTML = ""; return; }
   const profile = getProfile(state.modal.profileId);
-  mount.innerHTML = `<div class="modal-host"><div class="modal-mask" data-action="close-modal"></div><section class="confirm-modal" role="dialog" aria-modal="true" aria-label="确认回滚"><header><h2>确认回滚 Profile</h2><button class="el-drawer__close" data-action="close-modal">x</button></header><div class="modal-body"><p>将 <strong>${escapeHtml(profile?.name || "")}</strong> 从 Production 回滚到 Sandbox。Alexa 发现配置将在下一次发布同步中恢复到上一个可用版本。</p><div class="modal-alert">此操作不会删除 Profile 或物模型映射，但会停止当前 Production 版本。</div></div><footer><button class="el-btn" data-action="close-modal">取消</button><button class="el-btn el-btn--danger" data-action="rollback-confirm" data-profile-id="${profile?.id || ""}">确认回滚</button></footer></section></div>`;
+  mount.innerHTML = `<div class="modal-host"><div class="modal-mask" data-action="close-modal"></div><section class="confirm-modal" role="dialog" aria-modal="true" aria-label="确认回滚"><header><h2>确认回滚 Profile</h2><button class="el-drawer__close" data-action="close-modal">x</button></header><div class="modal-body"><p>将 <strong>${escapeHtml(profile?.name || "")}</strong> 恢复到当前环境的上一个已发布版本。Alexa 发现配置将在下一次发布同步中恢复。</p><div class="modal-alert">此操作不会删除 Profile 或物模型映射。</div></div><footer><button class="el-btn" data-action="close-modal">取消</button><button class="el-btn el-btn--danger" data-action="rollback-confirm" data-profile-id="${profile?.id || ""}">确认回滚</button></footer></section></div>`;
 }
 
 function renderToast() {
@@ -398,20 +383,19 @@ function handleAction(event) {
     updateProductAlexaSupport(enabling);
   }
   if (action === "edit-profile") openEditor(profileId);
-  if (action === "validate-profile") { openEditor(profileId, "release"); window.setTimeout(() => { runValidation(); setToast("已完成 Profile 配置校验", state.editor.validation.passed ? "success" : "danger"); }, 0); }
+  if (action === "validate-profile") { openEditor(profileId, "publish"); window.setTimeout(() => { runValidation(); setToast("已完成 Profile 配置校验", state.editor.validation.passed ? "success" : "danger"); }, 0); }
   if (action === "close-editor") closeEditor();
   if (action === "drawer-section") setEditorSection(section);
   if (action === "add-capability") addCapability();
   if (action === "remove-capability") removeCapability(Number(index));
   if (action === "run-validation") { const validation = runValidation(); setToast(validation.passed ? "校验通过，可以发布" : "校验未通过，请处理阻断项", validation.passed ? "success" : "danger"); }
   if (action === "save-draft") { saveDraft(); setToast("Profile 草稿已保存", "success"); }
-  if (action === "approve-gate") { approveSafetyGate(); setToast("已模拟 Safety Gate 审批通过；请重新运行校验", "info"); }
-  if (action === "publish") { if (publishDraft()) { setToast("Profile 已发布到 Production", "success"); closeEditor(); } else setToast("发布前必须先通过校验", "danger"); }
+  if (action === "publish") { if (publishDraft()) { setToast("Profile 已发布到当前环境", "success"); closeEditor(); } else setToast("发布前必须先通过校验", "danger"); }
   if (action === "rollback-open") showModal("rollback", profileId);
   if (action === "delist-open") showModal("delist", profileId);
   if (action === "delist-confirm") { closeModal(); setToast("Profile 已下架，已绑定用户将失去 Alexa 语音控制", "danger"); }
   if (action === "close-modal") closeModal();
-  if (action === "rollback-confirm") { rollbackProfile(profileId); closeModal(); setToast("Profile 已回滚至 Sandbox", "success"); }
+  if (action === "rollback-confirm") { rollbackProfile(profileId); closeModal(); setToast("Profile 已回滚至上一版本", "success"); }
   if (action === "reset-filters") { state.filters.keyword = ""; state.filters.status = "all"; render(); }
   if (action === "show-toast") setToast(toast, toastType || "info");
 }
