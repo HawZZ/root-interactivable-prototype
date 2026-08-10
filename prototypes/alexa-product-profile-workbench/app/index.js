@@ -31,7 +31,7 @@ import {
   updateProductAlexaSupport,
   addCapability,
   removeCapability
-} from "./state.js?v=20260810u";
+} from "./state.js?v=20260810v";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -92,7 +92,7 @@ const annotations = {
       context: "配置抽屉 / 能力与映射",
       summary: "每个 capability 明确绑定到注册物模型属性或标准命令，支持不同产品在同一 Adapter 下复用。",
       items: [
-        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "一行对应一个 Alexa interface；Mode、Range、Toggle 必须有 instance；属性只能来自物模型注册表。instance 全球统一，Friendly Names 按已启用 Locale 声明。"], ["交互", "可添加 allowlist 内能力、选择注册属性，并为 capability 与 mode 选择 Alexa 官方 Asset 或 Momcozy 自定义 Friendly Names。"], ["校验规则", "ModeController 必须配置完整模式映射；官方 Asset 必须来自平台 Catalog，自定义语义必须补齐所有已启用 Skill Locale 的名称。"]] },
+        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "一行对应一个 Alexa interface；Mode、Range、Toggle 必须有 instance；属性只能来自物模型注册表。instance 全球统一，Friendly Names 按已启用 Locale 声明。"], ["交互", "Catalog 的 Resource schema 决定该 interface 是否显示资源输入，不以是否有 instance 判断；适用时可为 capability 与 mode 选择 Alexa 官方 Asset 或 Momcozy 自定义 Friendly Names。"], ["校验规则", "官方 Asset 必须来自平台 Catalog；资源 schema=required 时，自定义语义必须补齐所有 ACTIVE Skill Locale 的名称。"]] },
         { n: 6, title: "首期标准映射边界", location: "关联位置：配置抽屉 > 映射方式", fields: [["说明", "首期只支持布尔、枚举、数值和单位转换；一条 directive 必须映射到一个物模型属性或标准命令。"], ["异常处理", "多属性编排、异步确认、安全状态机、跨设备动作和非标准云接口不在首期范围，Profile 不可发布。"]] }
       ]
     },
@@ -312,7 +312,7 @@ function applyResourceConfiguration() {
     const capabilityIndex = Number(propertySelect.dataset.capabilityIndex);
     const capability = state.editor.draft.capabilities[capabilityIndex];
     const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    if (!capability || !requiresInstance(capability.id) || article.querySelector(".resource-configuration")) return;
+    if (!capability || !requiresCapabilityResources(capability.id) || article.querySelector(".resource-configuration")) return;
 
     const resources = capability.capabilityResources || {};
     const config = document.createElement("section");
@@ -323,7 +323,7 @@ function applyResourceConfiguration() {
     schema.textContent = "capabilityResources";
     title.append(schema);
     const description = document.createElement("p");
-    description.textContent = "instance 全球统一；用户语义按 Skill 已启用 Locale 声明。存在官方 Asset 时优先引用 Asset；仅自定义产品语义才维护 Momcozy Friendly Names。";
+    description.textContent = "此处由 Capability Catalog 的 Resource schema 决定是否需要，不以是否有 instance 判断。机器标识全球统一；用户语义按 Skill 已启用 Locale 声明。存在官方 Asset 时优先引用 Asset；仅自定义产品语义才维护 Momcozy Friendly Names。";
     const source = resources.source || "custom";
     const declaration = document.createElement("div");
     declaration.className = "resource-form-grid";
@@ -345,7 +345,7 @@ function applyResourceConfiguration() {
     config.append(title, description, declaration);
     if (source === "custom") config.append(form);
 
-    if (capability.id === "ModeController") {
+    if (requiresModeResources(capability.id)) {
       article.querySelector("[data-capability-field=modes]")?.closest("label")?.remove();
       const modeSection = document.createElement("section");
       modeSection.className = "mode-resource-configuration";
@@ -401,6 +401,14 @@ function requiresInstance(interfaceId) {
   return Boolean(capabilityCatalog.find((item) => item.id === interfaceId)?.instanceRequired);
 }
 
+function requiresCapabilityResources(interfaceId) {
+  return capabilityCatalog.find((item) => item.id === interfaceId)?.resourceSchema?.capability === "required";
+}
+
+function requiresModeResources(interfaceId) {
+  return capabilityCatalog.find((item) => item.id === interfaceId)?.resourceSchema?.mode === "required";
+}
+
 function compatibleCapabilities(propertyId) {
   const property = modelPropertyCatalog.find((item) => item.id === propertyId);
   if (!property) return [];
@@ -444,8 +452,9 @@ function renderMappingSection(draft) {
     const propertyMeta = modelPropertyCatalog.find((item) => item.id === capability.property);
     const matchingCapabilities = compatibleCapabilities(capability.property);
     const instanceRequired = requiresInstance(capability.id);
+    const resourceRequired = requiresCapabilityResources(capability.id);
     const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
-    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>模板由匹配的通用 Adapter 能力包决定，产品不能改写协议处理逻辑。</em></div>${capability.id === "ModeController" ? `<label class="form-row form-row--wide"><span>Supported modes <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="modes" value="${escapeHtml(capability.modes || "")}" placeholder="SLEEP, SOOTHING, PLAY" /><em>枚举值会写入 Discovery capabilityConfiguration。</em></label>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
+    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"], [resourceRequired ? "需多语言资源声明" : capabilityMeta ? "资源声明不适用" : "等待 capability", resourceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>模板由匹配的通用 Adapter 能力包决定，产品不能改写协议处理逻辑。</em></div>${capability.id === "ModeController" ? `<label class="form-row form-row--wide"><span>Supported modes <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="modes" value="${escapeHtml(capability.modes || "")}" placeholder="SLEEP, SOOTHING, PLAY" /><em>枚举值会写入 Discovery capabilityConfiguration。</em></label>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
   }).join("")}</div></section>`;
 }
 
@@ -655,8 +664,8 @@ function handleInput(event) {
       updateCapability(index, "mapping", catalogItem?.template || "pending");
       if (target.value === "ModeController") updateCapability(index, "modes", "");
       else updateCapability(index, "modes", undefined);
-      updateCapability(index, "capabilityResources", requiresInstance(target.value) ? { source: "custom", localizedNames: defaultLocalizedNames("") } : undefined);
-      updateCapability(index, "modeMappings", target.value === "ModeController" ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
+      updateCapability(index, "capabilityResources", requiresCapabilityResources(target.value) ? { source: "custom", localizedNames: defaultLocalizedNames("") } : undefined);
+      updateCapability(index, "modeMappings", requiresModeResources(target.value) ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
       if (target.value === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");
       else updateCapability(index, "supportedOperations", undefined);
       state.editor.validation = null;
