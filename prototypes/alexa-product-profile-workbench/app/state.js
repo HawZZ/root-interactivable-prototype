@@ -8,13 +8,18 @@ export const localePolicy = {
   rule: "en-US 是所有自定义资源的必填基线；目标市场 Locale 缺失时不得宣称本地语音支持。"
 };
 
+export const skillLocales = [
+  ["zh-CN", "中文"], ["en-US", "英语（默认）"], ["de-DE", "德语"], ["fr-FR", "法语"], ["zh-TW", "中文繁体"], ["it-IT", "意大利语"], ["pt-BR", "葡萄牙语"], ["es-ES", "西班牙语"], ["ar-SA", "阿拉伯语"], ["vi-VN", "越南语"], ["id-ID", "印尼语"], ["th-TH", "泰语"], ["ms-MY", "马来语"], ["ja-JP", "日语"], ["ru-RU", "俄语"], ["fil-PH", "菲律宾语"], ["en-GB", "英语（英国）"], ["es-MX", "西班牙语（墨西哥）"]
+];
+
 // Platform-owned resource KV. Product Profiles only reference these stable keys.
 export const resourceRegistry = [
-  { key: "ModeController.CribMotionMode", scope: "capability", capability: "ModeController", values: { "en-US": "Motion Mode", "de-DE": "Bewegungsmodus" }, configuredLocales: 18, fallbackLocales: 0, usage: 1 },
-  { key: "ModeController.SLEEP", scope: "mode", capability: "ModeController", values: { "en-US": "Sleep", "de-DE": "Schlafmodus" }, configuredLocales: 18, fallbackLocales: 0, usage: 1 },
-  { key: "ModeController.SOFT_ROCKING", scope: "mode", capability: "ModeController", values: { "en-US": "Soft Rocking", "de-DE": "Sanftes Wiegen" }, configuredLocales: 18, fallbackLocales: 0, usage: 1 },
-  { key: "ModeController.PLAY", scope: "mode", capability: "ModeController", values: { "en-US": "Play", "de-DE": "Wiedergabe" }, configuredLocales: 16, fallbackLocales: 2, usage: 1 },
-  { key: "RangeController.CribMotionIntensity", scope: "capability", capability: "RangeController", values: { "en-US": "Motion Intensity", "de-DE": "Bewegungsintensität" }, configuredLocales: 18, fallbackLocales: 0, usage: 1 }
+  { key: "ModeController.CribMotionMode", scope: "capability", capability: "ModeController", semantic: "婴儿床运动模式名称", values: { "en-US": "Motion Mode", "de-DE": "Bewegungsmodus" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.SLEEP", scope: "mode", capability: "ModeController", semantic: "睡眠模式", values: { "en-US": "Sleep", "de-DE": "Schlafmodus" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.SOFT_ROCKING", scope: "mode", capability: "ModeController", semantic: "轻柔摇摆模式", values: { "en-US": "Soft Rocking", "de-DE": "Sanftes Wiegen" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.PLAY", scope: "mode", capability: "ModeController", semantic: "播放模式", values: { "en-US": "Play", "de-DE": "Wiedergabe" }, status: "published", version: 1, usage: 1 },
+  { key: "RangeController.CribMotionIntensity", scope: "capability", capability: "RangeController", semantic: "婴儿床运动强度名称", values: { "en-US": "Motion Intensity", "de-DE": "Bewegungsintensität" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.CALM", scope: "mode", capability: "ModeController", semantic: "平静模式", values: { "en-US": "Calm" }, status: "draft", version: 1, usage: 0 }
 ];
 
 export function getResource(key) {
@@ -22,7 +27,7 @@ export function getResource(key) {
 }
 
 export function resourcesFor(capability, scope) {
-  return resourceRegistry.filter((item) => item.capability === capability && item.scope === scope);
+  return resourceRegistry.filter((item) => item.capability === capability && item.scope === scope && item.status === "published");
 }
 
 export const statusMeta = {
@@ -181,7 +186,9 @@ export const state = {
   detailProductId: "momcozy.w1_lite",
   profiles: clone(profiles),
   filters: { keyword: "", status: "all" },
+  resourceFilters: { capability: "all", scope: "all", keyword: "" },
   editor: { open: false, section: "basic", sourceId: "", draft: null, productAlexaSupported: false, validation: null, isSaving: false },
+  resourceEditor: { open: false, sourceKey: "", draft: null, validation: null },
   modal: { type: "", profileId: "", productId: "", draft: null },
   toast: null,
   highlightedAnchor: "",
@@ -215,8 +222,84 @@ export function filteredProfiles() {
 export function setPage(page) {
   state.page = ["products", "product-detail", "resource-library"].includes(page) ? page : "products";
   state.editor.open = false;
+  state.resourceEditor = { open: false, sourceKey: "", draft: null, validation: null };
   state.modal = { type: "", profileId: "", productId: "", draft: null };
   emit();
+}
+
+export function filteredResources() {
+  const { capability, scope, keyword } = state.resourceFilters;
+  const search = keyword.trim().toLowerCase();
+  return resourceRegistry.filter((item) => {
+    const matchesCapability = capability === "all" || item.capability === capability;
+    const matchesScope = scope === "all" || item.scope === scope;
+    const matchesKeyword = !search || [item.key, item.semantic, ...Object.values(item.values)].join(" ").toLowerCase().includes(search);
+    return matchesCapability && matchesScope && matchesKeyword;
+  });
+}
+
+export function setResourceFilter(key, value) {
+  state.resourceFilters[key] = value;
+  emit();
+}
+
+export function resetResourceFilters() {
+  state.resourceFilters = { capability: "all", scope: "all", keyword: "" };
+  emit();
+}
+
+export function openResourceEditor(key = "") {
+  const source = key ? getResource(key) : null;
+  state.resourceEditor = {
+    open: true,
+    sourceKey: key,
+    draft: clone(source || { key: "", capability: "ModeController", scope: "mode", semantic: "", values: { "en-US": "", "de-DE": "" }, status: "draft", version: 1, usage: 0 }),
+    validation: null
+  };
+  emit();
+}
+
+export function closeResourceEditor() {
+  state.resourceEditor = { open: false, sourceKey: "", draft: null, validation: null };
+  emit();
+}
+
+export function updateResourceDraft(path, value) {
+  const [group, key] = path.split(".");
+  if (!state.resourceEditor.draft) return;
+  if (key) state.resourceEditor.draft[group][key] = value;
+  else state.resourceEditor.draft[group] = value;
+  state.resourceEditor.validation = null;
+}
+
+export function validateResourceDraft() {
+  const draft = state.resourceEditor.draft;
+  const errors = [];
+  if (!/^[A-Za-z][A-Za-z0-9._-]{2,95}$/.test(draft.key?.trim() || "")) errors.push("Resource Key 须以英文字母开头，仅含字母、数字、点、下划线和连字符。");
+  if (!draft.semantic?.trim()) errors.push("请填写资源语义说明，供维护者判断复用范围。");
+  if (!draft.capability) errors.push("请选择所属 Alexa capability。");
+  if (!draft.scope) errors.push("请选择资源范围。");
+  if (!draft.values?.[localePolicy.baseLocale]?.trim()) errors.push(`必须填写 ${localePolicy.baseLocale}（英语默认）词条。`);
+  const duplicate = resourceRegistry.find((item) => item.key === draft.key && item.key !== state.resourceEditor.sourceKey);
+  if (duplicate) errors.push(`Resource Key “${draft.key}” 已存在。`);
+  state.resourceEditor.validation = { errors, passed: errors.length === 0 };
+  emit();
+  return state.resourceEditor.validation;
+}
+
+export function saveResourceDraft(publish = false) {
+  const validation = state.resourceEditor.validation || validateResourceDraft();
+  if (!validation.passed) return false;
+  const draft = clone(state.resourceEditor.draft);
+  draft.status = publish ? "published" : "draft";
+  draft.version = state.resourceEditor.sourceKey ? (getResource(state.resourceEditor.sourceKey)?.version || 1) + 1 : 1;
+  draft.usage = getResource(state.resourceEditor.sourceKey)?.usage || 0;
+  const index = resourceRegistry.findIndex((item) => item.key === state.resourceEditor.sourceKey);
+  if (index >= 0) resourceRegistry.splice(index, 1, draft);
+  else resourceRegistry.push(draft);
+  state.resourceEditor = { open: false, sourceKey: "", draft: null, validation: null };
+  emit();
+  return true;
 }
 
 export function openProductDetail(productId) {
@@ -308,10 +391,12 @@ export function runValidation() {
       errors.push(`多语言资源：${resource.key} 与 ${label} 的类型或 capability 不匹配。`);
       return;
     }
+    if (resource.status !== "published") errors.push(`多语言资源：${resource.key} 尚未发布，不能被产品 Profile 引用。`);
     if (!resource.values[localePolicy.baseLocale]) errors.push(`多语言资源：${resource.key} 缺少必填 ${localePolicy.baseLocale} 基线。`);
     const missingRequired = requiredLocales.filter((locale) => !resource.values[locale]);
     if (missingRequired.length) errors.push(`多语言资源：${resource.key} 缺少目标市场 Locale ${missingRequired.join(", ")}，不能发布。`);
-    if (resource.fallbackLocales && !validatedResources.has(resource.key)) warnings.push(`多语言资源：${resource.key} 有 ${resource.fallbackLocales} 个已启用 Skill Locale 仅提供英语基线；该语言不可宣称本地语音支持。`);
+    const missingOptional = skillLocales.map(([locale]) => locale).filter((locale) => !requiredLocales.includes(locale) && !resource.values[locale]);
+    if (missingOptional.length && !validatedResources.has(resource.key)) warnings.push(`多语言资源：${resource.key} 有 ${missingOptional.length} 个已启用 Skill Locale 未配置；不得将这些 Locale 标记为本地语音可用。`);
     validatedResources.add(resource.key);
   };
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");

@@ -274,7 +274,37 @@ body { overflow-x: hidden; }
 .resource-policy p { max-width: 740px; margin: 5px 0 0; color: #506476; font-size: 12px; line-height: 1.6; }
 .resource-library .el-table td { font-size: 12px; }
 .resource-library .cell-secondary { display: block; margin-top: 3px; }
-@media (max-width: 960px) { .mode-mapping-table__head, .mode-mapping-row { grid-template-columns: minmax(105px, .75fr) minmax(170px, 1.25fr) minmax(115px, .9fr); } .resource-policy { flex-direction: column; } }
+.lang-tabs { display: flex; gap: 26px; min-height: 40px; margin: -2px 0 14px; border-bottom: 1px solid var(--el-border-color-light); }
+.lang-tab { position: relative; padding: 0 1px 11px; color: var(--el-text-color-secondary); border: 0; background: transparent; font-size: 13px; }
+.lang-tab:disabled { cursor: default; opacity: .72; }
+.lang-tab.is-active { color: var(--el-color-primary); font-weight: 500; }
+.lang-tab.is-active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--el-color-primary); content: ""; }
+.resource-toolbar { align-items: flex-start; gap: 12px; }
+.resource-toolbar .filter-row { flex-wrap: wrap; }
+.resource-search { width: 220px; }
+.table-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.resource-table-scroll { overflow: auto; border-top: 1px solid var(--el-border-color-light); }
+.resource-table { min-width: 2540px; }
+.resource-table th { white-space: nowrap; }
+.resource-table td { max-width: 154px; white-space: nowrap; }
+.resource-table .locale-cell { overflow: hidden; max-width: 120px; text-overflow: ellipsis; }
+.resource-table .locale-cell.is-empty { color: var(--el-text-color-placeholder); }
+.resource-editor-drawer { width: 900px; }
+.resource-editor-body { padding: 22px 26px; }
+.resource-locale-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin: 24px 0 10px; }
+.resource-locale-heading strong { display: block; color: var(--el-text-color-primary); font-size: 13px; font-weight: 600; }
+.resource-locale-heading span { display: block; margin-top: 4px; color: var(--el-text-color-secondary); font-size: 11px; line-height: 1.45; }
+.locale-editor-grid { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
+.locale-editor-row { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 53px; padding: 8px 11px; border-right: 1px solid var(--el-border-color-lighter); border-bottom: 1px solid var(--el-border-color-lighter); }
+.locale-editor-row:nth-child(2n) { border-right: 0; }
+.locale-editor-row:nth-last-child(-n + 2) { border-bottom: 0; }
+.locale-editor-row > span { display: grid; gap: 2px; min-width: 0; }
+.locale-editor-row strong { overflow: hidden; color: var(--el-text-color-regular); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.locale-editor-row code { color: var(--el-text-color-secondary); font-family: "IBM Plex Mono", monospace; font-size: 9px; }
+.locale-editor-row.is-required { background: #f7fbff; }
+.locale-editor-row.is-required strong::after { margin-left: 4px; color: var(--el-color-danger); content: "*"; }
+.locale-editor-help { margin: 9px 0 0; color: var(--el-text-color-secondary); font-size: 11px; line-height: 1.55; }
+@media (max-width: 960px) { .mode-mapping-table__head, .mode-mapping-row { grid-template-columns: minmax(105px, .75fr) minmax(170px, 1.25fr) minmax(115px, .9fr); } .resource-policy { flex-direction: column; } .resource-toolbar { flex-direction: column; } .table-actions { flex-wrap: wrap; } .locale-editor-grid { grid-template-columns: 1fr; } .locale-editor-row, .locale-editor-row:nth-child(2n) { border-right: 0; } .locale-editor-row:nth-last-child(-n + 2) { border-bottom: 1px solid var(--el-border-color-lighter); } .locale-editor-row:last-child { border-bottom: 0; } }
 .mapping-empty { padding: 12px; color: var(--el-text-color-secondary); border: 1px dashed #d6e4f3; border-radius: var(--radius); font-size: 11px; }
 .reporting-card { border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
 .reporting-card .form-row { padding: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }

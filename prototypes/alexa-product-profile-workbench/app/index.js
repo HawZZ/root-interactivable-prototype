@@ -1,5 +1,7 @@
 import {
   capabilityCatalog,
+  closeResourceEditor,
+  filteredResources,
   getResource,
   localePolicy,
   modelPropertyCatalog,
@@ -15,6 +17,7 @@ import {
   productData,
   resourceRegistry,
   resourcesFor,
+  resetResourceFilters,
   publishDraft,
   rollbackProfile,
   runValidation,
@@ -24,6 +27,7 @@ import {
   setHighlightedAnchor,
   setMobileView,
   setPage,
+  setResourceFilter,
   setToast,
   showModal,
   state,
@@ -32,9 +36,14 @@ import {
   updateCapability,
   updateDraft,
   updateProductAlexaSupport,
+  updateResourceDraft,
+  openResourceEditor,
+  saveResourceDraft,
+  skillLocales,
+  validateResourceDraft,
   addCapability,
   removeCapability
-} from "./state.js?v=20260811d";
+} from "./state.js?v=20260811e";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -80,7 +89,7 @@ const annotations = {
     context: "平台配置 / Alexa 多语言资源库",
     summary: "资源库是平台级 Capability Resource KV，统一维护 Discovery 需要的本地化 Friendly Names；产品 Profile 仅引用资源 Key。",
     items: [
-      { n: 16, title: "资源 Key 与本地化值", location: "关联位置：Alexa 多语言资源库 > KV 列表", fields: [["说明", "Resource Key 是稳定机器引用；Capability 与 Mode 资源分别保存。产品配置页不录入翻译，只选择已维护的 Key。"], ["责任边界", "平台 / 本地化角色维护 18 个已启用 Skill Locale；Adapter 在 Discovery 中生成 capabilityResources、modeResources。"], ["基线规则", "en-US 是自定义资源的必填基线。目标市场 Locale 必须配置；英语不能保证 Alexa 将本地语言语音理解为英语名称。"]] }
+      { n: 16, title: "Alexa 资源维护", location: "关联位置：多语言 > Alexa资源", fields: [["现状对齐", "沿用产品模板多语言页的筛选、查询/重置、导入/导出和横向语言表格；Alexa 资源不按产品、模板或 SKU 分栏。"], ["维护交互", "新增或编辑时维护 capability、scope、Resource Key、语义说明与 18 个 Locale 词条；保存草稿后不可被 Profile 引用，资源发布后才可选。"], ["发布规则", "en-US 是自定义资源必填基线；Resource Key 全局唯一。目标市场 Locale 缺失由产品 Profile 发布校验阻断；英语不能保证 Alexa 将本地语言语音理解为英语名称。"]] }
     ]
   },
   logs: {
@@ -149,15 +158,18 @@ function renderPageHeader() {
   const meta = {
     products: { crumb: "智能产品", title: "产品列表", copy: "查询、复制、查看产品；Alexa 配置仅在产品详情的高级配置中维护。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="创建产品沿用既有 IoT 产品流程" data-toast-type="info">+ 创建产品</button>`, anchor: 14 },
     "product-detail": { crumb: "产品详情", title: "产品详情", copy: "高级配置是当前需求唯一新增 Alexa 入口。", action: `<button class="el-btn" data-action="nav" data-page="products">返回列表</button>`, anchor: 15 },
-    "resource-library": { crumb: "平台配置", title: "Alexa 多语言资源库", copy: "平台统一维护 Capability Resource KV；产品 Profile 仅选择已发布资源 Key。", action: `<button class="el-btn" data-action="show-toast" data-toast="资源由平台与本地化角色按流程维护" data-toast-type="info">资源维护说明</button>`, anchor: 16 }
+    "resource-library": { crumb: "多语言 / Alexa资源", title: "Alexa 多语言资源", copy: "沿用多语言词条管理结构；资源按 capability 与 scope 全局复用，不按产品区分。", action: `<button class="el-btn" data-action="new-resource">+ 新增资源</button>`, anchor: 16 }
   }[state.page] || { crumb: "智能产品", title: "产品列表", copy: "", action: "", anchor: 14 };
   $("#breadcrumb").innerHTML = `<span>智能产品</span><span class="breadcrumb-slash">/</span><strong>${meta.crumb}</strong>`;
   $("#pageHeader").innerHTML = `<div><div class="page-title-line"><h1>${meta.title}</h1>${anchor(meta.anchor)}</div><p>${meta.copy}</p></div><div class="page-header-actions">${meta.action}</div>`;
 }
 
 function renderResourceLibraryPage() {
-  const localePreview = localePolicy.previewLocales;
-  return `<section class="resource-policy"><div><strong>Skill Locale 策略</strong><p>已启用 ${localePolicy.enabledLocaleCount} 个 Locale；<code>${localePolicy.baseLocale}</code> 为自定义资源必填基线。目标市场 Locale 缺失时阻断 Profile 发布，不将英语当作本地语音识别兜底。</p></div>${tag("平台维护", "info")}</section><section class="admin-panel resource-library"><div class="panel-toolbar"><div class="toolbar-note"><span class="status-dot status-dot--success"></span> ${resourceRegistry.length} 个已登记 Resource Key</div><div class="toolbar-note">产品 Profile 只读引用，不编辑翻译文本</div></div><table class="el-table"><thead><tr><th>Resource Key</th><th>范围</th><th>Capability</th>${localePreview.map((locale) => `<th>${locale}</th>`).join("")}<th>Locale 覆盖</th><th>引用 Profile</th></tr></thead><tbody>${resourceRegistry.map((resource) => `<tr><td><code class="cell-code">${escapeHtml(resource.key)}</code></td><td>${tag(resource.scope === "capability" ? "能力名称" : "模式名称", resource.scope === "capability" ? "primary" : "warning")}</td><td><code class="cell-code">${escapeHtml(resource.capability)}</code></td>${localePreview.map((locale) => `<td>${escapeHtml(resource.values[locale] || "--")}</td>`).join("")}<td><strong>${resource.configuredLocales}/${localePolicy.enabledLocaleCount}</strong>${resource.fallbackLocales ? `<span class="cell-secondary">${resource.fallbackLocales} 项仅英语基线</span>` : `<span class="cell-secondary">全部已配置</span>`}</td><td>${resource.usage}</td></tr>`).join("")}</tbody></table><footer class="table-footer"><span>资源在发布前由平台校验：Key 类型、en-US 基线、产品目标市场 Locale。</span><span>Discovery 自动生成 <code>capabilityResources</code> / <code>modeResources</code></span></footer></section>`;
+  const rows = filteredResources();
+  const configuredCount = (resource) => skillLocales.filter(([locale]) => resource.values[locale]?.trim()).length;
+  const resourceStatus = (resource) => resource.status === "published" ? tag("已发布", "success") : tag("草稿", "warning");
+  const capabilities = capabilityCatalog.filter((item) => item.status === "profile_ready").map((item) => item.id);
+  return `<nav class="lang-tabs" aria-label="多语言类型"><button class="lang-tab" disabled>产品模板</button><button class="lang-tab" disabled>智能产品</button><button class="lang-tab" disabled>App通用</button><button class="lang-tab is-active">Alexa资源</button></nav><section class="resource-policy"><div><strong>全局 Alexa Capability Resource KV</strong><p>沿用多语言管理的词条表结构，但不按产品、产品模板或 SKU 划分。每条资源按 capability 与 scope 归属，供所有产品 Profile 复用。</p></div>${tag("平台维护", "info")}</section><section class="admin-panel resource-library"><div class="panel-toolbar resource-toolbar"><div class="filter-row"><select class="el-select filter-select" data-resource-filter="capability"><option value="all">全部 capability</option>${capabilities.map((id) => `<option value="${id}" ${state.resourceFilters.capability === id ? "selected" : ""}>${id}</option>`).join("")}</select><select class="el-select filter-select" data-resource-filter="scope"><option value="all">全部资源范围</option><option value="capability" ${state.resourceFilters.scope === "capability" ? "selected" : ""}>能力名称</option><option value="mode" ${state.resourceFilters.scope === "mode" ? "selected" : ""}>模式名称</option></select><input class="el-input resource-search" data-resource-filter="keyword" value="${escapeHtml(state.resourceFilters.keyword)}" placeholder="搜索 Resource Key、语义或翻译" /><button class="el-btn el-btn--primary" data-action="resource-query">查询</button><button class="el-btn" data-action="reset-resource-filters">重置</button></div><div class="table-actions"><button class="el-btn" data-action="resource-import">导入</button><button class="el-btn" data-action="resource-export">导出</button><button class="el-btn el-btn--primary" data-action="new-resource">+ 新增资源</button></div></div><div class="resource-table-scroll"><table class="el-table resource-table"><thead><tr><th>Capability</th><th>资源范围</th><th>Resource Key</th><th>语义说明</th><th>状态</th>${skillLocales.map(([, label]) => `<th>${label}</th>`).join("")}<th>覆盖</th><th>引用</th><th class="col-ops">操作</th></tr></thead><tbody>${rows.length ? rows.map((resource) => `<tr><td><code class="cell-code">${escapeHtml(resource.capability)}</code></td><td>${tag(resource.scope === "capability" ? "能力名称" : "模式名称", resource.scope === "capability" ? "primary" : "warning")}</td><td><code class="cell-code">${escapeHtml(resource.key)}</code></td><td>${escapeHtml(resource.semantic)}</td><td>${resourceStatus(resource)}</td>${skillLocales.map(([locale]) => `<td class="locale-cell ${resource.values[locale] ? "" : "is-empty"}">${escapeHtml(resource.values[locale] || "未配置")}</td>`).join("")}<td><strong>${configuredCount(resource)}/${localePolicy.enabledLocaleCount}</strong></td><td>${resource.usage}</td><td class="col-ops"><button class="op-link" data-action="edit-resource" data-resource-key="${resource.key}">编辑</button></td></tr>`).join("") : `<tr><td colspan="${skillLocales.length + 9}"><div class="table-empty">没有符合条件的 Alexa Resource Key</div></td></tr>`}</tbody></table></div><footer class="table-footer"><span>共 ${rows.length} 条。发布资源后才会出现在产品 Profile 的 Resource Key 下拉中。</span><span>Discovery 自动生成 <code>capabilityResources</code> / <code>modeResources</code></span></footer></section>`;
 }
 
 function renderProfilesPage() {
@@ -245,6 +257,13 @@ function renderLogsPage() {
 
 function renderDrawer() {
   const mount = $("#drawerMount");
+  if (state.resourceEditor.open) {
+    const draft = state.resourceEditor.draft;
+    const readyCapabilities = capabilityCatalog.filter((item) => item.status === "profile_ready");
+    const validation = state.resourceEditor.validation;
+    mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-resource-editor"></div><aside class="el-drawer resource-editor-drawer" role="dialog" aria-modal="true" aria-label="${state.resourceEditor.sourceKey ? "编辑" : "新增"} Alexa 多语言资源"><header class="el-drawer__header"><div><h2 class="el-drawer__title">${state.resourceEditor.sourceKey ? "编辑" : "新增"} Alexa 多语言资源</h2><p class="drawer-subtitle">全局 Capability Resource KV <span>/</span> 不绑定产品</p></div><button class="el-drawer__close" data-action="close-resource-editor" aria-label="关闭">x</button></header><div class="el-drawer__body resource-editor-body"><section class="drawer-section"><div class="section-heading"><h3>资源定义 ${anchor(16)}</h3><p>Resource Key 是稳定机器引用。新增或修改发布后，所有引用该 Key 的 Profile 在下一次 Discovery 使用该资源版本。</p></div><div class="form-grid"><label class="form-row"><span>所属 Alexa capability <b>*</b></span><select class="el-select" data-resource-field="capability">${readyCapabilities.map((item) => `<option value="${item.id}" ${draft.capability === item.id ? "selected" : ""}>${item.id}</option>`).join("")}</select></label><label class="form-row"><span>资源范围 <b>*</b></span><select class="el-select" data-resource-field="scope"><option value="capability" ${draft.scope === "capability" ? "selected" : ""}>capability（能力名称）</option><option value="mode" ${draft.scope === "mode" ? "selected" : ""}>mode（模式名称）</option></select></label><label class="form-row"><span>Resource Key <b>*</b></span><input class="el-input" data-resource-field="key" value="${escapeHtml(draft.key)}" placeholder="例如 ModeController.SOFT_ROCKING" /><em>全局唯一；以英文字母开头，仅含字母、数字、点、下划线和连字符。已发布 Key 不建议改名。</em></label><label class="form-row"><span>语义说明 <b>*</b></span><input class="el-input" data-resource-field="semantic" value="${escapeHtml(draft.semantic)}" placeholder="例如 轻柔摇摆模式" /><em>供平台与本地化维护者判断是否可被不同产品复用。</em></label></div><div class="resource-locale-heading"><div><strong>多语言词条</strong><span>由 Skill Locale 策略同步的 ${localePolicy.enabledLocaleCount} 项；${localePolicy.baseLocale} 为发布必填。</span></div>${tag("不关联产品", "info")}</div><div class="locale-editor-grid">${skillLocales.map(([locale, label]) => `<label class="locale-editor-row ${locale === localePolicy.baseLocale ? "is-required" : ""}"><span><strong>${label}</strong><code>${locale}</code></span><input class="el-input" data-resource-field="values.${locale}" value="${escapeHtml(draft.values[locale] || "")}" placeholder="${locale === localePolicy.baseLocale ? "必填" : "未配置"}" /></label>`).join("")}</div><p class="locale-editor-help">未配置的 Locale 不会被英语自动翻译为当地语义；产品若面向该 Locale，发布 Profile 时会按其目标市场规则阻断。</p>${validation ? `<div class="validation-result ${validation.passed ? "is-passed" : "is-failed"}"><div class="validation-result__head"><strong>${validation.passed ? "资源校验通过" : `资源校验未通过 (${validation.errors.length})`}</strong>${tag(validation.passed ? "可发布" : "需处理", validation.passed ? "success" : "danger")}</div>${validation.passed ? `<p>Resource Key、语义与英语默认词条已满足发布条件。</p>` : `<ul>${validation.errors.map((item) => `<li class="validation-error">${escapeHtml(item)}</li>`).join("")}</ul>`}</div>` : ""}</section></div><footer class="el-drawer__footer"><button class="el-btn" data-action="close-resource-editor">取消</button><button class="el-btn" data-action="save-resource">保存草稿</button><button class="el-btn el-btn--primary" data-action="validate-resource">运行校验</button><button class="el-btn el-btn--primary" data-action="publish-resource" ${validation?.passed ? "" : "disabled"}>发布资源</button></footer></aside></div>`;
+    return;
+  }
   if (!state.editor.open) { mount.innerHTML = ""; return; }
   const draft = state.editor.draft;
   mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-editor"></div><aside class="el-drawer alexa-drawer" role="dialog" aria-modal="true" aria-label="${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置"><header class="el-drawer__header"><div><h2 class="el-drawer__title">${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置</h2><p class="drawer-subtitle">${escapeHtml(draft.name || "未命名 Profile")} <span>/</span> ${escapeHtml(draft.productKey || "草稿")}</p></div><button class="el-drawer__close" data-action="close-editor" aria-label="关闭">x</button></header><div class="drawer-shell"><nav class="drawer-section-nav">${sections.map(([key, label], index) => `<button class="drawer-section-item ${state.editor.section === key ? "is-active" : ""}" data-action="drawer-section" data-section="${key}" ${!state.editor.productAlexaSupported && key !== "basic" ? "disabled" : ""}><span>${index + 1}</span>${label}</button>`).join("")}</nav><div class="el-drawer__body">${renderDrawerBody(draft)}</div></div><footer class="el-drawer__footer"><button class="el-btn" data-action="close-editor">取消</button><button class="el-btn" data-action="save-draft">保存草稿</button><button class="el-btn el-btn--primary" data-action="run-validation" ${state.editor.productAlexaSupported ? "" : "disabled"}>运行校验</button><button class="el-btn el-btn--primary" data-action="publish" ${state.editor.productAlexaSupported && state.editor.validation?.passed ? "" : "disabled"}>发布</button></footer></aside></div>`;
@@ -334,7 +353,7 @@ function renderMappingSection(draft) {
     const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
     const capabilityResources = resourcesFor(capability.id, "capability");
     const capabilityResource = getResource(capability.capabilityResourceKey);
-    const resourceField = capabilityMeta?.resourceScopes?.includes("capability") ? `<label class="form-row"><span>能力名称资源 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="capabilityResourceKey"><option value="">请选择平台资源</option>${capabilityResources.map((item) => `<option value="${item.key}" ${item.key === capability.capabilityResourceKey ? "selected" : ""}>${item.key}</option>`).join("")}</select>${capabilityResource ? renderFieldTags([[`en-US：${capabilityResource.values["en-US"]}`, "success"], [`de-DE：${capabilityResource.values["de-DE"] || "未配置"}`, "info"], [`覆盖：${capabilityResource.configuredLocales}/${localePolicy.enabledLocaleCount}`, "neutral"]]) : renderFieldTags([["选择后预览平台资源", "neutral"]])}<em>按 Capability Template 引用平台多语言 Key；不在产品页面录入翻译。</em></label>` : "";
+    const resourceField = capabilityMeta?.resourceScopes?.includes("capability") ? `<label class="form-row"><span>能力名称资源 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="capabilityResourceKey"><option value="">请选择平台资源</option>${capabilityResources.map((item) => `<option value="${item.key}" ${item.key === capability.capabilityResourceKey ? "selected" : ""}>${item.key}</option>`).join("")}</select>${capabilityResource ? renderFieldTags([[`en-US：${capabilityResource.values["en-US"]}`, "success"], [`de-DE：${capabilityResource.values["de-DE"] || "未配置"}`, "info"], [`覆盖：${skillLocales.filter(([locale]) => capabilityResource.values[locale]).length}/${localePolicy.enabledLocaleCount}`, "neutral"]]) : renderFieldTags([["选择后预览平台资源", "neutral"]])}<em>按 Capability Template 引用平台多语言 Key；不在产品页面录入翻译。</em></label>` : "";
     return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}${resourceField}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>平台模板将 Alexa 指令转换为物模型读写；产品不配置 Lambda 或协议细节。</em></div>${capability.id === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(capability, propertyMeta, index)}</div>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
   }).join("")}</div></section>`;
 }
@@ -446,6 +465,16 @@ function handleAction(event) {
   if (action === "close-modal") closeModal();
   if (action === "rollback-confirm") { rollbackProfile(profileId); closeModal(); setToast("Profile 已回滚至上一版本", "success"); }
   if (action === "reset-filters") { state.filters.keyword = ""; state.filters.status = "all"; render(); }
+  if (action === "resource-query") setToast(`已查询 ${filteredResources().length} 条 Alexa Resource Key`, "success");
+  if (action === "reset-resource-filters") resetResourceFilters();
+  if (action === "resource-import") setToast("导入使用平台 Resource KV 模板；导入前校验 capability、scope、Resource Key 和 en-US。", "info");
+  if (action === "resource-export") setToast("已按当前筛选条件生成 Resource KV 导出任务。", "success");
+  if (action === "new-resource") openResourceEditor();
+  if (action === "edit-resource") openResourceEditor(trigger.dataset.resourceKey);
+  if (action === "close-resource-editor") closeResourceEditor();
+  if (action === "validate-resource") { const validation = validateResourceDraft(); setToast(validation.passed ? "资源校验通过，可以发布" : "资源校验未通过，请处理必填项", validation.passed ? "success" : "danger"); }
+  if (action === "save-resource") { if (saveResourceDraft(false)) setToast("Alexa Resource Key 草稿已保存", "success"); else setToast("保存前请处理资源校验项", "danger"); }
+  if (action === "publish-resource") { if (saveResourceDraft(true)) setToast("Alexa Resource Key 已发布，可供产品 Profile 引用", "success"); else setToast("发布前请处理资源校验项", "danger"); }
   if (action === "show-toast") setToast(toast, toastType || "info");
 }
 
@@ -460,6 +489,21 @@ function handleInput(event) {
         if (next) { next.focus(); next.setSelectionRange(caret, caret); }
       });
     }
+    return;
+  }
+  if (target.dataset.resourceFilter) {
+    const caret = target.selectionStart;
+    setResourceFilter(target.dataset.resourceFilter, target.value);
+    if (target.dataset.resourceFilter === "keyword") {
+      window.requestAnimationFrame(() => {
+        const next = document.querySelector('[data-resource-filter="keyword"]');
+        if (next) { next.focus(); next.setSelectionRange(caret, caret); }
+      });
+    }
+    return;
+  }
+  if (target.dataset.resourceField && state.resourceEditor.open) {
+    updateResourceDraft(target.dataset.resourceField, target.value);
     return;
   }
   if (target.dataset.productAlexaSupport) {
@@ -511,7 +555,7 @@ function handleInput(event) {
 document.addEventListener("click", handleAction);
 document.addEventListener("input", handleInput);
 document.addEventListener("change", handleInput);
-document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeModal(); closeEditor(); } });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeModal(); closeEditor(); closeResourceEditor(); } });
 document.querySelectorAll("[data-mobile-view-target]").forEach((button) => button.addEventListener("click", () => setMobileView(button.dataset.mobileViewTarget)));
 subscribe(render);
 render();
