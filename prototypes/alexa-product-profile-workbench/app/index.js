@@ -1,7 +1,5 @@
 import {
-  alexaAssetCatalog,
   capabilityCatalog,
-  enabledSkillLocales,
   modelPropertyCatalog,
   closeEditor,
   closeModal,
@@ -32,7 +30,7 @@ import {
   updateProductAlexaSupport,
   addCapability,
   removeCapability
-} from "./state.js?v=20260811b";
+} from "./state.js?v=20260811c";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -93,7 +91,7 @@ const annotations = {
       context: "配置抽屉 / 能力与映射",
       summary: "每个 capability 明确绑定到注册物模型属性或标准命令，支持不同产品在同一 Adapter 下复用。",
       items: [
-        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "一行对应一个 Alexa interface；Mode、Range、Toggle 必须有 instance；属性只能来自物模型注册表。instance 全球统一，Friendly Names 按已启用 Locale 声明。"], ["交互", "Catalog 的 Resource schema 决定该 interface 是否显示资源输入，不以是否有 instance 判断；标准语义只能从该 interface/作用域允许的 Asset 中选取，界面展示语义含义与官方定义。"], ["校验规则", "平台校验 Asset 合法性；产品必须确认与当前能力或枚举业务语义等价。无等价 Asset 时使用自定义语义，资源 schema=required 时补齐所有 ACTIVE Skill Locale。"]] },
+        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "先选择当前产品已有物模型属性，系统只展示类型匹配且已完成 Adapter 准入的 Alexa capability。Mode、Range、Toggle 需要 instance。"], ["交互", "ModeController 仅补充“物模型枚举值 → Alexa mode 值”映射；其余标准能力绑定一个属性即可。"], ["校验规则", "检查字段存在、类型/单位兼容、读写方向、instance 唯一性及枚举是否完整映射。Asset、多语言与 Friendly Name 不在产品页面配置。"]] },
         { n: 6, title: "首期标准映射边界", location: "关联位置：配置抽屉 > 映射方式", fields: [["说明", "首期只支持布尔、枚举、数值和单位转换；一条 directive 必须映射到一个物模型属性或标准命令。"], ["异常处理", "多属性编排、异步确认、安全状态机、跨设备动作和非标准云接口不在首期范围，Profile 不可发布。"]] }
       ]
     },
@@ -128,7 +126,6 @@ function render() {
   renderAnnotations();
   renderDrawer();
   applyInstanceFieldHints();
-  applyResourceConfiguration();
   renderModal();
   renderToast();
   refreshNav();
@@ -254,210 +251,16 @@ function applyInstanceFieldHints() {
   });
 }
 
-function defaultLocalizedNames(primary, aliases = "") {
-  return Object.fromEntries(enabledSkillLocales.map((locale) => [locale, { primary: locale === "en-US" ? primary : "", aliases: locale === "en-US" ? aliases : "" }]));
-}
-
-function localizedNames(resource) {
-  if (resource?.localizedNames) return resource.localizedNames;
-  return defaultLocalizedNames(resource?.primary || "", resource?.aliases || "");
-}
-
-function catalogAssets(interfaceId, scope) {
-  const supportedAssets = capabilityCatalog.find((item) => item.id === interfaceId)?.resourceSchema?.supportedAssets?.[scope] || [];
-  return alexaAssetCatalog.filter((asset) => supportedAssets.includes(asset.id) && asset.scope === scope && asset.interfaces.includes(interfaceId));
-}
-
-function selectedCatalogAsset(interfaceId, scope, assetId) {
-  return catalogAssets(interfaceId, scope).find((asset) => asset.id === assetId);
-}
-
-function assetOptions(interfaceId, scope, placeholder) {
-  return [["", placeholder], ...catalogAssets(interfaceId, scope).map((asset) => [asset.id, `${asset.displayName} · ${asset.id}`])];
-}
-
-function createAssetSemanticCard(asset, subject, dataset, confirmed) {
-  const card = document.createElement("div");
-  card.className = "asset-semantic-card";
-  if (!asset) {
-    card.innerHTML = `<strong>未选择标准语义</strong><p>只能选择 Capability Catalog 已同步且适用于当前接口的 Asset。若没有完全等价的标准语义，请改用自定义 Friendly Names。</p>`;
-    return card;
-  }
-  card.innerHTML = `<div class="asset-semantic-card__title"><strong>${escapeHtml(asset.displayName)}</strong><code>${escapeHtml(asset.id)}</code></div><p><b>标准含义：</b>${escapeHtml(asset.description)}</p><p>Alexa 多语言 Friendly Names 由 Global Catalog 管理，产品无需维护。</p>`;
-  const warning = document.createElement("label");
-  warning.className = "asset-semantic-card__confirm";
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.checked = Boolean(confirmed);
-  Object.entries(dataset).forEach(([key, value]) => { checkbox.dataset[key] = String(value); });
-  const text = document.createElement("span");
-  text.textContent = `我已确认 ${subject} 与 Alexa「${asset.displayName}」表达同一业务语义。`;
-  warning.append(checkbox, text);
-  const link = document.createElement("a");
-  link.href = asset.documentationUrl;
-  link.target = "_blank";
-  link.rel = "noreferrer";
-  link.textContent = "查看 Alexa 官方定义";
-  card.append(warning, link);
-  return card;
-}
-
 function resolvedModeMappings(capability, property) {
   if (capability.modeMappings?.length) return capability.modeMappings;
   return (property?.enumValues || []).map((modelValue) => ({
     modelValue,
-    alexaValue: capability.instance ? capability.instance + "." + modelValue : modelValue,
-    modeResources: { source: "custom", localizedNames: defaultLocalizedNames(modelValue.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())) }
+    alexaValue: modelValue.toLowerCase()
   }));
-}
-
-function createResourceInput(labelText, required, value, placeholder, dataset) {
-  const label = document.createElement("label");
-  label.className = "form-row";
-  const title = document.createElement("span");
-  title.textContent = labelText;
-  if (required) { const mark = document.createElement("b"); mark.textContent = "*"; title.append(" ", mark); }
-  const input = document.createElement("input");
-  input.className = "el-input";
-  input.value = value || "";
-  input.placeholder = placeholder;
-  Object.entries(dataset).forEach(([key, item]) => { input.dataset[key] = String(item); });
-  label.append(title, input);
-  return label;
-}
-
-function createResourceSelect(labelText, value, options, dataset) {
-  const label = document.createElement("label");
-  label.className = "form-row";
-  const title = document.createElement("span");
-  title.textContent = labelText;
-  const select = document.createElement("select");
-  select.className = "el-select";
-  options.forEach(([optionValue, optionText]) => {
-    const option = document.createElement("option");
-    option.value = optionValue;
-    option.textContent = optionText;
-    option.selected = optionValue === value;
-    select.append(option);
-  });
-  Object.entries(dataset).forEach(([key, item]) => { select.dataset[key] = String(item); });
-  label.append(title, select);
-  return label;
-}
-
-function applyResourceConfiguration() {
-  document.querySelectorAll(".mapping-item").forEach((article) => {
-    const propertySelect = article.querySelector("[data-capability-field=property]");
-    if (!propertySelect) return;
-    const capabilityIndex = Number(propertySelect.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[capabilityIndex];
-    const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    if (!capability || !requiresCapabilityResources(capability.id) || article.querySelector(".resource-configuration")) return;
-
-    const resources = capability.capabilityResources || {};
-    const config = document.createElement("section");
-    config.className = "resource-configuration";
-    const title = document.createElement("h4");
-    title.textContent = "能力语音名称 ";
-    const schema = document.createElement("span");
-    schema.textContent = "capabilityResources";
-    title.append(schema);
-    const description = document.createElement("p");
-    description.textContent = "此处由 Capability Catalog 的 Resource schema 决定是否需要，不以是否有 instance 判断。机器标识全球统一；用户语义按 Skill 已启用 Locale 声明。存在官方 Asset 时优先引用 Asset；仅自定义产品语义才维护 Momcozy Friendly Names。";
-    const source = resources.source || "custom";
-    const declaration = document.createElement("div");
-    declaration.className = "resource-form-grid";
-    declaration.append(createResourceSelect("声明来源", source, [["asset", "Alexa 标准语义"], ["custom", "自定义产品语义"]], { capabilityIndex, capabilityResourceSource: "source" }));
-    const form = document.createElement("div");
-    form.className = "resource-form-grid resource-form-grid--localized";
-    const names = localizedNames(resources);
-    enabledSkillLocales.forEach((locale) => {
-      const localeNames = names[locale] || {};
-      form.append(
-        createResourceInput(`主名称（${locale}）`, true, localeNames.primary, "例如 Motion", { capabilityIndex, capabilityResourceLocale: locale, capabilityResourceField: "primary" }),
-        createResourceInput(`备用称呼（${locale}，可选）`, false, localeNames.aliases, "例如 Movement, Rocking", { capabilityIndex, capabilityResourceLocale: locale, capabilityResourceField: "aliases" })
-      );
-    });
-    if (source === "asset") {
-      declaration.append(createResourceSelect("Alexa 标准语义", resources.assetId || "", assetOptions(capability.id, "capability", "请选择完全等价的标准语义"), { capabilityIndex, capabilityResourceField: "assetId" }));
-      declaration.append(createAssetSemanticCard(selectedCatalogAsset(capability.id, "capability", resources.assetId), `能力 “${capability.id}”`, { capabilityIndex, capabilityAssetConfirmed: "true" }, resources.semanticConfirmed));
-    }
-    const localeNote = document.createElement("em");
-    localeNote.textContent = source === "asset" ? "仅可选择当前 interface 已允许的 Catalog Asset。平台验证其合法性；产品须确认业务语义等价，不存在完全等价 Asset 时请用自定义语义。" : `继承 Skill 发布治理的已启用 Locale：${enabledSkillLocales.join("、")}；新增 Locale 后平台自动增加对应名称行并要求补齐。`;
-    declaration.append(localeNote);
-    config.append(title, description, declaration);
-    if (source === "custom") config.append(form);
-
-    if (requiresModeResources(capability.id)) {
-      article.querySelector("[data-capability-field=modes]")?.closest("label")?.remove();
-      const modeSection = document.createElement("section");
-      modeSection.className = "mode-resource-configuration";
-      const modeTitle = document.createElement("h4");
-      modeTitle.textContent = "模式映射与语音名称 ";
-      const modeSchema = document.createElement("span");
-      modeSchema.textContent = "supportedModes / modeResources";
-      modeTitle.append(modeSchema);
-      const modeDescription = document.createElement("p");
-      modeDescription.textContent = "mode 值是全球统一机器值；modeResources 按 Skill 已启用 Locale 声明。仅当 Momcozy 枚举与 Alexa 标准语义完全等价时使用 Asset；否则使用自定义 Friendly Names。";
-      const table = document.createElement("div");
-      table.className = "mode-mapping-table";
-      const header = document.createElement("div");
-      header.className = "mode-mapping-table__head";
-      ["Momcozy 枚举值", "Alexa mode 值 *", "声明来源", "模式语义（按已启用 Locale） *"].forEach((text) => { const cell = document.createElement("span"); cell.textContent = text; header.append(cell); });
-      table.append(header);
-      const mappings = resolvedModeMappings(capability, property);
-      mappings.forEach((mapping, mappingIndex) => {
-        const row = document.createElement("div");
-        row.className = "mode-mapping-row";
-        const modelValue = document.createElement("code");
-        modelValue.textContent = mapping.modelValue;
-        const modeResources = mapping.modeResources || { source: mapping.resourceSource || "custom", assetId: mapping.assetId || "", localizedNames: defaultLocalizedNames(mapping.friendlyName || "") };
-        const modeSource = modeResources.source || "custom";
-        const semantics = document.createElement("div");
-        semantics.className = "mode-semantic-fields";
-        let assetCard;
-        if (modeSource === "asset") {
-          semantics.append(createResourceSelect("", modeResources.assetId || "", assetOptions(capability.id, "mode", "请选择完全等价的标准语义"), { capabilityIndex, modeMappingIndex: mappingIndex, modeResourceField: "assetId" }).querySelector("select"));
-          assetCard = createAssetSemanticCard(selectedCatalogAsset(capability.id, "mode", modeResources.assetId), `设备枚举 “${mapping.modelValue}”`, { capabilityIndex, modeMappingIndex: mappingIndex, modeAssetConfirmed: "true" }, modeResources.semanticConfirmed);
-        } else {
-          const names = localizedNames(modeResources);
-          enabledSkillLocales.forEach((locale) => {
-            const field = createResourceInput("", false, names[locale]?.primary, `${locale} 名称`, { capabilityIndex, modeMappingIndex: mappingIndex, modeResourceLocale: locale, modeResourceField: "primary" }).querySelector("input");
-            field.setAttribute("aria-label", `${locale} 模式主名称`);
-            semantics.append(field);
-          });
-        }
-        row.append(modelValue,
-          createResourceInput("", false, mapping.alexaValue, "例如 Crib.MotionMode.Sleep", { capabilityIndex, modeMappingIndex: mappingIndex, modeMappingField: "alexaValue" }).querySelector("input"),
-          createResourceSelect("", modeSource, [["asset", "Alexa 标准语义"], ["custom", "自定义产品语义"]], { capabilityIndex, modeMappingIndex: mappingIndex, modeResourceSource: "source" }).querySelector("select"),
-          semantics
-        );
-        table.append(row);
-        if (assetCard) {
-          const detail = document.createElement("div");
-          detail.className = "mode-asset-detail";
-          detail.append(assetCard);
-          table.append(detail);
-        }
-      });
-      if (!mappings.length) { const empty = document.createElement("div"); empty.className = "resource-empty"; empty.textContent = "当前物模型未登记枚举值，无法配置 ModeController。"; table.append(empty); }
-      modeSection.append(modeTitle, modeDescription, table);
-      config.append(modeSection);
-    }
-    article.append(config);
-  });
 }
 
 function requiresInstance(interfaceId) {
   return Boolean(capabilityCatalog.find((item) => item.id === interfaceId)?.instanceRequired);
-}
-
-function requiresCapabilityResources(interfaceId) {
-  return capabilityCatalog.find((item) => item.id === interfaceId)?.resourceSchema?.capability === "required";
-}
-
-function requiresModeResources(interfaceId) {
-  return capabilityCatalog.find((item) => item.id === interfaceId)?.resourceSchema?.mode === "required";
 }
 
 function compatibleCapabilities(propertyId) {
@@ -496,16 +299,21 @@ function renderFieldTags(tags) {
   return `<div class="field-type-tags">${tags.map(([label, type]) => `<span class="field-type-tag field-type-tag--${type}">${escapeHtml(label)}</span>`).join("")}</div>`;
 }
 
+function renderModeMappings(capability, property, capabilityIndex) {
+  const mappings = resolvedModeMappings(capability, property);
+  if (!property?.enumValues?.length) return `<div class="mapping-empty">当前属性未登记枚举值，不能用于 ModeController。</div>`;
+  return `<section class="mode-mapping"><div class="mode-mapping__heading"><strong>模式值映射</strong><span>每个物模型枚举值必须对应一个 Alexa mode 值。</span></div><div class="mode-mapping-table"><div class="mode-mapping-table__head"><span>Momcozy 枚举值</span><span>Alexa mode 值 <b>*</b></span></div>${mappings.map((mapping, mappingIndex) => `<div class="mode-mapping-row"><code>${escapeHtml(mapping.modelValue)}</code><input class="el-input" data-capability-index="${capabilityIndex}" data-mode-mapping-index="${mappingIndex}" data-mode-mapping-field="alexaValue" value="${escapeHtml(mapping.alexaValue || "")}" placeholder="例如 sleep" /></div>`).join("")}</div><p class="mode-mapping__help">保存机器值即可。平台按 Capability 模板生成 Discovery 所需的 <code>supportedModes</code> 和资源声明；无需配置 Asset、多语言或 Friendly Name。</p></section>`;
+}
+
 function renderMappingSection(draft) {
   const readyCount = capabilityCatalog.filter((item) => item.status === "profile_ready").length;
-  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>先选择产品已有物模型属性，再从匹配的已发布 capability 中选择；覆盖范围以能力覆盖决策清单为准。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
+  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>先选择产品已有物模型属性，再从匹配的已发布 capability 中选择。首期只配置读写映射和必要的机器标识。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
     const capabilityMeta = capabilityCatalog.find((item) => item.id === capability.id);
     const propertyMeta = modelPropertyCatalog.find((item) => item.id === capability.property);
     const matchingCapabilities = compatibleCapabilities(capability.property);
     const instanceRequired = requiresInstance(capability.id);
-    const resourceRequired = requiresCapabilityResources(capability.id);
     const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
-    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"], [resourceRequired ? "需多语言资源声明" : capabilityMeta ? "资源声明不适用" : "等待 capability", resourceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>模板由匹配的通用 Adapter 能力包决定，产品不能改写协议处理逻辑。</em></div>${capability.id === "ModeController" ? `<label class="form-row form-row--wide"><span>Supported modes <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="modes" value="${escapeHtml(capability.modes || "")}" placeholder="SLEEP, SOOTHING, PLAY" /><em>枚举值会写入 Discovery capabilityConfiguration。</em></label>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
+    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>平台模板将 Alexa 指令转换为物模型读写；产品不配置 Lambda 或协议细节。</em></div>${capability.id === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(capability, propertyMeta, index)}</div>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
   }).join("")}</div></section>`;
 }
 
@@ -636,77 +444,6 @@ function handleInput(event) {
     updateProductAlexaSupport(target.checked);
     return;
   }
-  if (target.dataset.capabilityResourceSource && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    updateCapability(index, "capabilityResources", { ...(capability?.capabilityResources || {}), source: target.value, semanticConfirmed: false });
-    state.editor.validation = null;
-    render();
-    return;
-  }
-  if (target.dataset.capabilityResourceField && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    const resources = { ...(capability?.capabilityResources || {}) };
-    if (target.dataset.capabilityResourceLocale) {
-      resources.localizedNames = { ...localizedNames(resources), [target.dataset.capabilityResourceLocale]: { ...(localizedNames(resources)[target.dataset.capabilityResourceLocale] || {}), [target.dataset.capabilityResourceField]: target.value } };
-    } else {
-      resources[target.dataset.capabilityResourceField] = target.value;
-      if (target.dataset.capabilityResourceField === "assetId") resources.semanticConfirmed = false;
-    }
-    updateCapability(index, "capabilityResources", resources);
-    state.editor.validation = null;
-    if (target.dataset.capabilityResourceField === "assetId") render();
-    return;
-  }
-  if (target.dataset.capabilityAssetConfirmed && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    updateCapability(index, "capabilityResources", { ...(capability?.capabilityResources || {}), semanticConfirmed: target.checked });
-    state.editor.validation = null;
-    return;
-  }
-  if (target.dataset.modeResourceSource && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    const mappings = resolvedModeMappings(capability, property).map((item) => ({ ...item, modeResources: { ...(item.modeResources || {}) } }));
-    const mapping = mappings[Number(target.dataset.modeMappingIndex)];
-    mapping.modeResources = { ...(mapping.modeResources || {}), source: target.value, semanticConfirmed: false };
-    updateCapability(index, "modeMappings", mappings);
-    state.editor.validation = null;
-    render();
-    return;
-  }
-  if (target.dataset.modeResourceField && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    const mappings = resolvedModeMappings(capability, property).map((item) => ({ ...item, modeResources: { ...(item.modeResources || {}) } }));
-    const mapping = mappings[Number(target.dataset.modeMappingIndex)];
-    const resources = mapping.modeResources || {};
-    if (target.dataset.modeResourceLocale) {
-      resources.localizedNames = { ...localizedNames(resources), [target.dataset.modeResourceLocale]: { ...(localizedNames(resources)[target.dataset.modeResourceLocale] || {}), [target.dataset.modeResourceField]: target.value } };
-    } else {
-      resources[target.dataset.modeResourceField] = target.value;
-      if (target.dataset.modeResourceField === "assetId") resources.semanticConfirmed = false;
-    }
-    mapping.modeResources = resources;
-    updateCapability(index, "modeMappings", mappings);
-    state.editor.validation = null;
-    if (target.dataset.modeResourceField === "assetId") render();
-    return;
-  }
-  if (target.dataset.modeAssetConfirmed && state.editor.open) {
-    const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    const mappings = resolvedModeMappings(capability, property).map((item) => ({ ...item, modeResources: { ...(item.modeResources || {}) } }));
-    mappings[Number(target.dataset.modeMappingIndex)].modeResources.semanticConfirmed = target.checked;
-    updateCapability(index, "modeMappings", mappings);
-    state.editor.validation = null;
-    return;
-  }
   if (target.dataset.modeMappingIndex !== undefined && state.editor.open) {
     const index = Number(target.dataset.capabilityIndex);
     const capability = state.editor.draft.capabilities[index];
@@ -726,8 +463,6 @@ function handleInput(event) {
       updateCapability(index, "id", "");
       updateCapability(index, "instance", "");
       updateCapability(index, "mapping", "pending");
-      updateCapability(index, "modes", undefined);
-      updateCapability(index, "capabilityResources", undefined);
       updateCapability(index, "modeMappings", undefined);
       updateCapability(index, "supportedOperations", undefined);
       state.editor.validation = null;
@@ -738,10 +473,7 @@ function handleInput(event) {
       const catalogItem = capabilityCatalog.find((item) => item.id === target.value);
       updateCapability(index, "instance", requiresInstance(target.value) ? "" : "");
       updateCapability(index, "mapping", catalogItem?.template || "pending");
-      if (target.value === "ModeController") updateCapability(index, "modes", "");
-      else updateCapability(index, "modes", undefined);
-      updateCapability(index, "capabilityResources", requiresCapabilityResources(target.value) ? { source: "custom", localizedNames: defaultLocalizedNames("") } : undefined);
-      updateCapability(index, "modeMappings", requiresModeResources(target.value) ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
+      updateCapability(index, "modeMappings", target.value === "ModeController" ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
       if (target.value === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");
       else updateCapability(index, "supportedOperations", undefined);
       state.editor.validation = null;
