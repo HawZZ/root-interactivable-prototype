@@ -267,10 +267,19 @@ body { overflow-x: hidden; }
 .mode-mapping-table__head, .mode-mapping-row { display: grid; grid-template-columns: minmax(92px, .7fr) minmax(140px, 1.15fr) minmax(116px, .85fr) minmax(140px, 1fr); gap: 8px; align-items: center; padding: 8px 10px; }
 .mode-mapping-table__head { color: #5f7285; background: #f1f6fb; font-size: 10px; }
 .mode-mapping-row { border-top: 1px solid #edf1f5; }
+.mode-asset-detail { padding: 0 10px 10px; border-top: 0; }
 .mode-mapping-row code { color: #35506a; font-size: 11px; }
 .mode-mapping-row .el-input { min-width: 0; }
 .mode-semantic-fields { display: grid; gap: 6px; }
 .mode-semantic-fields .el-input { min-width: 0; }
+.asset-semantic-card { display: grid; gap: 6px; padding: 10px; border: 1px solid #c7dced; border-left: 3px solid #4d8edf; border-radius: 4px; background: #f5f9fe; color: #38516a; font-size: 11px; line-height: 1.5; }
+.resource-form-grid > .asset-semantic-card { grid-column: 1 / -1; }
+.asset-semantic-card p { margin: 0; }
+.asset-semantic-card__title { display: flex; align-items: baseline; gap: 8px; }
+.asset-semantic-card code { color: #355f8c; font-size: 10px; }
+.asset-semantic-card__confirm { display: flex; align-items: flex-start; gap: 7px; padding-top: 6px; border-top: 1px solid #d7e6f4; color: #7b4b00; font-weight: 600; }
+.asset-semantic-card__confirm input { margin-top: 2px; accent-color: var(--el-color-primary); }
+.asset-semantic-card a { color: var(--el-color-primary); font-weight: 600; text-decoration: none; }
 .resource-empty { padding: 12px; color: var(--el-text-color-secondary); font-size: 11px; }
 .reporting-card { border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
 .reporting-card .form-row { padding: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }
