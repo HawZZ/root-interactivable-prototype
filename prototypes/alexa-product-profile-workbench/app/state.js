@@ -12,14 +12,19 @@ export const skillLocales = [
   ["zh-CN", "中文"], ["en-US", "英语（默认）"], ["de-DE", "德语"], ["fr-FR", "法语"], ["zh-TW", "中文繁体"], ["it-IT", "意大利语"], ["pt-BR", "葡萄牙语"], ["es-ES", "西班牙语"], ["ar-SA", "阿拉伯语"], ["vi-VN", "越南语"], ["id-ID", "印尼语"], ["th-TH", "泰语"], ["ms-MY", "马来语"], ["ja-JP", "日语"], ["ru-RU", "俄语"], ["fil-PH", "菲律宾语"], ["en-GB", "英语（英国）"], ["es-MX", "西班牙语（墨西哥）"]
 ];
 
-// Platform-owned resource KV. Product Profiles only reference these stable keys.
+// Platform-owned resource KV. Mode mappings store Alexa Values; the platform resolves the matching key.
 export const resourceRegistry = [
-  { key: "ModeController.CribMotionMode", scope: "capability", capability: "ModeController", semantic: "婴儿床运动模式名称", values: { "en-US": "Motion Mode", "de-DE": "Bewegungsmodus" }, status: "published", version: 1, usage: 1 },
-  { key: "ModeController.SLEEP", scope: "mode", capability: "ModeController", semantic: "睡眠模式", values: { "en-US": "Sleep", "de-DE": "Schlafmodus" }, status: "published", version: 1, usage: 1 },
-  { key: "ModeController.SOFT_ROCKING", scope: "mode", capability: "ModeController", semantic: "轻柔摇摆模式", values: { "en-US": "Soft Rocking", "de-DE": "Sanftes Wiegen" }, status: "published", version: 1, usage: 1 },
-  { key: "ModeController.PLAY", scope: "mode", capability: "ModeController", semantic: "播放模式", values: { "en-US": "Play", "de-DE": "Wiedergabe" }, status: "published", version: 1, usage: 1 },
-  { key: "RangeController.CribMotionIntensity", scope: "capability", capability: "RangeController", semantic: "婴儿床运动强度名称", values: { "en-US": "Motion Intensity", "de-DE": "Bewegungsintensität" }, status: "published", version: 1, usage: 1 },
-  { key: "ModeController.CALM", scope: "mode", capability: "ModeController", semantic: "平静模式", values: { "en-US": "Calm" }, status: "draft", version: 1, usage: 0 }
+  { key: "ModeController.CribMotionMode", scope: "capability", capability: "ModeController", instance: "Crib.MotionMode", semantic: "婴儿床运动模式名称", values: { "en-US": "Motion Mode", "de-DE": "Bewegungsmodus" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.SLEEP", scope: "mode", capability: "ModeController", modeValue: "SLEEP", semantic: "睡眠模式", values: { "en-US": "Sleep", "de-DE": "Schlafmodus" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.SOFT_ROCKING", scope: "mode", capability: "ModeController", modeValue: "SOFT_ROCKING", semantic: "轻柔摇摆模式", values: { "en-US": "Soft Rocking", "de-DE": "Sanftes Wiegen" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.PLAY", scope: "mode", capability: "ModeController", modeValue: "PLAY", semantic: "播放模式", values: { "en-US": "Play", "de-DE": "Wiedergabe" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.WorkMode", scope: "capability", capability: "ModeController", instance: "Device.WorkMode", semantic: "设备工作模式名称", values: { "en-US": "Work Mode", "de-DE": "Betriebsmodus" }, status: "published", version: 1, usage: 0 },
+  { key: "ModeController.IDLE", scope: "mode", capability: "ModeController", modeValue: "IDLE", semantic: "空闲工作模式", values: { "en-US": "Idle", "de-DE": "Leerlauf" }, status: "published", version: 1, usage: 0 },
+  { key: "ModeController.FULL_LOAD", scope: "mode", capability: "ModeController", modeValue: "FULL_LOAD", semantic: "满载工作模式", values: { "en-US": "Full Load", "de-DE": "Volllast" }, status: "published", version: 1, usage: 0 },
+  { key: "ModeController.HALF_LOAD", scope: "mode", capability: "ModeController", modeValue: "HALF_LOAD", semantic: "半载工作模式", values: { "en-US": "Half Load", "de-DE": "Halbe Beladung" }, status: "published", version: 1, usage: 0 },
+  { key: "ModeController.LOW_POWER", scope: "mode", capability: "ModeController", modeValue: "LOW_POWER", semantic: "低功率工作模式", values: { "en-US": "Low Power", "de-DE": "Niedriger Energieverbrauch" }, status: "published", version: 1, usage: 0 },
+  { key: "RangeController.CribMotionIntensity", scope: "capability", capability: "RangeController", instance: "Crib.MotionIntensity", semantic: "婴儿床运动强度名称", values: { "en-US": "Motion Intensity", "de-DE": "Bewegungsintensität" }, status: "published", version: 1, usage: 1 },
+  { key: "ModeController.CALM", scope: "mode", capability: "ModeController", modeValue: "CALM", semantic: "平静模式", values: { "en-US": "Calm" }, status: "draft", version: 1, usage: 0 }
 ];
 
 export function getResource(key) {
@@ -28,6 +33,14 @@ export function getResource(key) {
 
 export function resourcesFor(capability, scope) {
   return resourceRegistry.filter((item) => item.capability === capability && item.scope === scope && item.status === "published");
+}
+
+export function modeResourceFor(capability, modeValue) {
+  return resourceRegistry.find((item) => item.capability === capability && item.scope === "mode" && item.modeValue === modeValue && item.status === "published");
+}
+
+export function capabilityResourceFor(capability, instance) {
+  return resourceRegistry.find((item) => item.capability === capability && item.scope === "capability" && item.status === "published" && item.instance === instance);
 }
 
 export const statusMeta = {
@@ -43,7 +56,7 @@ const profileReadyCapabilities = [
   { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", propertyIds: ["power"] },
   { id: "BrightnessController", group: "灯光", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持设置和增减亮度", directives: ["SetBrightness", "AdjustBrightness"], status: "profile_ready", template: "direct_property", propertyIds: ["brightness"] },
   { id: "ColorController", group: "灯光", type: "Color HSB Object", support: "结构化映射", hint: "彩灯颜色，保持当前亮度", directives: ["SetColor"], status: "profile_ready", template: "structured_hsb", propertyIds: ["color_hsb"] },
-  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "必须声明 instance，并逐项映射物模型枚举值", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability", "mode"], propertyIds: ["motion_mode"] },
+  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "仅用于可写、可查询的离散模式；必须声明 instance，并逐项映射物模型枚举值", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability", "mode"], propertyKinds: ["enum"], requiresWritable: true },
   { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "需实例", hint: "适用于等级、强度等通用范围", directives: ["SetRangeValue", "AdjustRangeValue"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability"], propertyIds: ["motion_level"] },
   { id: "ToggleController", group: "通用控制", type: "Boolean", support: "需实例", hint: "单设备内独立开关能力", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability"], propertyTypes: ["Boolean"] },
   { id: "Speaker", group: "音频", type: "Integer 0-100", support: "标准音量", hint: "连续音量 0-100", directives: ["SetVolume", "AdjustVolume"], status: "profile_ready", template: "speaker_volume", propertyIds: ["volume_0_100"] },
@@ -71,16 +84,21 @@ const officialMetadataOnlyCapabilities = [
 export const capabilityCatalog = [...profileReadyCapabilities, ...officialMetadataOnlyCapabilities];
 
 export const modelPropertyCatalog = [
-  { id: "power", label: "电源开关", type: "Boolean", unit: "-" },
-  { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%" },
-  { id: "color_hsb", label: "彩灯颜色", type: "ColorHSB", unit: "HSB" },
-  { id: "motion_mode", label: "运动模式", type: "Enum", unit: "-", enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
-  { id: "motion_level", label: "运动强度", type: "Integer", unit: "level" },
-  { id: "volume_0_100", label: "扬声器音量", type: "Integer", unit: "%" },
-  { id: "playback_command", label: "播放控制命令", type: "Command", unit: "-" },
-  { id: "playback_state", label: "播放状态", type: "Enum", unit: "-" },
-  { id: "device_online", label: "设备在线状态", type: "Boolean", unit: "-" }
+  { id: "power", label: "电源开关", type: "Boolean", unit: "-", readable: true, writable: true },
+  { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%", readable: true, writable: true },
+  { id: "color_hsb", label: "彩灯颜色", type: "ColorHSB", unit: "HSB", readable: true, writable: true },
+  { id: "motion_mode", label: "运动模式", type: "Enum", valueKind: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
+  { id: "work_mode", label: "工作模式（int 枚举示例）", type: "Integer", valueKind: "enum", unit: "-", readable: true, writable: true, enumValues: [{ value: "0", label: "空闲" }, { value: "1", label: "满载" }, { value: "2", label: "半载" }, { value: "3", label: "低功率" }] },
+  { id: "motion_level", label: "运动强度", type: "Integer", unit: "level", readable: true, writable: true },
+  { id: "volume_0_100", label: "扬声器音量", type: "Integer", unit: "%", readable: true, writable: true },
+  { id: "playback_command", label: "播放控制命令", type: "Command", unit: "-", readable: false, writable: true },
+  { id: "playback_state", label: "播放状态", type: "Enum", valueKind: "enum", unit: "-", readable: true, writable: false },
+  { id: "device_online", label: "设备在线状态", type: "Boolean", unit: "-", readable: true, writable: false }
 ];
+
+export function enumEntries(property) {
+  return (property?.enumValues || []).map((item) => typeof item === "object" ? { value: String(item.value), label: item.label || String(item.value) } : { value: String(item), label: String(item) });
+}
 
 const profiles = [
   {
@@ -115,8 +133,8 @@ const profiles = [
     updatedBy: "陈静",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { id: "ModeController", instance: "Crib.MotionMode", capabilityResourceKey: "ModeController.CribMotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modeMappings: [{ modelValue: "SLEEP", resourceKey: "ModeController.SLEEP" }, { modelValue: "SOFT_ROCKING", resourceKey: "ModeController.SOFT_ROCKING" }, { modelValue: "PLAY", resourceKey: "ModeController.PLAY" }] },
-      { id: "RangeController", instance: "Crib.MotionIntensity", capabilityResourceKey: "RangeController.CribMotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5" }
+      { id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct", readOnly: false, modeMappings: [{ modelValue: "SLEEP", alexaValue: "SLEEP" }, { modelValue: "SOFT_ROCKING", alexaValue: "SOFT_ROCKING" }, { modelValue: "PLAY", alexaValue: "PLAY" }] },
+      { id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct", readOnly: false, range: "1-5" }
     ]
   },
   {
@@ -253,7 +271,7 @@ export function openResourceEditor(key = "") {
   state.resourceEditor = {
     open: true,
     sourceKey: key,
-    draft: clone(source || { key: "", capability: "ModeController", scope: "mode", semantic: "", values: { "en-US": "", "de-DE": "" }, status: "draft", version: 1, usage: 0 }),
+    draft: clone(source || { key: "", capability: "ModeController", scope: "mode", instance: "", modeValue: "", semantic: "", values: { "en-US": "", "de-DE": "" }, status: "draft", version: 1, usage: 0 }),
     validation: null
   };
   emit();
@@ -279,9 +297,15 @@ export function validateResourceDraft() {
   if (!draft.semantic?.trim()) errors.push("请填写资源语义说明，供维护者判断复用范围。");
   if (!draft.capability) errors.push("请选择所属 Alexa capability。");
   if (!draft.scope) errors.push("请选择资源范围。");
+  if (draft.scope === "capability" && !instanceNamePattern.test(draft.instance?.trim() || "")) errors.push("能力名称资源须绑定 instance：1-64 位、英文字母开头，仅含字母、数字、点、下划线和连字符。");
+  if (draft.scope === "mode" && !instanceNamePattern.test(draft.modeValue?.trim() || "")) errors.push("Alexa mode 值须为 1-64 位、英文字母开头，仅含字母、数字、点、下划线和连字符。它是 Discovery / Directive / StateReport 使用的机器值。");
   if (!draft.values?.[localePolicy.baseLocale]?.trim()) errors.push(`必须填写 ${localePolicy.baseLocale}（英语默认）词条。`);
   const duplicate = resourceRegistry.find((item) => item.key === draft.key && item.key !== state.resourceEditor.sourceKey);
   if (duplicate) errors.push(`Resource Key “${draft.key}” 已存在。`);
+  const duplicatedModeValue = draft.scope === "mode" && resourceRegistry.find((item) => item.scope === "mode" && item.capability === draft.capability && item.modeValue === draft.modeValue && item.key !== state.resourceEditor.sourceKey);
+  if (duplicatedModeValue) errors.push(`Alexa mode 值 “${draft.modeValue}” 已被 ${duplicatedModeValue.key} 使用。`);
+  const duplicatedCapabilityInstance = draft.scope === "capability" && resourceRegistry.find((item) => item.scope === "capability" && item.capability === draft.capability && item.instance === draft.instance && item.key !== state.resourceEditor.sourceKey);
+  if (duplicatedCapabilityInstance) errors.push(`instance “${draft.instance}” 已被 ${duplicatedCapabilityInstance.key} 绑定。`);
   state.resourceEditor.validation = { errors, passed: errors.length === 0 };
   emit();
   return state.resourceEditor.validation;
@@ -414,21 +438,31 @@ export function runValidation() {
       else if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
       else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
       else instanceOwners.set(instance, capability.id);
-      if (catalogItem?.resourceScopes?.includes("capability")) validateResource(capability.capabilityResourceKey, "capability", capability.id, `${capability.id} 的能力名称`);
+      if (catalogItem?.resourceScopes?.includes("capability")) {
+        const resource = capabilityResourceFor(capability.id, instance);
+        if (!resource) errors.push(`能力与映射：${capability.id} 的 instance “${instance}” 尚未维护已发布能力名称 Resource KV。`);
+        else validateResource(resource.key, "capability", capability.id, `${capability.id} 的能力名称`);
+      }
     }
     if (capability.id === "ModeController") {
       const mappings = capability.modeMappings || [];
-      const enumValues = modelPropertyCatalog.find((item) => item.id === capability.property)?.enumValues || [];
+      const enumValues = enumEntries(modelPropertyCatalog.find((item) => item.id === capability.property));
       if (!enumValues.length) errors.push("能力与映射：ModeController 只能绑定已登记枚举值的物模型属性。");
       if (mappings.length !== enumValues.length) errors.push("能力与映射：ModeController 必须映射物模型的全部枚举值。");
       const modelValues = new Set();
+      const alexaModeValues = new Set();
       mappings.forEach((mapping) => {
-        if (!mapping.modelValue || !mapping.resourceKey) errors.push("能力与映射：每个模式都必须关联一个平台多语言资源 Key。");
-        else if (!enumValues.includes(mapping.modelValue)) errors.push(`能力与映射：模式 “${mapping.modelValue}” 不属于已绑定物模型属性。`);
+        if (!mapping.modelValue || !mapping.alexaValue) errors.push("能力与映射：每个物模型枚举值都必须映射一个 Alexa Value。");
+        else if (!enumValues.some((item) => item.value === String(mapping.modelValue))) errors.push(`能力与映射：模式 “${mapping.modelValue}” 不属于已绑定物模型属性。`);
         else if (modelValues.has(mapping.modelValue)) errors.push(`能力与映射：物模型枚举值 “${mapping.modelValue}” 不可重复。`);
         else {
           modelValues.add(mapping.modelValue);
-          validateResource(mapping.resourceKey, "mode", capability.id, `模式 ${mapping.modelValue}`);
+          const resource = modeResourceFor(capability.id, mapping.alexaValue);
+          if (!resource) errors.push(`能力与映射：Alexa Value “${mapping.alexaValue}” 尚未维护多语言 Resource KV。`);
+          else validateResource(resource.key, "mode", capability.id, `Alexa Value ${mapping.alexaValue}`);
+          if (!resource?.modeValue) errors.push(`能力与映射：Alexa Value ${mapping.alexaValue} 未维护稳定机器值。`);
+          else if (alexaModeValues.has(resource.modeValue)) errors.push(`能力与映射：Alexa mode 值 “${resource.modeValue}” 在同一 ModeController 中不可重复。`);
+          else alexaModeValues.add(resource.modeValue);
         }
       });
     }
