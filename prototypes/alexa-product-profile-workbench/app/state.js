@@ -56,9 +56,9 @@ const profileReadyCapabilities = [
   { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", propertyIds: ["power"] },
   { id: "BrightnessController", group: "灯光", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持设置和增减亮度", directives: ["SetBrightness", "AdjustBrightness"], status: "profile_ready", template: "direct_property", propertyIds: ["brightness"] },
   { id: "ColorController", group: "灯光", type: "Color HSB Object", support: "结构化映射", hint: "彩灯颜色，保持当前亮度", directives: ["SetColor"], status: "profile_ready", template: "structured_hsb", propertyIds: ["color_hsb"] },
-  { id: "ModeController", group: "通用控制", type: "Enum", support: "需实例", hint: "仅用于可写、可查询的离散模式；必须声明 instance，并逐项映射物模型枚举值", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability", "mode"], propertyKinds: ["enum"], requiresWritable: true },
-  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "需实例", hint: "适用于等级、强度等通用范围", directives: ["SetRangeValue", "AdjustRangeValue"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability"], propertyIds: ["motion_level"] },
-  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "需实例", hint: "单设备内独立开关能力", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", instanceRequired: true, resourceScopes: ["capability"], propertyTypes: ["Boolean"] },
+  { id: "ModeController", group: "通用控制", type: "Enum", support: "Instance 必填", hint: "仅用于可写、可查询的离散模式；Catalog 要求声明 instance，并逐项映射物模型枚举值", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceSupport: "required", resourceScopes: ["capability", "mode"], propertyKinds: ["enum"], requiresWritable: true },
+  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "Instance 可选", hint: "适用于等级、强度等通用范围；多个同类语义对象时填写 instance", directives: ["SetRangeValue", "AdjustRangeValue"], status: "profile_ready", template: "direct_property", instanceSupport: "optional", resourceScopes: ["capability"], propertyIds: ["motion_level"] },
+  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "Instance 可选", hint: "单设备内独立开关能力；多个同类开关语义时填写 instance", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", instanceSupport: "optional", resourceScopes: ["capability"], propertyTypes: ["Boolean"] },
   { id: "Speaker", group: "音频", type: "Integer 0-100", support: "标准音量", hint: "连续音量 0-100", directives: ["SetVolume", "AdjustVolume"], status: "profile_ready", template: "speaker_volume", propertyIds: ["volume_0_100"] },
   { id: "PlaybackController", group: "音频", type: "Command", support: "操作映射", hint: "按已声明操作控制播放", directives: ["Play", "Pause", "Stop"], status: "profile_ready", template: "playback_operations", propertyIds: ["playback_command"] },
   { id: "PlaybackStateReporter", group: "音频状态", type: "Enum", support: "状态映射", hint: "上报 PLAYING / PAUSED / STOPPED", directives: [], status: "profile_ready", template: "playback_state", propertyIds: ["playback_state"] },
@@ -432,10 +432,12 @@ export function runValidation() {
     if (!capability.id) errors.push("能力与映射：请选择与物模型属性匹配的 Alexa capability。");
     else if (!catalogItem || catalogItem.status !== "profile_ready") errors.push(`能力与映射：${capability.id} 尚未完成通用 Adapter 能力包，不能发布。`);
     if (!capability.property.trim()) errors.push(`能力与映射：${capability.id} 未绑定 Momcozy 物模型属性。`);
-    if (catalogItem?.instanceRequired) {
-      const instance = capability.instance?.trim() || "";
-      if (!instance) errors.push(`能力与映射：${capability.id} 必须声明 instance。`);
-      else if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
+    const instanceSupport = catalogItem?.instanceSupport || "none";
+    const instance = capability.instance?.trim() || "";
+    if (instanceSupport === "required" && !instance) errors.push(`能力与映射：${capability.id} 的 Capability Catalog 要求声明 instance。`);
+    if (instanceSupport === "none" && instance) errors.push(`能力与映射：${capability.id} 不支持 instance，不能填写。`);
+    if (instanceSupport !== "none" && instance) {
+      if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
       else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
       else instanceOwners.set(instance, capability.id);
       if (catalogItem?.resourceScopes?.includes("capability")) {
