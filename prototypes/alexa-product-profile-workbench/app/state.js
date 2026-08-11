@@ -12,6 +12,20 @@ export const skillLocales = [
   ["zh-CN", "中文"], ["en-US", "英语（默认）"], ["de-DE", "德语"], ["fr-FR", "法语"], ["zh-TW", "中文繁体"], ["it-IT", "意大利语"], ["pt-BR", "葡萄牙语"], ["es-ES", "西班牙语"], ["ar-SA", "阿拉伯语"], ["vi-VN", "越南语"], ["id-ID", "印尼语"], ["th-TH", "泰语"], ["ms-MY", "马来语"], ["ja-JP", "日语"], ["ru-RU", "俄语"], ["fil-PH", "菲律宾语"], ["en-GB", "英语（英国）"], ["es-MX", "西班牙语（墨西哥）"]
 ];
 
+// Platform-owned subset of Alexa's official Discovery displayCategories. Product
+// profiles select one primary display category; the Adapter emits it as a one-item array.
+export const endpointDisplayCategoryCatalog = [
+  { id: "LIGHT", label: "LIGHT", semantic: "灯具或夜灯", status: "profile_ready" },
+  { id: "SPEAKER", label: "SPEAKER", semantic: "扬声器或白噪音设备", status: "profile_ready" },
+  { id: "AIR_PURIFIER", label: "AIR_PURIFIER", semantic: "空气净化器", status: "profile_ready" },
+  { id: "FAN", label: "FAN", semantic: "风扇", status: "profile_ready" },
+  { id: "SMARTPLUG", label: "SMARTPLUG", semantic: "智能插座", status: "profile_ready" },
+  { id: "SWITCH", label: "SWITCH", semantic: "墙壁开关或独立开关", status: "profile_ready" },
+  { id: "TEMPERATURE_SENSOR", label: "TEMPERATURE_SENSOR", semantic: "温度传感器", status: "profile_ready" },
+  { id: "THERMOSTAT", label: "THERMOSTAT", semantic: "温控设备", status: "profile_ready" },
+  { id: "OTHER", label: "OTHER", semantic: "尚无准确官方分类的设备", status: "profile_ready" }
+];
+
 // Platform-owned resource KV. Mode mappings store Alexa Values; the platform resolves the matching key.
 export const resourceRegistry = [
   { key: "ModeController.CribMotionMode", scope: "capability", capability: "ModeController", instance: "Crib.MotionMode", semantic: "婴儿床运动模式名称", values: { "en-US": "Motion Mode", "de-DE": "Bewegungsmodus" }, status: "published", version: 1, usage: 1 },
@@ -107,7 +121,7 @@ const profiles = [
     name: "Bedside Light v1",
     productKey: "momcozy.bedside_light.v1",
     category: "Night Light",
-    endpointType: "LIGHT",
+    displayCategory: "LIGHT",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "published",
@@ -125,7 +139,7 @@ const profiles = [
     name: "Smart Crib Motion v1",
     productKey: "momcozy.smart_crib.motion.v1",
     category: "Smart Crib",
-    endpointType: "OTHER",
+    displayCategory: "OTHER",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
@@ -143,7 +157,7 @@ const profiles = [
     name: "White Noise Pro v2",
     productKey: "momcozy.white_noise.pro.v2",
     category: "Sound Device",
-    endpointType: "OTHER",
+    displayCategory: "SPEAKER",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",
@@ -355,7 +369,7 @@ export function openProductProfile(productId) {
     draft.productKey = product.id;
     draft.name = `${product.name} Alexa Profile`;
     draft.category = product.category;
-    draft.endpointType = product.category === "Night Light" ? "LIGHT" : "OTHER";
+    draft.displayCategory = product.category === "Night Light" ? "LIGHT" : product.category === "Sound Device" ? "SPEAKER" : "OTHER";
   }
   state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft, productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false };
   emit();
@@ -425,6 +439,7 @@ export function runValidation() {
   };
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
   if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
+  if (!endpointDisplayCategoryCatalog.some((item) => item.id === draft.displayCategory && item.status === "profile_ready")) errors.push("基础信息：请选择平台已启用的 Alexa Endpoint 显示分类。");
   if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
   if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个可发现的 Alexa capability。");
   draft.capabilities.forEach((capability) => {
@@ -572,7 +587,7 @@ function createEmptyProfile() {
     name: "",
     productKey: "",
     category: "Night Light",
-    endpointType: "LIGHT",
+    displayCategory: "LIGHT",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
     status: "draft",

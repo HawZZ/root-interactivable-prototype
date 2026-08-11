@@ -11,6 +11,7 @@ import {
   closeEditor,
   closeModal,
   dashboard,
+  endpointDisplayCategoryCatalog,
   filteredProfiles,
   getProfile,
   logData,
@@ -46,7 +47,7 @@ import {
   validateResourceDraft,
   addCapability,
   removeCapability
-} from "./state.js?v=20260811e";
+} from "./state.js?v=20260811f";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -107,7 +108,7 @@ const annotations = {
       context: "配置抽屉 / 基础信息",
       summary: "Profile 是产品级声明。产品团队只维护 endpoint 与物模型映射；运行时 Adapter、错误映射和 Skill 地区由平台统一治理。",
       items: [
-        { n: 4, title: "产品与 Endpoint 定义", location: "关联位置：配置抽屉 > 基础信息", fields: [["说明", "产品 Key 必须绑定既有 IoT 产品；Endpoint 类型决定 Alexa Discovery 分类；BLE 与 Wi-Fi 复用同一物模型控制语义。"], ["校验规则", "名称和 Product Key 必填；启用 Alexa 后仍停留在本步骤，待基础信息完成后再进入能力映射。"], ["状态/差异", "多路开关为单一 endpoint；网关及子设备独立呈现；解绑再绑定生成新 endpointId；虚拟设备和 Group 不暴露。"]] }
+        { n: 4, title: "产品与 Endpoint 定义", location: "关联位置：配置抽屉 > 基础信息", fields: [["说明", "产品 Key 必须绑定既有 IoT 产品；Endpoint 显示分类对应 Alexa Discovery displayCategories[0]，决定 Alexa App 的类型、图标与控制页；它不等于产品分类或 capability。"], ["校验规则", "名称、Product Key 和平台 Catalog 中已启用的显示分类必填；首期仅输出一个主分类，不能自定义或由 capability 自动推导。"], ["状态/差异", "多路开关为单一 endpoint；网关及子设备独立呈现；解绑再绑定生成新 endpointId；虚拟设备和 Group 不暴露。"]] }
       ]
     },
     mapping: {
@@ -197,7 +198,7 @@ function renderProfilesPage() {
         <div class="toolbar-note"><span class="status-dot status-dot--success"></span> 最近一次 Adapter Contract 校验：通过</div>
       </div>
       <table class="el-table profile-table">
-        <thead><tr><th style="width:42px"><input class="el-checkbox" type="checkbox" aria-label="全选" /></th><th>Profile 名称</th><th>产品分类 / Endpoint</th><th>共享 Adapter</th><th>Capability</th><th>状态</th><th>最近更新</th><th class="col-ops">操作</th></tr></thead>
+        <thead><tr><th style="width:42px"><input class="el-checkbox" type="checkbox" aria-label="全选" /></th><th>Profile 名称</th><th>产品分类 / 显示分类</th><th>共享 Adapter</th><th>Capability</th><th>状态</th><th>最近更新</th><th class="col-ops">操作</th></tr></thead>
         <tbody>${rows.length ? rows.map(renderProfileRow).join("") : `<tr><td colspan="8"><div class="table-empty">没有符合条件的 Profile</div></td></tr>`}</tbody>
       </table>
       <footer class="table-footer"><span>共 ${rows.length} 条</span><div class="pagination"><button class="page-btn is-active">1</button><button class="page-btn" disabled>2</button><button class="page-btn" disabled>&gt;</button></div></footer>
@@ -210,7 +211,7 @@ function renderProfileRow(profile) {
   return `<tr>
     <td><input class="el-checkbox" type="checkbox" aria-label="选择 ${escapeHtml(profile.name)}" /></td>
     <td><div class="profile-name">${escapeHtml(profile.name)}${profile.id === "bedside-light-v1" ? anchor(1) : ""}</div><div class="profile-key">${escapeHtml(profile.productKey)}</div></td>
-    <td><div>${escapeHtml(profile.category)}</div><span class="cell-secondary">${escapeHtml(profile.endpointType)}</span></td>
+    <td><div>${escapeHtml(profile.category)}</div><span class="cell-secondary">displayCategories[0]: ${escapeHtml(profile.displayCategory)}</span></td>
     <td><div class="adapter-cell">${escapeHtml(profile.adapter)}${profile.id === "bedside-light-v1" ? anchor(2) : ""}</div><span class="cell-secondary">v${escapeHtml(profile.adapterVersion)}</span></td>
     <td><div class="capability-cell">${escapeHtml(capabilityText)}</div><span class="cell-secondary">${profile.capabilities.length} 项能力</span></td>
     <td>${tag(status.label, status.type)}</td>
@@ -280,7 +281,8 @@ function renderDrawerBody(draft) {
   if (state.editor.section === "mapping") return renderMappingSection(draft);
   if (state.editor.section === "reporting") return renderReportingSection(draft);
   if (state.editor.section === "publish") return renderPublishSection(draft);
-  return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；定义 Alexa endpoint 类型和标准物模型映射。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /></label><label class="form-row"><span>Alexa Endpoint 类型</span><select class="el-select" data-field="endpointType"><option ${draft.endpointType === "LIGHT" ? "selected" : ""}>LIGHT</option><option ${draft.endpointType === "OTHER" ? "selected" : ""}>OTHER</option></select></label></div><div class="lifecycle-notice"><strong>设备路由与呈现规则</strong><span>连接方式、设备类型和网关关系继承产品与设备主数据；Alexa Profile 不重复配置。App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后保留在基础信息，完成产品级 endpoint 定义后再进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
+  const displayCategoryOptions = endpointDisplayCategoryCatalog.filter((item) => item.status === "profile_ready").map((item) => `<option value="${item.id}" ${draft.displayCategory === item.id ? "selected" : ""}>${item.label} · ${item.semantic}</option>`).join("");
+  return `<section class="drawer-section"><div class="section-heading"><h3>产品 Alexa 配置 ${anchor(4)}</h3><p>Profile 归属当前产品；选择 Alexa 官方 Endpoint 显示分类，并映射标准物模型能力。</p></div><div class="switch-row switch-row--interactive"><button class="switch-control switch-control--button ${state.editor.productAlexaSupported ? "is-on" : ""}" type="button" data-action="toggle-alexa-support" role="switch" aria-checked="${state.editor.productAlexaSupported}" aria-label="Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}"></button><span><strong>Alexa：${state.editor.productAlexaSupported ? "支持" : "不支持"}</strong><small>关闭后保留 Profile 历史并停用发布版本，不参与 Discovery；重新开启后必须重新校验和发布。</small></span></div>${state.editor.productAlexaSupported ? `<div class="form-grid"><label class="form-row"><span>Profile 名称 <b>*</b></span><input class="el-input" data-field="name" value="${escapeHtml(draft.name)}" placeholder="例如 Bedside Light Alexa Profile" /><em>产品级配置版本名称，不直接作为用户语音名称。</em></label><label class="form-row"><span>关联产品 <b>*</b></span><input class="el-input is-readonly" value="${escapeHtml(draft.productKey)}" readonly /><em>从智能产品入口带入，不能在此切换产品。</em></label><label class="form-row"><span>产品分类</span><input class="el-input is-readonly" value="${escapeHtml(draft.category)}" readonly /><em>来自 IoT 产品主数据，不等于 Alexa 显示分类。</em></label><label class="form-row"><span>Alexa Endpoint 显示分类 <b>*</b></span><select class="el-select" data-field="displayCategory">${displayCategoryOptions}</select><em>对应 Discovery <code>displayCategories[0]</code>；仅影响 Alexa App 的类型、图标和控制页，不自动增删 Capability。</em></label></div><div class="lifecycle-notice"><strong>设备路由与呈现规则</strong><span>首期仅声明一个主显示分类，Adapter 输出 <code>displayCategories: [displayCategory]</code>。连接方式、设备类型和网关关系继承产品与设备主数据；Alexa Profile 不重复配置。App 解绑再绑定生成新 endpointId；虚拟设备与 Group 不暴露给 Alexa。</span></div>` : `<div class="lifecycle-notice"><strong>当前不支持 Alexa</strong><span>开启后保留在基础信息，完成产品级 endpoint 定义后再进入能力与映射；保存后才将产品设为支持 Alexa。</span></div>`}</section>`;
 }
 
 function applyInstanceFieldHints() {
