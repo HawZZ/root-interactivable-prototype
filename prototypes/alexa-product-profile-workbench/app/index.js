@@ -1,5 +1,7 @@
 import {
   capabilityCatalog,
+  getResource,
+  localePolicy,
   modelPropertyCatalog,
   closeEditor,
   closeModal,
@@ -11,6 +13,8 @@ import {
   openProductDetail,
   openProductProfile,
   productData,
+  resourceRegistry,
+  resourcesFor,
   publishDraft,
   rollbackProfile,
   runValidation,
@@ -30,7 +34,7 @@ import {
   updateProductAlexaSupport,
   addCapability,
   removeCapability
-} from "./state.js?v=20260811c";
+} from "./state.js?v=20260811d";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -72,6 +76,13 @@ const annotations = {
       { n: 15, title: "高级配置中的 Alexa 入口", location: "关联位置：产品详情 > 高级配置", fields: [["现状依据", "产品详情 step=5 已承载新手指导、云倒计时、场景联动设置与耗材管理；Alexa 以同级卡片接入。"], ["交互", "进入卡片后可编辑 Alexa：支持/不支持；支持时继续配置 Profile、capability 与物模型映射。"], ["边界", "关闭支持后保留历史 Profile、停用发布版本并从 Discovery 排除；不在产品列表或基础信息重复配置。"]] }
     ]
   },
+  "resource-library": {
+    context: "平台配置 / Alexa 多语言资源库",
+    summary: "资源库是平台级 Capability Resource KV，统一维护 Discovery 需要的本地化 Friendly Names；产品 Profile 仅引用资源 Key。",
+    items: [
+      { n: 16, title: "资源 Key 与本地化值", location: "关联位置：Alexa 多语言资源库 > KV 列表", fields: [["说明", "Resource Key 是稳定机器引用；Capability 与 Mode 资源分别保存。产品配置页不录入翻译，只选择已维护的 Key。"], ["责任边界", "平台 / 本地化角色维护 18 个已启用 Skill Locale；Adapter 在 Discovery 中生成 capabilityResources、modeResources。"], ["基线规则", "en-US 是自定义资源的必填基线。目标市场 Locale 必须配置；英语不能保证 Alexa 将本地语言语音理解为英语名称。"]] }
+    ]
+  },
   logs: {
     context: "调用日志",
     summary: "调用日志记录 Alexa 的 Discovery / Directive / State·Change Report 调用，用于排查授权、发现与状态上报问题。",
@@ -91,7 +102,7 @@ const annotations = {
       context: "配置抽屉 / 能力与映射",
       summary: "每个 capability 明确绑定到注册物模型属性或标准命令，支持不同产品在同一 Adapter 下复用。",
       items: [
-        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "先选择当前产品已有物模型属性，系统只展示类型匹配且已完成 Adapter 准入的 Alexa capability。Mode、Range、Toggle 需要 instance。"], ["交互", "ModeController 仅补充“物模型枚举值 → Alexa mode 值”映射；其余标准能力绑定一个属性即可。"], ["校验规则", "检查字段存在、类型/单位兼容、读写方向、instance 唯一性及枚举是否完整映射。Asset、多语言与 Friendly Name 不在产品页面配置。"]] },
+        { n: 5, title: "Capability 与物模型映射", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "先选择当前产品已有物模型属性，系统只展示类型匹配且已完成 Adapter 准入的 Alexa capability。Mode、Range、Toggle 需要 instance。"], ["交互", "ModeController 选择能力名称资源 Key，并为每个物模型枚举值选择一个 mode 资源 Key；页面仅预览 en-US / de-DE，不录入翻译。"], ["校验规则", "检查字段存在、类型/单位兼容、instance 唯一性、资源 Key 类型、en-US 基线与目标市场 Locale。Asset 与 Friendly Name 原文不在产品页面配置。"]] },
         { n: 6, title: "首期标准映射边界", location: "关联位置：配置抽屉 > 映射方式", fields: [["说明", "首期只支持布尔、枚举、数值和单位转换；一条 directive 必须映射到一个物模型属性或标准命令。"], ["异常处理", "多属性编排、异步确认、安全状态机、跨设备动作和非标准云接口不在首期范围，Profile 不可发布。"]] }
       ]
     },
@@ -114,7 +125,8 @@ const annotations = {
 
 const pageRenderers = {
   products: renderProductsPage,
-  "product-detail": renderProductDetail
+  "product-detail": renderProductDetail,
+  "resource-library": renderResourceLibraryPage
 };
 
 function render() {
@@ -136,10 +148,16 @@ function render() {
 function renderPageHeader() {
   const meta = {
     products: { crumb: "智能产品", title: "产品列表", copy: "查询、复制、查看产品；Alexa 配置仅在产品详情的高级配置中维护。", action: `<button class="el-btn el-btn--primary" data-action="show-toast" data-toast="创建产品沿用既有 IoT 产品流程" data-toast-type="info">+ 创建产品</button>`, anchor: 14 },
-    "product-detail": { crumb: "产品详情", title: "产品详情", copy: "高级配置是当前需求唯一新增 Alexa 入口。", action: `<button class="el-btn" data-action="nav" data-page="products">返回列表</button>`, anchor: 15 }
+    "product-detail": { crumb: "产品详情", title: "产品详情", copy: "高级配置是当前需求唯一新增 Alexa 入口。", action: `<button class="el-btn" data-action="nav" data-page="products">返回列表</button>`, anchor: 15 },
+    "resource-library": { crumb: "平台配置", title: "Alexa 多语言资源库", copy: "平台统一维护 Capability Resource KV；产品 Profile 仅选择已发布资源 Key。", action: `<button class="el-btn" data-action="show-toast" data-toast="资源由平台与本地化角色按流程维护" data-toast-type="info">资源维护说明</button>`, anchor: 16 }
   }[state.page] || { crumb: "智能产品", title: "产品列表", copy: "", action: "", anchor: 14 };
   $("#breadcrumb").innerHTML = `<span>智能产品</span><span class="breadcrumb-slash">/</span><strong>${meta.crumb}</strong>`;
   $("#pageHeader").innerHTML = `<div><div class="page-title-line"><h1>${meta.title}</h1>${anchor(meta.anchor)}</div><p>${meta.copy}</p></div><div class="page-header-actions">${meta.action}</div>`;
+}
+
+function renderResourceLibraryPage() {
+  const localePreview = localePolicy.previewLocales;
+  return `<section class="resource-policy"><div><strong>Skill Locale 策略</strong><p>已启用 ${localePolicy.enabledLocaleCount} 个 Locale；<code>${localePolicy.baseLocale}</code> 为自定义资源必填基线。目标市场 Locale 缺失时阻断 Profile 发布，不将英语当作本地语音识别兜底。</p></div>${tag("平台维护", "info")}</section><section class="admin-panel resource-library"><div class="panel-toolbar"><div class="toolbar-note"><span class="status-dot status-dot--success"></span> ${resourceRegistry.length} 个已登记 Resource Key</div><div class="toolbar-note">产品 Profile 只读引用，不编辑翻译文本</div></div><table class="el-table"><thead><tr><th>Resource Key</th><th>范围</th><th>Capability</th>${localePreview.map((locale) => `<th>${locale}</th>`).join("")}<th>Locale 覆盖</th><th>引用 Profile</th></tr></thead><tbody>${resourceRegistry.map((resource) => `<tr><td><code class="cell-code">${escapeHtml(resource.key)}</code></td><td>${tag(resource.scope === "capability" ? "能力名称" : "模式名称", resource.scope === "capability" ? "primary" : "warning")}</td><td><code class="cell-code">${escapeHtml(resource.capability)}</code></td>${localePreview.map((locale) => `<td>${escapeHtml(resource.values[locale] || "--")}</td>`).join("")}<td><strong>${resource.configuredLocales}/${localePolicy.enabledLocaleCount}</strong>${resource.fallbackLocales ? `<span class="cell-secondary">${resource.fallbackLocales} 项仅英语基线</span>` : `<span class="cell-secondary">全部已配置</span>`}</td><td>${resource.usage}</td></tr>`).join("")}</tbody></table><footer class="table-footer"><span>资源在发布前由平台校验：Key 类型、en-US 基线、产品目标市场 Locale。</span><span>Discovery 自动生成 <code>capabilityResources</code> / <code>modeResources</code></span></footer></section>`;
 }
 
 function renderProfilesPage() {
@@ -255,7 +273,7 @@ function resolvedModeMappings(capability, property) {
   if (capability.modeMappings?.length) return capability.modeMappings;
   return (property?.enumValues || []).map((modelValue) => ({
     modelValue,
-    alexaValue: modelValue.toLowerCase()
+    resourceKey: `ModeController.${modelValue}`
   }));
 }
 
@@ -302,18 +320,22 @@ function renderFieldTags(tags) {
 function renderModeMappings(capability, property, capabilityIndex) {
   const mappings = resolvedModeMappings(capability, property);
   if (!property?.enumValues?.length) return `<div class="mapping-empty">当前属性未登记枚举值，不能用于 ModeController。</div>`;
-  return `<section class="mode-mapping"><div class="mode-mapping__heading"><strong>模式值映射</strong><span>每个物模型枚举值必须对应一个 Alexa mode 值。</span></div><div class="mode-mapping-table"><div class="mode-mapping-table__head"><span>Momcozy 枚举值</span><span>Alexa mode 值 <b>*</b></span></div>${mappings.map((mapping, mappingIndex) => `<div class="mode-mapping-row"><code>${escapeHtml(mapping.modelValue)}</code><input class="el-input" data-capability-index="${capabilityIndex}" data-mode-mapping-index="${mappingIndex}" data-mode-mapping-field="alexaValue" value="${escapeHtml(mapping.alexaValue || "")}" placeholder="例如 sleep" /></div>`).join("")}</div><p class="mode-mapping__help">保存机器值即可。平台按 Capability 模板生成 Discovery 所需的 <code>supportedModes</code> 和资源声明；无需配置 Asset、多语言或 Friendly Name。</p></section>`;
+  const options = resourcesFor("ModeController", "mode");
+  return `<section class="mode-mapping"><div class="mode-mapping__heading"><strong>模式值映射</strong><span>每个物模型枚举值选择一个平台维护的多语言 Resource Key。</span></div><div class="mode-mapping-table"><div class="mode-mapping-table__head"><span>Momcozy 枚举值</span><span>Mode Resource Key <b>*</b></span><span>语音名称预览</span></div>${mappings.map((mapping, mappingIndex) => { const resource = getResource(mapping.resourceKey); return `<div class="mode-mapping-row"><code>${escapeHtml(mapping.modelValue)}</code><select class="el-select" data-capability-index="${capabilityIndex}" data-mode-mapping-index="${mappingIndex}" data-mode-mapping-field="resourceKey"><option value="">请选择平台资源</option>${options.map((item) => `<option value="${item.key}" ${item.key === mapping.resourceKey ? "selected" : ""}>${item.key}</option>`).join("")}</select><div class="resource-preview">${resource ? `<strong>${escapeHtml(resource.values["en-US"] || "--")}</strong><span>de-DE: ${escapeHtml(resource.values["de-DE"] || "未配置")}</span>` : `<span>选择后预览 en-US / de-DE</span>`}</div></div>`; }).join("")}</div><p class="mode-mapping__help">机器 mode 值由平台按已绑定的 Momcozy 枚举值生成；Resource Key 只提供 Alexa Discovery 的多语言语义。产品页面不录入 Asset、翻译文本或 Locale。</p></section>`;
 }
 
 function renderMappingSection(draft) {
   const readyCount = capabilityCatalog.filter((item) => item.status === "profile_ready").length;
-  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>先选择产品已有物模型属性，再从匹配的已发布 capability 中选择。首期只配置读写映射和必要的机器标识。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
+  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>先选择产品已有物模型属性，再从匹配的已发布 capability 中选择。多语言语义由平台资源库统一维护，产品只引用 Key。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
     const capabilityMeta = capabilityCatalog.find((item) => item.id === capability.id);
     const propertyMeta = modelPropertyCatalog.find((item) => item.id === capability.property);
     const matchingCapabilities = compatibleCapabilities(capability.property);
     const instanceRequired = requiresInstance(capability.id);
     const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
-    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>平台模板将 Alexa 指令转换为物模型读写；产品不配置 Lambda 或协议细节。</em></div>${capability.id === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(capability, propertyMeta, index)}</div>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
+    const capabilityResources = resourcesFor(capability.id, "capability");
+    const capabilityResource = getResource(capability.capabilityResourceKey);
+    const resourceField = capabilityMeta?.resourceScopes?.includes("capability") ? `<label class="form-row"><span>能力名称资源 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="capabilityResourceKey"><option value="">请选择平台资源</option>${capabilityResources.map((item) => `<option value="${item.key}" ${item.key === capability.capabilityResourceKey ? "selected" : ""}>${item.key}</option>`).join("")}</select>${capabilityResource ? renderFieldTags([[`en-US：${capabilityResource.values["en-US"]}`, "success"], [`de-DE：${capabilityResource.values["de-DE"] || "未配置"}`, "info"], [`覆盖：${capabilityResource.configuredLocales}/${localePolicy.enabledLocaleCount}`, "neutral"]]) : renderFieldTags([["选择后预览平台资源", "neutral"]])}<em>按 Capability Template 引用平台多语言 Key；不在产品页面录入翻译。</em></label>` : "";
+    return `<article class="mapping-item"><header><strong>${capability.id || "待选择 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}</option>`).join("")}</select>${propertyMeta ? renderFieldTags([[`属性类型：${propertyMeta.type}`, "success"], [`单位：${propertyMeta.unit}`, "neutral"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]]) : renderFieldTags([["请先选择物模型属性", "neutral"]])}</label><label class="form-row"><span>Alexa interface <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="id" ${!propertyMeta || !matchingCapabilities.length ? "disabled" : ""}>${renderCapabilityOptions(capability.id, capability.property)}</select>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceRequired ? "需要 Instance" : capabilityMeta ? "无需 Instance" : "等待 capability", instanceRequired ? "warning" : "neutral"]])}</label>${instanceRequired ? `<label class="form-row"><span>Instance <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "不适用" : "等待选择 capability"}</div></div>`}${resourceField}<div class="form-row"><span>映射模板 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>平台模板将 Alexa 指令转换为物模型读写；产品不配置 Lambda 或协议细节。</em></div>${capability.id === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(capability, propertyMeta, index)}</div>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
   }).join("")}</div></section>`;
 }
 
@@ -462,6 +484,7 @@ function handleInput(event) {
     if (field === "property") {
       updateCapability(index, "id", "");
       updateCapability(index, "instance", "");
+      updateCapability(index, "capabilityResourceKey", undefined);
       updateCapability(index, "mapping", "pending");
       updateCapability(index, "modeMappings", undefined);
       updateCapability(index, "supportedOperations", undefined);
@@ -472,6 +495,7 @@ function handleInput(event) {
     if (field === "id") {
       const catalogItem = capabilityCatalog.find((item) => item.id === target.value);
       updateCapability(index, "instance", requiresInstance(target.value) ? "" : "");
+      updateCapability(index, "capabilityResourceKey", resourcesFor(target.value, "capability")[0]?.key);
       updateCapability(index, "mapping", catalogItem?.template || "pending");
       updateCapability(index, "modeMappings", target.value === "ModeController" ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
       if (target.value === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");

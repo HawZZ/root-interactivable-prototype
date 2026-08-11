@@ -262,11 +262,19 @@ body { overflow-x: hidden; }
 .mode-mapping__heading span, .mode-mapping__help { color: var(--el-text-color-secondary); font-size: 11px; line-height: 1.55; }
 .mode-mapping__help { margin: 0; }
 .mode-mapping-table { overflow: hidden; border: 1px solid #d6e4f3; border-radius: var(--radius); background: #fff; }
-.mode-mapping-table__head, .mode-mapping-row { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(180px, 1.2fr); gap: 12px; align-items: center; padding: 8px 10px; }
+.mode-mapping-table__head, .mode-mapping-row { display: grid; grid-template-columns: minmax(122px, .7fr) minmax(220px, 1.35fr) minmax(150px, 1fr); gap: 12px; align-items: center; padding: 8px 10px; }
 .mode-mapping-table__head { color: #5f7285; background: #f1f6fb; font-size: 10px; }
 .mode-mapping-row { border-top: 1px solid #edf1f5; }
 .mode-mapping-row code { color: #35506a; font-size: 11px; }
 .mode-mapping-row .el-input { min-width: 0; }
+.resource-preview { display: grid; min-width: 0; gap: 2px; color: var(--el-text-color-secondary); font-size: 10px; line-height: 1.35; }
+.resource-preview strong { overflow: hidden; color: var(--el-text-color-regular); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.resource-policy { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding: 14px 16px; border: 1px solid #c9ddf6; border-radius: var(--radius); background: #f4f9ff; }
+.resource-policy strong { color: #3c5c7b; font-size: 13px; }
+.resource-policy p { max-width: 740px; margin: 5px 0 0; color: #506476; font-size: 12px; line-height: 1.6; }
+.resource-library .el-table td { font-size: 12px; }
+.resource-library .cell-secondary { display: block; margin-top: 3px; }
+@media (max-width: 960px) { .mode-mapping-table__head, .mode-mapping-row { grid-template-columns: minmax(105px, .75fr) minmax(170px, 1.25fr) minmax(115px, .9fr); } .resource-policy { flex-direction: column; } }
 .mapping-empty { padding: 12px; color: var(--el-text-color-secondary); border: 1px dashed #d6e4f3; border-radius: var(--radius); font-size: 11px; }
 .reporting-card { border: 1px solid var(--el-border-color-light); border-radius: var(--radius); background: #fff; }
 .reporting-card .form-row { padding: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }
