@@ -36,18 +36,10 @@
                 <p>按产品配置既有设备来源的 C 端 App Push 规则</p>
               </div>
               <div class="page-actions">
-                <label class="product-control" data-anchor="product-switcher">当前产品
-                  <select class="el-select" id="productSelect" aria-label="切换当前产品"></select>
-                </label>
-                <label class="scenario-control">原型场景
-                  <select class="el-select" id="scenarioSelect">
-                    <option value="normal">正常数据</option>
-                    <option value="loading">加载中</option>
-                    <option value="error">加载失败</option>
-                    <option value="empty">空数据</option>
-                    <option value="permission">只读权限</option>
-                  </select>
-                </label>
+                <div class="product-control" data-anchor="product-switcher">
+                  <span>当前产品</span>
+                  <button type="button" class="product-picker-trigger" id="productPickerTrigger" aria-haspopup="dialog" aria-expanded="false"></button>
+                </div>
                 <button class="el-btn" id="refreshBtn">刷新</button>
                 <button class="el-btn" id="productLanguageBtn" data-anchor="product-language-entry">统一多语言</button>
                 <button class="el-btn el-btn--primary" id="primaryCreateBtn">新建推送规则</button>
@@ -70,11 +62,22 @@
         <button class="icon-btn" id="annotationToggle" title="收起批注">›</button>
       </header>
       <div class="annotation-help">黄色编号是原型锚点，不属于真实 IoT Admin 页面。点击批注可定位控件。</div>
+      <div class="annotation-scenario" data-anchor="prototype-scenario">
+        <span>原型场景</span>
+        <select class="el-select" id="annotationScenarioSelect" aria-label="切换原型场景">
+          <option value="normal">正常数据</option>
+          <option value="loading">加载中</option>
+          <option value="error">加载失败</option>
+          <option value="empty">空数据</option>
+          <option value="permission">只读权限</option>
+        </select>
+      </div>
       <div class="annotation-list" id="annotationList"></div>
     </aside>
   </div>
 
   <button class="annotation-reopen" id="annotationReopen">查看批注</button>
+  <div id="productPickerMount"></div>
   <div id="overlayRoot"></div>
   <div class="toast" id="toast" role="status"></div>
 
