@@ -27,7 +27,8 @@ export const placeholders=["${cozyDeviceName}","${cozyDeviceModel}","${cozyUserE
 export const emptyLanguageValues=()=>Object.fromEntries(supportedLanguages.map(([code])=>[code,{title:"",body:""}]));
 export const notificationTopics=[
   {id:"topic-clean",productId:"prod-s12",name:"清洗提醒",revision:3,updated:"2026-08-13 15:30",values:{"en-US":{title:"Cleaning is due",body:"Your pump parts need cleaning."}}},
-  {id:"topic-maintain",productId:"prod-s12",name:"保养提醒",revision:2,updated:"2026-08-13 14:10",values:{"en-US":{title:"Maintenance is due",body:"Your device needs maintenance."}}}
+  {id:"topic-maintain",productId:"prod-s12",name:"保养提醒",revision:2,updated:"2026-08-13 14:10",values:{"en-US":{title:"Maintenance is due",body:"Your device needs maintenance."}}},
+  {id:"topic-seasonal",productId:"prod-s12",name:"季节提醒",revision:1,updated:"2026-08-13 13:00",values:{"en-US":{title:"Seasonal care reminder",body:"Please check your device."}}}
 ];
 export const newRule=()=>({id:"",productId:"prod-s12",name:"",notificationTopicId:"",itemLabel:"",triggerType:"device",propertyId:"milkLevel",operator:">=",propertyValue:"180",cloudCountdownId:"feed-reminder",cloudThresholdMinutes:"15",consumableId:"pump-kit",consumableEvent:"low",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",minIntervalMinutes:"30",systemNotificationEnabled:false,presetLinkId:"message-center",title:"",body:"",topicRevision:0});
 
