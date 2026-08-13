@@ -1,26 +1,31 @@
-/* Snapshot copied from generate-interactive-prototype/library/tokens.css */
+/* Momcozy 3.0 semantic layer for this static shadcn-style prototype. */
 :root {
   color-scheme: light;
-  --el-color-primary:#4372ff; --el-color-primary-dark-2:#2b6bd9; --el-color-primary-light-3:#a3c5ff;
-  --el-color-primary-light-7:#e0ecff; --el-color-primary-light-9:#ecf5ff;
-  --el-color-success:#67c23a; --el-color-warning:#e6a23c; --el-color-danger:#f56c6c; --el-color-error:#f56c6c; --el-color-info:#909399;
-  --app-aside-bg-color:#001529; --app-aside-bg-active:#0b2a4a; --app-bg-color:#f9f9f9; --el-bg-color:#fff; --table-head-bg:#fafafa;
-  --el-text-color-primary:#303133; --el-text-color-regular:#606266; --el-text-color-secondary:#909399; --el-text-color-placeholder:#a8abb2;
-  --el-border-color:#dcdfe6; --el-border-color-light:#e4e7ed; --el-border-color-lighter:#ebeef5;
+  --colors-grays-900:#240f1b; --colors-grays-600:#9f969b; --colors-grays-300:#d3cfd1; --colors-grays-200:#e4e2e3; --colors-grays-150:#e9e8e7; --colors-grays-100:#f0eeef; --colors-grays-50:#f9f7f5; --colors-grays-0:#ffffff;
+  --colors-mom-50:#fff7f8; --colors-mom-75:#fff1f3; --colors-mom-100:#ffdde1; --colors-mom-300:#ffc0cb; --colors-mom-500:#ee9ca7; --colors-mom-700:#770523; --colors-mom-900:#3e0010;
+  --background:var(--colors-grays-50); --foreground:var(--colors-grays-900); --card:var(--colors-grays-0); --muted:var(--colors-grays-100); --muted-foreground:#786f74; --border:var(--colors-grays-200); --ring:var(--colors-mom-700);
+  --el-color-primary:var(--colors-mom-700); --el-color-primary-dark-2:#5f061d; --el-color-primary-light-3:var(--colors-mom-300); --el-color-primary-light-7:var(--colors-mom-100); --el-color-primary-light-9:var(--colors-mom-75);
+  --el-color-success:#087a37; --el-color-warning:#b65017; --el-color-danger:#c5181d; --el-color-error:#c5181d; --el-color-info:#6a6266;
+  --app-aside-bg-color:var(--colors-mom-900); --app-aside-bg-active:#5c0821; --app-bg-color:var(--background); --el-bg-color:var(--card); --table-head-bg:#f6f3f4;
+  --el-text-color-primary:var(--foreground); --el-text-color-regular:#51484d; --el-text-color-secondary:var(--muted-foreground); --el-text-color-placeholder:#a0979b;
+  --el-border-color:var(--border); --el-border-color-light:#ebe8e9; --el-border-color-lighter:#f2f0f1;
   --gap-8:8px; --gap-12:12px; --gap-16:16px; --gap-24:24px;
   --app-aside-width:208px; --app-aside-collapse-width:64px; --header-height:54px; --el-menu-item-height:56px; --el-menu-sub-item-height:50px;
-  --el-component-size:32px; --el-component-size-large:40px; --el-component-size-small:24px; --radius:4px;
-  --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,"Inter",sans-serif;
-  --anchor-bg:#facc15; --anchor-color:#713f12;
+  --el-component-size:36px; --el-component-size-large:44px; --el-component-size-small:28px; --radius-xs:2px; --radius-sm:4px; --radius-md:8px; --radius-lg:10px; --radius-xl:12px; --radius:var(--radius-md);
+  --shadow-100:0 2px 8px rgba(36,15,27,.06); --shadow-200:0 10px 28px rgba(36,15,27,.10); --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,ui-sans-serif,system-ui,sans-serif;
+  --anchor-bg:#f5c449; --anchor-color:#4c3200;
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--app-bg-color);color:var(--el-text-color-primary);font-family:var(--sans);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit} button{cursor:pointer} a{color:var(--el-color-primary);text-decoration:none} a:hover{color:var(--el-color-primary-dark-2)}
-.el-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--el-component-size);padding:0 var(--gap-12);border:1px solid var(--el-border-color);border-radius:var(--radius);background:var(--el-bg-color);color:var(--el-text-color-regular);font-size:14px;line-height:1;white-space:nowrap}
-.el-btn:hover{color:var(--el-color-primary);border-color:var(--el-color-primary-light-3);background:var(--el-color-primary-light-9)}
+.el-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--el-component-size);padding:0 var(--gap-12);border:1px solid var(--el-border-color);border-radius:var(--radius);background:var(--el-bg-color);color:var(--el-text-color-regular);font-size:14px;font-weight:500;line-height:1;white-space:nowrap;transition:background .16s,border-color .16s,color .16s,transform .12s}
+.el-btn:hover{color:var(--el-color-primary);border-color:var(--el-color-primary-light-3);background:var(--el-color-primary-light-9)}.el-btn:active{transform:translateY(1px)}.el-btn:focus-visible,.op-link:focus-visible,.icon-btn:focus-visible{outline:3px solid rgba(119,5,35,.14);outline-offset:2px}
 .el-btn--primary{background:var(--el-color-primary);border-color:var(--el-color-primary);color:#fff}.el-btn--primary:hover{background:var(--el-color-primary-dark-2);border-color:var(--el-color-primary-dark-2);color:#fff}
-.el-btn--primary:disabled,.el-btn--primary.is-disabled{background:#a3c5ff;border-color:#a3c5ff;cursor:not-allowed;opacity:.8}.el-btn--danger{background:var(--el-color-danger);border-color:var(--el-color-danger);color:#fff}.el-btn--danger:hover{filter:brightness(.92)}
+.el-btn--primary:disabled,.el-btn--primary.is-disabled{background:var(--colors-mom-300);border-color:var(--colors-mom-300);cursor:not-allowed;opacity:.8}.el-btn--danger{background:var(--el-color-danger);border-color:var(--el-color-danger);color:#fff}.el-btn--danger:hover{filter:brightness(.92)}
 .el-btn--small{height:var(--el-component-size-small);padding:0 8px;font-size:12px}.el-btn--large{height:var(--el-component-size-large);padding:0 var(--gap-16)}
-.el-input,.el-select{height:var(--el-component-size);width:100%;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 var(--gap-12);background:var(--el-bg-color);color:var(--el-text-color-primary)}
-.el-input::placeholder{color:var(--el-text-color-placeholder)}.el-input:focus{outline:none;border-color:var(--el-color-primary);box-shadow:0 0 0 2px var(--el-color-primary-light-7)}
+.el-input,.el-select{height:var(--el-component-size);width:100%;border:1px solid var(--el-border-color);border-radius:var(--radius);padding:0 var(--gap-12);background:var(--el-bg-color);color:var(--el-text-color-primary);transition:border-color .16s,box-shadow .16s,background .16s}
+.el-input::placeholder{color:var(--el-text-color-placeholder)}.el-input:focus,.el-select:focus,.el-textarea:focus{outline:none;border-color:var(--el-color-primary);box-shadow:0 0 0 3px rgba(119,5,35,.14)}
 .op-link{background:none;border:0;color:var(--el-color-primary);padding:0;font-size:14px}.op-link:hover{color:var(--el-color-primary-dark-2)}.op-link.is-disabled{color:var(--el-text-color-placeholder);cursor:not-allowed}.op-link.danger{color:var(--el-color-danger)}.op-divider{color:var(--el-border-color-light);padding:0 6px}
+
+html[data-theme="dark"]{color-scheme:dark;--colors-grays-900:#f7f3f6;--colors-grays-600:#938e93;--colors-grays-300:#4a484a;--colors-grays-200:#3c3a3c;--colors-grays-150:#2e2c2e;--colors-grays-100:#1e1c1e;--colors-grays-50:#171617;--colors-grays-0:#1c1c1e;--background:var(--colors-grays-50);--foreground:var(--colors-grays-900);--card:var(--colors-grays-0);--muted:var(--colors-grays-100);--muted-foreground:#c1b9bd;--border:var(--colors-grays-300);--ring:#da5876;--colors-mom-50:#291316;--colors-mom-75:#33191d;--colors-mom-100:#3d1e23;--colors-mom-300:#804c54;--colors-mom-500:#c7828b;--colors-mom-700:#da5876;--colors-mom-900:#f9c9cf;--el-color-primary:var(--colors-mom-700);--el-color-primary-dark-2:#f0a4b1;--el-color-primary-light-3:#804c54;--el-color-primary-light-7:#3d1e23;--el-color-primary-light-9:#33191d;--app-aside-bg-color:#171617;--app-aside-bg-active:#2d1820;--table-head-bg:#252324;--el-text-color-regular:#dfd8dc;--el-text-color-secondary:var(--muted-foreground);--el-text-color-placeholder:#8f878c;--el-border-color:var(--border);--el-border-color-light:#353334;--el-border-color-lighter:#292728;--shadow-100:0 2px 8px rgba(0,0,0,.25);--shadow-200:0 10px 28px rgba(0,0,0,.4)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
