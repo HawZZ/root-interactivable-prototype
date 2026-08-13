@@ -71,7 +71,7 @@ function testSnapshot() {
 function openSubmit(action) {
   if (state.activeProductLock) return showToast('提交被拒绝：该产品已有活跃审批单', false);
   const actionText = visibleAction(action);
-  modal(`<h3>确认提交${actionText}审批</h3><div class="modal-body"><div class="submit-summary">确认后将冻结产品快照，并向测试工程师发送邮件提醒、向审批人发送飞书待审批消息。</div><label class="field"><span>指定测试工程师邮箱 <span class="required">*</span></span><input class="el-input" id="tester-email" value="${escapeHtml(state.testerEmail)}" placeholder="例如 qa.liu@example.com"><span class="form-help">仅手工输入，不映射 ERP 账号。</span><span class="error" id="email-error"></span></label><div class="frozen-box"><b>冻结的审批配置</b><p>审批人：李娜（IoT 平台用户 / li.na）</p><p>动作：${actionText}；飞书消息将链接至本审批详情页。</p></div></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--primary" data-confirm-submit="${action}">确认提交并冻结</button></div>`);
+  modal(`<h3>确认提交${actionText}审批</h3><div class="modal-body"><div class="submit-summary">本次${actionText}需要发起审批。确认提交后，系统将冻结当前产品快照，并阻止其他人继续提交产品详情、上架范围、上架或下架变更。</div><div class="warning-box">冻结期间，线上正式配置不会变更；待审批单被撤销、驳回或完成应用后，才会释放产品编辑提交。</div><div class="frozen-box"><b>确认信息</b><p>动作：${actionText}</p><p>审批人：李娜（IoT 平台用户 / li.na）</p></div></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--primary" data-confirm-submit="${action}">继续提交</button></div>`);
 }
 
 function openApprove(id) {
@@ -109,7 +109,7 @@ function renderAnnotations(kind) {
   const cards = kind === 'product' ? [
     ['1', '产品状态与活跃审批锁', '产品详情页头部 / 冻结提示', '开发中编辑详情与上架范围直接保存；上架中、已上架、已下架的详情或上架范围需审批。任一产品最多一个待审批或未生效单，后到提交由服务端拒绝。'],
     ['2', '基础信息与上架范围入口', '产品信息', '保留 IoT Admin 基础信息布局。上架范围归属产品详情内上架动作，编辑入口使用抽屉。'],
-    ['3', '前端草稿和提交', '本地草稿与审批提交', '草稿只保存在前端会话，不持久化；非开发中提交后才冻结快照。上下架均经二次确认后提交审批。']
+    ['3', '前端草稿和提交', '本地草稿与审批提交 / 二次确认弹窗', '草稿只保存在前端会话，不持久化；非开发中提交后才冻结快照。二次确认明确提示：提交审批后将冻结产品，并阻止其他人继续提交变更；弹窗不要求输入测试工程师邮箱。']
   ] : kind === 'approvals' ? [
     ['1', '审批页数据隔离', '审批管理列表', '普通用户仅见“我发起的”并只可查看/撤销待审批；审批员和系统管理员可见“我审批的”全量列表。服务端必须复核权限。'],
     ['2', '审批详情操作', '审批详情', '审批员/系统管理员只可对待审批且非本人申请通过或驳回。已通过但应用失败转“未生效”，审批员或系统管理员可取消或重试。']
@@ -177,12 +177,10 @@ modalRoot.addEventListener('click', (event) => {
   if (event.target.closest('[data-save-direct]')) { closeOverlay(); showToast('开发中产品已直接保存并更新'); return; }
   const submit = event.target.closest('[data-confirm-submit]');
   if (submit) {
-    const email = $('#tester-email')?.value.trim();
-    if (!/^\S+@\S+\.\S+$/.test(email || '')) { $('#email-error').textContent = '请输入有效邮箱地址'; return; }
     if (state.activeProductLock) { closeOverlay(); showToast('提交被拒绝：已有活跃审批单', false); return; }
     const action = submit.dataset.confirmSubmit;
     apps.unshift({ id: `A-${String(7 + apps.length).padStart(3, '0')}`, productId: W1_ID, action, status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 11:20', lock: true, outcome: '' });
-    state.testerEmail = email; state.activeProductLock = true; state.activeApplication = apps[0].id; closeOverlay(); set({ page: 'detail', approvalTab: 'initiated' }); showToast('审批单已创建，产品已冻结'); return;
+    state.activeProductLock = true; state.activeApplication = apps[0].id; closeOverlay(); set({ page: 'detail', approvalTab: 'initiated' }); showToast('审批单已创建，产品已冻结'); return;
   }
   const reject = event.target.closest('[data-confirm-reject]');
   if (reject) { const reason = $('#reject-reason')?.value.trim(); if (!reason) { $('#reject-error').textContent = '请填写驳回原因'; return; } const item = apps.find((app) => app.id === reject.dataset.confirmReject); item.status = '已驳回'; item.lock = false; item.outcome = `审批驳回：${reason}`; if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('申请已驳回，线上配置未变更'); return; }
