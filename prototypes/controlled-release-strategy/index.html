@@ -176,6 +176,22 @@
     .selector-table { max-height: 188px; overflow: auto; border: 1px solid #edf0f5; }
     .selector-table table { table-layout: fixed; }
     .selector-table th:first-child, .selector-table td:first-child { width: 36px; }
+    .virtual-association-picker { border: 1px solid #dfe5ef; background: #fff; margin-top: 12px; }
+    .virtual-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #edf0f5; }
+    .virtual-picker-head strong { color: #39465a; }
+    .virtual-picker-selected { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 10px 12px; background: #fafcff; border-bottom: 1px solid #edf0f5; }
+    .virtual-picker-selected .selected-chip { max-width: 100%; }
+    .virtual-picker-selected .selected-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .virtual-picker-tools { display: grid; grid-template-columns: minmax(160px, 1fr) 110px 110px auto; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #edf0f5; }
+    .virtual-picker-tools input, .virtual-picker-tools select { width: 100%; min-height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; padding: 6px 9px; background: #fff; color: #39465a; }
+    .virtual-picker-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; color: #8b95a4; background: #fff; }
+    .virtual-picker-table { max-height: 224px; overflow: auto; border-top: 1px solid #edf0f5; }
+    .virtual-picker-table tr.is-filtered-out { display: none; }
+    .virtual-picker-table tr.is-disabled { background: #fafafa; color: #a0a9b8; }
+    .virtual-picker-table td { vertical-align: middle; }
+    .virtual-save-error { display: none; margin: 12px 0 0; }
+    .virtual-save-error.open { display: block; }
+    .drawer-foot .btn.is-saving { pointer-events: none; opacity: .72; }
     .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
     .form-grid.single-field { grid-template-columns: minmax(0, 1fr); }
     .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -191,6 +207,19 @@
     .subsection { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; }
     .subsection:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
     .subsection-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+    .mcu-mode-card { border: 1px solid #e5eaf3; background: #fff; padding: 14px 16px; margin: 0 0 12px; }
+    .mcu-mode-card .subsection-head { align-items: center; margin-bottom: 4px; }
+    .mcu-mode-value { display: flex; align-items: center; gap: 8px; color: #697386; line-height: 22px; }
+    .mcu-mode-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .mcu-mode-option { width: 100%; min-height: 74px; text-align: left; display: block; padding: 12px; border: 1px solid #d9dfe9; background: #fff; color: #516071; border-radius: 2px; }
+    .mcu-mode-option strong { display: block; color: #1f2d3d; margin-bottom: 5px; }
+    .mcu-mode-option span { font-size: 12px; line-height: 1.5; color: #7a8799; }
+    .mcu-mode-option.selected { border-color: #315efb; background: #f3f7ff; box-shadow: inset 0 0 0 1px #315efb; }
+    .firmware-tabs { display: flex; align-items: flex-end; gap: 22px; height: 42px; border-bottom: 1px solid #e5eaf3; margin: 0 0 14px; }
+    .firmware-tab { position: relative; height: 42px; border: 0; background: transparent; color: #697386; padding: 0 2px; font-size: 14px; }
+    .firmware-tab.active { color: #315efb; font-weight: 600; }
+    .firmware-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: #315efb; }
+    .mode-scope { margin-left: 6px; font-size: 12px; font-weight: 400; color: #8b95a4; }
     .firmware-state-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
     .firmware-state { border: 1px solid #e5eaf3; background: #fafbfc; padding: 10px; min-height: 64px; }
     .firmware-state strong { display: block; color: #1f2d3d; margin-bottom: 6px; }
@@ -246,6 +275,7 @@
     table { width: 100%; border-collapse: collapse; background: #fff; }
     th, td { border-bottom: 1px solid #edf0f5; padding: 10px 9px; text-align: left; vertical-align: top; word-break: break-word; }
     th { background: #fafbfc; color: #707b8c; font-weight: 600; }
+    tr.is-disabled { opacity: .48; background: #fafbfc; }
     td .sub { display: block; color: #9aa4b2; margin-top: 3px; }
     .table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; color: #8b95a4; }
@@ -262,6 +292,10 @@
     .note-toolbar { position: sticky; top: -16px; z-index: 2; margin: -16px -16px 12px; padding: 14px 16px 12px; background: #fff; border-bottom: 1px solid #edf0f5; }
     .note-toolbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .note-context-pill { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 2px; background: #eef4ff; color: #315efb; margin-top: 8px; }
+    .prototype-scenario { margin-top: 12px; padding-top: 12px; border-top: 1px solid #edf0f5; }
+    .prototype-scenario label { display: block; color: #697386; font-size: 12px; margin-bottom: 6px; }
+    .prototype-scenario select { width: 100%; height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; color: #39465a; padding: 0 8px; }
+    .prototype-scenario p { margin: 6px 0 0; color: #8b95a4; line-height: 1.55; }
     .note-item { width: 100%; text-align: left; border: 1px solid #e5eaf3; background: #fff; padding: 11px 12px; margin-top: 10px; border-radius: 4px; }
     .note-item.active { border-color: #facc15; background: #fffbe6; box-shadow: inset 3px 0 0 #facc15; }
     .note-index, .anchor { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #facc15; color: #713f12; font-size: 11px; font-weight: 700; }
@@ -536,6 +570,15 @@
       </div>
       <p id="noteIntro">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</p>
       <span class="note-context-pill" id="noteContext">产品详情批注</span>
+      <div class="prototype-scenario" id="prototypeScenarioBox">
+        <label for="prototypeScenario">原型场景</label>
+        <select id="prototypeScenario">
+          <option value="listed">已上架：MCU OTA 模式不可编辑</option>
+          <option value="offline">已下架：可修改 MCU OTA 模式</option>
+          <option value="dev">开发中：可修改 MCU OTA 模式</option>
+        </select>
+        <p id="prototypeScenarioHint">用于验证产品状态与 MCU OTA 模式的编辑边界。</p>
+      </div>
     </div>
     <div id="noteList"></div>
   </aside>
@@ -673,6 +716,7 @@
       deleteIds: [],
       drawer: null,
       notesOpen: true,
+      prototypeScenario: "listed",
       activeNoteId: "",
       importType: null,
       importStage: null,
@@ -690,8 +734,17 @@
       otaStep: 1,
       otaPublishMode: "publish",
       firmwareMessage: "",
+      firmwareTab: "firmware",
+      mcuModeEditing: false,
+      mcuModeDraft: null,
+      virtualEditingId: null,
+      virtualDraftMembers: new Set(),
+      virtualAssociationKeyword: "",
+      virtualAssociationChannel: "",
+      virtualAssociationStatus: "",
       otaTaskMessage: "",
       firmwareReleaseTargetId: null,
+      virtualReleaseTargetId: null,
       firmwareEditingId: null,
       extensionPanelMode: null,
       extensionPanelSaved: "",
@@ -714,9 +767,9 @@
     if (bootStep === "4" || bootStep === "debug") state.productStep = "debug";
 
     const products = {
-      dev: { name: "V3 Dev Pump", id: "2054039271856459777", status: "开发中", statusClass: "orange", panel: "RN", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" },
-      listed: { name: "12", id: "2054039271856459777", status: "已上架", statusClass: "green", panel: "RN", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" },
-      native: { name: "Cooker-N", id: "2054039271856460001", status: "已上架", statusClass: "green", panel: "原生", visible: "全部公司用户", listingMode: "full", listingRangeMode: "dc", listingRange: ["全部"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" }
+      dev: { name: "V3 Dev Pump", id: "2054039271856459777", status: "开发中", statusClass: "orange", panel: "RN", mcuOtaMode: "单固件", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" },
+      listed: { name: "12", id: "2054039271856459777", status: "已上架", statusClass: "green", panel: "RN", mcuOtaMode: "单固件", visible: "全部公司用户", listingMode: "partial", listingRangeMode: "dc", listingRange: ["北美数据中心", "欧洲数据中心"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" },
+      native: { name: "Cooker-N", id: "2054039271856460001", status: "已上架", statusClass: "green", panel: "原生", mcuOtaMode: "单固件", visible: "全部公司用户", listingMode: "full", listingRangeMode: "dc", listingRange: ["全部"], listingEffectiveMode: "立即生效", listingEffectiveTime: "" }
     };
 
     const authProducts = [
@@ -778,16 +831,22 @@
     }
 
     let firmwareVersions = [
-      { id: "fw4", name: "Pump-H Main MCU", type: "MCU固件", version: "1.3.0", hardware: "M9P0", functionVersion: "开发中版本 - 未上架", status: "开发中", createdAt: "2026-06-08 11:20", log: "优化泵阀控制", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw4", name: "Pump-H Main MCU", type: "MCU固件", version: "1.3.0", hardware: "M9P0", channel: "1", functionVersion: "开发中版本 - 未上架", status: "开发中", createdAt: "2026-06-08 11:20", log: "优化泵阀控制", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw5", name: "Pump-H Main MCU", type: "MCU固件", version: "1.2.5", hardware: "M9P0", channel: "2", functionVersion: "版本1 - 已发布", status: "测试中", createdAt: "2026-06-07 15:12", log: "双 MCU 通道测试", appRule: "版本不低于", appVersion: "v 2.2.10" },
       { id: "fw3", name: "Pump-H Module", type: "模组固件", version: "0.9.8", hardware: "B2", functionVersion: "开发中版本 - 未上架", status: "测试中", createdAt: "2026-06-06 15:12", log: "模组连接稳定性验证", appRule: "版本不低于", appVersion: "v 2.2.10" },
-      { id: "fw2", name: "Pump-H Main MCU", type: "MCU固件", version: "1.2.0", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "发布中", createdAt: "2026-06-03 10:00", log: "自动发布中，第 3 / 5 天", appRule: "版本不低于", appVersion: "v 2.2.10" },
-      { id: "fw1", name: "Pump-H Main MCU", type: "MCU固件", version: "1.1.9", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "已发布", createdAt: "2026-05-30 09:30", log: "稳定版本", appRule: "版本等于", appVersion: "v 2.2.10" },
+      { id: "fw2", name: "Pump-H Main MCU", type: "MCU固件", version: "1.2.0", hardware: "M9P1", channel: "1", functionVersion: "版本1 - 已发布", status: "发布中", createdAt: "2026-06-03 10:00", log: "自动发布中，第 3 / 5 天", appRule: "版本不低于", appVersion: "v 2.2.10" },
+      { id: "fw1", name: "Pump-H Main MCU", type: "MCU固件", version: "1.1.9", hardware: "M9P1", channel: "2", functionVersion: "版本1 - 已发布", status: "已发布", createdAt: "2026-05-30 09:30", log: "稳定版本", appRule: "版本等于", appVersion: "v 2.2.10" },
       { id: "fw0", name: "Pump-H Module", type: "模组固件", version: "0.9.6", hardware: "B2", functionVersion: "版本1 - 已发布", status: "已停止", createdAt: "2026-05-18 13:40", log: "已停止，保留历史升级来源", appRule: "版本不低于", appVersion: "v 2.1.8" }
     ];
 
     let otaTasks = [
       { id: "ota2", firmwareVersionId: "fw2", name: "Pump-H Main MCU 1.2.0 发布记录", firmwareName: "Pump-H Main MCU", firmwareType: "MCU固件", firmwareVersion: "1.2.0", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "发布中", publishMode: "自动发布", batchText: "5 天分批，开放覆盖度每天约增加 20%", upgradeMode: "提示升级", regions: ["北美数据中心", "欧洲数据中心"], appRule: "版本不低于", appVersion: "v 2.2.10", publishedAt: "2026-06-03 10:00", createdAt: "2026-06-02 16:20" },
       { id: "ota1", firmwareVersionId: "fw1", name: "Pump-H Main MCU 1.1.9 发布记录", firmwareName: "Pump-H Main MCU", firmwareType: "MCU固件", firmwareVersion: "1.1.9", hardware: "M9P0", functionVersion: "版本1 - 已发布", status: "已发布", publishMode: "全面发布", batchText: "100%", upgradeMode: "强制升级", regions: ["中国数据中心", "亚太数据中心"], appRule: "版本等于", appVersion: "v 2.2.10", publishedAt: "2026-05-30 09:30", createdAt: "2026-05-29 18:02" }
+    ];
+
+    let virtualVersions = [
+      { id: "vv1", version: "2.1.0", status: "测试中", appRule: "版本不低于", appVersion: "v 2.2.10", members: ["fw4", "fw5", "fw2", "fw1"], frozen: false, createdAt: "2026-06-08 12:00", log: "双 MCU 泵阀协同版本" },
+      { id: "vv0", version: "2.0.0", status: "已发布", appRule: "版本等于", appVersion: "v 2.2.10", members: ["fw2", "fw1"], frozen: true, createdAt: "2026-06-02 10:30", log: "已冻结历史虚拟版本" }
     ];
 
     const notes = {
@@ -810,6 +869,10 @@
       ],
       firmware: [
         { id: "firmware-tab", title: "新增产品详情固件配置", body: "固件配置位于产品详情 > 扩展程序与设备调试之间。设备管理 > OTA 的发布配置能力按产品迁入此处，不再作为本原型的独立发布入口。", loc: "产品详情 > 固件配置" },
+        { id: "firmware-tab", title: "MCU OTA 模式：展示态与编辑态", body: "展示态只呈现当前模式和影响范围；点击「编辑」后进入独立编辑态，选择单固件或虚拟版本，再通过「保存模式」提交二次确认。仅开发中/已下架产品可编辑；已上架/上架中仅展示禁用原因。", loc: "产品详情 > 固件配置 > MCU OTA 模式" },
+        { id: "firmware-tab", title: "内容页签不等于模式切换", body: "「固件版本 / 虚拟版本」只用于浏览两类数据，始终可切换。当前模式页标注“当前模式生效”；非当前模式保留历史数据但只读、不参与命中。虚拟模式下 MCU 组件的非开发中状态操作由虚拟版本驱动。", loc: "产品详情 > 固件配置 > 内容页签" },
+        { id: "virtual-version", title: "虚拟版本级 APP 条件的来源与边界", body: "字段：该条件由受控发布适配新增，配置在虚拟版本自身，不从组件 MCU 继承。命中规则：虚拟模式先按虚拟版本级 APP 条件筛选候选，再按用户身份和发布范围过滤并取最高语义化虚拟版本。PRD 边界：组件 MCU 的 APP 条件继续保存和展示，但仅单固件模式生效。", loc: "产品详情 > 固件配置 > 虚拟版本" },
+        { id: "virtual-version", title: "虚拟版本状态与操作边界", body: "状态规则：开发中可编辑、进入测试、删除；测试中可编辑、发布、停止；发布中可暂停、修改发布配置或停止；暂停发布可继续或停止；已发布可修改发布配置或停止；已停止仅保留历史记录，不可删除或编辑。停止真空保护：以当前产品和将停止版本的虚拟版本级 APP 条件版本值为评估点，排除该版本后白名单候选（测试中/发布中/已发布）与线上候选（发布中/已发布）均为空时，必须展示风险并二次确认。编辑范围：仅开发中、测试中可同时修改虚拟版本级 APP 条件和关联 MCU。", loc: "产品详情 > 固件配置 > 虚拟版本 > 操作" },
         { id: "firmware-state", title: "固件配置业务流程", body: "流程为新建固件版本，生成开发中记录；进入测试后由白名单命中；点击发布并配置全面发布或自动发布。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布。", loc: "产品详情 > 固件配置" },
         { id: "firmware-state", title: "固件版本字段定义", body: "固件版本字段包含固件名称、固件类型、固件版本、硬件版本、功能版本、APP版本号条件、状态、上传时间、发布日志和操作。新建时只选择功能版本、固件类型、上传文件、APP版本号条件和备注，文件解析字段只读。", loc: "产品详情 > 固件配置 > 固件版本" },
         { id: "firmware-state", title: "测试中固件统一入口", body: "原设备调试页内的测试固件能力与固件版本管理中的测试中状态是同一业务对象，不再拆成独立测试固件表。测试中、发布中、已发布都是候选来源，并在共同筛选满足后按固件版本号取最高版本。", loc: "产品详情 > 固件配置 > 固件版本" },
@@ -822,6 +885,19 @@
         { id: "firmware-state", title: "全面发布直达已发布", body: "选择全面发布时，保存后版本状态直接进入已发布，不经过发布中。选择自动发布时，保存后进入发布中，开放覆盖度达100%后才转已发布。同一系列其他版本不受影响，继续按自身状态服务对应设备。", loc: "产品详情 > 固件配置 > 发布配置" },
         { id: "firmware-state", title: "不在固件配置页跟踪 OTA 进度", body: "产品详情 > 固件配置只承接固件版本管理和发布配置，不展示 OTA 任务列表、命中设备数、成功升级数或失败率。进度追踪后续由独立监控面板承接。", loc: "产品详情 > 固件配置" },
         { id: "firmware-state", title: "OTA 请求按类型独立决策", body: "设备 / App 请求 OTA 时按固件类型独立判断，MCU 只判断 MCU 固件，模组只判断模组固件。请求参数需要区分整体 OTA 和模块 OTA；测试中、发布中、已发布版本是命中候选，暂停发布和已停止不参与命中策略。", loc: "产品详情 > 固件配置" }
+      ],
+      virtualVersionEdit: [
+        { id: "drawer-virtual-version-edit", title: "编辑虚拟版本", body: "说明：开发中、测试中虚拟版本可同时编辑虚拟版本级 APP 条件和关联 MCU；虚拟版本号创建后不可修改。候选仅含非 NULL 通道且状态为开发中/测试中/发布中/已发布的 MCU，模组、暂停发布和已停止固件不可关联。", loc: "产品详情 > 固件配置 > 虚拟版本 > 编辑" },
+        { id: "drawer-virtual-version-edit", title: "搜索式关联与保存反馈", body: "交互：已选组件固定展示为可移除标签；候选区域支持按固件名、固件版本、硬件版本搜索，并按通道号、状态筛选，候选数据由服务端分页返回。校验规则：关联组合以通道号 + 硬件版本唯一；允许同通道不同硬件、同硬件不同通道，无须覆盖全部通道。按钮状态：点击保存后展示“校验中/保存中”；失败时在抽屉内展示原因、标红字段并保持当前选择，成功后才关闭。状态规则：测试中新增的开发中组件保存时立即提升到测试中；移除组件不回退。", loc: "编辑虚拟版本抽屉" }
+      ],
+      virtualVersionCreate: [
+        { id: "drawer-virtual-version-create", title: "新建虚拟版本：独立 APP 条件", body: "字段：虚拟版本号、虚拟版本级 APP 条件和关联 MCU 均为必填。APP 条件不继承组件固件，用于虚拟版本模式下的候选筛选。交互：候选 MCU 支持搜索和通道/状态筛选，已选项在顶部汇总并可单独移除；数据量大时由服务端分页查询。校验规则：版本号为产品内唯一 x.y.z；APP 版本号为 x.y.z 或 v x.y.z；至少关联 1 个可用 MCU，通道号 + 硬件版本不可重复。异常处理：保存失败保留已填数据并在抽屉内说明原因，成功才关闭。", loc: "产品详情 > 固件配置 > 虚拟版本 > 新建" }
+      ],
+      firmwareReleaseConfig: [
+        { id: "drawer-firmware-release-config", title: "固件发布配置", body: "字段：发布方式、升级方式、生效时间、发布范围和自动发布总天数。状态规则：全面发布立即进入已发布；自动发布进入发布中；定时生效前保持测试中。异常处理：子集发布范围不能为空，定时生效必须填写时间，自动发布天数必须为正整数。", loc: "产品详情 > 固件配置 > 固件版本 > 发布" }
+      ],
+      virtualReleaseConfig: [
+        { id: "drawer-virtual-release-config", title: "虚拟版本发布配置与冻结", body: "字段：复用固件发布配置的发布方式、升级方式、生效时间和发布范围。首次提交（含定时）即冻结关联 MCU 与包信息；后续修改发布配置不会改写冻结快照。发布中/已发布的配置约束与固件、扩展程序一致：不可修改自动发布总天数和生效时间，发布中不可修改范围，已发布的全面发布不可切回自动发布。全面发布将低状态组件提升至已发布，自动发布提升至发布中，定时生效前提升至测试中。暂停、继续、停止均不回退组件状态。", loc: "产品详情 > 固件配置 > 虚拟版本 > 发布" }
       ],
       ota: [
         { id: "ota-upgrade", title: "OTA 已迁入固件配置", body: "本轮最新口径将 OTA 能力按产品迁入产品详情 > 固件配置；左侧设备管理 > OTA 在原型中不再作为新增能力验证入口。", loc: "产品详情 > 固件配置" }
@@ -945,8 +1021,10 @@
         state.rangeSummaryExpanded = !state.rangeSummaryExpanded;
         renderProduct();
       });
-      $("#listingActionBtn").textContent = product.status === "开发中" ? "上架产品" : "下架产品";
-      $("#listingRangeBtn").classList.toggle("hide", product.status === "开发中");
+      const online = ["已上架", "上架中"].includes(product.status);
+      $("#listingActionBtn").textContent = online ? "下架产品" : "上架产品";
+      $("#listingActionBtn").classList.toggle("danger", online);
+      $("#listingRangeBtn").classList.toggle("hide", ["开发中", "已下架"].includes(product.status));
       $$(".product-step").forEach(panel => panel.classList.add("hide"));
       $(`#${state.productStep}Step`).classList.remove("hide");
       $$("#productSteps .step").forEach(step => step.classList.toggle("active", step.dataset.step === state.productStep));
@@ -1172,20 +1250,20 @@
       return `命中影响：${item.version}/${nextStatus} 会进入候选集；若与 ${lower.map(candidate => `${candidate.version}/${candidate.status}`).join("、")} 同时满足命中条件，优先命中 ${item.version}，其他版本状态保持不变。`;
     }
 
-    // 同一系列：固件类型 + 硬件版本相同（固件版本不同）的版本集合
-    // 同一个固件：固件类型 + 硬件版本 + 固件版本三者完全相同 → 列表中有且仅有一个
+    // 同一系列 MCU 追加通道号维度；同一通道同硬件下多版本可并存。
+    // 同一个 MCU 固件：固件类型 + 硬件版本 + 固件版本 + 通道号四者完全相同。
     function sameSeries(a, b, kind) {
-      if (kind === "firmware") return a.type === b.type && (a.hw || a.hardware) === (b.hw || b.hardware);
+      if (kind === "firmware") return a.type === b.type && (a.hw || a.hardware) === (b.hw || b.hardware) && (a.type !== "MCU固件" || (a.channel || "") === (b.channel || ""));
       // 扩展程序无硬件版本维度，视为同一系列
       return true;
     }
 
     function isDuplicateFirmware(list, item, kind) {
-      // 同一个固件 = 固件类型 + 硬件版本 + 固件版本完全相同
+      // MCU 同一个固件 = 固件类型 + 硬件版本 + 固件版本 + 通道号完全相同
       if (kind !== "firmware") return false;
       return list.some(c => c !== item && c.type === item.type &&
         (c.hw || c.hardware) === (item.hw || item.hardware) &&
-        c.version === item.version);
+        c.version === item.version && (item.type !== "MCU固件" || (c.channel || "") === (item.channel || "")));
     }
 
     // 进入测试或发布时：同一系列多版本可以并存，只做真空保护
@@ -1461,6 +1539,8 @@
     }
 
     function firmwareActionsHtml(item) {
+      const virtualLock = products[state.product].mcuOtaMode === "虚拟版本" && item.type === "MCU固件";
+      if (virtualLock && item.status !== "开发中") return `<span class="sub">虚拟版本模式：状态由虚拟版本驱动</span><button class="btn" data-firmware-action="detail" data-fw-id="${item.id}">详情</button>`;
       if (item.status === "开发中") return `<button class="btn primary" data-firmware-action="test" data-fw-id="${item.id}">进入测试</button><button class="btn" data-firmware-action="edit" data-fw-id="${item.id}">编辑</button><button class="btn danger" data-firmware-action="delete" data-fw-id="${item.id}">删除</button>`;
       if (item.status === "测试中") return `<button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn primary" data-firmware-action="publish" data-fw-id="${item.id}">发布</button>`;
       if (item.status === "发布中") return `<button class="btn" data-firmware-action="pause" data-fw-id="${item.id}">暂停发布</button><button class="btn danger" data-firmware-action="stop" data-fw-id="${item.id}">停止</button><button class="btn" data-firmware-action="publish" data-fw-id="${item.id}">修改发布</button>`;
@@ -1470,6 +1550,7 @@
     }
 
     function firmwareVersionHtml() {
+      const virtualMode = products[state.product].mcuOtaMode === "虚拟版本";
       const counts = firmwareVersions.reduce((acc, item) => {
         acc[item.status] = (acc[item.status] || 0) + 1;
         return acc;
@@ -1478,10 +1559,11 @@
         <tr>
           <td>${item.name}</td>
           <td>${item.type}</td>
+          <td>${item.type === "MCU固件" ? (item.channel || "NULL") : "—"}</td>
           <td>${item.version}</td>
           <td>${item.hardware}</td>
           <td>${item.functionVersion}</td>
-          <td>${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</td>
+          <td>${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}${virtualMode && item.type === "MCU固件" ? `<span class="sub">仅单固件模式生效</span>` : ""}</td>
           <td><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span>${firmwareStatusHint(item.status) ? `<span class="sub">${firmwareStatusHint(item.status)}</span>` : ""}</td>
           <td>${item.createdAt}</td>
           <td>${item.log}</td>
@@ -1503,7 +1585,7 @@
         ${state.firmwareMessage ? `<div class="notice success firmware-message">${state.firmwareMessage}</div>` : ""}
         <div class="hit-rule-note">命中策略说明：${versionHitTips.firmware}</div>
         <table>
-          <thead><tr><th>固件名称</th><th>固件类型</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>APP版本号</th><th>状态${statusTipHtml("firmware")}</th><th>上传时间</th><th>发布日志</th><th>操作</th></tr></thead>
+          <thead><tr><th>固件名称</th><th>固件类型</th><th>通道号</th><th>固件版本</th><th>硬件版本</th><th>功能版本</th><th>组件 APP 条件${virtualMode ? `<span class="sub">虚拟模式不生效</span>` : ""}</th><th>状态${statusTipHtml("firmware")}</th><th>上传时间</th><th>发布日志</th><th>操作</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -1589,10 +1671,8 @@
         }
         if (btn.dataset.firmwareAction === "publish") {
           state.firmwareReleaseTargetId = item.id;
-          state.otaMode = "form";
-          state.otaStep = 2;
-          state.otaPublishMode = "publish";
-          state.firmwareMessage = `正在为固件版本 ${item.version} 配置发布。`;
+          openDrawer("firmwareReleaseConfig");
+          return;
         }
         render();
       }));
@@ -1646,6 +1726,7 @@
         <div class="form-grid">
           <div class="field"><label>功能版本</label><select id="firmwareAddFunctionVersion">${functionOptions}</select><span class="hint">选项引用产品详情 - 智能产品中的功能版本。</span></div>
           <div class="field"><label>固件类型</label><select id="firmwareAddType"><option value="mcu" selected>MCU固件</option><option value="module">模组固件</option></select></div>
+          <div class="field" id="firmwareChannelField"><label>通道号</label><input id="firmwareAddChannel" inputmode="numeric" placeholder="可选，正整数"><span class="hint">仅 MCU 固件显示；留空进入 NULL 桶，可单固件发布但不可关联虚拟版本。</span></div>
           <div class="field"><label>上传固件文件</label><input id="firmwareAddFile" type="file" accept=".ufw,.zip,.bin"><span class="hint">支持 .ufw、.zip、.bin。示例：Lute_M9_3.08_10_aabb_20240401.ufw</span><span class="error-text hide" id="firmwareAddFileError"></span></div>
           <div class="field"><label>产品</label><div class="readonly value-only">12 / 型号 1 / ID 2054039271856459777</div><span class="hint">继承当前产品详情上下文。</span></div>
           <div class="parse-grid">
@@ -1675,13 +1756,14 @@
     function firmwareVersionEditHtml(readonly = false) {
       const item = firmwareVersions.find(version => version.id === state.firmwareEditingId) || firmwareVersions[0];
       const isDev = item.status === "开发中";
-      const editable = isDev && !readonly;
+      const editable = false; // 固件开发中也仅允许维护备注；其余字段需删除后重建。
       return `<div id="drawer-firmware-version-edit" data-note-anchor="firmware-state">
         <div class="form-grid">
           <div class="field"><label>固件名称</label><div class="readonly value-only">${item.name}</div></div>
           <div class="field"><label>固件类型</label>${editable ? `<select id="firmwareEditType"><option ${item.type === "MCU固件" ? "selected" : ""}>MCU固件</option><option ${item.type === "模组固件" ? "selected" : ""}>模组固件</option></select>` : `<div class="readonly value-only">${item.type}</div>`}</div>
           <div class="field"><label>固件版本</label><div class="readonly value-only">${item.version}</div></div>
           <div class="field"><label>硬件版本</label><div class="readonly value-only">${item.hardware}</div></div>
+          ${item.type === "MCU固件" ? `<div class="field"><label>通道号</label><div class="readonly value-only">${item.channel || "NULL"}</div></div>` : ""}
           <div class="field"><label>状态</label><div class="readonly value-only"><span>${item.status}</span><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span></div></div>
           <div class="field"><label>上传时间</label><div class="readonly value-only">${item.createdAt}</div></div>
           <div class="field"><label>功能版本</label>${editable ? `<select id="firmwareEditFunctionVersion"><option ${item.functionVersion === "全部" ? "selected" : ""}>全部</option><option ${item.functionVersion === "版本1 - 已发布" ? "selected" : ""}>版本1 - 已发布</option><option ${item.functionVersion === "版本2 - 开发中" ? "selected" : ""}>版本2 - 开发中</option></select>` : `<div class="readonly value-only">${item.functionVersion}</div>`}</div>
@@ -2078,6 +2160,13 @@
         ? "当前抽屉批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
         : "当前页面批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。";
       $("#noteContext").textContent = context;
+      const scenario = $("#prototypeScenario");
+      if (scenario) scenario.value = state.prototypeScenario;
+      $("#prototypeScenarioHint").textContent = state.prototypeScenario === "offline"
+        ? "已下架产品：可在固件配置中进入 MCU OTA 模式编辑态。"
+        : state.prototypeScenario === "dev"
+        ? "开发中产品：可切换模式，并演示旧模式数据保留。"
+        : "已上架产品：为避免线上命中改变，MCU OTA 模式不可编辑。";
       $("#noteList").innerHTML = list.map((note, index) => `
         <button class="note-item ${note.id === state.activeNoteId ? "active" : ""}" data-note-target="${note.id}">
           <span class="note-index">${index + 1}</span>
@@ -2109,6 +2198,10 @@
         authList: "产品测试白名单抽屉批注",
         otaForm: "固件发布配置批注",
         firmwareVersionAdd: "新建固件版本抽屉批注",
+        firmwareReleaseConfig: "固件发布配置抽屉批注",
+        virtualVersionEdit: "编辑虚拟版本抽屉批注",
+        virtualVersionCreate: "新建虚拟版本抽屉批注",
+        virtualReleaseConfig: "虚拟版本发布配置抽屉批注",
         releaseConfig: "扩展程序发布配置抽屉批注",
         extensionVersionAdd: "新增扩展程序版本抽屉批注",
         extensionVersion: "版本指定弹窗批注",
@@ -2163,9 +2256,111 @@
       setTimeout(() => box.classList.remove("is-highlight"), 1600);
     }
 
+    function virtualAssociationCandidates(vv) {
+      const allowed = ["开发中", "测试中", "发布中", "已发布"];
+      return firmwareVersions.filter(item => item.type === "MCU固件" && Boolean(item.channel) && allowed.includes(item.status));
+    }
+
+    function virtualAssociationPickerHtml() {
+      const candidates = virtualAssociationCandidates();
+      const selected = Array.from(state.virtualDraftMembers).map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean);
+      const chips = selected.length
+        ? selected.map(item => `<span class="selected-chip"><span>通道 ${item.channel} · ${item.hardware} · ${item.version}</span><button type="button" data-remove-virtual-member="${item.id}" aria-label="移除通道 ${item.channel} ${item.hardware}">×</button></span>`).join("")
+        : `<span class="sub">尚未选择组件。支持搜索、按通道/状态筛选；不需要覆盖全部通道。</span>`;
+      const rows = candidates.map(item => `<tr data-virtual-candidate-row data-virtual-candidate="${item.id}" data-search="${escapeAttr(`${item.name} ${item.version} ${item.channel} ${item.hardware} ${item.status}`.toLowerCase())}" data-channel="${item.channel}" data-status="${item.status}">
+        <td><input type="checkbox" data-virtual-member="${item.id}" aria-label="选择通道 ${item.channel}、硬件 ${item.hardware}、固件 ${item.version}" ${state.virtualDraftMembers.has(item.id) ? "checked" : ""}></td>
+        <td>${item.name}<span class="sub">${item.log}</span></td><td>${item.version}</td><td>${item.channel}</td><td>${item.hardware}</td>
+        <td><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span></td>
+      </tr>`).join("");
+      const channelOptions = [...new Set(candidates.map(item => item.channel))].map(channel => `<option value="${channel}" ${state.virtualAssociationChannel === channel ? "selected" : ""}>通道 ${channel}</option>`).join("");
+      return `<section class="virtual-association-picker" id="virtualAssociationPicker">
+        <div class="virtual-picker-head"><strong>关联 MCU 固件</strong><button class="btn link" type="button" data-clear-virtual-members ${selected.length ? "" : "disabled"}>清空已选</button></div>
+        <div class="virtual-picker-selected" id="virtualSelectedChips">${chips}</div>
+        <div class="virtual-picker-tools"><input id="virtualAssociationKeyword" value="${escapeAttr(state.virtualAssociationKeyword || "")}" placeholder="搜索固件名、版本、硬件版本"><select id="virtualAssociationChannel"><option value="">全部通道</option>${channelOptions}</select><select id="virtualAssociationStatus"><option value="">全部状态</option>${["开发中", "测试中", "发布中", "已发布"].map(status => `<option ${state.virtualAssociationStatus === status ? "selected" : ""}>${status}</option>`).join("")}</select><button class="btn" type="button" data-reset-virtual-filter>重置</button></div>
+        <div class="virtual-picker-meta"><span id="virtualPickerResultCount">共 ${candidates.length} 条可关联 MCU</span><span>按「通道号 + 硬件版本」自动去重</span></div>
+        <div class="virtual-picker-table"><table><thead><tr><th style="width:42px">选择</th><th>固件名称 / 备注</th><th>固件版本</th><th>通道号</th><th>硬件版本</th><th>状态</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="auth-empty">暂无可关联 MCU 固件</td></tr>`}</tbody></table></div>
+      </section>`;
+    }
+
+    function virtualVersionEditHtml() {
+      const vv = virtualVersions.find(item => item.id === state.virtualEditingId);
+      if (!vv) return `<div class="notice warning">未找到需要编辑的虚拟版本。</div>`;
+      return `<div id="drawer-virtual-version-edit" data-note-anchor="drawer-virtual-version-edit">
+        <div class="notice">正在编辑虚拟版本 <strong>${vv.version}</strong>。开发中、测试中均可修改虚拟版本级 APP 条件和关联 MCU；请至少关联 1 个 MCU，“通道号 + 硬件版本”不可重复。</div>
+        <div class="form-grid"><div class="field"><label>虚拟版本号</label><div class="readonly">${vv.version}<span class="hint">版本号创建后不可修改。</span></div></div><div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualEditAppRule"><option ${vv.appRule === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${vv.appRule === "版本等于" ? "selected" : ""}>版本等于</option></select><input id="virtualEditAppVersion" value="${escapeAttr(vv.appVersion)}" placeholder="例如 v 2.2.10"></div><span class="hint">独立维护，不继承组件固件；保存后立即作为虚拟版本命中条件。</span></div></div>
+        <div class="summary-grid"><div class="summary-item"><span class="summary-label">当前状态</span><span class="summary-value"><span class="tag ${firmwareStatusClass(vv.status)}">${vv.status}</span></span></div><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">编辑边界</span><span class="summary-value">测试中截止</span></div></div>
+        ${virtualAssociationPickerHtml()}
+        <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
+        <div class="notice warning" id="virtualAssociationImpact">测试中保存后：新加入的开发中组件会立即提升至测试中；移除组件不会回退。发布后关联集合会冻结。</div>
+      </div>`;
+    }
+
+    function virtualVersionCreateHtml() {
+      return `<div id="drawer-virtual-version-create" data-note-anchor="drawer-virtual-version-create">
+        <div class="notice">虚拟版本以自身的 APP 条件作为命中前置过滤，不继承所关联 MCU 的 APP 条件。请至少关联 1 个可用 MCU；“通道号 + 硬件版本”不可重复，无需覆盖全部通道。</div>
+        <div class="form-grid">
+          <div class="field"><label><span class="required">*</span>虚拟版本号</label><input id="virtualVersionNo" placeholder="例如 2.2.0"><span class="hint">产品内唯一，格式为 x.y.z。</span></div>
+          <div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualVersionAppRule"><option>版本不低于</option><option>版本等于</option></select><input id="virtualVersionAppVersion" value="v 2.2.10" placeholder="例如 v 2.2.10"></div><span class="hint">仅虚拟版本模式生效；用于筛选候选虚拟版本。</span></div>
+        </div>
+        <div class="summary-grid"><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">创建后状态</span><span class="summary-value"><span class="tag gray">开发中</span></span></div></div>
+        ${virtualAssociationPickerHtml()}
+        <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
+        <div class="notice warning" id="virtualAssociationImpact">保存后仅创建开发中虚拟版本；进入测试时才会提升开发中组件。发布时将冻结关联集合和包信息。</div>
+      </div>`;
+    }
+
+    function managedReleaseTarget(kind) {
+      return kind === "virtual"
+        ? virtualVersions.find(item => item.id === state.virtualReleaseTargetId)
+        : firmwareVersions.find(item => item.id === state.firmwareReleaseTargetId);
+    }
+
+    function managedReleaseDrawerHtml(kind) {
+      const target = managedReleaseTarget(kind);
+      const isVirtual = kind === "virtual";
+      const existing = target?.releaseConfig || {};
+      const isReleaseConfigEdit = ["发布中", "暂停发布", "已发布"].includes(target?.status);
+      const data = {
+        mode: existing.mode || "自动发布",
+        upgradeMode: existing.upgradeMode || "提示升级",
+        effectiveAt: existing.effectiveAt || "立即生效",
+        effectiveTime: existing.effectiveTime || "2026-08-20 10:00",
+        rangeMode: existing.rangeMode || "sync",
+        range: existing.range || [],
+        batchDays: existing.batchDays || "5"
+      };
+      const lockMode = target?.status === "已发布" && data.mode === "全面发布";
+      const lockRange = target?.status === "发布中";
+      const lockSchedule = isReleaseConfigEdit;
+      const firstVirtualSubmission = isVirtual && !target?.frozen;
+      const listingRangeOptions = groupedCountryOptionsFor(currentProductListingRangeOptions());
+      const displayName = isVirtual ? `虚拟版本 ${target?.version || "--"}` : `${target?.name || "--"} ${target?.version || "--"}`;
+      return `<div id="drawer-${isVirtual ? "virtual" : "firmware"}-release-config" data-note-anchor="${isVirtual ? "drawer-virtual-release-config" : "drawer-firmware-release-config"}">
+        <div class="notice">${isVirtual ? (firstVirtualSubmission ? `首次提交发布配置将冻结 ${virtualMembers(target || {members: []}).length} 个关联 MCU 及包信息；定时生效同样在本次提交时冻结。` : "正在修改已冻结虚拟版本的发布配置；关联 MCU 与包信息快照保持不变。") : "提交后按发布方式进入发布中或已发布；定时生效前固件保持测试中。"}</div>
+        <div class="form-grid">
+          <div class="field"><label>${isVirtual ? "虚拟版本" : "固件版本"}</label><div class="readonly">${displayName}<span class="tag ${firmwareStatusClass(target?.status)}">${target?.status || "--"}</span></div></div>
+          <div class="field"><label>当前产品</label><div class="readonly">${products[state.product].name} / ${products[state.product].id}</div></div>
+          <div class="field"><label><span class="required">*</span>发布方式</label><select id="managedReleaseMode" ${lockMode ? "disabled" : ""}><option ${data.mode === "全面发布" ? "selected" : ""}>全面发布</option><option ${data.mode === "自动发布" ? "selected" : ""}>自动发布</option></select><span class="hint">全面发布直接进入已发布；自动发布按批次进入发布中。${lockMode ? "已发布的全面发布不可切回自动发布。" : ""}</span></div>
+          <div class="field"><label>升级方式</label><select id="managedReleaseUpgradeMode"><option ${data.upgradeMode === "提示升级" ? "selected" : ""}>提示升级</option><option ${data.upgradeMode === "强制升级" ? "selected" : ""}>强制升级</option></select></div>
+          <div class="field"><label>生效时间</label><select id="managedReleaseEffectiveAt" ${lockSchedule ? "disabled" : ""}><option ${data.effectiveAt === "立即生效" ? "selected" : ""}>立即生效</option><option ${data.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>
+          <div class="field ${data.effectiveAt === "定时生效" ? "" : "hide"}" id="managedReleaseEffectiveTimeField"><label><span class="required">*</span>定时生效时间</label><input id="managedReleaseEffectiveTime" placeholder="YYYY-MM-DD HH:mm" value="${escapeAttr(data.effectiveTime)}" ${lockSchedule ? "disabled" : ""}><span class="hint">生效前保持测试中；首次提交时即冻结虚拟版本的关联快照。</span></div>
+          <div class="field"><label>发布范围</label><select id="managedReleaseRangeMode" ${lockRange ? "disabled" : ""}><option value="sync" ${data.rangeMode === "sync" ? "selected" : ""}>同步上架范围</option><option value="custom" ${data.rangeMode === "custom" ? "selected" : ""}>选择上架范围中的一部分（子集）</option></select><span class="hint">当前上架范围：${currentProductListingRangeText()}。${lockRange ? "发布中状态不支持修改发布范围。" : ""}</span></div>
+          <div class="field ${data.rangeMode === "custom" ? "" : "hide"} ${lockRange ? "lock" : ""}" id="managedReleaseRangeSubset"><label><span class="required">*</span>范围子集</label>${rangeOptionsHtml("managedReleaseRangeSelect", listingRangeOptions, data.rangeMode === "custom" ? data.range : [], 2)}</div>
+          <div class="field" id="managedReleaseBatchDaysField"><label><span class="required">*</span>自动发布总天数</label><input id="managedReleaseBatchDays" value="${escapeAttr(data.batchDays)}" inputmode="numeric" ${lockSchedule ? "disabled" : ""}><span class="hint">N 天逐步开放至 100%。</span></div>
+        </div>
+        ${isReleaseConfigEdit ? `<div class="notice">发布中 / 已发布状态均不可修改自动发布总天数和生效时间，也不可降低当前开放覆盖度；发布中可切换至全面发布但不可修改范围；已发布可修改范围，但全面发布不可切回自动发布。</div>` : ""}
+        ${isVirtual ? `<div class="notice warning">组件状态影响：提交全面发布时，关联组件中开发中/测试中/发布中将提升至已发布；提交自动发布时提升至发布中。暂停、继续、停止均不会回退组件状态。</div>` : `<div class="impact-preview">影响预览：发布配置仅影响该固件版本的命中状态和范围。</div>`}
+      </div>`;
+    }
+
     function openDrawer(type) {
       state.drawer = type;
-      if (!["firmwareVersionEdit", "firmwareVersionDetail"].includes(type)) {
+      // 抽屉底部按钮会被不同表单复用。每次打开时显式还原，避免上一轮异步保存的禁用态遗留到发布配置。
+      const drawerSaveButton = $("#drawerSave");
+      drawerSaveButton.disabled = false;
+      drawerSaveButton.classList.remove("is-saving");
+      drawerSaveButton.removeAttribute("aria-busy");
+      if (!["firmwareVersionEdit", "firmwareVersionDetail", "virtualVersionEdit", "virtualVersionCreate"].includes(type)) {
         state.firmwareEditingId = null;
       }
       if (type === "authList") {
@@ -2176,6 +2371,11 @@
         state.authTag = "";
         state.authKeyword = "";
         state.authQueryField = "邮箱";
+      }
+      if (["virtualVersionEdit", "virtualVersionCreate"].includes(type)) {
+        state.virtualAssociationKeyword = "";
+        state.virtualAssociationChannel = "";
+        state.virtualAssociationStatus = "";
       }
       if (type === "addUser") {
         state.newAuthProducts = new Set(["V3 Dev Pump", "Pump-H"]);
@@ -2191,6 +2391,10 @@
         firmwareVersionAdd: ["新建固件版本", "选择功能版本、固件类型并上传固件文件；版本和硬件版本由文件名解析。", firmwareVersionAddHtml()],
         firmwareVersionEdit: ["编辑固件版本", "仅维护备注；功能版本、固件类型、APP 版本号配置和解析字段填错需删除后重新新建。", firmwareVersionEditHtml(false)],
         firmwareVersionDetail: ["固件版本详情", "查看当前固件版本的基础信息、版本控制条件和文件解析结果。", firmwareVersionEditHtml(true)],
+        firmwareReleaseConfig: ["固件发布配置", "配置发布方式、升级方式、生效时间和发布范围；保存后才变更固件状态。", managedReleaseDrawerHtml("firmware")],
+        virtualVersionEdit: ["编辑虚拟版本", "开发中、测试中可维护虚拟版本级 APP 条件和关联 MCU，并按通道号 + 硬件版本阻断重复组合。", virtualVersionEditHtml()],
+        virtualVersionCreate: ["新建虚拟版本", "配置独立 APP 条件并关联 MCU；组件固件的 APP 条件不会被继承。", virtualVersionCreateHtml()],
+        virtualReleaseConfig: [managedReleaseTarget("virtual")?.frozen ? "修改虚拟版本发布配置" : "虚拟版本发布配置", managedReleaseTarget("virtual")?.frozen ? "修改发布方式、升级方式和允许调整的发布范围；关联组件及包信息快照保持冻结。" : "配置发布方式、升级方式、生效时间和发布范围；首次提交将冻结关联组件及包信息。", managedReleaseDrawerHtml("virtual")],
         extensionVersionAdd: ["新增版本", "产品模块扩展程序迁入产品详情后，在当前产品上下文内新增版本。", extensionVersionAddHtml()],
         releaseConfig: [state.releaseConfigIntent === "edit" ? "修改发布配置" : "发布配置", "保存后立即生效；全面发布进入已发布，自动发布进入发布中。", releaseConfigDrawerHtml()]
       };
@@ -2200,7 +2404,7 @@
       $("#drawerDesc").textContent = desc;
       $("#drawerDesc").classList.toggle("hide", !desc);
       $("#drawerBody").innerHTML = html;
-      $("#drawerSave").textContent = type === "importUsers" ? "开始导入" : type === "releaseConfig" ? "保存并生效" : type === "authList" ? "确定" : "保存";
+      $("#drawerSave").textContent = type === "importUsers" ? "开始导入" : ["releaseConfig", "firmwareReleaseConfig", "virtualReleaseConfig"].includes(type) ? "提交发布" : type === "authList" ? "确定" : "保存";
       $("#drawerSave").classList.toggle("hide", ["firmwareVersionDetail"].includes(type));
       $("#drawerCancel").textContent = ["firmwareVersionDetail"].includes(type) ? "关闭" : "取消";
       $("#drawer").classList.toggle("wide", type === "authList");
@@ -2213,14 +2417,24 @@
     }
 
     function closeDrawer() {
+      const closingType = state.drawer;
       state.drawer = null;
       state.extensionReleaseMode = null;
       state.editingUserId = null;
+      if (closingType === "firmwareReleaseConfig") state.firmwareReleaseTargetId = null;
+      if (closingType === "virtualReleaseConfig") state.virtualReleaseTargetId = null;
+      if (["virtualVersionEdit", "virtualVersionCreate"].includes(closingType)) {
+        state.virtualEditingId = null;
+        state.virtualDraftMembers = new Set();
+      }
       $("#drawer").classList.remove("wide");
       document.body.classList.remove("drawer-open", "drawer-wide");
       $("#drawer").classList.remove("open");
       $("#drawerMask").classList.remove("open");
       $("#drawerSave").textContent = "保存";
+      $("#drawerSave").disabled = false;
+      $("#drawerSave").classList.remove("is-saving");
+      $("#drawerSave").removeAttribute("aria-busy");
       $("#drawerSave").classList.remove("hide");
       $("#drawerCancel").textContent = "取消";
       renderNotes();
@@ -2620,6 +2834,107 @@
         $("#firmwareAddType")?.addEventListener("change", syncFirmwareAdd);
         syncFirmwareAdd();
       }
+      if (["virtualVersionEdit", "virtualVersionCreate"].includes(type)) {
+        const vv = virtualVersions.find(item => item.id === state.virtualEditingId);
+        const isCreate = type === "virtualVersionCreate";
+        const setVirtualSaveError = (message, targetId = "") => {
+          const error = $("#virtualSaveError");
+          if (error) { error.textContent = message; error.classList.add("open"); }
+          ["#virtualVersionNo", "#virtualVersionAppVersion", "#virtualEditAppVersion"].forEach(selector => $(selector)?.classList.remove("invalid"));
+          if (targetId) {
+            const target = $(`#${targetId}`);
+            target?.classList.add("invalid");
+            target?.focus();
+          }
+          showToast(message);
+        };
+        const clearVirtualSaveError = () => {
+          $("#virtualSaveError")?.classList.remove("open");
+          ["#virtualVersionNo", "#virtualVersionAppVersion", "#virtualEditAppVersion"].forEach(selector => $(selector)?.classList.remove("invalid"));
+        };
+        const applyVirtualCandidateFilters = () => {
+          const keyword = (state.virtualAssociationKeyword || "").trim().toLowerCase();
+          const channel = state.virtualAssociationChannel || "";
+          const status = state.virtualAssociationStatus || "";
+          let visible = 0;
+          $$('[data-virtual-candidate-row]').forEach(row => {
+            const match = (!keyword || row.dataset.search.includes(keyword)) && (!channel || row.dataset.channel === channel) && (!status || row.dataset.status === status);
+            row.classList.toggle("is-filtered-out", !match);
+            if (match) visible += 1;
+          });
+          const total = $$('[data-virtual-candidate-row]').length;
+          $("#virtualPickerResultCount").textContent = `显示 ${visible} / ${total} 条可关联 MCU`;
+        };
+        const refreshVirtualDraft = () => {
+          const selected = Array.from(state.virtualDraftMembers).map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean);
+          const selectedKeys = new Set(selected.map(item => `${item.channel}::${item.hardware}`));
+          $$('[data-virtual-member]').forEach(input => {
+            const item = firmwareVersions.find(candidate => candidate.id === input.dataset.virtualMember);
+            const key = item ? `${item.channel}::${item.hardware}` : "";
+            const isSelected = state.virtualDraftMembers.has(input.dataset.virtualMember);
+            const collision = !isSelected && selectedKeys.has(key);
+            input.disabled = collision;
+            input.closest('tr')?.classList.toggle('is-disabled', collision);
+          });
+          $("#virtualDraftCount").textContent = `${selected.length} 个`;
+          $("#virtualAssociationImpact").textContent = isCreate
+            ? "保存后仅创建开发中虚拟版本；进入测试时才会提升开发中组件。发布时将冻结关联集合和包信息。"
+            : vv?.status === "测试中"
+              ? "测试中保存后：新加入的开发中组件会立即提升至测试中；移除组件不会回退。"
+              : "保存后仅更新关联集合；进入测试时才提升开发中组件。发布后关联集合会冻结。";
+          $("#virtualSelectedChips").innerHTML = selected.length
+            ? selected.map(item => `<span class="selected-chip"><span>通道 ${item.channel} · ${item.hardware} · ${item.version}</span><button type="button" data-remove-virtual-member="${item.id}" aria-label="移除通道 ${item.channel} ${item.hardware}">×</button></span>`).join("")
+            : `<span class="sub">尚未选择组件。支持搜索、按通道/状态筛选；不需要覆盖全部通道。</span>`;
+          $("[data-clear-virtual-members]")?.toggleAttribute("disabled", !selected.length);
+          $$('[data-remove-virtual-member]').forEach(btn => btn.addEventListener("click", () => {
+            state.virtualDraftMembers.delete(btn.dataset.removeVirtualMember);
+            clearVirtualSaveError();
+            refreshVirtualDraft();
+          }));
+          applyVirtualCandidateFilters();
+        };
+        $$('[data-virtual-member]').forEach(input => input.addEventListener('change', () => {
+          const item = firmwareVersions.find(candidate => candidate.id === input.dataset.virtualMember);
+          if (!item) return;
+          const key = `${item.channel}::${item.hardware}`;
+          if (input.checked) {
+            const duplicate = Array.from(state.virtualDraftMembers).map(id => firmwareVersions.find(candidate => candidate.id === id)).find(candidate => candidate && `${candidate.channel}::${candidate.hardware}` === key);
+            if (duplicate) { input.checked = false; setVirtualSaveError(`通道 ${item.channel} / 硬件 ${item.hardware} 已关联 ${duplicate.version}，不能重复关联。`); return; }
+            state.virtualDraftMembers.add(item.id);
+          } else state.virtualDraftMembers.delete(item.id);
+          clearVirtualSaveError();
+          refreshVirtualDraft();
+        }));
+        $("#virtualAssociationKeyword")?.addEventListener("input", event => { state.virtualAssociationKeyword = event.target.value; applyVirtualCandidateFilters(); });
+        $("#virtualAssociationChannel")?.addEventListener("change", event => { state.virtualAssociationChannel = event.target.value; applyVirtualCandidateFilters(); });
+        $("#virtualAssociationStatus")?.addEventListener("change", event => { state.virtualAssociationStatus = event.target.value; applyVirtualCandidateFilters(); });
+        $("[data-reset-virtual-filter]")?.addEventListener("click", () => { state.virtualAssociationKeyword = ""; state.virtualAssociationChannel = ""; state.virtualAssociationStatus = ""; $("#virtualAssociationKeyword").value = ""; $("#virtualAssociationChannel").value = ""; $("#virtualAssociationStatus").value = ""; applyVirtualCandidateFilters(); });
+        $("[data-clear-virtual-members]")?.addEventListener("click", () => { state.virtualDraftMembers = new Set(); clearVirtualSaveError(); refreshVirtualDraft(); });
+        $("#virtualVersionNo")?.addEventListener("input", clearVirtualSaveError);
+        $("#virtualVersionAppVersion")?.addEventListener("input", clearVirtualSaveError);
+        $("#virtualEditAppVersion")?.addEventListener("input", clearVirtualSaveError);
+        $("#virtualEditAppRule")?.addEventListener("change", clearVirtualSaveError);
+        refreshVirtualDraft();
+      }
+      if (["firmwareReleaseConfig", "virtualReleaseConfig"].includes(type)) {
+        wireMultiPick();
+        const syncManagedReleaseMode = () => {
+          const auto = $("#managedReleaseMode")?.value === "自动发布";
+          $("#managedReleaseBatchDaysField")?.classList.toggle("hide", !auto);
+        };
+        const syncManagedReleaseRange = () => {
+          const custom = $("#managedReleaseRangeMode")?.value === "custom";
+          $("#managedReleaseRangeSubset")?.classList.toggle("hide", !custom);
+        };
+        const syncManagedReleaseTime = () => {
+          const timed = $("#managedReleaseEffectiveAt")?.value === "定时生效";
+          $("#managedReleaseEffectiveTimeField")?.classList.toggle("hide", !timed);
+        };
+        $("#managedReleaseMode")?.addEventListener("change", syncManagedReleaseMode);
+        $("#managedReleaseRangeMode")?.addEventListener("change", syncManagedReleaseRange);
+        $("#managedReleaseEffectiveAt")?.addEventListener("change", syncManagedReleaseTime);
+        syncManagedReleaseMode(); syncManagedReleaseRange(); syncManagedReleaseTime();
+      }
       if (type === "releaseConfig") {
         wireMultiPick();
         const syncReleaseMode = () => {
@@ -2642,6 +2957,29 @@
         syncReleaseEffectiveAt();
       }
       $("#drawerSave").onclick = async () => {
+        const isVirtualSave = ["virtualVersionCreate", "virtualVersionEdit"].includes(type);
+        const virtualSaveButton = $("#drawerSave");
+        const restoreVirtualSave = () => {
+          if (!isVirtualSave) return;
+          virtualSaveButton.disabled = false;
+          virtualSaveButton.classList.remove("is-saving");
+          virtualSaveButton.textContent = "保存";
+        };
+        const failVirtualSave = (message, targetId = "") => {
+          const error = $("#virtualSaveError");
+          if (error) { error.textContent = message; error.classList.add("open"); }
+          ["#virtualVersionNo", "#virtualVersionAppVersion"].forEach(selector => $(selector)?.classList.remove("invalid"));
+          if (targetId) { const target = $(`#${targetId}`); target?.classList.add("invalid"); target?.focus(); }
+          restoreVirtualSave();
+          showToast(message);
+        };
+        if (isVirtualSave) {
+          $("#virtualSaveError")?.classList.remove("open");
+          virtualSaveButton.disabled = true;
+          virtualSaveButton.classList.add("is-saving");
+          virtualSaveButton.textContent = "校验中…";
+          await new Promise(resolve => setTimeout(resolve, 180));
+        }
         if (type === "importUsers") {
           openImportProgress(type);
           return;
@@ -2753,7 +3091,7 @@
             product.listingRangeMode = rangeMode;
             product.listingRange = range;
           }
-          if (state.product === "dev") {
+          if (["开发中", "已下架"].includes(product.status)) {
             const shouldSchedule = effectiveMode === "定时生效" && effectiveTime && new Date(effectiveTime).getTime() > Date.now();
             product.status = shouldSchedule ? "上架中" : "已上架";
             product.statusClass = shouldSchedule ? "orange" : "green";
@@ -2772,6 +3110,11 @@
           const fileName = $("#firmwareAddFile")?.files?.[0]?.name || "";
           const parsed = parseFirmwareFileName(fileName);
           const firmwareType = firmwareTypeName[$("#firmwareAddType")?.value || "mcu"];
+          const channel = $("#firmwareAddChannel")?.value.trim() || "";
+          if (firmwareType === "MCU固件" && channel && !/^[1-9]\d*$/.test(channel)) {
+            showToast("MCU 通道号仅支持正整数；留空将归入 NULL 桶。");
+            return;
+          }
           if (!parsed) {
             showToast("请上传符合命名规则的固件文件。");
             return;
@@ -2779,9 +3122,10 @@
           if (firmwareVersions.some(item =>
             item.version === parsed.firmwareVersion &&
             item.type === firmwareType &&
-            (item.hw || item.hardware || "") === (parsed.hardwareVersion || "")
+            (item.hw || item.hardware || "") === (parsed.hardwareVersion || "") &&
+            (firmwareType !== "MCU固件" || (item.channel || "") === channel)
           )) {
-            showToast(`已存在相同固件：${firmwareType} / 硬件版本 ${parsed.hardwareVersion} / 固件版本 ${parsed.firmwareVersion}，无法重复上传。`);
+            showToast(`已存在相同固件：${firmwareType} / 硬件版本 ${parsed.hardwareVersion} / 固件版本 ${parsed.firmwareVersion}${firmwareType === "MCU固件" ? ` / 通道 ${channel || "NULL"}` : ""}，无法重复上传。`);
             return;
           }
           firmwareVersions.unshift({
@@ -2790,6 +3134,7 @@
             type: firmwareType,
             version: parsed.firmwareVersion,
             hardware: parsed.hardwareVersion,
+            channel: firmwareType === "MCU固件" ? channel : "",
             functionVersion: $("#firmwareAddFunctionVersion").value,
             status: "开发中",
             createdAt: "2026-06-09 11:30",
@@ -2809,13 +3154,117 @@
           const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
           if (item) {
             item.log = $("#firmwareEditRemark").value.trim() || item.log;
-            if (item.status === "开发中") {
-              if ($("#firmwareEditType")) item.type = $("#firmwareEditType").value;
-              if ($("#firmwareEditFunctionVersion")) item.functionVersion = $("#firmwareEditFunctionVersion").value;
-              if ($("#firmwareEditAppRule")) item.appRule = $("#firmwareEditAppRule").value;
-              if ($("#firmwareEditAppVersion")) item.appVersion = $("#firmwareEditAppVersion").value;
-            }
             state.firmwareMessage = `固件版本 ${item.version} 已保存。`;
+          }
+        }
+        if (type === "virtualVersionCreate") {
+          const version = $("#virtualVersionNo").value.trim();
+          const appVersion = $("#virtualVersionAppVersion").value.trim();
+          const members = Array.from(state.virtualDraftMembers);
+          if (!/^\d+\.\d+\.\d+$/.test(version) || virtualVersions.some(item => item.version === version)) {
+            failVirtualSave("请输入产品内未使用的 x.y.z 虚拟版本号。", "virtualVersionNo");
+            return;
+          }
+          if (!/^v?\s*\d+\.\d+\.\d+$/i.test(appVersion)) {
+            failVirtualSave("APP 版本号格式应为 v2.2.10 或 2.2.10。", "virtualVersionAppVersion");
+            return;
+          }
+          if (!members.length) {
+            failVirtualSave("请至少关联 1 个 MCU 固件；可使用上方搜索与筛选定位后勾选。");
+            return;
+          }
+          const selected = members.map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean);
+          const keys = selected.map(item => `${item.channel}::${item.hardware}`);
+          if (new Set(keys).size !== keys.length) {
+            failVirtualSave("同一通道号 + 硬件版本只能关联一个 MCU 固件。");
+            return;
+          }
+          virtualSaveButton.textContent = "保存中…";
+          virtualVersions.unshift({
+            id: `vv${Date.now()}`,
+            version,
+            status: "开发中",
+            appRule: $("#virtualVersionAppRule").value,
+            appVersion: appVersion.startsWith("v") ? appVersion : `v ${appVersion}`,
+            members,
+            frozen: false,
+            createdAt: "2026-08-14 10:00",
+            log: "新建虚拟版本；独立维护 APP 条件"
+          });
+          state.firmwareMessage = `虚拟版本 ${version} 已新建；APP 条件为 ${$("#virtualVersionAppRule").value} ${appVersion}，关联 ${members.length} 个 MCU。`;
+          state.virtualDraftMembers = new Set();
+        }
+        if (type === "virtualVersionEdit") {
+          const vv = virtualVersions.find(item => item.id === state.virtualEditingId);
+          const members = Array.from(state.virtualDraftMembers);
+          const appVersion = $("#virtualEditAppVersion").value.trim();
+          if (!vv) { failVirtualSave("未找到虚拟版本，请关闭后重试。"); return; }
+          if (vv.frozen) { failVirtualSave("关联集合和包信息已冻结，请新建虚拟版本。"); return; }
+          if (!/^v?\s*\d+\.\d+\.\d+$/i.test(appVersion)) { failVirtualSave("APP 版本号格式应为 v2.2.10 或 2.2.10。", "virtualEditAppVersion"); return; }
+          if (!members.length) { failVirtualSave("请至少关联 1 个 MCU 固件；可使用上方搜索与筛选定位后勾选。"); return; }
+          const selected = members.map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean);
+          const keys = selected.map(item => `${item.channel}::${item.hardware}`);
+          if (new Set(keys).size !== keys.length) { failVirtualSave("同一通道号 + 硬件版本只能关联一个 MCU 固件。"); return; }
+          virtualSaveButton.textContent = "保存中…";
+          const oldMembers = new Set(vv.members);
+          vv.members = members;
+          vv.appRule = $("#virtualEditAppRule").value;
+          vv.appVersion = appVersion.startsWith("v") || appVersion.startsWith("V") ? appVersion.replace(/^V/, "v") : `v ${appVersion}`;
+          const added = selected.filter(item => !oldMembers.has(item.id));
+          const raised = vv.status === "测试中" && added.length ? promoteVirtual(vv, "测试中", added.map(item => item.id)) : "";
+          const removed = Array.from(oldMembers).filter(id => !members.includes(id));
+          state.firmwareMessage = `虚拟版本 ${vv.version} 已保存：APP 条件为 ${vv.appRule} ${vv.appVersion}；关联新增 ${added.length} 个、移除 ${removed.length} 个。${raised || "移除组件不回退；后续状态由虚拟版本驱动。"}`;
+          state.virtualEditingId = null;
+          state.virtualDraftMembers = new Set();
+        }
+        if (["firmwareReleaseConfig", "virtualReleaseConfig"].includes(type)) {
+          const isVirtual = type === "virtualReleaseConfig";
+          const target = managedReleaseTarget(isVirtual ? "virtual" : "firmware");
+          if (!target) { showToast("未找到待发布版本，请关闭后重试。"); return; }
+          const mode = $("#managedReleaseMode").value;
+          const effectiveAt = $("#managedReleaseEffectiveAt").value;
+          const effectiveTime = $("#managedReleaseEffectiveTime").value.trim();
+          const rangeMode = $("#managedReleaseRangeMode").value;
+          const range = rangeMode === "custom" ? selectedMultiValues("#managedReleaseRangeSelect") : currentProductListingRangeOptions();
+          const batchDays = $("#managedReleaseBatchDays")?.value.trim() || "";
+          if (!range.length) { showToast("请至少选择一个发布范围。"); return; }
+          if (effectiveAt === "定时生效" && !effectiveTime) { showToast("请配置定时生效时间。"); return; }
+          if (mode === "自动发布" && (!/^[1-9]\d*$/.test(batchDays))) { showToast("自动发布总天数需为正整数。"); return; }
+          const timedPending = effectiveAt === "定时生效";
+          const nextStatus = timedPending ? "测试中" : (mode === "全面发布" ? "已发布" : "发布中");
+          if (isVirtual) {
+            const componentTarget = timedPending ? "测试中" : (mode === "全面发布" ? "已发布" : "发布中");
+            const firstSubmission = !target.frozen;
+            const ok = await showConfirm(firstSubmission ? "提交发布并冻结" : "修改发布配置", `将以<strong>${mode}</strong>${timedPending ? `并在 ${effectiveTime} 定时生效` : ""}${firstSubmission ? "发布" : "更新"}虚拟版本 <strong>${target.version}</strong>。${firstSubmission ? `本次提交会冻结 ${virtualMembers(target).length} 个关联 MCU 与包信息；` : "关联 MCU 与包信息快照保持冻结；"}组件状态将只升不降，目标状态为<strong>${componentTarget}</strong>。`, firstSubmission ? "确认提交" : "确认保存");
+            if (!ok) return;
+            const releaseSaveButton = $("#drawerSave");
+            releaseSaveButton.disabled = true;
+            releaseSaveButton.classList.add("is-saving");
+            releaseSaveButton.setAttribute("aria-busy", "true");
+            releaseSaveButton.textContent = "提交中…";
+            await new Promise(resolve => setTimeout(resolve, 180));
+            if (firstSubmission) {
+              target.frozen = true;
+              target.frozenMembers = virtualMembers(target).map(item => ({ id: item.id, channel: item.channel, hardware: item.hardware, version: item.version }));
+            }
+            target.releaseConfig = { mode, upgradeMode: $("#managedReleaseUpgradeMode").value, effectiveAt, effectiveTime: timedPending ? effectiveTime : "", rangeMode, range, batchDays: mode === "自动发布" ? batchDays : "" };
+            target.status = nextStatus;
+            state.firmwareMessage = firstSubmission
+              ? `虚拟版本 ${target.version} 已提交${mode}${timedPending ? "定时发布" : "发布"}，关联集合和包信息已冻结。${promoteVirtual(target, componentTarget)}`
+              : `虚拟版本 ${target.version} 的发布配置已更新，关联集合和包信息快照保持冻结。${promoteVirtual(target, componentTarget)}`;
+            state.virtualReleaseTargetId = null;
+          } else {
+            const releaseSaveButton = $("#drawerSave");
+            releaseSaveButton.disabled = true;
+            releaseSaveButton.classList.add("is-saving");
+            releaseSaveButton.setAttribute("aria-busy", "true");
+            releaseSaveButton.textContent = "提交中…";
+            await new Promise(resolve => setTimeout(resolve, 180));
+            target.releaseConfig = { mode, upgradeMode: $("#managedReleaseUpgradeMode").value, effectiveAt, effectiveTime: timedPending ? effectiveTime : "", rangeMode, range, batchDays: mode === "自动发布" ? batchDays : "" };
+            target.status = nextStatus;
+            target.log = timedPending ? `${mode}已配置定时生效` : (mode === "自动发布" ? `自动发布：${batchDays} 天分批` : "全面发布：已发布");
+            state.firmwareMessage = `固件版本 ${target.version} 已提交发布配置，${timedPending ? "定时生效前保持测试中" : `版本进入${nextStatus}`}。`;
+            state.firmwareReleaseTargetId = null;
           }
         }
         if (type === "extensionVersionAdd") {
@@ -3025,12 +3474,46 @@
     $$("#productSteps .step[data-step]").forEach(step => step.addEventListener("click", () => { state.productStep = step.dataset.step; render(); }));
     $("#versionSelect").addEventListener("change", event => {
       state.product = event.target.value;
+      state.prototypeScenario = event.target.value === "dev" ? "dev" : "listed";
       state.extensionPanelMode = null;
       state.extensionPanelSaved = "";
+      state.mcuModeEditing = false;
+      state.mcuModeDraft = null;
+      render();
+    });
+    $("#prototypeScenario").addEventListener("change", event => {
+      const scenario = event.target.value;
+      state.prototypeScenario = scenario;
+      state.product = scenario === "dev" ? "dev" : "listed";
+      if (scenario === "offline") {
+        products.listed.status = "已下架";
+        products.listed.statusClass = "tag";
+      } else {
+        products.listed.status = "已上架";
+        products.listed.statusClass = "green";
+      }
+      state.mcuModeEditing = false;
+      state.mcuModeDraft = null;
+      state.firmwareMessage = scenario === "offline" ? "原型场景已切换为已下架：MCU OTA 模式现在可编辑。" : "";
       render();
     });
       document.addEventListener("click", async event => {
       if (!event.target.closest(".status-tip, .inline-tip, .app-version-field")) closeAllTips();
+      const listingAction = event.target.closest("#listingActionBtn");
+      if (listingAction && ["已上架", "上架中"].includes(products[state.product].status)) {
+        event.preventDefault();
+        const product = products[state.product];
+        const ok = await showConfirm("下架产品", `确定下架产品 <strong>${product.name}</strong>？<br>下架后产品不再面向线上用户；固件与虚拟版本数据保留，MCU OTA 模式恢复可编辑。`, "确认下架");
+        if (!ok) return;
+        product.status = "已下架";
+        product.statusClass = "tag";
+        state.prototypeScenario = "offline";
+        state.mcuModeEditing = false;
+        state.mcuModeDraft = null;
+        state.firmwareMessage = "产品已下架：MCU OTA 模式已恢复可编辑；历史固件和虚拟版本数据均保留。";
+        render();
+        return;
+      }
       const opener = event.target.closest("[data-open-drawer]");
       if (opener) {
         openDrawer(opener.dataset.openDrawer);
@@ -3180,6 +3663,86 @@
     $("#versionImpactModal").addEventListener("click", event => {
       if (event.target === $("#versionImpactModal")) closeVersionImpactModal(false);
     });
+
+    /* 2026-08-13: MCU virtual-version OTA adaptation (kept local to this prototype). */
+    function mcuModeHtml() {
+      const product = products[state.product];
+      const editable = ["开发中", "已下架"].includes(product.status);
+      const current = product.mcuOtaMode || "单固件";
+      const draft = state.mcuModeDraft || current;
+      const display = `<div class="subsection-head"><div><h3><span class="anchor">1</span>MCU OTA 模式</h3><p class="mcu-mode-value">当前模式：<span class="tag blue">${current}</span><span>仅影响 MCU；模组固件始终沿用单固件受控发布。</span></p></div><button class="btn" data-edit-mcu-mode ${editable ? "" : "disabled title=\"仅开发中或已下架产品可编辑\""}>编辑</button></div>`;
+      const editor = `<div class="subsection-head"><div><h3><span class="anchor">1</span>编辑 MCU OTA 模式</h3><p class="sub">保存后切换产品级 MCU 命中与操作权限；不会停止或删除旧模式数据。</p></div><button class="btn link" data-cancel-mcu-mode>取消编辑</button></div><div class="mcu-mode-editor" role="radiogroup" aria-label="MCU OTA 模式">${[["单固件","组件 MCU 独立受控发布与命中"],["虚拟版本","以虚拟版本统一编排组件 MCU"]].map(([mode, desc]) => `<button class="mcu-mode-option ${draft === mode ? "selected" : ""}" data-mcu-mode-draft="${mode}" role="radio" aria-checked="${draft === mode}"><strong>${mode}</strong><span>${desc}</span></button>`).join("")}</div><div class="notice">切换后，旧模式数据保留为只读且不参与命中；切回后恢复原操作能力。模组固件不受影响。</div><div class="form-foot"><button class="btn" data-cancel-mcu-mode>取消</button><button class="btn primary" data-save-mcu-mode>保存模式</button></div>`;
+      return `<section class="mcu-mode-card" data-note-anchor="firmware-tab">${state.mcuModeEditing ? editor : display}${!state.mcuModeEditing && !editable ? `<div class="notice warning">产品当前为${product.status}，为避免线上命中改变，MCU OTA 模式不可编辑。</div>` : ""}</section>`;
+    }
+    function virtualMembers(vv) { return vv.members.map(id => firmwareVersions.find(x => x.id === id)).filter(Boolean); }
+    function vvStatusClass(status) { return firmwareStatusClass(status); }
+    function normalizedAppVersion(value) {
+      return String(value || "0").match(/\d+(?:\.\d+)*/)?.[0] || "0";
+    }
+    function virtualAppRuleMatches(version, appVersion) {
+      const compared = compareVersion(normalizedAppVersion(appVersion), normalizedAppVersion(version.appVersion));
+      return version.appRule === "版本等于" ? compared === 0 : compared >= 0;
+    }
+    function virtualStopVacuumImpact(target) {
+      const referenceAppVersion = normalizedAppVersion(target.appVersion);
+      const alternatives = virtualVersions.filter(version => version.id !== target.id && virtualAppRuleMatches(version, referenceAppVersion));
+      const whitelistCandidates = alternatives.filter(version => ["测试中", "发布中", "已发布"].includes(version.status));
+      const onlineCandidates = alternatives.filter(version => ["发布中", "已发布"].includes(version.status));
+      return { referenceAppVersion, whitelistCandidates, onlineCandidates, isVacuum: !whitelistCandidates.length && !onlineCandidates.length };
+    }
+    function virtualActionsHtml(vv) {
+      if (products[state.product].mcuOtaMode !== "虚拟版本") return `<span class="sub">单固件模式下仅查看，不参与命中</span>`;
+      if (vv.status === "开发中") return `<button class="btn primary" data-virtual-action="test" data-vv-id="${vv.id}">进入测试</button><button class="btn" data-virtual-action="edit" data-vv-id="${vv.id}">编辑</button><button class="btn danger" data-virtual-action="delete" data-vv-id="${vv.id}">删除</button>`;
+      if (vv.status === "测试中") return `<button class="btn" data-virtual-action="edit" data-vv-id="${vv.id}">编辑</button><button class="btn primary" data-virtual-action="publish" data-vv-id="${vv.id}">发布</button><button class="btn danger" data-virtual-action="stop" data-vv-id="${vv.id}">停止</button>`;
+      if (vv.status === "发布中") return `<button class="btn" data-virtual-action="pause" data-vv-id="${vv.id}">暂停发布</button><button class="btn danger" data-virtual-action="stop" data-vv-id="${vv.id}">停止</button><button class="btn" data-virtual-action="publish" data-vv-id="${vv.id}">修改发布</button>`;
+      if (vv.status === "暂停发布") return `<button class="btn primary" data-virtual-action="resume" data-vv-id="${vv.id}">继续</button><button class="btn danger" data-virtual-action="stop" data-vv-id="${vv.id}">停止</button>`;
+      if (vv.status === "已发布") return `<span class="sub">关联和包信息已冻结</span><button class="btn danger" data-virtual-action="stop" data-vv-id="${vv.id}">停止</button><button class="btn" data-virtual-action="publish" data-vv-id="${vv.id}">修改发布配置</button>`;
+      return `<span class="sub">已停止：仅保留历史记录，不可删除或编辑</span>`;
+    }
+    function virtualVersionHtml() {
+      const active = products[state.product].mcuOtaMode === "虚拟版本";
+      const rows = virtualVersions.map(vv => `<tr><td>${vv.version}</td><td>${vv.appRule} ${vv.appVersion}<span class="sub">独立于组件 APP 条件</span></td><td>${virtualMembers(vv).length} 个 MCU<br><span class="sub">${virtualMembers(vv).map(x => `通道${x.channel}/${x.hardware}/${x.version}`).join("；") || "无"}</span></td><td><span class="tag ${vvStatusClass(vv.status)}">${vv.status}</span></td><td>${vv.frozen ? "<span class='tag blue'>已冻结</span>" : "可调整（测试中截止）"}</td><td>${vv.createdAt}</td><td class="table-actions">${virtualActionsHtml(vv)}</td></tr>`).join("");
+      return `<div class="subsection" id="virtual-version" data-note-anchor="virtual-version"><div class="subsection-head"><div><h3><span class="anchor">3</span>虚拟版本</h3><p class="sub">虚拟版本级 APP 条件独立维护、仅在虚拟版本模式生效；关联按“通道号 + 硬件版本”去重，无需覆盖全部通道。</p></div><button class="btn primary" data-virtual-action="new" ${active ? "" : "disabled title=\"单固件模式下不可新建虚拟版本\""}>新建虚拟版本</button></div>${active ? "" : `<div class="notice warning">当前为单固件模式：本页展示保留的虚拟版本历史数据，仅供查看，不参与命中。请先通过上方“编辑 MCU OTA 模式”切换到虚拟版本模式。</div>`}${state.firmwareMessage ? `<div class="notice success firmware-message">${state.firmwareMessage}</div>` : ""}<div class="notice">命中时先按虚拟版本级 APP 条件筛选候选版本，再按用户身份和发布范围过滤；组件 MCU 的 APP 条件仅在单固件模式保存和生效。设备请求时平台从发布冻结快照按通道号+硬件版本+当前版本筛选适用子集。</div><table><thead><tr><th>虚拟版本号</th><th>虚拟版本级 APP 条件</th><th>关联 MCU</th><th>状态</th><th>冻结状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+    function promoteVirtual(vv, target, memberIds = vv.members) {
+      const rank = { "开发中": 0, "测试中": 1, "发布中": 2, "已发布": 3 };
+      const raised = [];
+      memberIds.map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean).forEach(item => { if (rank[item.status] !== undefined && rank[item.status] < rank[target]) { raised.push(`${item.version}（通道${item.channel}/${item.hardware}：${item.status}→${target}）`); item.status = target; item.log = `由虚拟版本 ${vv.version} 驱动进入${target}`; } });
+      return raised.length ? `组件状态影响：${raised.join("、")}。` : "组件状态影响：无低状态组件需要提升；不会发生回退。";
+    }
+    function wireVirtualFirmware() {
+      $('[data-edit-mcu-mode]')?.addEventListener('click', () => { state.mcuModeEditing = true; state.mcuModeDraft = products[state.product].mcuOtaMode || '单固件'; renderFirmware(); });
+      $$('[data-mcu-mode-draft]').forEach(btn => btn.addEventListener('click', () => { state.mcuModeDraft = btn.dataset.mcuModeDraft; renderFirmware(); }));
+      $$('[data-cancel-mcu-mode]').forEach(btn => btn.addEventListener('click', () => { state.mcuModeEditing = false; state.mcuModeDraft = null; renderFirmware(); }));
+      $('[data-save-mcu-mode]')?.addEventListener('click', async () => { const product = products[state.product]; const mode = state.mcuModeDraft || product.mcuOtaMode; if (mode === product.mcuOtaMode) { state.mcuModeEditing = false; state.mcuModeDraft = null; renderFirmware(); return; } const ok = await showConfirm('切换 MCU OTA 模式', `切换至<strong>${mode}</strong>后，原${product.mcuOtaMode}模式数据保留且只读、不再参与命中；切回时会恢复历史活跃对象的操作能力。模组固件不受影响。`, '确认切换'); if (!ok) return; product.mcuOtaMode = mode; state.mcuModeEditing = false; state.mcuModeDraft = null; state.firmwareTab = mode === '虚拟版本' ? 'virtual' : 'firmware'; state.firmwareMessage = `MCU OTA 已切换为${mode}模式；旧模式数据保留并停用命中。`; render(); });
+      $$('[data-firmware-tab]').forEach(btn => btn.addEventListener('click', () => { state.firmwareTab = btn.dataset.firmwareTab; renderFirmware(); }));
+      $$('[data-virtual-action]').forEach(btn => btn.addEventListener('click', async () => { if (products[state.product].mcuOtaMode !== '虚拟版本') { showToast('当前为单固件模式，虚拟版本仅可查看，不参与命中或操作。'); return; } const action = btn.dataset.virtualAction; const vv = virtualVersions.find(v => v.id === btn.dataset.vvId) || virtualVersions[0]; if (action === 'new') { state.virtualEditingId = null; state.virtualDraftMembers = new Set(); openDrawer('virtualVersionCreate'); return; }
+        if (action === 'delete') { if (!vv || vv.status !== '开发中') { showToast('仅开发中虚拟版本可删除；已停止版本仅保留历史记录。'); return; } const ok = await showConfirm('删除虚拟版本', `将删除虚拟版本 <strong>${vv.version}</strong> 及其未发布关联配置。该操作不可恢复。`, '确认删除'); if (!ok) return; virtualVersions = virtualVersions.filter(item => item.id !== vv.id); state.firmwareMessage = `虚拟版本 ${vv.version} 已删除。`; render(); return; }
+        if (action === 'edit') { if (!['开发中', '测试中'].includes(vv.status) || vv.frozen) { showToast('仅开发中、测试中虚拟版本可编辑 APP 条件和关联 MCU。'); return; } state.virtualEditingId = vv.id; state.virtualDraftMembers = new Set(vv.members); openDrawer('virtualVersionEdit'); return; }
+        if (!vv) return; if (action === 'test') { const ok = await showConfirm('进入测试中', `关联 ${virtualMembers(vv).length} 个 MCU。开发中组件将同步提升至测试中，其他组件不会降级。`, '确认进入测试'); if (!ok) return; vv.status='测试中'; state.firmwareMessage = `虚拟版本 ${vv.version} 已进入测试中。${promoteVirtual(vv,'测试中')}`; }
+        if (action === 'publish') { state.virtualReleaseTargetId = vv.id; openDrawer('virtualReleaseConfig'); return; }
+        if (action === 'pause') { vv.status='暂停发布'; state.firmwareMessage=`虚拟版本 ${vv.version} 已暂停；组件 MCU 状态保持不变。`; }
+        if (action === 'resume') { vv.status='发布中'; state.firmwareMessage=`虚拟版本 ${vv.version} 已继续发布；组件 MCU 状态保持不变。`; }
+        if (action === 'stop') {
+          if (!['测试中', '发布中', '暂停发布', '已发布'].includes(vv.status)) { showToast('当前状态不支持停止。'); return; }
+          const impact = virtualStopVacuumImpact(vv);
+          const ok = impact.isVacuum
+            ? await showConfirm('停止后无可命中虚拟版本', `停止虚拟版本 <strong>${vv.version}</strong> 后，产品 <strong>${products[state.product].name}</strong> 在虚拟版本级 APP 条件评估点 <strong>${impact.referenceAppVersion}</strong> 下，白名单候选（测试中/发布中/已发布）和线上候选（发布中/已发布）均为空。<br><br>匹配该 APP 条件的设备将不会收到虚拟版本 OTA；设备保持当前虚拟版本不变（不升级、不回滚）。是否仍然停止？`, '仍然停止')
+            : await showConfirm('停止虚拟版本', `停止后虚拟版本不参与命中；组件 MCU 不会回退或被停止。已停止版本仅保留历史记录，不可删除。`, '确认停止');
+          if (!ok) return;
+          vv.status='已停止';
+          state.firmwareMessage=`虚拟版本 ${vv.version} 已停止；组件状态未改写，历史记录不可删除。${impact.isVacuum ? '已确认虚拟版本命中真空风险。' : ''}`;
+        }
+        render();
+      }));
+    }
+    function renderFirmware() {
+      if (!$('#firmwareBody')) return;
+      const activeMode = products[state.product].mcuOtaMode || '单固件';
+      const tabs = `<div class="firmware-tabs" role="tablist" aria-label="固件配置内容"><button class="firmware-tab ${state.firmwareTab==='firmware'?'active':''}" data-firmware-tab="firmware" role="tab" aria-selected="${state.firmwareTab==='firmware'}">固件版本<span class="mode-scope">${activeMode === '单固件' ? '当前模式生效' : '组件数据（受虚拟版本驱动）'}</span></button><button class="firmware-tab ${state.firmwareTab==='virtual'?'active':''}" data-firmware-tab="virtual" role="tab" aria-selected="${state.firmwareTab==='virtual'}">虚拟版本<span class="mode-scope">${activeMode === '虚拟版本' ? '当前模式生效' : '历史数据仅查看'}</span></button></div>`;
+      $('#firmwareBody').innerHTML = `${mcuModeHtml()}${tabs}${state.firmwareTab === 'virtual' ? virtualVersionHtml() : firmwareVersionHtml()}`;
+      wireFirmware(); wireVirtualFirmware();
+    }
 
     render();
   </script>
