@@ -286,12 +286,21 @@ function openMemberPicker(role) {
   });
 }
 
+function openDeleteRole(role) {
+  activeRole = role;
+  setDrawer("删除数据角色 · " + role.name,
+    "<div class='field'><label>删除影响</label><div class='scope'><b>" + role.name + "</b><br>负责人：" + role.owner + "<br>当前成员：" + role.memberNames.length + " 人<br>授权范围：" + roleProductLabel(role) + "</div></div>" +
+    "<div class='field'><p class='help'>确认后将从所有关联 IoT 平台账号中移除该数据角色，并立即重新计算其有效产品范围；该操作不可撤销。</p></div>",
+    "确认删除", "deleteRole");
+}
+
 function renderRoleRows() {
   document.querySelector("#roles tbody").innerHTML = dataRoles.map((role, index) =>
-    "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td><button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button></td></tr>"
+    "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td><button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button><i>|</i><button class='op danger' data-role-delete='" + index + "'>删除</button></td></tr>"
   ).join("");
   document.querySelectorAll("[data-role-edit]").forEach(button => { button.onclick = () => openRoleEditor(dataRoles[Number(button.dataset.roleEdit)]); });
   document.querySelectorAll("[data-role-members]").forEach(button => { button.onclick = () => openRoleMembers(dataRoles[Number(button.dataset.roleMembers)]); });
+  document.querySelectorAll("[data-role-delete]").forEach(button => { button.onclick = () => openDeleteRole(dataRoles[Number(button.dataset.roleDelete)]); });
 }
 
 function bindFilterActions() {
@@ -394,6 +403,15 @@ document.querySelector("#confirm").onclick = () => {
     renderRows();
     closeDrawer();
     toast("成员已保存；产品访问范围已重新计算");
+    return;
+  }
+  if (drawerMode === "deleteRole") {
+    users.forEach(user => { user.roles = user.roles.filter(roleName => roleName !== activeRole.name); });
+    dataRoles.splice(dataRoles.indexOf(activeRole), 1);
+    renderRows();
+    renderRoleRows();
+    closeDrawer();
+    toast("数据角色已删除，关联用户的有效产品范围已重新计算");
     return;
   }
   closeDrawer();
