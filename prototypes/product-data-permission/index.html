@@ -35,13 +35,6 @@
                 <h1>数据权限管理</h1>
                 <p>按产品配置用户与数据角色的可访问范围</p>
               </div>
-              <button class="el-btn el-btn--primary" id="newGrant">+ 用户授权</button>
-            </div>
-
-            <div class="notice">
-              <b>临时全量账号</b>
-              <span>12 人 · 覆盖后续新产品 · 需由全局管理员逐人移除</span>
-              <button id="showTemp">查看名单</button>
             </div>
 
             <div class="tabs">
@@ -61,7 +54,7 @@
                 <button class="el-btn">重置</button>
               </div>
               <table class="el-table">
-                <thead><tr><th>用户</th><th>ERP 角色</th><th>直授产品</th><th>数据角色产品</th><th>有效产品范围</th><th>状态</th><th>操作</th></tr></thead>
+                <thead><tr><th>用户</th><th>ERP 角色</th><th>直授产品</th><th>数据角色</th><th>有效产品范围</th><th>操作</th></tr></thead>
                 <tbody id="userRows"></tbody>
               </table>
               <div class="pager">共 3 条　‹　<b>1</b>　›　 10条/页</div>
@@ -79,6 +72,7 @@
                 <tbody>
                   <tr><td>北美泵产品组</td><td>王琳</td><td>8</td><td>3 个产品</td><td><span class="tag success">启用</span></td><td><button class="op">管理成员</button><i>|</i><button class="op">查看</button></td></tr>
                   <tr><td>欧洲运营组</td><td>李浩</td><td>5</td><td>2 个产品</td><td><span class="tag success">启用</span></td><td><button class="op">管理成员</button><i>|</i><button class="op">查看</button></td></tr>
+                  <tr><td>系统临时全量角色</td><td>全局管理员</td><td>12</td><td>全部产品（动态）</td><td><span class="tag success">启用</span></td><td><button class="op">管理成员</button><i>|</i><button class="op">查看</button></td></tr>
                 </tbody>
               </table>
             </section>
