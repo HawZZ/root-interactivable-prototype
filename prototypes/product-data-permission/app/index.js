@@ -1,17 +1,17 @@
 const users = [
-  { name: "陈薇", mail: "chen.wei@momcozy.com", erp: "产品经理", directMode: "specified", direct: ["W1 Lite"], roles: ["北美泵产品组"] },
-  { name: "王琳", mail: "wang.lin@momcozy.com", erp: "运营专员", directMode: "specified", direct: [], roles: ["欧洲运营组"] },
-  { name: "赵敏", mail: "zhao.min@momcozy.com", erp: "历史账号", directMode: "specified", direct: [], roles: ["系统临时全量角色"] }
+  { name: "陈薇", mail: "chen.wei@momcozy.com", erp: "产品经理", direct: ["W1 Lite"], roles: ["北美泵产品组"] },
+  { name: "王琳", mail: "wang.lin@momcozy.com", erp: "运营专员", direct: [], roles: ["欧洲运营组"] },
+  { name: "赵敏", mail: "zhao.min@momcozy.com", erp: "历史账号", direct: [], roles: ["系统临时全量角色"] }
 ];
 
 const dataRoles = [
-  { name: "北美泵产品组", owner: "王琳", memberNames: ["陈薇", "周凯", "李宁", "Sofia", "韩雪", "赵敏", "Luca", "Mila"], products: ["W1 Lite", "S12 Pro", "M5"] },
-  { name: "欧洲运营组", owner: "李浩", memberNames: ["王琳", "Ana", "Luca", "Mila", "周凯"], products: ["S12 Pro", "V2"] },
-  { name: "系统临时全量角色", owner: "全局管理员", memberNames: ["赵敏", "李哲", "林丹", "Grace", "Daisy", "Tom", "Eric", "Nina", "王超", "小陈", "Jasper", "Lily"], products: [], dynamicAll: true }
+  { name: "北美泵产品组", owner: "王琳", enabled: true, memberNames: ["陈薇", "周凯", "李宁", "Sofia", "韩雪", "赵敏", "Luca", "Mila"], products: ["W1 Lite", "S12 Pro", "M5"] },
+  { name: "欧洲运营组", owner: "李浩", enabled: true, memberNames: ["王琳", "Ana", "Luca", "Mila", "周凯"], products: ["S12 Pro", "V2"] },
+  { name: "系统临时全量角色", owner: "全局管理员", enabled: true, memberNames: ["赵敏", "李哲", "林丹", "Grace", "Daisy", "Tom", "Eric", "Nina", "王超", "小陈", "Jasper", "Lily"], products: [], dynamicAll: true }
 ];
 
 const iotAccounts = [
-  ["陈薇", "chenwei", "chen.wei@momcozy.com"], ["王琳", "wanglin", "wang.lin@momcozy.com"],
+  ["全局管理员", "globaladmin", "admin@momcozy.com"], ["陈薇", "chenwei", "chen.wei@momcozy.com"], ["王琳", "wanglin", "wang.lin@momcozy.com"],
   ["李浩", "lihao", "li.hao@momcozy.com"], ["周凯", "zhoukai", "zhou.kai@momcozy.com"],
   ["赵敏", "zhaomin", "zhao.min@momcozy.com"], ["韩雪", "hanxue", "han.xue@momcozy.com"],
   ["Sofia", "sofia", "sofia@momcozy.com"], ["Ana", "ana", "ana@momcozy.com"],
@@ -50,6 +50,8 @@ let drawerMode = "grant";
 let activeRole = null;
 let selectedMember = null;
 let grantDraft = null;
+let roleDraft = null;
+let memberDraft = null;
 
 function toast(message) {
   const element = document.querySelector("#toast");
@@ -64,12 +66,12 @@ function roleProductLabel(role) {
 }
 
 function directProductLabel(user) {
-  return user.directMode === "all" ? "全部产品（动态）" : (user.direct.length ? user.direct.join("、") : "—");
+  return user.direct.length ? user.direct.join("、") : "—";
 }
 
 function calculateScope(user) {
   const roles = user.roles.map(name => dataRoles.find(role => role.name === name)).filter(Boolean);
-  if (user.directMode === "all" || roles.some(role => role.dynamicAll)) return "全部产品（动态）";
+  if (roles.some(role => role.dynamicAll)) return "全部产品（动态）";
   return [...new Set([...user.direct, ...roles.flatMap(role => role.products)])].join("、") || "—";
 }
 
@@ -132,15 +134,12 @@ function bindAccountSearch(inputId, listId, excludedNames, onPick) {
   };
   input.oninput = () => { delete input.dataset.accountMail; render(); };
   input.onfocus = render;
-  render();
+  if (input.dataset.accountMail) list.innerHTML = "";
+  else render();
 }
 
 function renderGrantProductPicker() {
   const host = document.querySelector("#grantProducts");
-  if (grantDraft.mode === "all") {
-    host.innerHTML = "<div class='scope'>全部产品（动态）<p class='help'>包括现有全部产品及后续新建产品；撤销后立即按剩余授权来源计算范围。</p></div>";
-    return;
-  }
   host.innerHTML = "<input class='el-input' id='productSearch' placeholder='搜索产品名称或产品 ID（共 " +
     productCatalog.length + " 个产品）'><div class='account-suggestions' id='productSuggestions'></div><div class='scope' id='selectedProducts'>" +
     (grantDraft.direct.length ? grantDraft.direct.map(name => "<span class='chip'>" + name + " <button class='op danger' data-remove-product='" + name + "'>×</button></span>").join("") : "尚未选择指定产品") + "</div>";
@@ -169,83 +168,130 @@ function renderGrantProductPicker() {
   });
 }
 
+function renderGrantRolePicker() {
+  const host = document.querySelector("#grantRoles");
+  host.innerHTML = "<input class='el-input' id='roleSearch' placeholder='搜索数据角色名称'><div class='account-suggestions' id='roleSuggestions'></div><div class='scope' id='selectedRoles'>" +
+    (grantDraft.roles.length ? grantDraft.roles.map(name => {
+      const role = dataRoles.find(item => item.name === name);
+      const removable = role && role.dynamicAll ? "" : " <button class='op danger' data-remove-role='" + name + "'>×</button>";
+      return "<span class='chip'>" + name + removable + "</span>";
+    }).join("") : "暂无数据角色授权") + "</div>";
+  const input = document.querySelector("#roleSearch");
+  const list = document.querySelector("#roleSuggestions");
+  const render = () => {
+    const keyword = input.value.trim().toLowerCase();
+    const matches = dataRoles.filter(role => !role.dynamicAll && !grantDraft.roles.includes(role.name) &&
+      (!keyword || role.name.toLowerCase().includes(keyword)));
+    list.innerHTML = matches.length ? matches.map(role =>
+      "<button type='button' class='account-option' data-role='" + role.name + "'><b>" + role.name +
+      "</b><span>" + roleProductLabel(role) + "</span></button>"
+    ).join("") : "<p class='help'>没有可添加的匹配数据角色。</p>";
+    list.querySelectorAll("[data-role]").forEach(button => {
+      button.onclick = () => { grantDraft.roles.push(button.dataset.role); renderGrantRolePicker(); };
+    });
+  };
+  input.oninput = render;
+  input.onfocus = render;
+  render();
+  document.querySelectorAll("[data-remove-role]").forEach(button => {
+    button.onclick = () => {
+      grantDraft.roles = grantDraft.roles.filter(name => name !== button.dataset.removeRole);
+      renderGrantRolePicker();
+    };
+  });
+}
+
 function openGrant(user) {
   current = user;
-  grantDraft = { mode: user.directMode, direct: [...user.direct] };
+  grantDraft = { direct: [...user.direct], roles: [...user.roles] };
   setDrawer("管理用户授权 · " + user.name,
     "<div class='field'><label>IoT 平台账号</label><input class='el-input' value='" + user.name + "（" + user.mail +
     "）' disabled><p class='help'>账号由 ERP 分配并同步至 IoT 平台；本页仅维护 IoT 产品数据授权，不修改 ERP 账号、角色或页面权限。</p></div>" +
-    "<div class='field'><label>授权产品 <em style='color:#f56c6c'>*</em></label><div class='scope'>" +
-    "<label><input type='radio' name='grantMode' value='specified' " + (grantDraft.mode === "specified" ? "checked" : "") + "> 指定产品</label>" +
-    "<label style='margin-left:20px'><input type='radio' name='grantMode' value='all' " + (grantDraft.mode === "all" ? "checked" : "") + "> 全部产品（动态）</label></div>" +
-    "<p class='help'>指定产品可按名称或产品 ID 检索后多选；全部产品会动态覆盖后续新建产品。</p><div id='grantProducts'></div></div>" +
-    "<div class='field'><label>数据角色来源</label><div class='scope'>" + user.roles.map(role => "<span class='chip'>" + role + "</span>").join("") +
-    "</div><p class='help'>直授变更不会移除数据角色带来的产品范围。</p></div>",
+    "<div class='field'><label>直接授权产品</label><p class='help'>用户直授仅支持指定产品，可按名称或产品 ID 检索后多选。</p><div id='grantProducts'></div></div>" +
+    "<div class='field'><label>从属数据角色</label><p class='help'>可加入多个数据角色；系统临时全量角色仅由上线冻结名单管理，不能在此新增。</p><div id='grantRoles'></div></div>",
     "确认授权", "grant");
-  document.querySelectorAll("input[name='grantMode']").forEach(input => {
-    input.onchange = () => { grantDraft.mode = input.value; renderGrantProductPicker(); };
-  });
   renderGrantProductPicker();
+  renderGrantRolePicker();
 }
 
-function openRole(mode, role) {
+function renderRoleProductPicker() {
+  const host = document.querySelector("#roleProductPicker");
+  if (roleDraft.dynamicAll) {
+    host.innerHTML = "<div class='scope'>全部产品（动态）<p class='help'>包含现有全部产品与后续新建产品。</p></div>";
+    return;
+  }
+  host.innerHTML = "<input class='el-input' id='roleProductSearch' placeholder='搜索产品名称或产品 ID（共 " + productCatalog.length + " 个产品）'><div class='account-suggestions' id='roleProductSuggestions'></div><div class='scope'>" +
+    (roleDraft.products.length ? roleDraft.products.map(name => "<span class='chip'>" + name + " <button class='op danger' data-remove-role-product='" + name + "'>×</button></span>").join("") : "尚未选择指定产品") + "</div>";
+  const input = document.querySelector("#roleProductSearch");
+  const list = document.querySelector("#roleProductSuggestions");
+  const render = () => {
+    const keyword = input.value.trim().toLowerCase();
+    const matches = productCatalog.filter(product => !roleDraft.products.includes(product.name) && (!keyword || (product.name + " " + product.id).toLowerCase().includes(keyword))).slice(0, 8);
+    list.innerHTML = matches.length ? matches.map(product => "<button type='button' class='account-option' data-role-product='" + product.name + "'><b>" + product.name + "</b><span>" + product.id + "</span></button>").join("") : "<p class='help'>没有可添加的匹配产品。</p>";
+    list.querySelectorAll("[data-role-product]").forEach(button => {
+      button.onclick = () => { roleDraft.products.push(button.dataset.roleProduct); renderRoleProductPicker(); };
+    });
+  };
+  input.oninput = render;
+  input.onfocus = render;
+  render();
+  document.querySelectorAll("[data-remove-role-product]").forEach(button => {
+    button.onclick = () => { roleDraft.products = roleDraft.products.filter(name => name !== button.dataset.removeRoleProduct); renderRoleProductPicker(); };
+  });
+}
+
+function openRoleEditor(role) {
   activeRole = role || null;
-  if (mode === "create") {
-    setDrawer("新建数据角色",
-      "<div class='field'><label>角色名称 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleName' placeholder='例如：日本泵产品组'><p class='help'>名称在数据角色范围内唯一，创建后可用于成员授权。</p></div>" +
-      "<div class='field'><label>角色负责人 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleOwner' placeholder='搜索姓名、拼音或邮箱'><div class='account-suggestions' id='roleOwnerSuggestions'></div><p class='help'>候选来源为 IoT 平台账号，可按姓名、拼音或邮箱模糊搜索；负责人仅可维护本角色成员，不自动获得产品访问权。</p></div>" +
-      "<div class='field'><label>授权产品 <em style='color:#f56c6c'>*</em></label><div class='scope' id='roleProducts'><label><input type='checkbox' value='W1 Lite'> W1 Lite</label><label><input type='checkbox' value='S12 Pro'> S12 Pro</label><label><input type='checkbox' value='M5'> M5</label><label><input type='checkbox' value='V2'> V2</label></div><p class='help'>仅全局管理员可配置产品范围。</p></div>",
-      "创建角色", "createRole");
-    bindAccountSearch("roleOwner", "roleOwnerSuggestions", [], () => {});
-    return;
-  }
-  if (mode === "members") {
-    setDrawer("管理成员 · " + role.name,
-      "<div class='field'><label>角色负责人</label><input class='el-input' value='" + role.owner + "' disabled></div>" +
-      "<div class='field'><label>授权产品</label><div class='scope'>" + roleProductLabel(role) + "</div><p class='help'>" +
-      (role.dynamicAll ? "该角色动态覆盖后续新建产品。" : "角色负责人不可修改产品范围。") + "</p></div>" +
-      "<div class='field'><label>当前成员</label><div class='scope' id='memberList'>" +
-      role.memberNames.map(name => "<span class='chip'>" + name + "</span>").join("") +
-      "</div><button class='op' id='addMember'>+ 添加成员</button><p class='help'>成员来源为 IoT 平台账号；保存后，成员的产品访问范围立即重新计算。</p></div>",
-      "完成", "members");
-    document.querySelector("#addMember").onclick = () => openMemberPicker(role);
-    return;
-  }
-  setDrawer("数据角色详情 · " + role.name,
-    "<div class='field'><label>角色负责人</label><input class='el-input' value='" + role.owner + "' disabled></div>" +
-    "<div class='field'><label>成员数</label><input class='el-input' value='" + role.memberNames.length + " 人' disabled></div>" +
-    "<div class='field'><label>授权产品</label><div class='scope'>" + roleProductLabel(role) + "</div></div><p class='help'>" +
-    (role.dynamicAll ? "系统临时全量角色的成员由上线时冻结名单确定；移除后立即失效且不会自动回加。" : "查看态不提供修改入口；如需维护成员，请使用“管理成员”。") + "</p>",
-    "关闭", "detail");
+  roleDraft = role ? { name: role.name, owner: role.owner, enabled: role.enabled, dynamicAll: !!role.dynamicAll, products: [...role.products] } : { name: "", owner: "", enabled: true, dynamicAll: false, products: [] };
+  const owner = iotAccounts.find(account => account.name === roleDraft.owner);
+  setDrawer((role ? "编辑数据角色 · " : "新建数据角色") + (role ? role.name : ""),
+    "<div class='field'><label>角色名称 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleName' value='" + roleDraft.name + "' placeholder='例如：日本泵产品组'></div>" +
+    "<div class='field'><label>角色负责人 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleOwner' value='" + (owner ? owner.name + "（" + owner.mail + "）" : roleDraft.owner) + "' placeholder='搜索姓名、拼音或邮箱'><div class='account-suggestions' id='roleOwnerSuggestions'></div><p class='help'>候选来源为 IoT 平台账号，可按姓名、拼音或邮箱模糊搜索。</p></div>" +
+    "<div class='field'><label>状态</label><select class='el-select' id='roleStatus'><option value='enabled' " + (roleDraft.enabled ? "selected" : "") + ">启用</option><option value='disabled' " + (!roleDraft.enabled ? "selected" : "") + ">停用</option></select></div>" +
+    "<div class='field'><label>授权产品 <em style='color:#f56c6c'>*</em></label><div class='scope'><label><input type='radio' name='roleMode' value='specified' " + (!roleDraft.dynamicAll ? "checked" : "") + "> 指定产品</label><label style='margin-left:20px'><input type='radio' name='roleMode' value='all' " + (roleDraft.dynamicAll ? "checked" : "") + "> 全部产品（动态）</label></div><p class='help'>数据角色支持指定产品或动态全部产品。</p><div id='roleProductPicker'></div></div>",
+    role ? "保存角色" : "创建角色", "saveRole");
+  if (owner) document.querySelector("#roleOwner").dataset.accountMail = owner.mail;
+  bindAccountSearch("roleOwner", "roleOwnerSuggestions", [], account => { roleDraft.owner = account.name; });
+  document.querySelectorAll("input[name='roleMode']").forEach(input => {
+    input.onchange = () => { roleDraft.dynamicAll = input.value === "all"; renderRoleProductPicker(); };
+  });
+  renderRoleProductPicker();
+}
+
+function openRoleMembers(role, preserveDraft) {
+  activeRole = role;
+  if (!preserveDraft) memberDraft = [...role.memberNames];
+  setDrawer("管理成员 · " + role.name,
+    "<div class='field'><label>当前成员</label><div class='scope' id='memberList'>" +
+    (memberDraft.length ? memberDraft.map(name => "<span class='chip'>" + name + " <button class='op danger' data-remove-member='" + name + "'>×</button></span>").join("") : "暂无成员") +
+    "</div><button class='op' id='addMember'>+ 添加成员</button><p class='help'>" + (role.dynamicAll ? "系统临时全量角色只允许按冻结名单移除成员，不支持新增。" : "成员来源为 IoT 平台账号，可按姓名、拼音或邮箱搜索。") + "</p></div>",
+    "保存成员", "members");
+  document.querySelectorAll("[data-remove-member]").forEach(button => {
+    button.onclick = () => { memberDraft = memberDraft.filter(name => name !== button.dataset.removeMember); openRoleMembers(role, true); };
+  });
+  document.querySelector("#addMember").onclick = () => {
+    if (role.dynamicAll) return toast("系统临时全量角色不支持新增成员");
+    openMemberPicker(role);
+  };
 }
 
 function openMemberPicker(role) {
-  activeRole = role;
   selectedMember = null;
   setDrawer("添加成员 · " + role.name,
-    "<div class='field'><label>选择 IoT 平台账号 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='memberSearch' placeholder='搜索姓名、拼音或邮箱'><div class='account-suggestions' id='memberSuggestions'></div><p class='help'>仅可添加已由 ERP 分配到 IoT 平台的账号；已是成员的账号不会重复出现。</p></div>" +
-    "<div class='field'><label>待添加成员</label><div class='scope' id='selectedMember'>请选择一个 IoT 平台账号</div></div>",
+    "<div class='field'><label>选择 IoT 平台账号 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='memberSearch' placeholder='搜索姓名、拼音或邮箱'><div class='account-suggestions' id='memberSuggestions'></div><p class='help'>已是成员的账号不会重复出现。</p></div><div class='field'><label>待添加成员</label><div class='scope' id='selectedMember'>请选择一个 IoT 平台账号</div></div>",
     "添加成员", "addMember");
-  bindAccountSearch("memberSearch", "memberSuggestions", role.memberNames, account => {
+  bindAccountSearch("memberSearch", "memberSuggestions", memberDraft, account => {
     selectedMember = account;
     document.querySelector("#selectedMember").innerHTML = "<span class='chip'>" + account.name + " · " + account.mail + "</span>";
   });
 }
 
-function renderNewRoleRow(role) {
-  document.querySelector("#roles tbody").insertAdjacentHTML("beforeend",
-    "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length +
-    " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag success'>启用</span></td><td><button class='op'>管理成员</button> <button class='op'>查看</button></td></tr>");
-  bindRoleActions();
-}
-
-function bindRoleActions() {
-  [...document.querySelectorAll("#roles tbody tr")].forEach((row, index) => {
-    const role = dataRoles[index];
-    row.querySelectorAll(".op").forEach(button => {
-      button.onclick = () => openRole(button.textContent.includes("管理成员") ? "members" : "detail", role);
-    });
-  });
+function renderRoleRows() {
+  document.querySelector("#roles tbody").innerHTML = dataRoles.map((role, index) =>
+    "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td><button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button></td></tr>"
+  ).join("");
+  document.querySelectorAll("[data-role-edit]").forEach(button => { button.onclick = () => openRoleEditor(dataRoles[Number(button.dataset.roleEdit)]); });
+  document.querySelectorAll("[data-role-members]").forEach(button => { button.onclick = () => openRoleMembers(dataRoles[Number(button.dataset.roleMembers)]); });
 }
 
 function bindFilterActions() {
@@ -273,51 +319,87 @@ document.querySelectorAll(".tab").forEach(button => {
     renderNotes(button.dataset.tab);
   };
 });
-document.querySelector(".right").onclick = () => openRole("create");
+document.querySelector(".right").onclick = () => openRoleEditor(null);
 document.querySelector("#close").onclick = closeDrawer;
 document.querySelector("#cancel").onclick = closeDrawer;
 document.querySelector("#drawer .mask").onclick = closeDrawer;
 document.querySelector("#confirm").onclick = () => {
   if (drawerMode === "grant") {
-    if (grantDraft.mode === "specified" && !grantDraft.direct.length) return toast("请至少选择一个指定产品，或选择全部产品（动态）");
-    current.directMode = grantDraft.mode;
-    current.direct = grantDraft.mode === "all" ? [] : [...grantDraft.direct];
-    const appliedMode = grantDraft.mode;
+    const previousRoles = [...current.roles];
+    current.direct = [...grantDraft.direct];
+    current.roles = [...grantDraft.roles];
+    previousRoles.forEach(name => {
+      if (!current.roles.includes(name)) {
+        const role = dataRoles.find(item => item.name === name);
+        if (role) role.memberNames = role.memberNames.filter(member => member !== current.name);
+      }
+    });
+    current.roles.forEach(name => {
+      if (!previousRoles.includes(name)) {
+        const role = dataRoles.find(item => item.name === name);
+        if (role && !role.memberNames.includes(current.name)) role.memberNames.push(current.name);
+      }
+    });
     renderRows();
+    renderRoleRows();
     closeDrawer();
-    toast(appliedMode === "all" ? "已授予全部产品（动态）访问范围" : "指定产品授权已生效");
+    toast("用户的指定产品直授与数据角色归属已保存");
     return;
   }
-  if (drawerMode === "createRole") {
+  if (drawerMode === "saveRole") {
     const name = document.querySelector("#roleName").value.trim();
     const ownerInput = document.querySelector("#roleOwner");
     const owner = iotAccounts.find(account => account.mail === ownerInput.dataset.accountMail)?.name;
-    const products = [...document.querySelectorAll("#roleProducts input:checked")].map(input => input.value);
+    const enabled = document.querySelector("#roleStatus").value === "enabled";
     if (!name) return toast("请填写数据角色名称");
-    if (dataRoles.some(role => role.name === name)) return toast("数据角色名称已存在");
+    if (dataRoles.some(role => role.name === name && role !== activeRole)) return toast("数据角色名称已存在");
     if (!owner) return toast("请从 IoT 平台账号搜索结果中选择角色负责人");
-    if (!products.length) return toast("请选择至少一个授权产品");
-    const role = { name, owner, memberNames: [], products };
-    dataRoles.push(role);
-    renderNewRoleRow(role);
+    if (!roleDraft.dynamicAll && !roleDraft.products.length) return toast("请选择至少一个指定产品，或选择全部产品（动态）");
+    if (activeRole) {
+      const oldName = activeRole.name;
+      activeRole.name = name;
+      activeRole.owner = owner;
+      activeRole.enabled = enabled;
+      activeRole.dynamicAll = roleDraft.dynamicAll;
+      activeRole.products = roleDraft.dynamicAll ? [] : [...roleDraft.products];
+      users.forEach(user => { user.roles = user.roles.map(roleName => roleName === oldName ? name : roleName); });
+    } else {
+      dataRoles.push({ name, owner, enabled, memberNames: [], products: roleDraft.dynamicAll ? [] : [...roleDraft.products], dynamicAll: roleDraft.dynamicAll });
+    }
+    renderRows();
+    renderRoleRows();
     closeDrawer();
-    toast("数据角色已创建，可继续管理成员");
+    toast(activeRole ? "数据角色已保存" : "数据角色已创建，可继续管理成员");
     return;
   }
   if (drawerMode === "addMember") {
     if (!selectedMember) return toast("请从 IoT 平台账号搜索结果中选择成员");
-    activeRole.memberNames.push(selectedMember.name);
-    const row = document.querySelectorAll("#roles tbody tr")[dataRoles.indexOf(activeRole)];
-    if (row) row.children[2].textContent = activeRole.memberNames.length + " 人";
+    memberDraft.push(selectedMember.name);
+    openRoleMembers(activeRole, true);
+    toast("已加入待保存成员列表");
+    return;
+  }
+  if (drawerMode === "members") {
+    const previousMembers = [...activeRole.memberNames];
+    activeRole.memberNames = [...memberDraft];
+    users.forEach(user => {
+      if (previousMembers.includes(user.name) && !memberDraft.includes(user.name)) {
+        user.roles = user.roles.filter(roleName => roleName !== activeRole.name);
+      }
+      if (!previousMembers.includes(user.name) && memberDraft.includes(user.name) && !user.roles.includes(activeRole.name)) {
+        user.roles.push(activeRole.name);
+      }
+    });
+    renderRoleRows();
+    renderRows();
     closeDrawer();
-    toast("已添加 " + selectedMember.name + "；产品访问范围已重新计算");
+    toast("成员已保存；产品访问范围已重新计算");
     return;
   }
   closeDrawer();
-  if (drawerMode === "members") toast(activeRole.name + " 的成员维护已完成");
 };
 
 renderRows();
-bindRoleActions();
+renderRoleRows();
 bindFilterActions();
 renderNotes("users");
