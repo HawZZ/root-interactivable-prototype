@@ -21,6 +21,7 @@ Site: https://hawzz.github.io/root-interactivable-prototype/
 - [固件多 MCU 通道号 + 虚拟版本原型](./prototypes/firmware-multi-mcu-channel-number/) — 覆盖通道号、虚拟版本任务与多 MCU 下发
 - [产品详情变更审批原型](./prototypes/product-detail-change-approval/) — 覆盖变更审批、冻结快照和重试应用
 - [Alexa Product Profile 配置工作台](./prototypes/alexa-product-profile-workbench/) — Momcozy IoT 平台中共享 Alexa Adapter、产品能力映射、发布门禁及 OAuth/Discovery 测试的交互原型
+- [IoT 平台产品数据权限管理原型](./prototypes/product-data-permission/) — 覆盖用户直授、数据角色、产品授权核查与临时全量账号。
 
 ## Source Policy
 
