@@ -13,7 +13,6 @@ export const state = {
   activeProductLock: true,
   retryOutcome: 'success',
   pendingAction: '详情变更',
-  testerEmail: 'qa.liu@example.com',
   evidence: '',
   toast: ''
 };
