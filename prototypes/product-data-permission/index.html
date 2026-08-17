@@ -6,6 +6,7 @@
   <title>IoT 平台数据权限</title>
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
+  <link rel="stylesheet" href="styles/drawer.css">
 </head>
 <body>
   <main class="shell">
@@ -79,6 +80,15 @@
           </div>
         </section>
       </div>
+
+      <div class="drawer-host" id="drawer">
+        <div class="mask"></div>
+        <aside class="drawer">
+          <header><h2 id="drawerTitle">用户授权</h2><button id="close">×</button></header>
+          <div class="drawer-body" id="drawerBody"></div>
+          <footer><button class="el-btn" id="cancel">取消</button><button class="el-btn el-btn--primary" id="confirm">确认授权</button></footer>
+        </aside>
+      </div>
     </section>
 
     <aside class="notes">
@@ -90,14 +100,6 @@
     </aside>
   </main>
 
-  <div class="drawer-host" id="drawer">
-    <div class="mask"></div>
-    <aside class="drawer">
-      <header><h2 id="drawerTitle">用户授权</h2><button id="close">×</button></header>
-      <div class="drawer-body" id="drawerBody"></div>
-      <footer><button class="el-btn" id="cancel">取消</button><button class="el-btn el-btn--primary" id="confirm">确认授权</button></footer>
-    </aside>
-  </div>
   <div id="toast"></div>
   <script type="module" src="app/index.js"></script>
 </body>
