@@ -5,13 +5,26 @@ const users = [
 ];
 
 const dataRoles = [
-  { name: '北美泵产品组', owner: '王琳', members: 8, products: ['W1 Lite', 'S12 Pro', 'M5'] },
-  { name: '欧洲运营组', owner: '李浩', members: 5, products: ['S12 Pro', 'V2'] }
+  { name: '北美泵产品组', owner: '王琳', members: 8, memberNames: ['陈薇', '周凯', '李宁', 'Sofia', '韩雪', '赵敏', 'Luca', 'Mila'], products: ['W1 Lite', 'S12 Pro', 'M5'] },
+  { name: '欧洲运营组', owner: '李浩', members: 5, memberNames: ['王琳', 'Ana', 'Luca', 'Mila', '周凯'], products: ['S12 Pro', 'V2'] }
+];
+
+const iotAccounts = [
+  { name: '陈薇', pinyin: 'chenwei', mail: 'chen.wei@momcozy.com' },
+  { name: '王琳', pinyin: 'wanglin', mail: 'wang.lin@momcozy.com' },
+  { name: '李浩', pinyin: 'lihao', mail: 'li.hao@momcozy.com' },
+  { name: '周凯', pinyin: 'zhoukai', mail: 'zhou.kai@momcozy.com' },
+  { name: '赵敏', pinyin: 'zhaomin', mail: 'zhao.min@momcozy.com' },
+  { name: '韩雪', pinyin: 'hanxue', mail: 'han.xue@momcozy.com' },
+  { name: 'Sofia', pinyin: 'sofia', mail: 'sofia@momcozy.com' },
+  { name: 'Ana', pinyin: 'ana', mail: 'ana@momcozy.com' },
+  { name: 'Luca', pinyin: 'luca', mail: 'luca@momcozy.com' },
+  { name: 'Mila', pinyin: 'mila', mail: 'mila@momcozy.com' }
 ];
 
 const notes = {
   users: [
-    ['页面入口', '关联位置：系统管理 > 数据权限管理。ERP 页面权限决定是否可进入，本页不替代 ERP 功能权限。'],
+    ['页面可见范围', '仅 IoT 平台管理员可见；管理员资格由 ERP 配置的数据权限管理页面/动作功能授权决定，本页不修改 ERP 权限。'],
     ['有效范围', '直授产品与所属数据角色产品取并集；表格展示来源与计算结果。'],
     ['临时全量账号', '仅上线时冻结的有效历史账号加入；新账号不加入，移除立即失效且不会自动回加。'],
     ['用户授权', '全局管理员可新增/撤销直授产品；角色负责人不可修改此范围。']
@@ -20,11 +33,6 @@ const notes = {
     ['数据角色', '角色含负责人、成员与授权产品；负责人只管理成员，不自动取得产品访问权。'],
     ['新建角色', '角色名称、负责人和授权产品为必填项；提交成功后立即可用于授权范围计算。'],
     ['成员管理', '点击“管理成员”进入成员维护；产品范围仅全局管理员可维护。']
-  ],
-  products: [
-    ['产品授权视图', '按产品反向查看直授用户、数据角色与关联资源，用于授权核查。'],
-    ['查看授权', '展示当前产品的授权来源；无权产品不会出现在该视图。'],
-    ['资源范围', '产品关联资源通过实际归属产品判定；客户端传入产品参数不能扩大访问范围。']
   ],
   drawer: [
     ['抽屉操作', '确认按钮根据当前操作执行校验。取消或关闭不保存任何变更。'],
@@ -35,7 +43,7 @@ const notes = {
 let current = users[0];
 let drawerMode = 'grant';
 let activeRole = null;
-let memberAdded = false;
+let selectedMember = null;
 
 function toast(message) {
   const element = document.querySelector('#toast');
@@ -49,7 +57,6 @@ function renderNotes(tab, context) {
   document.querySelector('#noteContext').textContent = context || ({
     users: '用户授权 · 页面态',
     roles: '数据角色 · 页面态',
-    products: '产品授权视图 · 页面态',
     drawer: '操作抽屉 · 当前状态'
   }[tab]);
   document.querySelector('#notes').innerHTML = notes[tab].map((note, index) => `
@@ -97,10 +104,42 @@ function closeDrawer() {
   renderNotes(document.querySelector('.tab.active').dataset.tab);
 }
 
+function bindAccountSearch(inputId, listId, excludedNames, onPick) {
+  const input = document.querySelector(`#${inputId}`);
+  const list = document.querySelector(`#${listId}`);
+  const render = () => {
+    const keyword = input.value.trim().toLowerCase();
+    const matches = iotAccounts.filter(account => {
+      const searchable = `${account.name} ${account.pinyin} ${account.mail}`.toLowerCase();
+      return !excludedNames.includes(account.name) && (!keyword || searchable.includes(keyword));
+    });
+    list.innerHTML = matches.length ? matches.map(account => `
+      <button type="button" class="account-option" data-mail="${account.mail}">
+        <b>${account.name}</b><span>${account.mail} · ${account.pinyin}</span>
+      </button>
+    `).join('') : '<p class="help">未找到匹配的 IoT 平台账号。</p>';
+    list.querySelectorAll('.account-option').forEach(button => {
+      button.onclick = () => {
+        const account = iotAccounts.find(item => item.mail === button.dataset.mail);
+        input.value = `${account.name}（${account.mail}）`;
+        input.dataset.accountMail = account.mail;
+        onPick(account);
+        list.innerHTML = '';
+      };
+    });
+  };
+  input.oninput = () => {
+    delete input.dataset.accountMail;
+    render();
+  };
+  input.onfocus = render;
+  render();
+}
+
 function openGrant(user) {
   current = user;
   setDrawer(`用户授权 · ${user.name}`, `
-    <div class="field"><label>ERP 账号</label><input class="el-input" value="${user.mail}" disabled><p class="help">账号、页面权限和 ERP 角色由 ERP 管理。</p></div>
+    <div class="field"><label>IoT 平台账号</label><input class="el-input" value="${user.name}（${user.mail}）" disabled><p class="help">账号由 ERP 分配并同步至 IoT 平台；本页仅维护 IoT 产品数据授权，不修改 ERP 账号、角色或页面权限。</p></div>
     <div class="field"><label>用户直授产品 <em style="color:#f56c6c">*</em></label>
       <select class="el-select" id="product"><option value="">请选择产品</option><option>W1 Lite</option><option>S12 Pro</option><option>M5</option><option>V2</option></select>
       <p class="help">仅可授予当前管理员拥有管理权限的产品。</p>
@@ -123,27 +162,20 @@ function openRole(mode, role) {
   if (mode === 'create') {
     setDrawer('新建数据角色', `
       <div class="field"><label>角色名称 <em style="color:#f56c6c">*</em></label><input class="el-input" id="roleName" placeholder="例如：日本泵产品组"><p class="help">名称在数据角色范围内唯一，创建后可用于成员授权。</p></div>
-      <div class="field"><label>角色负责人 <em style="color:#f56c6c">*</em></label><select class="el-select" id="roleOwner"><option value="">请选择负责人</option><option>陈薇</option><option>王琳</option></select><p class="help">负责人仅可维护本角色成员，不自动获得产品访问权。</p></div>
+      <div class="field"><label>角色负责人 <em style="color:#f56c6c">*</em></label><input class="el-input" id="roleOwner" placeholder="搜索姓名、拼音或邮箱"><div class="account-suggestions" id="roleOwnerSuggestions"></div><p class="help">候选来源为 IoT 平台账号，可按姓名、拼音或邮箱模糊搜索；负责人仅可维护本角色成员，不自动获得产品访问权。</p></div>
       <div class="field"><label>授权产品 <em style="color:#f56c6c">*</em></label><div class="scope" id="roleProducts"><label><input type="checkbox" value="W1 Lite"> W1 Lite</label><label><input type="checkbox" value="S12 Pro"> S12 Pro</label><label><input type="checkbox" value="M5"> M5</label><label><input type="checkbox" value="V2"> V2</label></div><p class="help">仅全局管理员可配置产品范围。</p></div>
     `, '创建角色', 'createRole');
+    bindAccountSearch('roleOwner', 'roleOwnerSuggestions', [], () => {});
     return;
   }
 
-  const memberNames = role.name === '北美泵产品组' ? ['陈薇', '周凯', '李宁', 'Sofia'] : ['王琳', 'Ana', 'Luca', 'Mila'];
   if (mode === 'members') {
-    memberAdded = false;
     setDrawer(`管理成员 · ${role.name}`, `
       <div class="field"><label>角色负责人</label><input class="el-input" value="${role.owner}" disabled></div>
       <div class="field"><label>授权产品</label><div class="scope">${role.products.map(product => `<span class="chip">${product}</span>`).join('')}</div><p class="help">角色负责人不可修改产品范围。</p></div>
-      <div class="field"><label>当前成员</label><div class="scope" id="memberList">${memberNames.map(name => `<span class="chip">${name}</span>`).join('')}</div><button class="op" id="addMember">+ 添加成员</button><p class="help">成员变更保存后，产品访问范围立即重新计算。</p></div>
+      <div class="field"><label>当前成员</label><div class="scope" id="memberList">${role.memberNames.map(name => `<span class="chip">${name}</span>`).join('')}</div><button class="op" id="addMember">+ 添加成员</button><p class="help">成员来源为 IoT 平台账号；保存后，成员的产品访问范围立即重新计算。</p></div>
     `, '保存成员', 'members');
-    document.querySelector('#addMember').onclick = () => {
-      const list = document.querySelector('#memberList');
-      if (list.textContent.includes('新成员')) return toast('新成员已在待保存列表中');
-      list.insertAdjacentHTML('beforeend', '<span class="chip">新成员</span>');
-      memberAdded = true;
-      toast('已加入待保存成员列表');
-    };
+    document.querySelector('#addMember').onclick = () => openMemberPicker(role);
     return;
   }
 
@@ -155,14 +187,17 @@ function openRole(mode, role) {
   `, '关闭', 'detail');
 }
 
-function openProductAuth(product) {
-  const directUsers = users.filter(user => user.direct.includes(product)).map(user => user.name);
-  const roles = dataRoles.filter(role => role.products.includes(product));
-  setDrawer(`产品授权 · ${product}`, `
-    <div class="field"><label>用户直授</label><div class="scope">${directUsers.length ? directUsers.map(name => `<span class="chip">${name}</span>`).join('') : '暂无用户直授'}</div></div>
-    <div class="field"><label>数据角色</label><div class="scope">${roles.length ? roles.map(role => `<span class="chip">${role.name} · ${role.members} 人</span>`).join('') : '暂无数据角色授权'}</div></div>
-    <div class="field"><label>核查提示</label><p class="help">本视图仅展示当前产品的授权来源；关联资源需按服务端实际产品归属鉴权。</p></div>
-  `, '关闭', 'detail');
+function openMemberPicker(role) {
+  activeRole = role;
+  selectedMember = null;
+  setDrawer(`添加成员 · ${role.name}`, `
+    <div class="field"><label>选择 IoT 平台账号 <em style="color:#f56c6c">*</em></label><input class="el-input" id="memberSearch" placeholder="搜索姓名、拼音或邮箱"><div class="account-suggestions" id="memberSuggestions"></div><p class="help">仅可添加已由 ERP 分配到 IoT 平台的账号；已是成员的账号不会重复出现。</p></div>
+    <div class="field"><label>待添加成员</label><div class="scope" id="selectedMember">请选择一个 IoT 平台账号</div></div>
+  `, '添加成员', 'addMember');
+  bindAccountSearch('memberSearch', 'memberSuggestions', role.memberNames, account => {
+    selectedMember = account;
+    document.querySelector('#selectedMember').innerHTML = `<span class="chip">${account.name} · ${account.mail}</span>`;
+  });
 }
 
 function renderNewRoleRow(role) {
@@ -198,7 +233,6 @@ function bindFilterActions() {
         }
       };
     });
-    if (index === 2 && buttons.length === 1) buttons[0].onclick = () => toast('已刷新产品授权视图（演示数据）');
   });
 }
 
@@ -217,9 +251,6 @@ document.querySelector('#showTemp').onclick = () => setDrawer('临时全量账�
   <div class="field"><label>覆盖规则</label><p class="help">上线时冻结的有效历史账号，范围随产品新增动态扩展；新注册账号不自动加入。</p></div>
   <div class="field"><label>演示名单</label><div class="scope"><span class="chip">赵敏</span><span class="chip">李哲</span><span class="chip">其余 10 人</span></div><p class="help">管理员移除后立即失效，且不会自动回加。</p></div>
 `, '关闭', 'detail');
-document.querySelectorAll('#products .op').forEach(button => {
-  button.onclick = () => openProductAuth(button.closest('tr').querySelector('td').textContent.trim());
-});
 document.querySelector('#close').onclick = closeDrawer;
 document.querySelector('#cancel').onclick = closeDrawer;
 document.querySelector('#drawer .mask').onclick = closeDrawer;
@@ -235,28 +266,34 @@ document.querySelector('#confirm').onclick = () => {
   }
   if (drawerMode === 'createRole') {
     const name = document.querySelector('#roleName').value.trim();
-    const owner = document.querySelector('#roleOwner').value;
+    const ownerInput = document.querySelector('#roleOwner');
+    const owner = iotAccounts.find(account => account.mail === ownerInput.dataset.accountMail)?.name;
     const products = [...document.querySelectorAll('#roleProducts input:checked')].map(input => input.value);
     if (!name) return toast('请填写数据角色名称');
     if (dataRoles.some(role => role.name === name)) return toast('数据角色名称已存在');
-    if (!owner) return toast('请选择角色负责人');
+    if (!ownerInput.dataset.accountMail) return toast('请从 IoT 平台账号搜索结果中选择角色负责人');
     if (!products.length) return toast('请选择至少一个授权产品');
-    const role = { name, owner, members: 0, products };
+    const role = { name, owner, members: 0, memberNames: [], products };
     dataRoles.push(role);
     renderNewRoleRow(role);
     closeDrawer();
     toast('数据角色已创建，可继续管理成员');
     return;
   }
-  if (drawerMode === 'members') {
-    if (memberAdded) {
-      activeRole.members += 1;
-      const roleIndex = dataRoles.indexOf(activeRole);
-      const row = document.querySelectorAll('#roles tbody tr')[roleIndex];
-      if (row) row.children[2].textContent = `${activeRole.members} 人`;
-    }
+  if (drawerMode === 'addMember') {
+    if (!selectedMember) return toast('请从 IoT 平台账号搜索结果中选择成员');
+    activeRole.memberNames.push(selectedMember.name);
+    activeRole.members = activeRole.memberNames.length;
+    const roleIndex = dataRoles.indexOf(activeRole);
+    const row = document.querySelectorAll('#roles tbody tr')[roleIndex];
+    if (row) row.children[2].textContent = `${activeRole.members} 人`;
     closeDrawer();
-    toast(`成员已保存；${activeRole.name} 的有效产品范围已重新计算`);
+    toast(`已添加 ${selectedMember.name}；产品访问范围已重新计算`);
+    return;
+  }
+  if (drawerMode === 'members') {
+    closeDrawer();
+    toast(`${activeRole.name} 的成员维护已完成`);
     return;
   }
   closeDrawer();
