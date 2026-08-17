@@ -1,5 +1,5 @@
 import { $, $$, escapeHtml } from './dom.js';
-import { state, apps, currentUser, isActive, set, tagType } from './state.js';
+import { state, apps, appendStatusRecord, currentUser, isActive, set, tagType } from './state.js';
 
 const screen = $('#screen');
 const anno = $('#annotation-body');
@@ -10,6 +10,7 @@ const tag = (value) => `<span class="el-tag el-tag--${tagType(value)} is-plain">
 const anchor = (n, id) => `<button class="anchor" type="button" data-anchor="${id}" aria-label="查看批注 ${n}">${n}</button>`;
 const isPrivileged = () => state.role === '审批员' || state.role === '系统管理员';
 const visibleAction = (action) => ({ '详情变更': '变更详情', '上架范围变更': '变更详情', 上架: '上架产品', 下架: '下架产品' }[action] || action);
+const creationBehavior = (action) => ({ '详情变更': '编辑产品详情', '上架范围变更': '编辑产品上架范围', 上架: '提交产品上架', 下架: '提交产品下架' }[action] || action);
 
 function layout(content, active) {
   const crumb = active === 'product' ? '智能产品 / 产品列表 / 产品详情' : active === 'approvals' ? '配置中心 / 审批管理' : '智能产品 / 产品列表';
@@ -49,7 +50,8 @@ function detail(item) {
   const canCancel = isPrivileged() && !owner && item.status === '未生效';
   const canRetry = isPrivileged() && !owner && item.status === '未生效';
   const notification = `${item.product} / ${item.model} 正在${visibleAction(item.action)}，待审批。<br>审批单据：/approvals/${item.id}<br>@审批员角色成员`;
-  return layout(`<div class="page-title"><div><h1>审批详情 ${item.id} ${tag(item.status)}</h1><p>提交人：${item.applicant} · 审批角色：审批员（外部 ERP 分配 IoT 平台账号）</p></div><button class="el-btn" data-page="approvals">返回审批管理</button></div><div class="detail-grid"><div><section class="product-panel" id="snapshot"><div class="panel-head"><h2>冻结快照与变更差异 ${anchor(1, 'snapshot')}</h2>${tag('不可修改')}</div><div class="info-grid two">${info('产品', `${item.product} / ${item.model}`)}${info('申请动作', item.action)}${info('审批角色', '审批员（外部 ERP 分配）')}${info('基线正式版本', 'v12')}${info('冻结快照版本', 'v13')}</div><table class="diff-table"><thead><tr><th>字段</th><th>基线正式值</th><th>冻结目标值</th></tr></thead><tbody><tr><td>产品名称</td><td class="before">W1 Lite</td><td class="after">W1 Lite Plus</td></tr><tr><td>上架范围</td><td class="before">北美</td><td class="after">北美、欧洲</td></tr></tbody></table></section>${canApprove ? approvalPanel(item) : ''}${canWithdraw ? `<section class="confirm-card"><h2>发起人操作</h2><p>你只能撤销本人处于“待审批”的申请；撤销后线上配置不变并释放产品冻结。</p><div class="button-row"><button class="el-btn el-btn--danger" data-withdraw="${item.id}">撤销申请</button></div></section>` : ''}${canCancel ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败，产品仍被冻结；审批员可取消本次变更，状态将转为“已驳回”。</p><div class="button-row"><button class="el-btn el-btn--danger" data-cancel-unapplied="${item.id}">取消本次变更</button></div></section>` : ''}${canRetry ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败。审批员或系统管理员可在不重新开放编辑的情况下重试应用冻结快照。</p><div class="button-row"><button class="el-btn el-btn--primary" data-retry-apply="${item.id}">重试应用</button></div></section>` : ''}${!canApprove && !canWithdraw && !canCancel && !canRetry ? `<section class="notice-box"><b>只读详情</b><p>${owner ? '提交人不可通过或驳回本人申请。' : '当前状态或角色不支持审批操作。'}</p></section>` : ''}<section class="timeline"><h2>操作记录</h2><div class="timeline-item"><b>快照已冻结</b><small>${item.submitted} · ${item.applicant} · v12 → v13</small></div><div class="timeline-item"><b>飞书待审批提醒已投递</b><small>消息仅提醒审批，不承载审批动作；测试在系统外完成。</small></div><div class="timeline-item"><b>${item.outcome || '等待审批结果'}</b><small>申请状态：${item.status}</small></div></section></div><aside><section class="notice-box" id="notifications"><h2>通知投递 ${anchor(2, 'notifications')}</h2><div class="notice-line"><div><b>飞书机器人</b><small>${notification}</small></div>${tag('已受理')}</div><p class="muted">平台仅向审批员角色成员投递待审批提醒；外部测试、测试结果与通知审批人均在系统外完成，“待审批”不代表测试通过。</p></section></aside></div>`, 'approvals');
+  const history = [...(item.history || [])].reverse().map((record) => `<div class="timeline-item"><b>${escapeHtml(record.operator)}，${tag(record.status)}</b><small>${escapeHtml(record.occurredAt)}，${escapeHtml(record.action)}</small></div>`).join('');
+  return layout(`<div class="page-title"><div><h1>审批详情 ${item.id} ${tag(item.status)}</h1><p>提交人：${item.applicant} · 审批角色：审批员（外部 ERP 分配 IoT 平台账号）</p></div><button class="el-btn" data-page="approvals">返回审批管理</button></div><div class="detail-grid"><div><section class="product-panel" id="snapshot"><div class="panel-head"><h2>冻结快照与变更差异 ${anchor(1, 'snapshot')}</h2>${tag('不可修改')}</div><div class="info-grid two">${info('产品', `${item.product} / ${item.model}`)}${info('申请动作', item.action)}${info('审批角色', '审批员（外部 ERP 分配）')}${info('基线正式版本', 'v12')}${info('冻结快照版本', 'v13')}</div><table class="diff-table"><thead><tr><th>字段</th><th>基线正式值</th><th>冻结目标值</th></tr></thead><tbody><tr><td>产品名称</td><td class="before">W1 Lite</td><td class="after">W1 Lite Plus</td></tr><tr><td>上架范围</td><td class="before">北美</td><td class="after">北美、欧洲</td></tr></tbody></table></section>${canApprove ? approvalPanel(item) : ''}${canWithdraw ? `<section class="confirm-card"><h2>发起人操作</h2><p>你只能撤销本人处于“待审批”的申请；撤销后线上配置不变并释放产品冻结。</p><div class="button-row"><button class="el-btn el-btn--danger" data-withdraw="${item.id}">撤销申请</button></div></section>` : ''}${canCancel ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败，产品仍被冻结；审批员可取消本次变更，状态将转为“已驳回”。</p><div class="button-row"><button class="el-btn el-btn--danger" data-cancel-unapplied="${item.id}">取消本次变更</button></div></section>` : ''}${canRetry ? `<section class="confirm-card"><h2>未生效处理</h2><p>审批已通过但应用失败。审批员或系统管理员可在不重新开放编辑的情况下重试应用冻结快照。</p><div class="button-row"><button class="el-btn el-btn--primary" data-retry-apply="${item.id}">重试应用</button></div></section>` : ''}${!canApprove && !canWithdraw && !canCancel && !canRetry ? `<section class="notice-box"><b>只读详情</b><p>${owner ? '提交人不可通过或驳回本人申请。' : '当前状态或角色不支持审批操作。'}</p></section>` : ''}<section class="timeline"><div class="panel-head"><h2>操作记录 ${anchor(4, 'operation-history')}</h2><span class="muted">按当前时区展示</span></div>${history}</section></div><aside><section class="notice-box" id="notifications"><h2>通知投递 ${anchor(2, 'notifications')}</h2><div class="notice-line"><div><b>飞书机器人</b><small>${notification}</small></div>${tag('已受理')}</div><p class="muted">平台仅向审批员角色成员投递待审批提醒；外部测试、测试结果与通知审批人均在系统外完成，“待审批”不代表测试通过。</p></section></aside></div>`, 'approvals');
 }
 
 function approvalPanel(item) {
@@ -65,7 +67,7 @@ function openSubmit(action) {
 
 function openApprove(id) {
   const item = apps.find((app) => app.id === id);
-  modal(`<h3 id="approval-modal">核对信息 ${anchor(4, 'approval-modal')}</h3><div class="modal-body"><div class="approval-check-grid"><div class="check-item"><label>申请号</label><strong>${item.id}</strong></div><div class="check-item"><label>动作</label><strong>${item.action}</strong></div><div class="check-item"><label>产品</label><strong>${item.product} / ${item.model}</strong></div><div class="check-item"><label>审批角色</label><strong>审批员（外部 ERP 分配）</strong></div><div class="check-item"><label>冻结快照</label><strong>v13（不可修改）</strong></div><div class="check-item"><label>外部测试依据</label><strong>${escapeHtml(state.evidence)}</strong></div><div class="check-item check-item--wide"><label>目标变更</label><strong>产品名称：W1 Lite → W1 Lite Plus；上架范围：北美 → 北美、欧洲</strong></div></div><div class="warning-box">确认后在当前审批单内应用冻结快照，并直接返回“已生效”或“未生效”的结果。</div></div><div class="modal-foot"><button class="el-btn" data-close-modal>返回修改</button><button class="el-btn el-btn--primary" data-confirm-approve="${id}">确认应用</button></div>`);
+  modal(`<h3 id="approval-modal">核对信息 ${anchor(5, 'approval-modal')}</h3><div class="modal-body"><div class="approval-check-grid"><div class="check-item"><label>申请号</label><strong>${item.id}</strong></div><div class="check-item"><label>动作</label><strong>${item.action}</strong></div><div class="check-item"><label>产品</label><strong>${item.product} / ${item.model}</strong></div><div class="check-item"><label>审批角色</label><strong>审批员（外部 ERP 分配）</strong></div><div class="check-item"><label>冻结快照</label><strong>v13（不可修改）</strong></div><div class="check-item"><label>外部测试依据</label><strong>${escapeHtml(state.evidence)}</strong></div><div class="check-item check-item--wide"><label>目标变更</label><strong>产品名称：W1 Lite → W1 Lite Plus；上架范围：北美 → 北美、欧洲</strong></div></div><div class="warning-box">确认后在当前审批单内应用冻结快照，并直接返回“已生效”或“未生效”的结果。</div></div><div class="modal-foot"><button class="el-btn" data-close-modal>返回修改</button><button class="el-btn el-btn--primary" data-confirm-approve="${id}">确认应用</button></div>`);
 }
 
 function openReject(id) { modal(`<h3>驳回申请</h3><div class="modal-body"><p>驳回后不应用冻结快照，线上正式配置保持不变，产品冻结释放。</p><label class="field"><span>驳回原因 <span class="required">*</span></span><textarea class="el-input textarea" id="reject-reason" placeholder="请填写驳回原因"></textarea><span class="error" id="reject-error"></span></label></div><div class="modal-foot"><button class="el-btn" data-close-modal>取消</button><button class="el-btn el-btn--danger" data-confirm-reject="${id}">确认驳回</button></div>`); }
@@ -93,14 +95,16 @@ function renderAnnotations(kind) {
   const cards = kind === 'product' ? [
     ['1', '产品状态与活跃审批锁', '产品详情页头部 / 冻结提示', '开发中编辑详情与上架范围直接保存；上架中、已上架、已下架的详情或上架范围需审批。任一产品最多一个待审批或未生效单，后到提交由服务端拒绝。'],
     ['2', '基础信息与上架范围入口', '产品信息', '保留 IoT Admin 基础信息布局。上架范围归属产品详情内上架动作，编辑入口使用抽屉。'],
-    ['3', '前端草稿和提交', '本地草稿与审批提交 / 二次确认弹窗', '草稿只保存在前端会话，不持久化；非开发中提交后才冻结快照。二次确认明确提示：提交审批后将冻结产品，并阻止其他人继续提交变更；弹窗不要求输入测试工程师邮箱。']
+    ['3', '前端草稿和提交', '本地草稿与审批提交 / 二次确认弹窗', '草稿只保存在前端会话，不持久化；非开发中提交后才冻结快照。二次确认明确提示：提交审批后将冻结产品，并阻止其他人继续提交变更；弹窗不要求补充通知接收人。']
   ] : kind === 'approvals' ? [
     ['1', '审批员角色与数据隔离', '审批管理列表', '普通用户仅见“我发起的”并只可查看/撤销待审批；外部 ERP 分配“审批员”角色的 IoT 平台账号继承当前审批员全部权限，可见“我审批的”全量列表。IoT 平台不提供审批员配置入口。'],
     ['2', '审批详情操作', '审批详情', '审批员/系统管理员只可对待审批且非本人申请通过或驳回。已通过但应用失败转“未生效”，审批员或系统管理员可取消或重试。']
   ] : [
     ['1', '冻结快照', '审批详情', '展示基线与目标差异；快照不可修改。'],
     ['2', '飞书审批提醒', '通知投递', '平台仅向审批员角色成员投递飞书待审批提醒；不再向测试工程师投递邮件或测试快照链接。测试、测试结果和通知审批人均在系统外完成。'],
-    ['3', '通过并应用', '审批操作 / 核对弹窗', '点击通过并应用直接弹出核对信息，确认后在原单据内应用，不创建额外状态。']
+    ['3', '审批操作', '审批详情 > 审批操作', '审批员/系统管理员根据系统外测试结论处理申请；通过、驳回、重试和取消均驱动审批状态机。'],
+    ['4', '状态流转操作记录', '审批详情 > 操作记录', '每次状态变更均新增一条记录，按时间倒序展示“操作人，目标状态”与“按当前时区换算的时间，行为”。重试失败虽保持未生效，也需记录“未生效，重试应用失败”。'],
+    ['5', '通过并应用', '审批操作 > 核对信息弹窗', '点击通过并应用直接弹出核对信息，确认后在原单据内应用，不创建额外状态；应用成功或失败分别记录已生效或未生效。']
   ];
   anno.innerHTML = `${prototypeControls()}<p class="annotation-intro">原型角色、产品状态与活动审批仅在本批注栏切换，不属于左侧真实产品页面。切换仅用于展示，不替代真实服务端鉴权。</p>${cards.map(([n, title, location, body]) => `<button class="anno"><h3><span class="anno-n">${n}</span>${title}</h3><p><b>关联位置：</b>${location}</p><p><b>说明 / 交互：</b>${body}</p></button>`).join('')}<div class="assumption"><b>原型备注</b><p>审批员角色由外部 ERP 创建并分配 IoT 平台账号；该角色继承当前审批员全部权限。审批员可见全量审批单，但默认禁止审批本人发起的申请；未生效的重试与取消均由审批员或系统管理员执行。</p></div>`;
 }
@@ -142,9 +146,9 @@ function bind() {
   $$('[data-reject]').forEach((button) => button.addEventListener('click', () => openReject(button.dataset.reject)));
 }
 
-function withdraw(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '待审批') return; item.status = '已撤销'; item.lock = false; item.outcome = '发起人撤销'; if (item.productId === W1_ID) state.activeProductLock = false; showToast('申请已撤销，线上配置未变更'); render(); }
-function cancelUnapplied(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; item.status = '已驳回'; item.lock = false; item.outcome = '审批员取消未生效变更'; showToast('本次变更已取消，产品冻结已释放'); render(); }
-function retryApply(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; if (state.retryOutcome === 'failed') { item.outcome = '重试应用失败'; showToast('重试应用失败，审批单保持未生效', false); render(); return; } item.status = '已生效'; item.lock = false; item.outcome = '重试应用成功'; showToast('冻结快照已重试应用并生效'); render(); }
+function withdraw(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '待审批') return; item.status = '已撤销'; item.lock = false; item.outcome = '发起人撤销'; appendStatusRecord(item, '已撤销', '撤销申请'); if (item.productId === W1_ID) state.activeProductLock = false; showToast('申请已撤销，线上配置未变更'); render(); }
+function cancelUnapplied(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; item.status = '已驳回'; item.lock = false; item.outcome = '审批员取消未生效变更'; appendStatusRecord(item, '已驳回', '取消本次变更'); showToast('本次变更已取消，产品冻结已释放'); render(); }
+function retryApply(id) { const item = apps.find((app) => app.id === id); if (!item || item.status !== '未生效') return; if (state.retryOutcome === 'failed') { item.outcome = '重试应用失败'; appendStatusRecord(item, '未生效', '重试应用失败'); showToast('重试应用失败，审批单保持未生效', false); render(); return; } item.status = '已生效'; item.lock = false; item.outcome = '重试应用成功'; appendStatusRecord(item, '已生效', '重试应用成功'); showToast('冻结快照已重试应用并生效'); render(); }
 
 modalRoot.addEventListener('click', (event) => {
   if (event.target.classList.contains('modal-mask') || event.target.matches('[data-close-modal]') || event.target.matches('.drawer-mask') || event.target.matches('[data-close-drawer]')) return closeOverlay();
@@ -157,13 +161,16 @@ modalRoot.addEventListener('click', (event) => {
   if (submit) {
     if (state.activeProductLock) { closeOverlay(); showToast('提交被拒绝：已有活跃审批单', false); return; }
     const action = submit.dataset.confirmSubmit;
-    apps.unshift({ id: `A-${String(7 + apps.length).padStart(3, '0')}`, productId: W1_ID, action, status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 11:20', lock: true, outcome: '' });
+    const created = { id: `A-${String(7 + apps.length).padStart(3, '0')}`, productId: W1_ID, action, status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 11:20', lock: true, outcome: '', history: [] };
+    appendStatusRecord(created, '待审批', creationBehavior(action));
+    created.submitted = created.history[0].occurredAt;
+    apps.unshift(created);
     state.activeProductLock = true; state.activeApplication = apps[0].id; closeOverlay(); set({ page: 'detail', approvalTab: 'initiated' }); showToast('审批单已创建，产品已冻结'); return;
   }
   const reject = event.target.closest('[data-confirm-reject]');
-  if (reject) { const reason = $('#reject-reason')?.value.trim(); if (!reason) { $('#reject-error').textContent = '请填写驳回原因'; return; } const item = apps.find((app) => app.id === reject.dataset.confirmReject); item.status = '已驳回'; item.lock = false; item.outcome = `审批驳回：${reason}`; if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('申请已驳回，线上配置未变更'); return; }
+  if (reject) { const reason = $('#reject-reason')?.value.trim(); if (!reason) { $('#reject-error').textContent = '请填写驳回原因'; return; } const item = apps.find((app) => app.id === reject.dataset.confirmReject); item.status = '已驳回'; item.lock = false; item.outcome = `审批驳回：${reason}`; appendStatusRecord(item, '已驳回', '驳回申请'); if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('申请已驳回，线上配置未变更'); return; }
   const approve = event.target.closest('[data-confirm-approve]');
-  if (approve) { const item = apps.find((app) => app.id === approve.dataset.confirmApprove); item.status = '已生效'; item.lock = false; item.outcome = '审批通过，应用成功'; if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('冻结快照已应用，申请已生效'); return; }
+  if (approve) { const item = apps.find((app) => app.id === approve.dataset.confirmApprove); item.status = '已生效'; item.lock = false; item.outcome = '审批通过，应用成功'; appendStatusRecord(item, '已生效', '通过审批并应用成功'); if (item.productId === W1_ID) state.activeProductLock = false; closeOverlay(); set({ page: 'detail' }); showToast('冻结快照已应用，申请已生效'); return; }
 });
 
 window.addEventListener('prototype:change', render);

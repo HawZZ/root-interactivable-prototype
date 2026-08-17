@@ -18,13 +18,24 @@ export const state = {
 };
 
 export const apps = [
-  { id: 'A-001', productId: '2075767415740338177', action: '详情变更', status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 10:18', lock: true, outcome: '' },
-  { id: 'A-002', productId: '2042519931187200001', action: '上架', status: '已生效', product: 'T3 Wearable Pump', model: 'T3', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-04 09:20', lock: false, outcome: '审批通过，应用成功' },
-  { id: 'A-003', productId: '2042519931187200002', action: '下架', status: '已驳回', product: 'S9 Sterilizer', model: 'S9', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-03 14:06', lock: false, outcome: '审批驳回' },
-  { id: 'A-004', productId: '2042519931187200003', action: '上架范围变更', status: '待审批', product: 'DreamSync Tech', model: 'WN05', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-05 08:42', lock: true, outcome: '' },
-  { id: 'A-005', productId: '2042519931187200004', action: '详情变更', status: '已生效', product: 'N1 Nursery', model: 'N1', applicant: '王敏 / 系统管理员', applicantId: 'wang.admin', submitted: '2026-08-02 16:10', lock: false, outcome: '审批通过，应用成功' },
-  { id: 'A-006', productId: '2042519931187200005', action: '上架', status: '未生效', product: 'M5 Monitor', model: 'M5', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-01 11:32', lock: true, outcome: '审批通过，但应用失败' }
+  { id: 'A-001', productId: '2075767415740338177', action: '详情变更', status: '待审批', product: 'W1 Lite', model: 'W1Lite', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-05 10:18', lock: true, outcome: '', history: [{ operator: '陈晓', status: '待审批', occurredAt: '2026-08-05 10:18', action: '编辑产品详情' }] },
+  { id: 'A-002', productId: '2042519931187200001', action: '上架', status: '已生效', product: 'T3 Wearable Pump', model: 'T3', applicant: '陈晓 / 产品经理', applicantId: 'chen.xiao', submitted: '2026-08-04 09:20', lock: false, outcome: '审批通过，应用成功', history: [{ operator: '陈晓', status: '待审批', occurredAt: '2026-08-04 09:20', action: '提交产品上架' }, { operator: '李娜', status: '已生效', occurredAt: '2026-08-04 10:06', action: '通过审批并应用成功' }] },
+  { id: 'A-003', productId: '2042519931187200002', action: '下架', status: '已驳回', product: 'S9 Sterilizer', model: 'S9', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-03 14:06', lock: false, outcome: '审批驳回', history: [{ operator: '赵青', status: '待审批', occurredAt: '2026-08-03 14:06', action: '提交产品下架' }, { operator: '李娜', status: '已驳回', occurredAt: '2026-08-03 15:12', action: '驳回申请' }] },
+  { id: 'A-004', productId: '2042519931187200003', action: '上架范围变更', status: '待审批', product: 'DreamSync Tech', model: 'WN05', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-05 08:42', lock: true, outcome: '', history: [{ operator: '赵青', status: '待审批', occurredAt: '2026-08-05 08:42', action: '编辑产品上架范围' }] },
+  { id: 'A-005', productId: '2042519931187200004', action: '详情变更', status: '已生效', product: 'N1 Nursery', model: 'N1', applicant: '王敏 / 系统管理员', applicantId: 'wang.admin', submitted: '2026-08-02 16:10', lock: false, outcome: '审批通过，应用成功', history: [{ operator: '王敏', status: '待审批', occurredAt: '2026-08-02 16:10', action: '编辑产品详情' }, { operator: '李娜', status: '已生效', occurredAt: '2026-08-02 16:42', action: '通过审批并应用成功' }] },
+  { id: 'A-006', productId: '2042519931187200005', action: '上架', status: '未生效', product: 'M5 Monitor', model: 'M5', applicant: '赵青 / 产品经理', applicantId: 'zhao.qing', submitted: '2026-08-01 11:32', lock: true, outcome: '审批通过，但应用失败', history: [{ operator: '赵青', status: '待审批', occurredAt: '2026-08-01 11:32', action: '提交产品上架' }, { operator: '李娜', status: '未生效', occurredAt: '2026-08-01 12:04', action: '通过审批，应用失败' }] }
 ];
+
+function displayCurrentTime() {
+  const parts = new Intl.DateTimeFormat('sv-SE', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const value = (type) => parts.find((part) => part.type === type)?.value;
+  return `${value('year')}-${value('month')}-${value('day')} ${value('hour')}:${value('minute')}`;
+}
+
+export function appendStatusRecord(item, status, action, operator = currentUser().name) {
+  item.history ||= [];
+  item.history.push({ operator, status, occurredAt: displayCurrentTime(), action });
+}
 
 export function currentUser() {
   return Object.values(users).find((user) => user.role === state.role) || users.productManager;
