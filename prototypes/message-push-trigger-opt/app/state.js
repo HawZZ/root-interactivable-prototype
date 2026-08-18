@@ -71,7 +71,7 @@ export const newRule = () => ({
   id: "", productId: "prod-s12", name: "", dailySummaryGroupId: "", itemLabel: "",
   triggerType: "device", thingModelId: "milkLevel", operator: ">=", conditionValue: "180", conditionValues: [],
   cloudCountdownId: "feed-reminder", cloudThreshold: "0", consumableId: "shield-timer", consumableEvent: "low",
-  timeStart: "00:00", timeEnd: "23:59", reminderMode: "each", minIntervalMinutes: "30",
+  timeMode: "all-day", timeStart: "00:00", timeEnd: "23:59", reminderMode: "each", minIntervalMinutes: "30",
   systemNotificationEnabled: false, presetLinkId: "message-center", title: "", body: "", groupRevision: 0
 });
 

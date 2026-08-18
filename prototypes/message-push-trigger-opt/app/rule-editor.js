@@ -74,8 +74,10 @@ function conditionValueControl(model) {
 }
 
 function timeWindow() {
-  const cross = appState.rule.timeStart > appState.rule.timeEnd;
-  return `<div class="form-section" data-anchor="trigger-time"><div class="section-title"><h3>提醒时间</h3><p>触发条件和这个时间段都满足时才提醒</p></div><div class="time-range"><input class="el-input" type="time" data-rule-input="timeStart" value="${esc(appState.rule.timeStart)}"><span>至</span><input class="el-input" type="time" data-rule-input="timeEnd" value="${esc(appState.rule.timeEnd)}"><span class="el-tag el-tag--${cross ? "warning" : "info"} is-plain">${cross ? "跨到次日" : "当天"}</span></div></div>`;
+  const rule = appState.rule;
+  const custom = rule.timeMode === "custom";
+  const cross = rule.timeStart > rule.timeEnd;
+  return `<div class="form-section" data-anchor="trigger-time"><div class="section-title"><h3>提醒时间</h3><p>触发条件和这里的设置都满足时才提醒</p></div><div class="radio-row time-mode-row"><label class="choice-card ${!custom ? "selected" : ""}"><input type="radio" name="time-mode" value="all-day" ${!custom ? "checked" : ""}><span class="choice-copy"><strong>全天</strong><small>不限制提醒发生的时间</small></span></label><label class="choice-card ${custom ? "selected" : ""}"><input type="radio" name="time-mode" value="custom" ${custom ? "checked" : ""}><span class="choice-copy"><strong>指定时段</strong><small>只在设定的时间内提醒</small></span></label></div>${custom ? `<div class="time-range"><input class="el-input" type="time" data-rule-input="timeStart" value="${esc(rule.timeStart)}"><span>至</span><input class="el-input" type="time" data-rule-input="timeEnd" value="${esc(rule.timeEnd)}"><span class="el-tag el-tag--${cross ? "warning" : "info"} is-plain">${cross ? "跨到次日" : "当天"}</span></div>` : `<div class="all-day-summary"><strong>全天</strong><span>每个自然日内均可触发提醒。</span></div>`}</div>`;
 }
 
 function triggerStep() {
@@ -216,6 +218,7 @@ function wire() {
   host.querySelectorAll('input[name="content-mode"]').forEach(input => input.onchange = () => switchContentMode(input.value));
   host.querySelector("[data-group-select]")?.addEventListener("change", event => { appState.rule.dailySummaryGroupId = event.target.value; appState.rule.groupRevision = currentGroup()?.revision || 0; rerender(); });
   host.querySelectorAll('input[name="trigger"]').forEach(input => input.onchange = () => switchTrigger(input.value));
+  host.querySelectorAll('input[name="time-mode"]').forEach(input => input.onchange = () => { appState.rule.timeMode = input.value; rerender(); });
   host.querySelector("[data-open-picker]")?.addEventListener("click", openPicker);
   host.querySelectorAll("[data-enum-value]").forEach(input => input.onchange = () => { const values = new Set(appState.rule.conditionValues || []); input.checked ? values.add(input.dataset.enumValue) : values.delete(input.dataset.enumValue); appState.rule.conditionValues = [...values]; });
   host.querySelectorAll('input[name="mode"]').forEach(input => input.onchange = () => { appState.rule.reminderMode = input.value; rerender(); });
