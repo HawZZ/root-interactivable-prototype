@@ -1,47 +1,94 @@
-export const products=[
-  {id:"prod-s12",name:"S12 Pro 吸乳器",model:"S12 Pro",presetLinks:[{id:"message-center",label:"消息中心",uri:"cozy://message-center"},{id:"home",label:"设备首页",uri:"cozy://device/{deviceId}/home"},{id:"safety",label:"安全提醒页",uri:"cozy://device/{deviceId}/safety"}]},
-  {id:"prod-air-p3",name:"Cozy Air P3",model:"Air P3",presetLinks:[{id:"message-center",label:"消息中心",uri:"cozy://message-center"},{id:"home",label:"设备首页",uri:"cozy://device/{deviceId}/home"},{id:"filter",label:"滤芯管理",uri:"cozy://device/{deviceId}/consumable/filter"}]}
+export const products = [
+  { id: "prod-s12", name: "S12 Pro 吸乳器", model: "S12 Pro", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "care", label: "护理记录" }] },
+  { id: "prod-air-p3", name: "Cozy Air P3", model: "Air P3", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "filter", label: "滤芯管理" }] }
 ];
 
-const numberOperators=[">=",">","=","<=","<"];
-const numeric=(id,name,group,unit,example,description)=>({id,name,group,type:"number",unit,example,description,operators:numberOperators});
-const enumValue=(id,name,group,options,description)=>({id,name,group,type:"enum",options,description,operators:["=","!="]});
-const boolean=(id,name,group,description)=>({id,name,group,type:"boolean",description,operators:["=","!="]});
+const numeric = (id, name, group, dataType, unit, example, min, max, step) => ({ kind: "property", id, name, group, dataType, unit, example, min, max, step });
+const enumeration = (id, name, group, options) => ({ kind: "property", id, name, group, dataType: "enum", options });
+const bool = (id, name, group) => ({ kind: "property", id, name, group, dataType: "bool" });
+const text = (id, name, group, maxLength) => ({ kind: "property", id, name, group, dataType: "string", maxLength });
+const event = (id, name, group) => ({ kind: "event", id, name, group, dataType: "event" });
 
-// 原型用 36 个产品属性模拟大目录；真实数据来自当前产品的功能设计。
-const s12Properties=[
-  numeric("milkLevel","储奶量","安全与告警","ml","180","储奶容器实时液位"),enumValue("overflowRiskLevel","溢奶风险等级","安全与告警",["low","medium","high"],"溢奶风险结果"),numeric("milkTemperature","奶液温度","安全与告警","°C","38","储奶容器温度"),boolean("leakDetected","漏液检测","安全与告警","是否检测到漏液"),enumValue("cupSealStatus","罩杯密封状态","安全与告警",["sealed","loose","unknown"],"罩杯密封情况"),numeric("motorTemperature","电机温度","安全与告警","°C","65","电机温度"),enumValue("tubeBlockageRisk","导管堵塞风险","安全与告警",["none","suspected","confirmed"],"导管堵塞风险"),
-  numeric("batteryLevel","电池电量","设备状态","%","20","设备当前电量"),enumValue("chargeStatus","充电状态","设备状态",["charging","full","discharging"],"设备充电状态"),boolean("deviceOnline","设备在线","设备状态","设备是否在线"),numeric("bluetoothRssi","蓝牙信号强度","设备状态","dBm","-70","蓝牙连接强度"),numeric("storageUsage","本地存储占用","设备状态","%","85","本地存储使用率"),boolean("childLock","童锁状态","设备状态","童锁是否开启"),boolean("sleepMode","休眠模式","设备状态","是否进入休眠"),numeric("screenBrightness","屏幕亮度","设备状态","%","60","屏幕亮度"),numeric("autoShutdownMinutes","自动关机时长","设备状态","分钟","30","自动关机时长"),
-  enumValue("pumpMode","吸乳模式","泵乳过程",["standard","stimulation","quiet"],"当前吸乳模式"),numeric("pumpDuration","本次吸乳时长","泵乳过程","分钟","30","本次已吸乳时长"),numeric("suctionLevel","吸力档位","泵乳过程","档","6","当前吸力档位"),numeric("cycleRate","吸乳频率","泵乳过程","rpm","50","当前吸乳频率"),numeric("leftMotorSpeed","左侧电机转速","泵乳过程","rpm","1800","左侧电机转速"),numeric("rightMotorSpeed","右侧电机转速","泵乳过程","rpm","1800","右侧电机转速"),numeric("leftPressure","左侧负压","泵乳过程","kPa","16","左侧负压"),numeric("rightPressure","右侧负压","泵乳过程","kPa","16","右侧负压"),numeric("flowRate","流速","泵乳过程","ml/min","12","当前流速"),numeric("sessionCount","今日吸乳次数","泵乳过程","次","6","今天的完成次数"),numeric("stimulationDuration","刺激模式时长","泵乳过程","分钟","8","刺激模式时长"),boolean("paused","设备暂停","泵乳过程","是否暂停"),
-  numeric("motorRuntime","电机累计运行时长","维护与诊断","小时","300","电机累计运行时长"),numeric("cleaningCycle","距上次清洁次数","维护与诊断","次","8","最近清洁后的运行次数"),numeric("chargingCycles","累计充电循环","维护与诊断","次","120","累计充电循环"),enumValue("valveHealth","阀门健康度","维护与诊断",["normal","degraded","replace"],"阀门状态"),enumValue("temperatureSensorStatus","温度传感器状态","维护与诊断",["normal","fault","calibrating"],"温度传感器状态"),enumValue("selfCheckStatus","最近一次自检","维护与诊断",["passed","warning","failed"],"最近一次自检结果"),numeric("firmwareUpdateProgress","固件更新进度","维护与诊断","%","100","固件更新进度"),numeric("errorRetryCount","故障重试次数","维护与诊断","次","3","故障重试次数")
+const s12Models = [
+  numeric("milkLevel", "储奶量", "安全与告警", "int32", "ml", "180", 0, 240, 1),
+  enumeration("overflowRiskLevel", "溢奶风险等级", "安全与告警", [{ value: "low", label: "低" }, { value: "medium", label: "中" }, { value: "high", label: "高" }]),
+  numeric("milkTemperature", "奶液温度", "安全与告警", "float", "°C", "38.5", 0, 80, 0.1),
+  bool("leakDetected", "漏液检测", "安全与告警"),
+  text("errorText", "故障描述", "安全与告警", 64),
+  event("milkOverflow", "储奶杯已满", "安全与告警"),
+  event("motorStall", "电机堵转", "安全与告警"),
+  numeric("batteryLevel", "电池电量", "设备状态", "int32", "%", "20", 0, 100, 1),
+  enumeration("chargeStatus", "充电状态", "设备状态", [{ value: "charging", label: "充电中" }, { value: "full", label: "已充满" }, { value: "discharging", label: "未充电" }]),
+  bool("deviceOnline", "设备在线", "设备状态"),
+  text("firmwareVersion", "固件版本", "设备状态", 32),
+  event("deviceRestarted", "设备重启", "设备状态"),
+  enumeration("pumpMode", "吸乳模式", "泵乳过程", [{ value: "standard", label: "标准" }, { value: "stimulation", label: "刺激" }, { value: "quiet", label: "静音" }]),
+  numeric("pumpDuration", "本次吸乳时长", "泵乳过程", "int32", "分钟", "30", 0, 120, 1),
+  numeric("suctionLevel", "吸力档位", "泵乳过程", "int32", "档", "6", 1, 12, 1),
+  event("sessionCompleted", "吸乳完成", "泵乳过程"),
+  numeric("motorRuntime", "电机累计运行时长", "维护与诊断", "int64", "小时", "300", 0, 10000, 1),
+  enumeration("valveHealth", "阀门健康度", "维护与诊断", [{ value: "normal", label: "正常" }, { value: "degraded", label: "衰减" }, { value: "replace", label: "需更换" }]),
+  event("selfCheckFailed", "自检失败", "维护与诊断")
 ];
 
-export const recentPropertyIds={"prod-s12":["milkLevel","overflowRiskLevel","pumpDuration","batteryLevel"],"prod-air-p3":["pm25"]};
-export const productSources={
-  "prod-s12":{properties:s12Properties,countdowns:[{id:"feed-reminder",name:"喂养提醒",deviceCapability:"verified",cycleContract:"verified",duration:60,unit:"分钟"}],consumables:[{id:"pump-kit",name:"吸乳配件",unit:"%",deviceCapability:"verified"}]},
-  "prod-air-p3":{properties:[numeric("pm25","PM2.5","空气质量","μg/m³","75","室内颗粒物浓度"),numeric("co2","CO₂","空气质量","ppm","1000","室内二氧化碳浓度"),numeric("humidity","环境湿度","环境监测","%","70","室内相对湿度"),numeric("temperature","环境温度","环境监测","°C","28","室内环境温度"),enumValue("fanMode","风机模式","设备状态",["auto","sleep","turbo"],"当前风机模式"),boolean("deviceOnline","设备在线","设备状态","设备是否在线")],countdowns:[{id:"filter-dry",name:"滤芯干燥提醒",deviceCapability:"verified",cycleContract:"verified",duration:30,unit:"天"}],consumables:[{id:"filter",name:"HEPA 滤芯",unit:"%",deviceCapability:"verified"},{id:"carbon",name:"活性炭滤芯",unit:"%",deviceCapability:"verified"}]}
+export const productSources = {
+  "prod-s12": {
+    thingModels: s12Models,
+    countdowns: [
+      { id: "feed-reminder", name: "配件清洗周期", duration: 30, unit: "天" },
+      { id: "sterilize-reminder", name: "消毒提醒", duration: 12, unit: "小时" }
+    ],
+    consumables: [
+      { id: "shield-timer", name: "吸乳罩清洗", type: "cloud-timed", typeLabel: "云端定时耗材", unit: "天" },
+      { id: "valve-timer", name: "阀门清洗", type: "cloud-timed", typeLabel: "云端定时耗材", unit: "天" },
+      { id: "duckbill-count", name: "鸭嘴阀寿命", type: "device-counted", typeLabel: "设备计数耗材", unit: "次" },
+      { id: "storage-bag", name: "储奶袋", type: "non-counted", typeLabel: "非计数类耗材", unit: "个" }
+    ]
+  },
+  "prod-air-p3": {
+    thingModels: [numeric("pm25", "PM2.5", "空气质量", "float", "μg/m³", "75", 0, 1000, 0.1), enumeration("fanMode", "风机模式", "设备状态", [{ value: "auto", label: "自动" }, { value: "sleep", label: "睡眠" }, { value: "turbo", label: "强劲" }]), bool("deviceOnline", "设备在线", "设备状态"), event("filterBlocked", "滤芯堵塞", "维护与诊断")],
+    countdowns: [{ id: "filter-dry", name: "滤芯干燥提醒", duration: 30, unit: "天" }],
+    consumables: [{ id: "filter", name: "HEPA 滤芯", type: "cloud-timed", typeLabel: "云端定时耗材", unit: "天" }, { id: "carbon", name: "活性炭滤芯", type: "device-counted", typeLabel: "设备计数耗材", unit: "%" }]
+  }
 };
 
-export const supportedLanguages=[["en-US","English"],["zh-CN","简体中文"],["de-DE","Deutsch"],["fr-FR","Français"],["zh-TW","繁體中文"],["it-IT","Italiano"],["pt-PT","Português"],["es-ES","Español"],["ar-SA","العربية"],["vi-VN","Tiếng Việt"],["id-ID","Bahasa Indonesia"],["th-TH","ไทย"],["ms-MY","Bahasa Melayu"],["ja-JP","日本語"],["ru-RU","Русский"],["fil-PH","Filipino"],["ko-KR","한국어"],["nl-NL","Nederlands"]];
-export const placeholders=["${cozyDeviceName}","${cozyDeviceModel}","${cozyUserEmail}","${cozyUserFirstName}","${cozyUserLastName}","${cozyCountdownTimer}","${cozyDeviceConsumableName}","${cozyConsumableUseValue}","${cozyConsumableRemainValue}","${cozyConsumableUnit}"];
-export const emptyLanguageValues=()=>Object.fromEntries(supportedLanguages.map(([code])=>[code,{title:"",body:""}]));
-export const notificationTopics=[
-  {id:"topic-clean",productId:"prod-s12",name:"清洗提醒",revision:3,updated:"2026-08-13 15:30",values:{"en-US":{title:"Cleaning is due",body:"Your pump parts need cleaning."}}},
-  {id:"topic-maintain",productId:"prod-s12",name:"保养提醒",revision:2,updated:"2026-08-13 14:10",values:{"en-US":{title:"Maintenance is due",body:"Your device needs maintenance."}}},
-  {id:"topic-seasonal",productId:"prod-s12",name:"季节提醒",revision:1,updated:"2026-08-13 13:00",values:{"en-US":{title:"Seasonal care reminder",body:"Please check your device."}}}
-];
-export const newRule=()=>({id:"",productId:"prod-s12",name:"",notificationTopicId:"",itemLabel:"",triggerType:"device",propertyId:"milkLevel",operator:">=",propertyValue:"180",cloudCountdownId:"feed-reminder",cloudThresholdMinutes:"15",consumableId:"pump-kit",consumableEvent:"low",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",minIntervalMinutes:"30",systemNotificationEnabled:false,presetLinkId:"message-center",title:"",body:"",topicRevision:0});
+export const operatorOptions = {
+  int32: ["=", "!=", ">", ">=", "<", "<="], int64: ["=", "!=", ">", ">=", "<", "<="],
+  float: ["=", "!=", ">", ">=", "<", "<="], double: ["=", "!=", ">", ">=", "<", "<="],
+  enum: ["=", "!=", "包含", "不包含"], bool: ["="], string: ["=", "!=", "包含", "不包含"], event: ["="]
+};
 
-export const rules=[
-  {id:"R-2048",productId:"prod-s12",name:"储奶量过高提醒",product:"S12 Pro 吸乳器",trigger:"设备：储奶量 ≥ 180 ml",title:"Milk overflow detected",body:"Your S12 Pro needs attention.",languages:"1",strategy:"逐条发送 · 消息中心",status:"启用",updated:"2026-08-13 15:30",notificationTopicId:"",itemLabel:"",triggerType:"device",propertyId:"milkLevel",operator:">=",propertyValue:"180",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",systemNotificationEnabled:false,presetLinkId:"message-center"},
-  {id:"R-2047",productId:"prod-s12",name:"罩杯清洗提醒",product:"S12 Pro 吸乳器",trigger:"云端：喂养提醒 ≤ 0 分钟",title:"Cleaning is due",body:"Your pump parts need cleaning.",languages:"1",strategy:"清洗提醒 · 主题汇总",status:"启用",updated:"2026-08-13 15:30",notificationTopicId:"topic-clean",itemLabel:"Breast shields",triggerType:"cloud",cloudCountdownId:"feed-reminder",cloudThresholdMinutes:"0",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",systemNotificationEnabled:true,presetLinkId:"message-center",topicRevision:3},
-  {id:"R-2046",productId:"prod-s12",name:"阀门清洗提醒",product:"S12 Pro 吸乳器",trigger:"耗材：吸乳配件不足",title:"Cleaning is due",body:"Your pump parts need cleaning.",languages:"1",strategy:"清洗提醒 · 主题汇总",status:"启用",updated:"2026-08-13 15:10",notificationTopicId:"topic-clean",itemLabel:"Valves",triggerType:"consumable",consumableId:"pump-kit",consumableEvent:"low",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",systemNotificationEnabled:false,presetLinkId:"message-center",topicRevision:3},
-  {id:"R-2045",productId:"prod-s12",name:"电机保养提醒",product:"S12 Pro 吸乳器",trigger:"设备：电机累计运行时长 ≥ 300 小时",title:"Maintenance is due",body:"Your device needs maintenance.",languages:"1",strategy:"保养提醒 · 主题汇总",status:"启用",updated:"2026-08-13 14:10",notificationTopicId:"topic-maintain",itemLabel:"Motor",triggerType:"device",propertyId:"motorRuntime",operator:">=",propertyValue:"300",timeStart:"00:00",timeEnd:"23:59",reminderMode:"each",systemNotificationEnabled:false,presetLinkId:"message-center",topicRevision:2},
-  {id:"R-2044",productId:"prod-s12",name:"清洁周期独立提醒",product:"S12 Pro 吸乳器",trigger:"设备：距上次清洁次数 ≥ 8 次",title:"Clean your pump",body:"It is time to clean your pump.",languages:"1",strategy:"仅发送首条 · 60 分钟 · 消息中心",status:"草稿",updated:"2026-08-13 13:20",notificationTopicId:"",itemLabel:"",triggerType:"device",propertyId:"cleaningCycle",operator:">=",propertyValue:"8",timeStart:"08:00",timeEnd:"22:00",reminderMode:"discard",minIntervalMinutes:"60",systemNotificationEnabled:false,presetLinkId:"message-center"}
+export const supportedLanguages = [["en-US", "English"], ["zh-CN", "简体中文"], ["de-DE", "Deutsch"], ["fr-FR", "Français"], ["zh-TW", "繁體中文"], ["it-IT", "Italiano"], ["pt-PT", "Português"], ["es-ES", "Español"], ["ar-SA", "العربية"], ["vi-VN", "Tiếng Việt"], ["id-ID", "Bahasa Indonesia"], ["th-TH", "ไทย"], ["ms-MY", "Bahasa Melayu"], ["ja-JP", "日本語"], ["ru-RU", "Русский"], ["fil-PH", "Filipino"], ["ko-KR", "한국어"], ["nl-NL", "Nederlands"]];
+export const placeholders = ["${cozyDeviceName}", "${cozyDeviceModel}", "${cozyUserEmail}", "${cozyUserFirstName}", "${cozyUserLastName}", "${cozyCountdownTimer}", "${cozyDeviceConsumableName}", "${cozyConsumableUseValue}", "${cozyConsumableRemainValue}", "${cozyConsumableUnit}"];
+
+export const dailySummaryGroups = [
+  { id: "group-clean", productId: "prod-s12", name: "清洗提醒", revision: 4, updated: "2026-08-18 15:40", values: { "en-US": { title: "Cleaning is due", body: "Your pump parts need cleaning." }, "zh-CN": { title: "该清洗配件了", body: "以下吸乳配件需要清洗。" } } },
+  { id: "group-care", productId: "prod-s12", name: "保养提醒", revision: 2, updated: "2026-08-18 13:20", values: { "en-US": { title: "Care tasks for today", body: "Please check today's care items." } } },
+  { id: "group-unused", productId: "prod-s12", name: "未使用示例组", revision: 1, updated: "2026-08-17 10:05", values: { "en-US": { title: "Daily reminder", body: "You have tasks scheduled today." } } }
 ];
 
-// 每个产品维护一份语言选择；大表中的每行由当前规则的 title/body 自动生成。
-export const productLanguageConfig={"prod-s12":{selectedLocales:["en-US"]},"prod-air-p3":{selectedLocales:["en-US"]}};
-const languageValues=emptyLanguageValues();
-languageValues["en-US"]={title:"Milk overflow detected",body:"Your S12 Pro needs attention."};
-export const appState={scenario:"normal",readOnly:false,annotationOpen:true,ruleStep:1,selectedProductId:"prod-s12",editingRule:false,rule:newRule(),activeContentField:"title",message:{values:languageValues}};
+export const newRule = () => ({
+  id: "", productId: "prod-s12", name: "", dailySummaryGroupId: "", itemLabel: "",
+  triggerType: "device", thingModelId: "milkLevel", operator: ">=", conditionValue: "180", conditionValues: [],
+  cloudCountdownId: "feed-reminder", cloudThreshold: "0", consumableId: "shield-timer", consumableEvent: "low",
+  timeStart: "00:00", timeEnd: "23:59", reminderMode: "each", minIntervalMinutes: "30",
+  systemNotificationEnabled: false, presetLinkId: "message-center", title: "", body: "", groupRevision: 0
+});
+
+export const rules = [
+  { ...newRule(), id: "R-2048", productId: "prod-s12", name: "储奶量过高提醒", trigger: "物模型：储奶量 >= 180 ml", title: "Milk overflow detected", body: "Your S12 Pro needs attention.", languages: "1", strategy: "逐条发送 · 消息中心", status: "启用", updated: "2026-08-18 15:30", thingModelId: "milkLevel", operator: ">=", conditionValue: "180" },
+  { ...newRule(), id: "R-2047", productId: "prod-s12", name: "吸乳罩清洗提醒", trigger: "云端：配件清洗周期 <= 0 天", title: "Cleaning is due", body: "Your pump parts need cleaning.", languages: "2", strategy: "每日汇总 · 消息中心 + 系统通知", status: "启用", updated: "2026-08-18 15:30", dailySummaryGroupId: "group-clean", itemLabel: "Breast shields", triggerType: "cloud", cloudThreshold: "0", systemNotificationEnabled: true, groupRevision: 4 },
+  { ...newRule(), id: "R-2046", productId: "prod-s12", name: "阀门清洗提醒", trigger: "耗材：阀门清洗不足", title: "Cleaning is due", body: "Your pump parts need cleaning.", languages: "2", strategy: "每日汇总 · 消息中心", status: "启用", updated: "2026-08-18 15:10", dailySummaryGroupId: "group-clean", itemLabel: "Valves", triggerType: "consumable", consumableId: "valve-timer", consumableEvent: "low", groupRevision: 4 },
+  { ...newRule(), id: "R-2045", productId: "prod-s12", name: "消毒提醒", trigger: "云端：消毒提醒 <= 1 小时", title: "Care tasks for today", body: "Please check today's care items.", languages: "1", strategy: "每日汇总 · 消息中心", status: "启用", updated: "2026-08-18 14:10", dailySummaryGroupId: "group-care", itemLabel: "Sterilize pump parts", triggerType: "cloud", cloudCountdownId: "sterilize-reminder", cloudThreshold: "1", groupRevision: 2 },
+  { ...newRule(), id: "R-2044", productId: "prod-s12", name: "自检失败提醒", trigger: "物模型事件：自检失败 = true", title: "Device check failed", body: "Open the app to view details.", languages: "1", strategy: "仅发送首条 · 60 分钟 · 消息中心", status: "草稿", updated: "2026-08-18 13:20", triggerType: "device", thingModelId: "selfCheckFailed", operator: "=", conditionValue: "true", reminderMode: "discard", minIntervalMinutes: "60" }
+];
+
+export const productLanguageConfig = {
+  "prod-s12": { selectedLocales: ["en-US", "zh-CN"], values: {} },
+  "prod-air-p3": { selectedLocales: ["en-US"], values: {} }
+};
+
+export const appState = {
+  scenario: "normal", readOnly: false, annotationOpen: true, activePage: "rules", ruleStep: 1,
+  selectedProductId: "prod-s12", editingRule: false, rule: newRule(), activeContentField: "title"
+};

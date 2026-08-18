@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>IoT Admin · 消息推送 P0 规则闭环</title>
+  <title>IoT Admin · 消息推送 V3.7</title>
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
 </head>
@@ -33,7 +33,7 @@
             <div class="page-heading" data-anchor="page-heading">
               <div>
                 <h1>消息推送</h1>
-                <p>按产品配置既有设备来源的 C 端 App Push 规则</p>
+                <p>配置独立提醒，并将可预测的定时提醒按自然日汇总</p>
               </div>
               <div class="page-actions">
                 <div class="product-control" data-anchor="product-switcher">
@@ -47,7 +47,8 @@
             </div>
 
             <div class="business-tabs" data-anchor="business-tabs">
-              <button class="business-tab active">推送规则 <span id="ruleCount">0</span></button>
+              <button class="business-tab active" data-page="rules">推送规则 <span id="ruleCount">0</span></button>
+              <button class="business-tab" data-page="groups">每日汇总 <span id="groupCount">0</span></button>
             </div>
 
             <section class="content-panel" id="workspace" aria-live="polite"></section>
@@ -81,6 +82,7 @@
   <div id="overlayRoot"></div>
   <div class="toast" id="toast" role="status"></div>
 
+  <script src="vendor/xlsx.full.min.js"></script>
   <script type="module" src="app/index.js"></script>
 </body>
 </html>
