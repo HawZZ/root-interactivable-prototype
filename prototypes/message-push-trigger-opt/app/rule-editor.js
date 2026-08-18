@@ -12,7 +12,7 @@ const groupValue = (group, field) => group?.values?.["en-US"]?.[field] || "";
 const selectedModel = () => sources().thingModels.find(item => item.id === appState.rule.thingModelId) || sources().thingModels[0];
 const selectedConsumable = () => sources().consumables.find(item => item.id === appState.rule.consumableId) || sources().consumables[0];
 const supportsSummary = () => appState.rule.triggerType === "cloud" || (appState.rule.triggerType === "consumable" && selectedConsumable()?.type === "cloud-timed");
-let pickerState = { query: "", group: "all", kind: "all" };
+let pickerState = { query: "", kind: "all" };
 
 function stepNav() {
   return `<nav class="step-nav" id="ruleStepNav" data-anchor="step-nav"><div class="step-progress"><span>规则配置</span><strong>步骤 ${appState.ruleStep} / 3</strong></div><ol class="step-list">${steps.map(([number, title, subtitle], index) => `<li class="step-slot"><button class="step-item ${number === appState.ruleStep ? "active" : ""} ${number < appState.ruleStep ? "is-complete" : ""}" data-step="${number}"><span class="step-index">${number < appState.ruleStep ? "✓" : number}</span><span class="step-copy"><strong>${title}</strong><small>${subtitle}</small></span></button>${index < 2 ? `<span class="step-connector ${number < appState.ruleStep ? "is-complete" : ""}"></span>` : ""}</li>`).join("")}</ol></nav>`;
@@ -34,16 +34,14 @@ function modelMeta(model) {
   if (!model) return "";
   return `${model.kind === "event" ? "事件" : model.dataType}${model.unit ? ` · ${model.unit}` : ""} · ${model.id}`;
 }
-function modelGroups() { return [...new Set(sources().thingModels.map(item => item.group || "其他"))]; }
 function matchingModels() {
   const keyword = pickerState.query.trim().toLowerCase();
-  return sources().thingModels.filter(item => (pickerState.group === "all" || item.group === pickerState.group) && (pickerState.kind === "all" || item.kind === pickerState.kind) && (!keyword || `${item.name} ${item.id} ${item.group}`.toLowerCase().includes(keyword)));
+  return sources().thingModels.filter(item => (pickerState.kind === "all" || item.kind === pickerState.kind) && (!keyword || `${item.name} ${item.id}`.toLowerCase().includes(keyword)));
 }
 function pickerShell() {
-  const all = sources().thingModels;
   const rows = matchingModels();
   const current = selectedModel();
-  return `<div class="property-picker-host is-open" id="propertyPicker"><div class="property-picker-mask" data-picker-close></div><section class="property-picker"><header class="property-picker-header"><div><h3>选择物模型</h3><p>属性按数据类型配置条件；事件上报即触发。</p></div><button class="icon-btn" data-picker-close>×</button></header><div class="property-picker-toolbar"><div class="property-search"><span>⌕</span><input class="el-input" data-model-query value="${esc(pickerState.query)}" placeholder="搜索名称或标识符"><kbd>Esc</kbd></div><div class="segmented"><button class="${pickerState.kind === "all" ? "active" : ""}" data-model-kind="all">全部</button><button class="${pickerState.kind === "property" ? "active" : ""}" data-model-kind="property">属性</button><button class="${pickerState.kind === "event" ? "active" : ""}" data-model-kind="event">事件</button></div></div><div class="property-picker-body"><aside class="property-group-list"><button class="property-group ${pickerState.group === "all" ? "active" : ""}" data-model-group="all"><span>全部分组</span><b>${all.length}</b></button>${modelGroups().map(group => `<button class="property-group ${pickerState.group === group ? "active" : ""}" data-model-group="${esc(group)}"><span>${esc(group)}</span><b>${all.filter(item => item.group === group).length}</b></button>`).join("")}</aside><section class="property-results"><div class="property-results-head"><span>${pickerState.query ? `“${esc(pickerState.query)}” 的结果` : "可选物模型"}</span><small>${rows.length} 个</small></div><div class="property-option-list">${rows.length ? rows.map(item => `<button class="property-option ${item.id === current?.id ? "selected" : ""}" data-select-model="${item.id}"><span class="property-type-icon">${item.kind === "event" ? "E" : item.dataType === "enum" ? "≡" : item.dataType === "string" ? "T" : "#"}</span><span class="property-option-copy"><strong>${esc(item.name)}</strong><small>${esc(modelMeta(item))}</small></span><span class="property-option-side"><b>${item.id === current?.id ? "已选" : "选择"}</b></span></button>`).join("") : `<div class="property-empty"><strong>没有匹配结果</strong><span>可换个名称或分组。</span></div>`}</div></section></div><footer class="property-picker-footer"><span>来源：当前产品物模型配置</span><button class="el-btn" data-picker-close>取消</button></footer></section></div>`;
+  return `<div class="property-picker-host is-open" id="propertyPicker"><div class="property-picker-mask" data-picker-close></div><section class="property-picker"><header class="property-picker-header"><div><h3>选择物模型</h3><p>属性按数据类型配置条件；事件上报即触发。</p></div><button class="icon-btn" data-picker-close>×</button></header><div class="property-picker-toolbar"><div class="property-search"><span>⌕</span><input class="el-input" data-model-query value="${esc(pickerState.query)}" placeholder="搜索名称或标识符"><kbd>Esc</kbd></div><div class="segmented"><button class="${pickerState.kind === "all" ? "active" : ""}" data-model-kind="all">全部</button><button class="${pickerState.kind === "property" ? "active" : ""}" data-model-kind="property">属性</button><button class="${pickerState.kind === "event" ? "active" : ""}" data-model-kind="event">事件</button></div></div><div class="property-picker-body"><section class="property-results"><div class="property-results-head"><span>${pickerState.query ? `“${esc(pickerState.query)}” 的结果` : "可选物模型"}</span><small>${rows.length} 个</small></div><div class="property-option-list">${rows.length ? rows.map(item => `<button class="property-option ${item.id === current?.id ? "selected" : ""}" data-select-model="${item.id}"><span class="property-type-icon">${item.kind === "event" ? "E" : item.dataType === "enum" ? "≡" : item.dataType === "string" ? "T" : "#"}</span><span class="property-option-copy"><strong>${esc(item.name)}</strong><small>${esc(modelMeta(item))}</small></span><span class="property-option-side"><b>${item.id === current?.id ? "已选" : "选择"}</b></span></button>`).join("") : `<div class="property-empty"><strong>没有匹配结果</strong><span>可换个名称搜索。</span></div>`}</div></section></div><footer class="property-picker-footer"><span>来源：当前产品物模型配置</span><button class="el-btn" data-picker-close>取消</button></footer></section></div>`;
 }
 function closePicker() { $("#propertyPicker")?.remove(); }
 function renderPicker() { const host = $("#propertyPicker"); if (!host) return; host.outerHTML = pickerShell(); wirePicker(); }
@@ -58,10 +56,9 @@ function wirePicker() {
   host.querySelectorAll("[data-picker-close]").forEach(button => button.onclick = closePicker);
   host.querySelector("[data-model-query]").oninput = event => { pickerState.query = event.target.value; renderPicker(); };
   host.querySelectorAll("[data-model-kind]").forEach(button => button.onclick = () => { pickerState.kind = button.dataset.modelKind; renderPicker(); });
-  host.querySelectorAll("[data-model-group]").forEach(button => button.onclick = () => { pickerState.group = button.dataset.modelGroup; renderPicker(); });
   host.querySelectorAll("[data-select-model]").forEach(button => button.onclick = () => { const model = sources().thingModels.find(item => item.id === button.dataset.selectModel); if (!model) return; selectModel(model); closePicker(); rerender(); showToast(`已选择：${model.name}`); });
 }
-function openPicker() { pickerState = { query: "", group: "all", kind: "all" }; $("#overlayRoot").insertAdjacentHTML("beforeend", pickerShell()); wirePicker(); }
+function openPicker() { pickerState = { query: "", kind: "all" }; $("#overlayRoot").insertAdjacentHTML("beforeend", pickerShell()); wirePicker(); }
 
 function conditionValueControl(model) {
   const rule = appState.rule;
