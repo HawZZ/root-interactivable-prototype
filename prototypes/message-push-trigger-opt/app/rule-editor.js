@@ -1,6 +1,7 @@
 import { $, esc, showToast } from "./dom.js";
 import { appState, placeholders, products, productSources, rules, newRule, dailySummaryGroups, operatorOptions } from "./state.js";
 import { renderAnnotations } from "./annotations.js";
+import { openConfirmationDialog } from "./confirmation-dialog.js";
 
 const steps = [[1, "消息内容", "独立文案或每日汇总"], [2, "触发条件", "来源、条件与提醒时间"], [3, "投递设置", "目标与发送方式"]];
 const product = () => products.find(item => item.id === appState.selectedProductId) || products[0];
@@ -142,17 +143,29 @@ function rerender() { const host = $("#ruleDrawer"); if (!host) return; host.out
 
 function switchTrigger(next) {
   const rule = appState.rule;
-  if (rule.dailySummaryGroupId && next === "device" && !window.confirm("设备触发不能加入每日汇总组。继续后将移出汇总组并恢复独立内容，是否继续？")) return;
-  if (rule.dailySummaryGroupId && next === "device") rule.dailySummaryGroupId = "";
+  const removeFromSummary = () => { rule.dailySummaryGroupId = ""; rule.triggerType = next; rerender(); };
+  if (rule.dailySummaryGroupId && next === "device") {
+    openConfirmationDialog({ title: "更改触发源", description: "设备触发不能加入每日汇总组。继续后将移出汇总组，并恢复独立内容。", confirmLabel: "继续并移出", onConfirm: removeFromSummary, onCancel: rerender });
+    return;
+  }
+  if (rule.dailySummaryGroupId && next === "consumable" && selectedConsumable()?.type !== "cloud-timed") {
+    openConfirmationDialog({ title: "更改触发源", description: `${selectedConsumable()?.typeLabel || "当前耗材"}不能加入每日汇总组。继续后将移出汇总组，并恢复独立内容。`, confirmLabel: "继续并移出", onConfirm: removeFromSummary, onCancel: rerender });
+    return;
+  }
   rule.triggerType = next;
-  if (next === "consumable" && selectedConsumable()?.type !== "cloud-timed" && rule.dailySummaryGroupId) rule.dailySummaryGroupId = "";
   rerender();
 }
 function switchContentMode(mode) {
   if (mode === "standalone") { appState.rule.dailySummaryGroupId = ""; rerender(); return; }
   if (!supportsSummary()) {
-    if (!window.confirm("当前来源不能加入每日汇总组。继续后将切换为云端触发，是否继续？")) { rerender(); return; }
-    appState.rule.triggerType = "cloud";
+    openConfirmationDialog({
+      title: "切换为云端触发",
+      description: "当前来源不能加入每日汇总组。继续后将切换为云端触发。",
+      confirmLabel: "继续切换",
+      onConfirm: () => { appState.rule.triggerType = "cloud"; appState.rule.dailySummaryGroupId = groups()[0]?.id || ""; appState.rule.groupRevision = currentGroup()?.revision || 0; rerender(); },
+      onCancel: rerender
+    });
+    return;
   }
   appState.rule.dailySummaryGroupId = groups()[0]?.id || "";
   appState.rule.groupRevision = currentGroup()?.revision || 0;
@@ -162,8 +175,14 @@ function switchConsumable(id) {
   const next = sources().consumables.find(item => item.id === id);
   if (!next) return;
   if (appState.rule.dailySummaryGroupId && next.type !== "cloud-timed") {
-    if (!window.confirm(`${next.typeLabel}不能加入每日汇总组。继续后将移出汇总组并恢复独立内容，是否继续？`)) { rerender(); return; }
-    appState.rule.dailySummaryGroupId = "";
+    openConfirmationDialog({
+      title: "更改耗材项",
+      description: `${next.typeLabel}不能加入每日汇总组。继续后将移出汇总组，并恢复独立内容。`,
+      confirmLabel: "继续并移出",
+      onConfirm: () => { appState.rule.dailySummaryGroupId = ""; appState.rule.consumableId = id; rerender(); },
+      onCancel: rerender
+    });
+    return;
   }
   appState.rule.consumableId = id;
   rerender();

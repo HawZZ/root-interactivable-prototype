@@ -4,6 +4,7 @@ import { renderAnnotations } from "./annotations.js";
 import { openRuleDrawer, resetRuleDraft } from "./rule-editor.js";
 import { openProductLanguageDrawer } from "./language-editor.js";
 import { openProductPicker, renderProductPickerTrigger } from "./product-picker.js";
+import { openConfirmationDialog } from "./confirmation-dialog.js";
 
 const workspace = $("#workspace");
 let query = "";
@@ -105,8 +106,13 @@ function deleteGroup(id) {
   if (!group) return;
   const count = groupMembers(id).length;
   if (count) return showToast(`仍关联 ${count} 条规则，不能删除`, "error");
-  if (!window.confirm(`删除每日汇总组「${group.name}」？历史消息不会被删除。`)) return;
-  dailySummaryGroups.splice(dailySummaryGroups.indexOf(group), 1); render(); showToast("每日汇总组已删除");
+  openConfirmationDialog({
+    title: "删除每日汇总组",
+    description: `删除“${group.name}”后不能恢复。已有消息中心记录不会删除。`,
+    confirmLabel: "删除",
+    tone: "danger",
+    onConfirm: () => { dailySummaryGroups.splice(dailySummaryGroups.indexOf(group), 1); render(); showToast("每日汇总组已删除"); }
+  });
 }
 
 function seedRule(row) {
@@ -116,8 +122,15 @@ function seedRule(row) {
 }
 function openNewRule() { resetRuleDraft(); openRuleDrawer(); }
 function openDeleteRule(index) {
-  const row = rules[index]; if (!row || !window.confirm(`删除推送规则「${row.name}」？`)) return;
-  rules.splice(index, 1); render(); showToast("规则已删除");
+  const row = rules[index];
+  if (!row) return;
+  openConfirmationDialog({
+    title: "删除推送规则",
+    description: `删除“${row.name}”后不能恢复。`,
+    confirmLabel: "删除",
+    tone: "danger",
+    onConfirm: () => { rules.splice(index, 1); render(); showToast("规则已删除"); }
+  });
 }
 function setProduct(id) {
   if (!products.some(product => product.id === id)) return;
