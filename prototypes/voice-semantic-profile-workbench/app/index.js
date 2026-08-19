@@ -135,7 +135,7 @@ const annotations = {
       context: "配置抽屉 / 能力与映射",
       summary: "默认链路简化为：物模型属性/命令 -> Alexa Capability -> 多语言语音名称 -> 英语语句示例；内部协议字段只在折叠技术详情中只读展示。",
       items: [
-        { n: 5, title: "直接选择 Capability", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string 是硬筛条件；属性 ID 和名称不参与判断。Capability 以中文用途为主标题、官方 ID 为辅助信息。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容语音配置。"], ["组合输出", "一条规则产生多个 Capability 时作为一个组合选项，用户不拆分内部规则。"]] },
+        { n: 5, title: "直接选择 Capability", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string 是硬筛条件；属性 ID 和名称不参与判断。Capability 以中文用途为主标题、官方 ID 为辅助信息。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容语音配置。"], ["组合输出", "一条规则产生多个 Capability 时作为一个组合选项，用户不拆分内部规则。"], ["Catalog 边界", "当前 10 个 Alexa 能力包为 profile_ready；另有 41 个官方候选仅登记为 metadata_only，不能成为可发布选项。"]] },
         { n: 6, title: "多语言与语句预览", location: "关联位置：映射项 > 步骤 3-4", fields: [["语音名称", "需要区分对象的 Mode、Range、Toggle 按目标 Locale 填写一个主名称和最多两个别名；Mode 同时维护全部枚举值名称。"], ["多实例", "运动模式与音乐模式可分别映射 ModeController；平台按 mappingId 生成不同稳定 instance，即使都包含 sleep 值也不会混淆。"], ["语句", "输入完整后从 Provider Metadata 的 Alexa 官方预置模板展示 1-3 条 en-US 示例；设备名固定为 {device name}，不支持自定义句型。"]] },
         { n: 8, title: "内部模型折叠", location: "关联位置：映射项 > 技术详情", fields: [["默认界面", "不显示设备语义、规则 ID、优先级、Adapter、instance、Alexa Value、Resource KV 或 Catalog 版本。"], ["排查", "折叠技术详情只读展示内部语义、固定规则、生成的 Capability、instance 和资源引用。"], ["二期", "Google Home 复用同一中立语义，但独立选择 Trait、维护本地化资源并发布，不引用 Alexa 资源。"]] }
       ]

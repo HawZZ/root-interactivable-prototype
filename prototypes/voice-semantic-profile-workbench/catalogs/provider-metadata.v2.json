@@ -1,6 +1,6 @@
 {
   "catalog": "ProviderMetadataCatalog",
-  "version": "2026.08.2",
+  "version": "2026.08.3",
   "providers": {
     "alexa": {
       "definitions": [
@@ -80,7 +80,45 @@
           "id": "RTCSessionController", "label": "实时会话", "group": "会话", "type": "rtc",
           "directives": [], "status": "metadata_only", "instanceSupport": "optional",
           "supportedLocales": ["en-US"], "utteranceTemplates": {"en-US": []}
-        }
+        },
+        {"id": "AutomationManagement", "label": "AutomationManagement", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "CameraStreamController", "label": "CameraStreamController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ChannelController", "label": "ChannelController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "Commissionable", "label": "Commissionable", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ContactSensor", "label": "ContactSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "Cooking", "label": "Cooking", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "DataController", "label": "DataController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "DeviceUsage", "label": "DeviceUsage", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "DoorbellEventSource", "label": "DoorbellEventSource", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "EqualizerController", "label": "EqualizerController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "HumiditySensor", "label": "HumiditySensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "InputController", "label": "InputController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "InventoryLevelSensor", "label": "InventoryLevelSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "InventoryLevelUsageSensor", "label": "InventoryLevelUsageSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "InventoryUsageSensor", "label": "InventoryUsageSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "KeypadController", "label": "KeypadController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "Launcher", "label": "Launcher", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "LockController", "label": "LockController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "MotionSensor", "label": "MotionSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "PercentageController", "label": "PercentageController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "PowerLevelController", "label": "PowerLevelController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ProactiveNotificationSource", "label": "ProactiveNotificationSource", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "RecordController", "label": "RecordController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "RemoteVideoPlayer", "label": "RemoteVideoPlayer", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SceneController", "label": "SceneController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SecurityPanelController", "label": "SecurityPanelController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SeekController", "label": "SeekController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SimpleEventSource", "label": "SimpleEventSource", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SmartVision.ObjectDetectionSensor", "label": "SmartVision.ObjectDetectionSensor", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "SmartVision.SnapshotProvider", "label": "SmartVision.SnapshotProvider", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "StepSpeaker", "label": "StepSpeaker", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ThermostatController", "label": "ThermostatController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ThermostatController.Configuration", "label": "ThermostatController.Configuration", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ThermostatController.HVAC.Components", "label": "ThermostatController.HVAC.Components", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "ThermostatController.Schedule", "label": "ThermostatController.Schedule", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "TimeHoldController", "label": "TimeHoldController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "UIController", "label": "UIController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}},
+        {"id": "WakeOnLANController", "label": "WakeOnLANController", "group": "官方候选", "type": "待同步 schema", "directives": [], "status": "metadata_only", "supportedLocales": [], "utteranceTemplates": {}}
       ]
     },
     "google_home": {

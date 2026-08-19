@@ -965,7 +965,8 @@ export function runValidation() {
       }
     });
   });
-  if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
+  if (!draft.reporting.endpointHealth) errors.push("状态报告：EndpointHealth 是 Alexa 配置发布必需项。");
+  if (!draft.reporting.stateReport) warnings.push("状态报告：StateReport 未启用；具体 Capability 的可查询属性仍须满足 Provider 契约。");
   if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport。");
   state.editor.validation = { errors: [...new Set(errors)], warnings: [...new Set(warnings)], passed: errors.length === 0, checkedAt: "刚刚" };
   emit();
