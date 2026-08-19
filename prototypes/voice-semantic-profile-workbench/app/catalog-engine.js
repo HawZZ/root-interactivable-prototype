@@ -21,6 +21,40 @@ export function resolveProviderProjection(binding, provider, projectionRules, so
   return { status: rule.support, rule, rules: selected, outputs: rule.outputs };
 }
 
+export function providerCapabilityCandidatesForSource(source, provider, semanticCatalog, projectionRules, providerDefinitions, targetLocales = []) {
+  if (!source) return [];
+  const candidates = semanticCandidatesForSource(source, semanticCatalog).flatMap((semanticCandidate) => {
+    return projectionRules
+      .filter((rule) => rule.provider === provider && rule.semanticInputs.length === 1 && rule.semanticInputs[0].semanticId === semanticCandidate.semantic.id)
+      .filter((rule) => ruleMatchesSource(rule, source) && rule.outputs.length)
+      .map((rule) => {
+        const outputs = rule.outputs.map((output) => ({
+          ...output,
+          metadata: providerDefinitions.find((item) => item.id === output.capabilityId)
+        }));
+        const unavailableOutputs = outputs.filter((output) => output.metadata?.status !== "profile_ready");
+        const unsupportedLocales = targetLocales.filter((locale) => outputs.some((output) => !output.metadata?.supportedLocales?.includes(locale)));
+        const reasons = [];
+        if (rule.support !== "ready") reasons.push(`规则状态为 ${rule.support}`);
+        if (unavailableOutputs.length) reasons.push(`${unavailableOutputs.map((item) => item.capabilityId).join("、")} 尚未开放`);
+        if (unsupportedLocales.length) reasons.push(`不支持 Locale：${unsupportedLocales.join("、")}`);
+        return {
+          semantic: semanticCandidate.semantic,
+          slotId: semanticCandidate.slotId,
+          fit: semanticCandidate.fit,
+          score: semanticCandidate.score,
+          notes: semanticCandidate.notes,
+          rule,
+          outputs,
+          selectable: reasons.length === 0,
+          reasons
+        };
+      });
+  });
+  const fitOrder = { "可直接绑定": 0, "需转换": 1, "信息不足": 2 };
+  return candidates.sort((a, b) => Number(b.selectable) - Number(a.selectable) || fitOrder[a.fit] - fitOrder[b.fit] || b.score - a.score || a.rule.ruleId.localeCompare(b.rule.ruleId));
+}
+
 function candidateFit(source, semantic) {
   const slot = semantic.sourceSlots.find((item) => {
     if (!item.acceptedSourceKinds.includes(source.sourceKind || "property")) return false;

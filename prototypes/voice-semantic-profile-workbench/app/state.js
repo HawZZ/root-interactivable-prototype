@@ -1,4 +1,8 @@
-import { resolveProviderProjection as resolveProjection, semanticCandidatesForSource as getSemanticCandidates } from "./catalog-engine.js";
+import {
+  providerCapabilityCandidatesForSource as getProviderCapabilityCandidates,
+  resolveProviderProjection as resolveProjection,
+  semanticCandidatesForSource as getSemanticCandidates
+} from "./catalog-engine.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
@@ -9,6 +13,18 @@ export const semanticProfileContract = {
   phase: 1,
   activeProviders: ["alexa"],
   futureProviders: ["google_home"]
+};
+
+export const voiceLabelSetContract = {
+  name: "VoiceLabelSet",
+  provider: "alexa",
+  fields: ["scope", "locales.*.primary", "locales.*.aliases"]
+};
+
+export const providerCapabilityMappingContract = {
+  name: "ProviderCapabilityMapping",
+  provider: "alexa",
+  fields: ["mappingId", "sourceRef", "semanticRef", "ruleRef", "outputs", "voiceLabelSetRefs"]
 };
 
 export const localePolicy = {
@@ -90,7 +106,7 @@ async function loadCatalog(relativePath) {
 
 const [semanticCatalogDocument, providerCatalogDocument, projectionCatalogDocument] = await Promise.all([
   loadCatalog("../catalogs/semantic-capabilities.v1.json"),
-  loadCatalog("../catalogs/provider-metadata.v1.json"),
+  loadCatalog("../catalogs/provider-metadata.v2.json"),
   loadCatalog("../catalogs/projection-rules.v1.json")
 ]);
 
@@ -105,6 +121,9 @@ export const capabilityCatalog = providerCatalogDocument.providers.alexa.definit
 export const providerMetadataCatalog = providerCatalogDocument.providers;
 export const projectionRuleCatalog = projectionCatalogDocument.rules;
 
+export const alexaProfileLocales = [...new Set(capabilityCatalog.flatMap((item) => item.supportedLocales || []))]
+  .map((locale) => skillLocales.find(([id]) => id === locale) || [locale, locale]);
+
 export const modelPropertyCatalog = [
   { id: "power", label: "电源开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
   { id: "brightness", label: "夜灯亮度", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
@@ -113,6 +132,7 @@ export const modelPropertyCatalog = [
   { id: "color_payload", label: "颜色与色温结构值", sourceKind: "property", type: "string", unit: "-", valueShape: "color_hsb_cct", readable: true, writable: true },
   { id: "device_label", label: "设备文本标签", sourceKind: "property", type: "string", unit: "-", valueShape: "plain_text", readable: true, writable: false },
   { id: "motion_mode", label: "运动模式", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
+  { id: "music_mode", label: "音乐模式", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "LULLABY", "WHITE_NOISE"] },
   { id: "work_mode", label: "工作模式（数值型枚举值）", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: [{ value: "0", label: "空闲" }, { value: "1", label: "满载" }, { value: "2", label: "半载" }, { value: "3", label: "低功率" }] },
   { id: "motion_level", label: "运动强度", sourceKind: "property", type: "int", unit: "level", min: 1, max: 5, readable: true, writable: true },
   { id: "child_lock", label: "童锁开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
@@ -130,11 +150,176 @@ export function resolveProviderProjection(binding, provider = "alexa") {
   return resolveProjection(binding, provider, projectionRuleCatalog, modelPropertyCatalog);
 }
 
+export function capabilityCandidatesForSource(source, targetLocales = [localePolicy.baseLocale], provider = "alexa") {
+  const definitions = providerMetadataCatalog[provider]?.definitions || [];
+  return getProviderCapabilityCandidates(source, provider, semanticCapabilityCatalog, projectionRuleCatalog, definitions, targetLocales);
+}
+
 export function enumEntries(property) {
   return (property?.enumValues || []).map((item) => typeof item === "object" ? { value: String(item.value), label: item.label || String(item.value) } : { value: String(item), label: String(item) });
 }
 
-const profiles = [
+function stableToken(value) {
+  const token = String(value || "binding").replace(/[^A-Za-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "");
+  return token || "binding";
+}
+
+export function stableInstanceFor(binding) {
+  return `Momcozy.${stableToken(binding.mappingId || binding.bindingId)}`.slice(0, 64);
+}
+
+export function stableProviderValueFor(binding, sourceValue) {
+  return `Momcozy.${stableToken(binding.mappingId || binding.bindingId)}.${stableToken(sourceValue)}`.slice(0, 64);
+}
+
+export function generatedResourceRefs(binding) {
+  const resolution = resolveProviderProjection(binding, "alexa");
+  const outputIds = resolution.outputs?.map((item) => item.capabilityId) || [];
+  const refs = [];
+  if (binding.voice?.control) refs.push(`${outputIds[0] || "Capability"}.${stableToken(binding.bindingId)}.name`);
+  Object.keys(binding.voice?.values || {}).forEach((value) => refs.push(`${outputIds[0] || "Capability"}.${stableToken(binding.bindingId)}.${stableToken(value)}`));
+  return refs;
+}
+
+function labelSetIssues(labelSet, locales, label) {
+  const issues = [];
+  locales.forEach((locale) => {
+    const entry = labelSet?.locales?.[locale];
+    if (!entry?.primary?.trim()) {
+      issues.push(`${label}缺少 ${locale} 主名称`);
+      return;
+    }
+    const names = [entry.primary, ...(entry.aliases || [])].map((item) => item.trim().toLowerCase()).filter(Boolean);
+    if (new Set(names).size !== names.length) issues.push(`${label}的 ${locale} 主名称与别名重复`);
+    if ((entry.aliases || []).filter((item) => item.trim()).length > 2) issues.push(`${label}的 ${locale} 最多配置两个别名`);
+  });
+  return issues;
+}
+
+export function selectedCapabilityCandidate(binding, profile) {
+  const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+  return capabilityCandidatesForSource(source, profile?.targetLocales || [localePolicy.baseLocale]).find((item) => `${item.rule.ruleId}@${item.rule.version}` === binding.ruleRef);
+}
+
+export function mappingIssues(binding, profile) {
+  const issues = [];
+  const locales = profile?.targetLocales || [localePolicy.baseLocale];
+  const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+  if (!source) return ["请选择物模型属性或命令"];
+  if (!binding.ruleRef) return ["请选择 Alexa Capability"];
+  const candidate = selectedCapabilityCandidate(binding, profile);
+  if (!candidate) return ["所选 Capability 与当前属性不再兼容"];
+  if (!candidate.selectable) issues.push(...candidate.reasons);
+  if (binding.voice?.control) issues.push(...labelSetIssues(binding.voice.control, locales, "控制名称"));
+  if (candidate.outputs.some((item) => item.capabilityId === "ModeController")) {
+    const values = enumEntries(source);
+    values.forEach((entry) => issues.push(...labelSetIssues(binding.voice?.values?.[entry.value], locales, `枚举值 ${entry.value}`)));
+  }
+  if (candidate.outputs.some((item) => item.capabilityId === "PlaybackController") && !["Play", "Pause"].every((operation) => source.operations?.includes(operation))) issues.push("播放控制命令至少需要 Play 和 Pause");
+  return issues;
+}
+
+export function localeCompletion(binding, profile) {
+  const locales = profile?.targetLocales || [localePolicy.baseLocale];
+  const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+  const candidate = selectedCapabilityCandidate(binding, profile);
+  if (!candidate) return { complete: 0, total: locales.length };
+  const sets = [];
+  if (binding.voice?.control) sets.push(binding.voice.control);
+  if (candidate.outputs.some((item) => item.capabilityId === "ModeController")) enumEntries(source).forEach((entry) => sets.push(binding.voice?.values?.[entry.value]));
+  if (!sets.length) return { complete: locales.length, total: locales.length };
+  return {
+    complete: locales.filter((locale) => sets.every((set) => set?.locales?.[locale]?.primary?.trim())).length,
+    total: locales.length
+  };
+}
+
+export function utteranceExamplesForBinding(binding, profile) {
+  if (mappingIssues(binding, profile).length) return [];
+  const candidate = selectedCapabilityCandidate(binding, profile);
+  const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+  const controlName = binding.voice?.control?.locales?.[localePolicy.baseLocale]?.primary?.trim() || "";
+  const firstValue = enumEntries(source)[0]?.value;
+  const valueName = binding.voice?.values?.[firstValue]?.locales?.[localePolicy.baseLocale]?.primary?.trim() || "";
+  const sampleValue = Number.isFinite(source?.min) && Number.isFinite(source?.max) ? String(Math.round((source.min + source.max) / 2)) : "50";
+  const examples = candidate.outputs.flatMap((output) => output.metadata?.utteranceTemplates?.[localePolicy.baseLocale] || []).map((template) => template
+    .replaceAll("{control name}", controlName)
+    .replaceAll("{value name}", valueName)
+    .replaceAll("{sample value}", sampleValue));
+  return [...new Set(examples)].slice(0, 3);
+}
+
+const defaultVoiceNames = {
+  motion_mode: { control: { "en-US": "motion mode", "de-DE": "Bewegungsmodus" }, values: { SLEEP: { "en-US": "sleep", "de-DE": "Schlaf" }, SOFT_ROCKING: { "en-US": "soft rocking", "de-DE": "sanftes Wiegen" }, PLAY: { "en-US": "play", "de-DE": "Wiedergabe" } } },
+  music_mode: { control: { "en-US": "music mode", "de-DE": "Musikmodus" }, values: { SLEEP: { "en-US": "sleep", "de-DE": "Schlaf" }, LULLABY: { "en-US": "lullaby", "de-DE": "Schlaflied" }, WHITE_NOISE: { "en-US": "white noise", "de-DE": "weisses Rauschen" } } },
+  work_mode: { control: { "en-US": "work mode", "de-DE": "Betriebsmodus" }, values: { 0: { "en-US": "idle", "de-DE": "Leerlauf" }, 1: { "en-US": "full load", "de-DE": "Volllast" }, 2: { "en-US": "half load", "de-DE": "halbe Last" }, 3: { "en-US": "low power", "de-DE": "Energiesparen" } } },
+  motion_level: { control: { "en-US": "motion intensity", "de-DE": "Bewegungsintensitaet" } },
+  child_lock: { control: { "en-US": "child lock", "de-DE": "Kindersicherung" } }
+};
+
+function createLabelSet(bindingId, scope, locales, values = {}) {
+  return {
+    id: `alexa.${stableToken(bindingId)}.${scope}`,
+    provider: "alexa",
+    scope,
+    locales: Object.fromEntries(locales.map((locale) => [locale, { primary: values[locale] || "", aliases: [] }]))
+  };
+}
+
+function candidateNeedsControlName(candidate) {
+  return candidate?.outputs.some((output) => (output.metadata?.utteranceTemplates?.[localePolicy.baseLocale] || []).some((template) => template.includes("{control name}")));
+}
+
+function initializeVoice(binding, candidate, source, locales, seedDefaults = false) {
+  const defaults = seedDefaults ? defaultVoiceNames[source?.id] || {} : {};
+  const voice = { values: {} };
+  if (candidateNeedsControlName(candidate)) voice.control = createLabelSet(binding.bindingId, "capability", locales, defaults.control || {});
+  if (candidate?.outputs.some((output) => output.capabilityId === "ModeController")) {
+    enumEntries(source).forEach((entry) => {
+      voice.values[entry.value] = createLabelSet(binding.bindingId, `mode.${stableToken(entry.value)}`, locales, defaults.values?.[entry.value] || {});
+    });
+  }
+  return voice;
+}
+
+function normalizeBinding(binding, locales, seedDefaults = true) {
+  const normalized = clone(binding);
+  normalized.mappingId ||= normalized.bindingId;
+  normalized.sourceRef = normalized.property || "";
+  normalized.semanticRef = normalized.semantic || "";
+  normalized.provider = "alexa";
+  const source = modelPropertyCatalog.find((item) => item.id === normalized.property);
+  const resolution = resolveProviderProjection(normalized, "alexa");
+  if (!normalized.ruleRef && resolution.rule) normalized.ruleRef = `${resolution.rule.ruleId}@${resolution.rule.version}`;
+  const candidate = capabilityCandidatesForSource(source, locales).find((item) => `${item.rule.ruleId}@${item.rule.version}` === normalized.ruleRef);
+  normalized.voice ||= initializeVoice(normalized, candidate, source, locales, seedDefaults);
+  normalized.providerOverrides ||= { alexa: {} };
+  candidate?.outputs.forEach((output) => {
+    normalized.providerOverrides.alexa ||= {};
+    normalized.providerOverrides.alexa[output.capabilityId] ||= {};
+    const support = output.metadata?.instanceSupport || "none";
+    if (support !== "none") normalized.providerOverrides.alexa[output.capabilityId].instance = stableInstanceFor(normalized);
+    if (output.capabilityId === "ModeController") {
+      normalized.providerOverrides.alexa[output.capabilityId].modeMappings = enumEntries(source).map((entry) => ({
+        modelValue: entry.value,
+        alexaValue: stableProviderValueFor(normalized, entry.value)
+      }));
+    }
+    if (output.capabilityId === "PlaybackController") normalized.providerOverrides.alexa[output.capabilityId].supportedOperations = "Play, Pause";
+  });
+  return normalized;
+}
+
+function normalizeProfile(profile) {
+  const normalized = clone(profile);
+  normalized.targetLocales ||= normalized.category === "Smart Crib" ? ["en-US", "de-DE"] : ["en-US"];
+  normalized.catalogVersions.provider = catalogVersions.provider;
+  normalized.providerProjections.alexa.providerMetadataVersion = catalogVersions.provider;
+  normalized.capabilities = normalized.capabilities.map((binding) => normalizeBinding(binding, normalized.targetLocales));
+  return normalized;
+}
+
+const profileFixtures = [
   {
     id: "bedside-light-v2",
     productId: "momcozy.bedside_light",
@@ -174,6 +359,7 @@ const profiles = [
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
       { bindingId: "crib-mode", semantic: "device.mode", semanticSlot: "value", property: "motion_mode", providerOverrides: { alexa: { ModeController: { instance: "Crib.MotionMode", modeMappings: [{ modelValue: "SLEEP", alexaValue: "SLEEP" }, { modelValue: "SOFT_ROCKING", alexaValue: "SOFT_ROCKING" }, { modelValue: "PLAY", alexaValue: "PLAY" }] } } } },
+      { bindingId: "crib-music-mode", semantic: "device.mode", semanticSlot: "value", property: "music_mode", providerOverrides: { alexa: { ModeController: {} } } },
       { bindingId: "crib-level", semantic: "device.level", semanticSlot: "value", property: "motion_level", providerOverrides: { alexa: { RangeController: { instance: "Crib.MotionIntensity", range: "1-5" } } } },
       { bindingId: "crib-lock", semantic: "device.toggle", semanticSlot: "value", property: "child_lock", providerOverrides: { alexa: { ToggleController: { instance: "Crib.ChildLock" } } } }
     ]
@@ -202,6 +388,8 @@ const profiles = [
     ]
   }
 ];
+
+const profiles = profileFixtures.map(normalizeProfile);
 
 export const dashboard = {
   regions: ["测试数据", "北美", "亚太", "欧洲", "中国"],
@@ -249,7 +437,7 @@ export const state = {
   profiles: clone(profiles),
   filters: { keyword: "", status: "all" },
   resourceFilters: { capability: "all", scope: "all", keyword: "" },
-  editor: { open: false, section: "basic", sourceId: "", draft: null, productAlexaSupported: false, validation: null, isSaving: false },
+  editor: { open: false, section: "basic", sourceId: "", draft: null, productAlexaSupported: false, validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} },
   resourceEditor: { open: false, sourceKey: "", draft: null, validation: null },
   modal: { type: "", profileId: "", productId: "", draft: null },
   toast: null,
@@ -386,7 +574,7 @@ export function setFilter(key, value) {
 export function openEditor(id = "", section = "basic") {
   const source = id ? getProfile(id) : createEmptyProfile();
   const product = productData.find((item) => item.id === source.productId);
-  state.editor = { open: true, section, sourceId: id, draft: clone(source), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false };
+  state.editor = { open: true, section, sourceId: id, draft: normalizeProfile(source), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} };
   emit();
 }
 
@@ -401,7 +589,7 @@ export function openProductProfile(productId) {
     draft.category = product.category;
     draft.displayCategory = product.category === "Night Light" ? "LIGHT" : product.category === "Sound Device" ? "SPEAKER" : "OTHER";
   }
-  state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft, productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false };
+  state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft: normalizeProfile(draft), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} };
   emit();
   return true;
 }
@@ -430,6 +618,99 @@ export function updateCapability(index, key, value) {
   if (capability) capability[key] = value;
 }
 
+export function setExpandedMapping(index) {
+  state.editor.expandedMapping = state.editor.expandedMapping === index ? -1 : index;
+  emit();
+}
+
+export function toggleTechnicalDetails(index) {
+  state.editor.technicalDetails[index] = !state.editor.technicalDetails[index];
+  emit();
+}
+
+export function setProfileLocale(locale, enabled) {
+  const draft = state.editor.draft;
+  if (!draft || (locale === localePolicy.baseLocale && !enabled)) return false;
+  const next = new Set(draft.targetLocales || [localePolicy.baseLocale]);
+  if (enabled) next.add(locale);
+  else next.delete(locale);
+  draft.targetLocales = alexaProfileLocales.map(([id]) => id).filter((id) => next.has(id));
+  draft.capabilities.forEach((binding) => {
+    const sets = [binding.voice?.control, ...Object.values(binding.voice?.values || {})].filter(Boolean);
+    sets.forEach((set) => { if (enabled && !set.locales[locale]) set.locales[locale] = { primary: "", aliases: [] }; });
+  });
+  state.editor.validation = null;
+  emit();
+  return true;
+}
+
+function applyMappingChange(index, field, value) {
+  const binding = state.editor.draft.capabilities[index];
+  if (!binding) return;
+  if (field === "property") {
+    binding.property = value;
+    binding.sourceRef = value;
+    binding.semantic = "";
+    binding.semanticRef = "";
+    binding.semanticSlot = "";
+    binding.ruleRef = "";
+    binding.voice = { values: {} };
+    binding.providerOverrides = { alexa: {} };
+  } else if (field === "ruleRef") {
+    const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+    const candidate = capabilityCandidatesForSource(source, state.editor.draft.targetLocales).find((item) => `${item.rule.ruleId}@${item.rule.version}` === value);
+    binding.ruleRef = value;
+    binding.semantic = candidate?.semantic.id || "";
+    binding.semanticRef = binding.semantic;
+    binding.semanticSlot = candidate?.slotId || "";
+    binding.providerOverrides = { alexa: {} };
+    binding.voice = initializeVoice(binding, candidate, source, state.editor.draft.targetLocales, false);
+    candidate?.outputs.forEach((output) => {
+      const override = {};
+      if (output.metadata?.instanceSupport !== "none") override.instance = stableInstanceFor(binding);
+      if (output.capabilityId === "ModeController") override.modeMappings = enumEntries(source).map((entry) => ({ modelValue: entry.value, alexaValue: stableProviderValueFor(binding, entry.value) }));
+      if (output.capabilityId === "PlaybackController") override.supportedOperations = "Play, Pause";
+      binding.providerOverrides.alexa[output.capabilityId] = override;
+    });
+  }
+  state.editor.validation = null;
+}
+
+export function requestMappingChange(index, field, value) {
+  const binding = state.editor.draft.capabilities[index];
+  if (!binding || binding[field] === value) return;
+  const hasDependentConfig = Boolean(binding.ruleRef || binding.voice?.control || Object.keys(binding.voice?.values || {}).length);
+  if (hasDependentConfig) {
+    state.modal = { type: "reset-mapping", index, field, value };
+    emit();
+    return;
+  }
+  applyMappingChange(index, field, value);
+  emit();
+}
+
+export function confirmMappingChange() {
+  if (state.modal.type !== "reset-mapping") return;
+  const { index, field, value } = state.modal;
+  applyMappingChange(index, field, value);
+  state.modal = { type: "", profileId: "", productId: "", draft: null };
+  emit();
+}
+
+export function updateVoiceLabel(index, scope, sourceValue, locale, field, aliasIndex, value) {
+  const binding = state.editor.draft.capabilities[index];
+  if (!binding) return;
+  const set = scope === "control" ? binding.voice?.control : binding.voice?.values?.[sourceValue];
+  if (!set) return;
+  set.locales[locale] ||= { primary: "", aliases: [] };
+  if (field === "primary") set.locales[locale].primary = value;
+  else {
+    const aliases = set.locales[locale].aliases ||= [];
+    aliases[Number(aliasIndex)] = value;
+  }
+  state.editor.validation = null;
+}
+
 export function updateProjectionOverride(index, provider, capabilityId, key, value) {
   const binding = state.editor.draft.capabilities[index];
   if (!binding) return;
@@ -440,17 +721,20 @@ export function updateProjectionOverride(index, provider, capabilityId, key, val
 }
 
 export function addCapability() {
-  state.editor.draft.capabilities.push({ bindingId: `binding-${Date.now()}`, semantic: "", semanticSlot: "", property: "", providerOverrides: { alexa: {} } });
+  const mappingId = `binding-${Date.now()}`;
+  state.editor.draft.capabilities.push({ bindingId: mappingId, mappingId, sourceRef: "", semanticRef: "", provider: "alexa", semantic: "", semanticSlot: "", property: "", ruleRef: "", voice: { values: {} }, providerOverrides: { alexa: {} } });
+  state.editor.expandedMapping = state.editor.draft.capabilities.length - 1;
   state.editor.section = "mapping";
   emit();
 }
 
 export function removeCapability(index) {
   state.editor.draft.capabilities.splice(index, 1);
+  state.editor.expandedMapping = Math.min(state.editor.expandedMapping, state.editor.draft.capabilities.length - 1);
   emit();
 }
 
-export function runValidation() {
+function runLegacyValidation() {
   const draft = state.editor.draft;
   const errors = [];
   const warnings = [];
@@ -569,6 +853,58 @@ export function runValidation() {
   return state.editor.validation;
 }
 
+export function runValidation() {
+  const draft = state.editor.draft;
+  const errors = [];
+  const warnings = [];
+  const sourceOwners = new Map();
+  const instanceOwners = new Map();
+  if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
+  if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
+  if (!endpointDisplayCategoryCatalog.some((item) => item.id === draft.displayCategory && item.status === "profile_ready")) errors.push("基础信息：请选择平台已启用的 Alexa Endpoint 显示分类。");
+  if (!(draft.targetLocales || []).includes(localePolicy.baseLocale)) errors.push("基础信息：Alexa 目标 Locale 必须包含 en-US。");
+  if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
+  if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个 Alexa Capability。");
+
+  draft.capabilities.forEach((binding, index) => {
+    const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+    if (!binding.bindingId) errors.push(`能力与映射：第 ${index + 1} 条映射缺少稳定 mappingId。`);
+    if (source) {
+      if (sourceOwners.has(source.id)) errors.push(`能力与映射：${source.id} 已被第 ${sourceOwners.get(source.id)} 条映射使用。`);
+      else sourceOwners.set(source.id, index + 1);
+    }
+    mappingIssues(binding, draft).forEach((issue) => errors.push(`能力与映射：第 ${index + 1} 条 ${issue}。`));
+    const candidate = selectedCapabilityCandidate(binding, draft);
+    if (!candidate) return;
+    if (candidate.fit === "信息不足") errors.push(`能力与映射：${source.id} 的候选信息不足（${candidate.notes.join("、")}）。`);
+    else if (candidate.fit === "需转换") warnings.push(`能力与映射：${source.id} 需要平台归一化（${candidate.notes.join("、")}）。`);
+    if (binding.semantic !== candidate.semantic.id || binding.semanticSlot !== candidate.slotId) errors.push(`技术契约：${binding.bindingId} 的内部语义引用与所选 Capability 规则不一致。`);
+    candidate.outputs.forEach((output) => {
+      if (output.metadata?.instanceSupport !== "none") {
+        const instance = binding.providerOverrides?.alexa?.[output.capabilityId]?.instance;
+        const expected = stableInstanceFor(binding);
+        if (instance !== expected) errors.push(`技术契约：${output.capabilityId} 的稳定 instance 已失效。`);
+        else if (instanceOwners.has(instance)) errors.push(`技术契约：instance ${instance} 与 ${instanceOwners.get(instance)} 重复。`);
+        else instanceOwners.set(instance, binding.bindingId);
+      }
+      if (output.capabilityId === "ModeController") {
+        const mappings = binding.providerOverrides?.alexa?.ModeController?.modeMappings || [];
+        const entries = enumEntries(source);
+        if (mappings.length !== entries.length) errors.push(`技术契约：${source.id} 的稳定 Alexa Value 未覆盖全部枚举值。`);
+        entries.forEach((entry) => {
+          const expected = stableProviderValueFor(binding, entry.value);
+          if (!mappings.some((item) => item.modelValue === entry.value && item.alexaValue === expected)) errors.push(`技术契约：${source.id}.${entry.value} 的 Alexa Value 已失效。`);
+        });
+      }
+    });
+  });
+  if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
+  if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport。");
+  state.editor.validation = { errors: [...new Set(errors)], warnings: [...new Set(warnings)], passed: errors.length === 0, checkedAt: "刚刚" };
+  emit();
+  return state.editor.validation;
+}
+
 export function saveDraft() {
   const draft = clone(state.editor.draft);
   const product = productData.find((item) => item.id === draft.productId);
@@ -661,6 +997,7 @@ export function setMobileView(view) {
 }
 
 function createEmptyProfile() {
+  const mappingId = `binding-${Date.now()}`;
   return {
     id: `new-profile-${Date.now()}`,
     name: "",
@@ -675,7 +1012,8 @@ function createEmptyProfile() {
     status: "draft",
     updatedAt: "未保存",
     updatedBy: "林宇",
+    targetLocales: [localePolicy.baseLocale],
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
-    capabilities: [{ bindingId: `binding-${Date.now()}`, semantic: "device.power", semanticSlot: "value", property: "power", providerOverrides: { alexa: { PowerController: { instance: "" } } } }]
+    capabilities: [{ bindingId: mappingId, mappingId, sourceRef: "", semanticRef: "", provider: "alexa", semantic: "", semanticSlot: "", property: "", ruleRef: "", voice: { values: {} }, providerOverrides: { alexa: {} } }]
   };
 }
