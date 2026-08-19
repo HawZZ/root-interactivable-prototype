@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Semantic Profile V2 | Momcozy IoT Admin</title>
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+  </head>
+  <body>
+    <main class="prototype-shell">
+      <section class="product-pane" aria-label="IoT Admin 产品界面">
+        <div class="product-canvas">
+          <header class="topbar">
+            <div class="brand">Momcozy <span>IoT Admin</span></div>
+            <nav class="global-nav" aria-label="主导航">
+              <button class="global-nav__item">工作台</button>
+              <button class="global-nav__item is-active">智能产品</button>
+              <button class="global-nav__item">设备管理</button>
+              <button class="global-nav__item">配置中心</button>
+            </nav>
+            <div class="topbar-user">Haw <span class="user-avatar">H</span></div>
+          </header>
+          <div class="workspace">
+            <aside class="side-nav" aria-label="配置导航">
+              <p class="side-nav__group">设备助手 V2</p>
+              <button class="side-nav__item is-active" data-page="profiles">语义 Profile</button>
+              <button class="side-nav__item" data-page="catalog">能力 Catalog</button>
+              <button class="side-nav__item" data-page="migration">V1 迁移校验</button>
+              <div class="side-nav__rule"></div>
+              <p class="side-nav__group">当前发布版本</p>
+              <button class="side-nav__item is-muted" data-action="show-v1-baseline">Alexa V1 基线</button>
+            </aside>
+            <section class="content-area">
+              <div id="breadcrumbs"></div>
+              <div id="page-root"></div>
+            </section>
+          </div>
+        </div>
+        <div id="drawer-root"></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      </section>
+      <aside class="annotation-pane" aria-label="原型批注">
+        <header class="annotation-header">
+          <div>
+            <p>Prototype specification</p>
+            <h1>原型批注</h1>
+          </div>
+          <span class="annotation-badge">V2</span>
+        </header>
+        <div id="annotation-root" class="annotation-body"></div>
+      </aside>
+    </main>
+    <script type="module" src="app/index.js"></script>
+  </body>
+</html>

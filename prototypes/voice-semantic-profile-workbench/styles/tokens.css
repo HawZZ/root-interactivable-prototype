@@ -1,0 +1,117 @@
+/*
+  IoT Admin Design Tokens — single source of truth for the prototype component library.
+  Source: wiki/luteos-iot-admin-full-view/iot-admin-UI设计规范.md (sampled 2026-05-13
+  from https://iot-admin-dev.luteos.com/home) and the annotation-optimized reference
+  prototype. Element Plus baseline.
+
+  Usage in a prototype: <link rel="stylesheet" href="library/tokens.css"> then reuse
+  the class names/structure from library/<component>.html. Do not re-derive colors or
+  spacing inline; reference these tokens so every prototype stays consistent.
+*/
+:root {
+  color-scheme: light;
+
+  /* Brand primary */
+  --el-color-primary: #4372ff;
+  --el-color-primary-dark-2: #2b6bd9;
+  --el-color-primary-light-3: #a3c5ff;
+  --el-color-primary-light-7: #e0ecff;
+  --el-color-primary-light-9: #ecf5ff;
+
+  /* Functional / semantic */
+  --el-color-success: #67c23a;
+  --el-color-warning: #e6a23c;
+  --el-color-danger: #f56c6c;
+  --el-color-error: #f56c6c;
+  --el-color-info: #909399;
+
+  /* Neutrals */
+  --app-aside-bg-color: #001529;   /* dark left nav */
+  --app-aside-bg-active: #0b2a4a;
+  --app-bg-color: #f9f9f9;        /* page background */
+  --el-bg-color: #ffffff;         /* table / card / drawer / form container */
+  --table-head-bg: #fafafa;       /* table header background */
+
+  --el-text-color-primary: #303133;   /* titles, important body */
+  --el-text-color-regular: #606266;    /* body, table cells */
+  --el-text-color-secondary: #909399; /* table head, helper text */
+  --el-text-color-placeholder: #a8abb2;
+
+  --el-border-color: #dcdfe6;          /* inputs, buttons, base border */
+  --el-border-color-light: #e4e7ed;    /* cards, table dividers */
+  --el-border-color-lighter: #ebeef5;  /* table row dividers */
+
+  /* Spacing scale */
+  --gap-8: 8px;    /* table cells, tight elements */
+  --gap-12: 12px;  /* button groups, form internal */
+  --gap-16: 16px;  /* drawer footer, local regions */
+  --gap-24: 24px;  /* page regions, content top */
+
+  /* Layout */
+  --app-aside-width: 208px;
+  --app-aside-collapse-width: 64px;
+  --header-height: 54px;
+  --el-menu-item-height: 56px;
+  --el-menu-sub-item-height: 50px;
+  --el-component-size: 32px;       /* default control height */
+  --el-component-size-large: 40px;
+  --el-component-size-small: 24px;
+  --radius: 4px;
+
+  /* Typography */
+  --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, "Inter", sans-serif;
+
+  /* Prototype-only: annotation anchors (not a platform token) */
+  --anchor-bg: #facc15;
+  --anchor-color: #713f12;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--app-bg-color);
+  color: var(--el-text-color-primary);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+a { color: var(--el-color-primary); text-decoration: none; }
+a:hover { color: var(--el-color-primary-dark-2); }
+
+/* Shared element styles reused across components — keep in sync with library/*.html */
+.el-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: var(--el-component-size); padding: 0 var(--gap-12);
+  border: 1px solid var(--el-border-color); border-radius: var(--radius);
+  background: var(--el-bg-color); color: var(--el-text-color-regular);
+  font-size: 14px; line-height: 1; white-space: nowrap;
+}
+.el-btn:hover { color: var(--el-color-primary); border-color: var(--el-color-primary-light-3); background: var(--el-color-primary-light-9); }
+.el-btn--primary { background: var(--el-color-primary); border-color: var(--el-color-primary); color: #fff; }
+.el-btn--primary:hover { background: var(--el-color-primary-dark-2); border-color: var(--el-color-primary-dark-2); color: #fff; }
+.el-btn--primary:disabled, .el-btn--primary.is-disabled { background: #a3c5ff; border-color: #a3c5ff; cursor: not-allowed; opacity: .8; }
+.el-btn--danger { background: var(--el-color-danger); border-color: var(--el-color-danger); color: #fff; }
+.el-btn--danger:hover { filter: brightness(.92); }
+.el-btn--small { height: var(--el-component-size-small); padding: 0 8px; font-size: 12px; }
+.el-btn--large { height: var(--el-component-size-large); padding: 0 var(--gap-16); }
+
+.el-input, .el-select {
+  height: var(--el-component-size); width: 100%;
+  border: 1px solid var(--el-border-color); border-radius: var(--radius);
+  padding: 0 var(--gap-12); background: var(--el-bg-color); color: var(--el-text-color-primary);
+}
+.el-input::placeholder { color: var(--el-text-color-placeholder); }
+.el-input:focus { outline: none; border-color: var(--el-color-primary); box-shadow: 0 0 0 2px var(--el-color-primary-light-7); }
+
+/* Text-link operation buttons used in table operation columns */
+.op-link { background: none; border: 0; color: var(--el-color-primary); padding: 0; font-size: 14px; }
+.op-link:hover { color: var(--el-color-primary-dark-2); }
+.op-link.is-disabled { color: var(--el-text-color-placeholder); cursor: not-allowed; }
+.op-link.danger { color: var(--el-color-danger); }
+.op-divider { color: var(--el-border-color-light); padding: 0 6px; }
