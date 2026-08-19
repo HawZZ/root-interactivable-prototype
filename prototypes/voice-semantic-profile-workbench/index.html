@@ -3,54 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Voice Semantic Profile V2 | Momcozy IoT Admin</title>
+    <title>设备助手语义配置 V2 | Momcozy IoT Admin</title>
     <link rel="stylesheet" href="styles/tokens.css" />
     <link rel="stylesheet" href="styles/app.css" />
   </head>
   <body>
-    <main class="prototype-shell">
-      <section class="product-pane" aria-label="IoT Admin 产品界面">
-        <div class="product-canvas">
-          <header class="topbar">
-            <div class="brand">Momcozy <span>IoT Admin</span></div>
-            <nav class="global-nav" aria-label="主导航">
-              <button class="global-nav__item">工作台</button>
-              <button class="global-nav__item is-active">智能产品</button>
-              <button class="global-nav__item">设备管理</button>
-              <button class="global-nav__item">配置中心</button>
+    <div class="prototype-shell" data-mobile-view="product">
+      <div class="mobile-view-switcher" role="tablist" aria-label="原型视图切换">
+        <button class="mobile-view-tab is-active" data-mobile-view-target="product" role="tab" aria-selected="true">产品界面</button>
+        <button class="mobile-view-tab" data-mobile-view-target="notes" role="tab" aria-selected="false">原型批注</button>
+      </div>
+
+      <main class="product-pane" id="productPane" aria-label="Momcozy IoT Admin 产品界面">
+        <div class="admin-app" id="adminApp">
+          <aside class="side-nav">
+            <div class="brand-lockup">
+              <div class="brand-mark">M</div>
+              <div>
+                <div class="brand-name">momcozy</div>
+                <div class="brand-subtitle">AIoT Platform</div>
+              </div>
+            </div>
+            <div class="tenant-switcher">
+              <span class="tenant-dot"></span>
+              <span class="tenant-name">Momcozy Global</span>
+              <span class="tenant-caret">v</span>
+            </div>
+            <nav class="primary-nav" aria-label="主导航">
+              <button class="nav-item is-active" data-action="nav" data-page="products"><span class="nav-glyph">#</span><span>智能产品</span></button>
+              <button class="nav-item" data-action="nav" data-page="resource-library"><span class="nav-glyph">文</span><span>多语言</span></button>
             </nav>
-            <div class="topbar-user">Haw <span class="user-avatar">H</span></div>
-          </header>
-          <div class="workspace">
-            <aside class="side-nav" aria-label="配置导航">
-              <p class="side-nav__group">设备助手 V2</p>
-              <button class="side-nav__item is-active" data-page="profiles">语义 Profile</button>
-              <button class="side-nav__item" data-page="catalog">能力 Catalog</button>
-              <button class="side-nav__item" data-page="migration">V1 迁移校验</button>
-              <div class="side-nav__rule"></div>
-              <p class="side-nav__group">当前发布版本</p>
-              <button class="side-nav__item is-muted" data-action="show-v1-baseline">Alexa V1 基线</button>
-            </aside>
-            <section class="content-area">
-              <div id="breadcrumbs"></div>
-              <div id="page-root"></div>
-            </section>
-          </div>
+            <div class="side-nav-footer">
+              <div class="status-line"><span class="status-dot status-dot--success"></span><span>一期 Alexa</span><span class="version-text">V2</span></div>
+              <button class="nav-item nav-item--footer"><span class="nav-glyph">?</span><span>帮助与文档</span></button>
+            </div>
+          </aside>
+
+          <section class="workspace">
+            <header class="topbar">
+              <div class="breadcrumb" id="breadcrumb"><span>配置中心</span><span class="breadcrumb-slash">/</span><strong>Alexa Product Profile</strong></div>
+              <div class="topbar-actions">
+                <span class="environment-chip"><span class="environment-dot"></span>需求原型</span>
+                <button class="icon-button" title="通知" aria-label="通知"><span class="bell-icon">!</span><span class="notification-badge">3</span></button>
+                <div class="user-menu"><span class="avatar">LY</span><span>林宇</span><span class="caret">v</span></div>
+              </div>
+            </header>
+            <div class="page-area">
+              <div class="page-header" id="pageHeader"></div>
+              <div id="pageRoot"></div>
+            </div>
+          </section>
         </div>
-        <div id="drawer-root"></div>
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
-      </section>
-      <aside class="annotation-pane" aria-label="原型批注">
-        <header class="annotation-header">
+        <div id="drawerMount"></div>
+      </main>
+
+      <aside class="annotation-panel" id="annotationPanel" aria-label="原型批注">
+        <div class="annotation-header">
           <div>
-            <p>Prototype specification</p>
-            <h1>原型批注</h1>
+            <div class="annotation-kicker">ANNOTATED PROTOTYPE</div>
+            <h2>原型批注</h2>
           </div>
-          <span class="annotation-badge">V2</span>
-        </header>
-        <div id="annotation-root" class="annotation-body"></div>
+          <span class="annotation-count" id="annotationCount">0</span>
+        </div>
+        <div class="annotation-context" id="annotationContext">Profiles / Alexa Product Profile</div>
+        <div class="annotation-summary" id="annotationSummary"></div>
+        <div class="annotation-list" id="annotationList"></div>
+        <div class="annotation-footer">
+          <span class="footer-key">交互范围</span>
+          <span>智能产品 / 高级配置 / Alexa 配置（V2 一期）</span>
+        </div>
       </aside>
-    </main>
-    <script type="module" src="app/index.js"></script>
+    </div>
+
+    <div id="modalMount"></div>
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+    <script type="module" src="app/index.js?v=20260819v2"></script>
   </body>
 </html>
