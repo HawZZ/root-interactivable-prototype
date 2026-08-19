@@ -1,3 +1,5 @@
+import { resolveProviderProjection as resolveProjection, semanticCandidatesForSource as getSemanticCandidates } from "./catalog-engine.js";
+
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
 
@@ -75,65 +77,58 @@ export const statusMeta = {
   rolledback: { label: "已回滚", type: "info" }
 };
 
-const profileReadyCapabilities = [
-  { id: "PowerController", group: "基础控制", type: "Boolean", support: "标准映射", hint: "开关状态，直接映射 Boolean 属性", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", propertyIds: ["power"] },
-  { id: "BrightnessController", group: "灯光", type: "Integer 0-100", support: "标准映射", hint: "亮度 0-100，支持设置和增减亮度", directives: ["SetBrightness", "AdjustBrightness"], status: "profile_ready", template: "direct_property", propertyIds: ["brightness"] },
-  { id: "ColorController", group: "灯光", type: "Color HSB Object", support: "结构化映射", hint: "彩灯颜色，保持当前亮度", directives: ["SetColor"], status: "profile_ready", template: "structured_hsb", propertyIds: ["color_hsb"] },
-  { id: "ModeController", group: "通用控制", type: "Enum", support: "Instance 必填", hint: "仅用于可写、可查询的离散模式；Catalog 要求声明 instance，并逐项映射物模型枚举值", directives: ["SetMode", "AdjustMode"], status: "profile_ready", template: "direct_property", instanceSupport: "required", resourceScopes: ["capability", "mode"], propertyKinds: ["enum"], requiresWritable: true },
-  { id: "RangeController", group: "通用控制", type: "Integer / Enum", support: "Instance 可选", hint: "适用于等级、强度等通用范围；多个同类语义对象时填写 instance", directives: ["SetRangeValue", "AdjustRangeValue"], status: "profile_ready", template: "direct_property", instanceSupport: "optional", resourceScopes: ["capability"], propertyIds: ["motion_level"] },
-  { id: "ToggleController", group: "通用控制", type: "Boolean", support: "Instance 可选", hint: "单设备内独立开关能力；多个同类开关语义时填写 instance", directives: ["TurnOn", "TurnOff"], status: "profile_ready", template: "direct_property", instanceSupport: "optional", resourceScopes: ["capability"], propertyTypes: ["Boolean"] },
-  { id: "Speaker", group: "音频", type: "Integer 0-100", support: "标准音量", hint: "连续音量 0-100", directives: ["SetVolume", "AdjustVolume"], status: "profile_ready", template: "speaker_volume", propertyIds: ["volume_0_100"] },
-  { id: "PlaybackController", group: "音频", type: "Command", support: "操作映射", hint: "按已声明操作控制播放", directives: ["Play", "Pause", "Stop"], status: "profile_ready", template: "playback_operations", propertyIds: ["playback_command"] },
-  { id: "PlaybackStateReporter", group: "音频状态", type: "Enum", support: "状态映射", hint: "上报 PLAYING / PAUSED / STOPPED", directives: [], status: "profile_ready", template: "playback_state", propertyIds: ["playback_state"] },
-  { id: "EndpointHealth", group: "状态", type: "Connectivity", support: "必选", hint: "设备在线状态上报", directives: [], status: "profile_ready", template: "endpoint_health", propertyIds: ["device_online"] }
-];
+async function loadCatalog(relativePath) {
+  const url = new URL(relativePath, import.meta.url);
+  if (url.protocol === "file:") {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(url, "utf8"));
+  }
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Catalog 加载失败：${relativePath} (${response.status})`);
+  return response.json();
+}
 
-const officialMetadataOnlyCapabilities = [
-  "AutomationManagement", "CameraStreamController", "ChannelController", "ColorTemperatureController", "Commissionable", "ContactSensor", "Cooking", "DataController", "DeviceUsage", "DoorbellEventSource", "EqualizerController", "HumiditySensor", "InputController", "InventoryLevelSensor", "InventoryLevelUsageSensor", "InventoryUsageSensor", "KeypadController", "Launcher", "LockController", "MotionSensor", "PercentageController", "PowerLevelController", "ProactiveNotificationSource", "RecordController", "RemoteVideoPlayer", "RTCSessionController", "SceneController", "SecurityPanelController", "SeekController", "SimpleEventSource", "SmartVision.ObjectDetectionSensor", "SmartVision.SnapshotProvider", "StepSpeaker", "TemperatureSensor", "ThermostatController", "ThermostatController.Configuration", "ThermostatController.HVAC.Components", "ThermostatController.Schedule", "TimeHoldController", "UIController", "WakeOnLANController"
-].map((id) => {
-  const adapterReady = false;
-  return {
-    id,
-    group: "官方预置",
-    type: "待同步 schema",
-    support: adapterReady ? "待发布准入" : "仅元数据",
-    hint: adapterReady ? "通用 Adapter 已实现，待完成产品发布准入" : "已收录官方 capability，待通用 Adapter 能力包实现",
-    directives: [],
-    status: adapterReady ? "adapter_ready" : "metadata_only",
-    template: "pending"
-  };
-});
+const [semanticCatalogDocument, providerCatalogDocument, projectionCatalogDocument] = await Promise.all([
+  loadCatalog("../catalogs/semantic-capabilities.v1.json"),
+  loadCatalog("../catalogs/provider-metadata.v1.json"),
+  loadCatalog("../catalogs/projection-rules.v1.json")
+]);
 
-export const capabilityCatalog = [...profileReadyCapabilities, ...officialMetadataOnlyCapabilities];
-
-// V2 product semantics are provider-neutral. Phase 1 instantiates only the
-// Alexa projection, while the semantic ids remain stable for later providers.
-export const semanticCapabilityCatalog = [
-  { id: "device.power", label: "电源", propertyIds: ["power"], alexaCapability: "PowerController", relation: "1:1" },
-  { id: "light.brightness", label: "亮度", propertyIds: ["brightness"], alexaCapability: "BrightnessController", relation: "1:1" },
-  { id: "light.color", label: "颜色", propertyIds: ["color_hsb"], alexaCapability: "ColorController", relation: "1:1" },
-  { id: "device.mode", label: "工作模式", propertyIds: ["motion_mode", "work_mode"], alexaCapability: "ModeController", relation: "结构转换" },
-  { id: "device.level", label: "强度等级", propertyIds: ["motion_level"], alexaCapability: "RangeController", relation: "条件投影" },
-  { id: "device.toggle", label: "独立开关", propertyIds: ["child_lock"], alexaCapability: "ToggleController", relation: "结构转换" },
-  { id: "audio.volume", label: "音量", propertyIds: ["volume_0_100"], alexaCapability: "Speaker", relation: "1:1" },
-  { id: "audio.playback_control", label: "播放控制", propertyIds: ["playback_command"], alexaCapability: "PlaybackController", relation: "1:1" },
-  { id: "audio.playback_state", label: "播放状态", propertyIds: ["playback_state"], alexaCapability: "PlaybackStateReporter", relation: "1:1" },
-  { id: "device.connectivity", label: "连接状态", propertyIds: ["device_online"], alexaCapability: "EndpointHealth", relation: "协议状态" }
-];
+export const catalogVersions = {
+  semantic: semanticCatalogDocument.version,
+  provider: providerCatalogDocument.version,
+  projection: projectionCatalogDocument.version
+};
+export const allowedPropertyTypes = semanticCatalogDocument.allowedPropertyTypes;
+export const semanticCapabilityCatalog = semanticCatalogDocument.capabilities;
+export const capabilityCatalog = providerCatalogDocument.providers.alexa.definitions;
+export const providerMetadataCatalog = providerCatalogDocument.providers;
+export const projectionRuleCatalog = projectionCatalogDocument.rules;
 
 export const modelPropertyCatalog = [
-  { id: "power", label: "电源开关", type: "Boolean", unit: "-", readable: true, writable: true },
-  { id: "brightness", label: "夜灯亮度", type: "Integer", unit: "%", readable: true, writable: true },
-  { id: "color_hsb", label: "彩灯颜色", type: "ColorHSB", unit: "HSB", readable: true, writable: true },
-  { id: "motion_mode", label: "运动模式", type: "Enum", valueKind: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
-  { id: "work_mode", label: "工作模式（int 枚举示例）", type: "Integer", valueKind: "enum", unit: "-", readable: true, writable: true, enumValues: [{ value: "0", label: "空闲" }, { value: "1", label: "满载" }, { value: "2", label: "半载" }, { value: "3", label: "低功率" }] },
-  { id: "motion_level", label: "运动强度", type: "Integer", unit: "level", readable: true, writable: true },
-  { id: "child_lock", label: "童锁开关", type: "Boolean", unit: "-", readable: true, writable: true },
-  { id: "volume_0_100", label: "扬声器音量", type: "Integer", unit: "%", readable: true, writable: true },
-  { id: "playback_command", label: "播放控制命令", type: "Command", unit: "-", readable: false, writable: true },
-  { id: "playback_state", label: "播放状态", type: "Enum", valueKind: "enum", unit: "-", readable: true, writable: false },
-  { id: "device_online", label: "设备在线状态", type: "Boolean", unit: "-", readable: true, writable: false }
+  { id: "power", label: "电源开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
+  { id: "brightness", label: "夜灯亮度", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
+  { id: "ambient_temperature", label: "环境温度", sourceKind: "property", type: "float", unit: "°C", min: -20, max: 80, readable: true, writable: false },
+  { id: "target_temperature", label: "目标温度", sourceKind: "property", type: "double", unit: "°C", min: 5, max: 40, readable: true, writable: true },
+  { id: "color_payload", label: "颜色与色温结构值", sourceKind: "property", type: "string", unit: "-", valueShape: "color_hsb_cct", readable: true, writable: true },
+  { id: "device_label", label: "设备文本标签", sourceKind: "property", type: "string", unit: "-", valueShape: "plain_text", readable: true, writable: false },
+  { id: "motion_mode", label: "运动模式", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
+  { id: "work_mode", label: "工作模式（数值型枚举值）", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: [{ value: "0", label: "空闲" }, { value: "1", label: "满载" }, { value: "2", label: "半载" }, { value: "3", label: "低功率" }] },
+  { id: "motion_level", label: "运动强度", sourceKind: "property", type: "int", unit: "level", min: 1, max: 5, readable: true, writable: true },
+  { id: "child_lock", label: "童锁开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
+  { id: "volume_0_100", label: "扬声器音量", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
+  { id: "playback_state", label: "播放状态", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: false, enumValues: ["PLAYING", "PAUSED", "STOPPED"] },
+  { id: "device_online", label: "设备在线状态", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: false },
+  { id: "playback_command", label: "播放控制命令", sourceKind: "command", type: null, unit: "-", operations: ["Play", "Pause", "Stop"] }
 ];
+
+export function semanticCandidatesForSource(source) {
+  return getSemanticCandidates(source, semanticCapabilityCatalog);
+}
+
+export function resolveProviderProjection(binding, provider = "alexa") {
+  return resolveProjection(binding, provider, projectionRuleCatalog, modelPropertyCatalog);
+}
 
 export function enumEntries(property) {
   return (property?.enumValues || []).map((item) => typeof item === "object" ? { value: String(item.value), label: item.label || String(item.value) } : { value: String(item), label: String(item) });
@@ -149,13 +144,16 @@ const profiles = [
     displayCategory: "LIGHT",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
+    catalogVersions: { semantic: "2026.08.1", projection: "2026.08.1", provider: "2026.08.1" },
+    semanticProfileVersion: 1,
+    providerProjections: { alexa: { semanticProfileVersion: 1, ruleCatalogVersion: "2026.08.1", providerMetadataVersion: "2026.08.1", status: "draft" } },
     status: "draft",
     updatedAt: "2026-08-02 15:18",
     updatedBy: "林宇",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { semantic: "device.power", id: "PowerController", instance: "", property: "power", mapping: "direct_property", readOnly: false },
-      { semantic: "light.brightness", id: "BrightnessController", instance: "", property: "brightness", mapping: "direct_property", readOnly: false }
+      { bindingId: "bedside-power", semantic: "device.power", semanticSlot: "value", property: "power", providerOverrides: { alexa: { PowerController: { instance: "" } } } },
+      { bindingId: "bedside-brightness", semantic: "light.brightness", semanticSlot: "value", property: "brightness", providerOverrides: { alexa: { BrightnessController: { instance: "" } } } }
     ]
   },
   {
@@ -167,14 +165,17 @@ const profiles = [
     displayCategory: "OTHER",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
+    catalogVersions: { semantic: "2026.08.1", projection: "2026.08.1", provider: "2026.08.1" },
+    semanticProfileVersion: 1,
+    providerProjections: { alexa: { semanticProfileVersion: 1, ruleCatalogVersion: "2026.08.1", providerMetadataVersion: "2026.08.1", status: "draft" } },
     status: "draft",
     updatedAt: "2026-08-04 10:42",
     updatedBy: "陈静",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { semantic: "device.mode", id: "ModeController", instance: "Crib.MotionMode", property: "motion_mode", mapping: "direct_property", readOnly: false, modeMappings: [{ modelValue: "SLEEP", alexaValue: "SLEEP" }, { modelValue: "SOFT_ROCKING", alexaValue: "SOFT_ROCKING" }, { modelValue: "PLAY", alexaValue: "PLAY" }] },
-      { semantic: "device.level", id: "RangeController", instance: "Crib.MotionIntensity", property: "motion_level", mapping: "direct_property", readOnly: false, range: "1-5" },
-      { semantic: "device.toggle", id: "ToggleController", instance: "Crib.ChildLock", property: "child_lock", mapping: "direct_property", readOnly: false }
+      { bindingId: "crib-mode", semantic: "device.mode", semanticSlot: "value", property: "motion_mode", providerOverrides: { alexa: { ModeController: { instance: "Crib.MotionMode", modeMappings: [{ modelValue: "SLEEP", alexaValue: "SLEEP" }, { modelValue: "SOFT_ROCKING", alexaValue: "SOFT_ROCKING" }, { modelValue: "PLAY", alexaValue: "PLAY" }] } } } },
+      { bindingId: "crib-level", semantic: "device.level", semanticSlot: "value", property: "motion_level", providerOverrides: { alexa: { RangeController: { instance: "Crib.MotionIntensity", range: "1-5" } } } },
+      { bindingId: "crib-lock", semantic: "device.toggle", semanticSlot: "value", property: "child_lock", providerOverrides: { alexa: { ToggleController: { instance: "Crib.ChildLock" } } } }
     ]
   },
   {
@@ -186,15 +187,18 @@ const profiles = [
     displayCategory: "SPEAKER",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
+    catalogVersions: { semantic: "2026.08.1", projection: "2026.08.1", provider: "2026.08.1" },
+    semanticProfileVersion: 1,
+    providerProjections: { alexa: { semanticProfileVersion: 1, ruleCatalogVersion: "2026.08.1", providerMetadataVersion: "2026.08.1", status: "draft" } },
     status: "draft",
     updatedAt: "2026-08-01 16:06",
     updatedBy: "王琪",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
     capabilities: [
-      { semantic: "device.power", id: "PowerController", instance: "", property: "power", mapping: "direct_property", readOnly: false },
-      { semantic: "audio.volume", id: "Speaker", instance: "", property: "volume_0_100", mapping: "speaker_volume", readOnly: false },
-      { semantic: "audio.playback_control", id: "PlaybackController", instance: "", property: "playback_command", mapping: "playback_operations", readOnly: false, supportedOperations: "Play, Pause" },
-      { semantic: "audio.playback_state", id: "PlaybackStateReporter", instance: "", property: "playback_state", mapping: "playback_state", readOnly: true }
+      { bindingId: "noise-power", semantic: "device.power", semanticSlot: "value", property: "power", providerOverrides: { alexa: { PowerController: { instance: "" } } } },
+      { bindingId: "noise-volume", semantic: "audio.volume", semanticSlot: "value", property: "volume_0_100", providerOverrides: { alexa: { Speaker: { instance: "" } } } },
+      { bindingId: "noise-playback-command", semantic: "audio.playback_control", semanticSlot: "command", property: "playback_command", providerOverrides: { alexa: { PlaybackController: { instance: "", supportedOperations: "Play, Pause" } } } },
+      { bindingId: "noise-playback-state", semantic: "audio.playback_state", semanticSlot: "state", property: "playback_state", providerOverrides: { alexa: { PlaybackStateReporter: { instance: "" } } } }
     ]
   }
 ];
@@ -426,8 +430,17 @@ export function updateCapability(index, key, value) {
   if (capability) capability[key] = value;
 }
 
+export function updateProjectionOverride(index, provider, capabilityId, key, value) {
+  const binding = state.editor.draft.capabilities[index];
+  if (!binding) return;
+  binding.providerOverrides ||= {};
+  binding.providerOverrides[provider] ||= {};
+  binding.providerOverrides[provider][capabilityId] ||= {};
+  binding.providerOverrides[provider][capabilityId][key] = value;
+}
+
 export function addCapability() {
-  state.editor.draft.capabilities.push({ semantic: "", id: "", instance: "", property: "", mapping: "pending", readOnly: false });
+  state.editor.draft.capabilities.push({ bindingId: `binding-${Date.now()}`, semantic: "", semanticSlot: "", property: "", providerOverrides: { alexa: {} } });
   state.editor.section = "mapping";
   emit();
 }
@@ -466,54 +479,88 @@ export function runValidation() {
   if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
   if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
   if (!endpointDisplayCategoryCatalog.some((item) => item.id === draft.displayCategory && item.status === "profile_ready")) errors.push("基础信息：请选择平台已启用的 Alexa Endpoint 显示分类。");
+  if (!draft.catalogVersions?.semantic || !draft.catalogVersions?.projection || !draft.catalogVersions?.provider) errors.push("版本：SemanticProfile 必须固定语义、投影规则和 Provider Metadata Catalog 版本。");
+  if (!draft.providerProjections?.alexa?.semanticProfileVersion || !draft.providerProjections?.alexa?.ruleCatalogVersion || !draft.providerProjections?.alexa?.providerMetadataVersion) errors.push("版本：Alexa ProviderProjection 必须引用 SemanticProfile、Projection Rule 和 Provider Metadata 版本。");
   if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
   if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个可发现的 Alexa capability。");
-  draft.capabilities.forEach((capability) => {
-    const catalogItem = capabilityCatalog.find((item) => item.id === capability.id);
-    const semanticItem = semanticCapabilityCatalog.find((item) => item.id === capability.semantic);
-    if (!capability.semantic) errors.push("能力与映射：请选择与物模型属性匹配的设备语义。");
-    else if (!semanticItem?.propertyIds.includes(capability.property)) errors.push(`能力与映射：设备语义 ${capability.semantic} 与物模型属性不兼容。`);
-    else if (semanticItem.alexaCapability !== capability.id) errors.push(`能力与映射：${capability.semantic} 的 Alexa Projection 结果不一致。`);
-    if (!capability.id) errors.push("能力与映射：设备语义尚未解析出 Alexa capability。");
-    else if (!catalogItem || catalogItem.status !== "profile_ready") errors.push(`能力与映射：${capability.id} 尚未完成通用 Adapter 能力包，不能发布。`);
-    if (!capability.property.trim()) errors.push(`能力与映射：${capability.id} 未绑定 Momcozy 物模型属性。`);
-    const instanceSupport = catalogItem?.instanceSupport || "none";
-    const instance = capability.instance?.trim() || "";
-    if (instanceSupport === "required" && !instance) errors.push(`能力与映射：${capability.id} 的 Capability Catalog 要求声明 instance。`);
-    if (instanceSupport === "none" && instance) errors.push(`能力与映射：${capability.id} 不支持 instance，不能填写。`);
-    if (instanceSupport !== "none" && instance) {
-      if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capability.id} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
-      else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
-      else instanceOwners.set(instance, capability.id);
-      if (catalogItem?.resourceScopes?.includes("capability")) {
-        const resource = capabilityResourceFor(capability.id, instance);
-        if (!resource) errors.push(`能力与映射：${capability.id} 的 instance “${instance}” 尚未维护已发布能力名称 Resource KV。`);
-        else validateResource(resource.key, "capability", capability.id, `${capability.id} 的能力名称`);
-      }
+  const sourceOwners = new Map();
+  draft.capabilities.forEach((binding, bindingIndex) => {
+    const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+    if (!binding.bindingId) errors.push(`能力与映射：第 ${bindingIndex + 1} 条 SemanticBinding 缺少稳定 bindingId。`);
+    const semanticItem = semanticCapabilityCatalog.find((item) => item.id === binding.semantic);
+    if (!source) {
+      errors.push(`能力与映射：第 ${bindingIndex + 1} 条绑定未选择有效的物模型属性或命令。`);
+      return;
     }
-    if (capability.id === "ModeController") {
-      const mappings = capability.modeMappings || [];
-      const enumValues = enumEntries(modelPropertyCatalog.find((item) => item.id === capability.property));
-      if (!enumValues.length) errors.push("能力与映射：ModeController 只能绑定已登记枚举值的物模型属性。");
-      if (mappings.length !== enumValues.length) errors.push("能力与映射：ModeController 必须映射物模型的全部枚举值。");
-      const modelValues = new Set();
-      const alexaModeValues = new Set();
-      mappings.forEach((mapping) => {
-        if (!mapping.modelValue || !mapping.alexaValue) errors.push("能力与映射：每个物模型枚举值都必须映射一个 Alexa Value。");
-        else if (!enumValues.some((item) => item.value === String(mapping.modelValue))) errors.push(`能力与映射：模式 “${mapping.modelValue}” 不属于已绑定物模型属性。`);
-        else if (modelValues.has(mapping.modelValue)) errors.push(`能力与映射：物模型枚举值 “${mapping.modelValue}” 不可重复。`);
-        else {
-          modelValues.add(mapping.modelValue);
-          const resource = modeResourceFor(capability.id, mapping.alexaValue);
-          if (!resource) errors.push(`能力与映射：Alexa Value “${mapping.alexaValue}” 尚未维护多语言 Resource KV。`);
-          else validateResource(resource.key, "mode", capability.id, `Alexa Value ${mapping.alexaValue}`);
-          if (!resource?.modeValue) errors.push(`能力与映射：Alexa Value ${mapping.alexaValue} 未维护稳定机器值。`);
-          else if (alexaModeValues.has(resource.modeValue)) errors.push(`能力与映射：Alexa mode 值 “${resource.modeValue}” 在同一 ModeController 中不可重复。`);
-          else alexaModeValues.add(resource.modeValue);
+    if (sourceOwners.has(source.id)) errors.push(`能力与映射：${source.id} 已被第 ${sourceOwners.get(source.id)} 条绑定使用；默认不允许重复绑定同一来源。`);
+    else sourceOwners.set(source.id, bindingIndex + 1);
+    if (!semanticItem) {
+      errors.push(`能力与映射：${source.id} 尚未人工选择设备语义。`);
+      return;
+    }
+    const candidate = semanticCandidatesForSource(source).find((item) => item.semantic.id === semanticItem.id);
+    if (!candidate) {
+      errors.push(`能力与映射：设备语义 ${semanticItem.id} 不接受 ${source.sourceKind === "command" ? "command" : source.type} 来源。`);
+      return;
+    }
+    if (binding.semanticSlot && binding.semanticSlot !== candidate.slotId) errors.push(`能力与映射：${semanticItem.id} 的输入槽位已变化，请重新选择设备语义。`);
+    if (candidate.fit === "信息不足") errors.push(`能力与映射：${source.id} 绑定 ${semanticItem.id} 时信息不足（${candidate.notes.join("、")}）。`);
+    if (candidate.fit === "需转换") warnings.push(`能力与映射：${source.id} 绑定 ${semanticItem.id} 需要归一化（${candidate.notes.join("、")}）。`);
+
+    const resolution = resolveProviderProjection(binding, "alexa");
+    if (resolution.status === "conflict") {
+      errors.push(`Alexa Projection：${semanticItem.id} 命中多个同优先级规则（${resolution.rules.map((item) => item.ruleId).join(", ")}），请由平台维护者处理 Catalog 冲突。`);
+      return;
+    }
+    if (!resolution.rule || resolution.status === "unsupported" || !resolution.outputs.length) {
+      errors.push(`Alexa Projection：${semanticItem.id} 没有可用规则；语义草稿可保存，但不能发布 Alexa。`);
+      return;
+    }
+    if (resolution.status !== "ready") errors.push(`Alexa Projection：规则 ${resolution.rule.ruleId}@${resolution.rule.version} 状态为 ${resolution.status}，尚不能发布。`);
+
+    resolution.outputs.forEach((output) => {
+      const capabilityId = output.capabilityId;
+      const catalogItem = capabilityCatalog.find((item) => item.id === capabilityId);
+      const override = binding.providerOverrides?.alexa?.[capabilityId] || {};
+      if (!catalogItem || catalogItem.status !== "profile_ready") errors.push(`能力与映射：${capabilityId} 尚未完成通用 Adapter 能力包，不能发布。`);
+      const instanceSupport = catalogItem?.instanceSupport || "none";
+      const instance = override.instance?.trim() || "";
+      if (instanceSupport === "required" && !instance) errors.push(`能力与映射：${capabilityId} 的 Capability Catalog 要求声明 instance。`);
+      if (instanceSupport === "none" && instance) errors.push(`能力与映射：${capabilityId} 不支持 instance，不能填写。`);
+      if (instanceSupport !== "none" && instance) {
+        if (!instanceNamePattern.test(instance)) errors.push(`能力与映射：${capabilityId} 的 instance 必须为 1-64 位、英文字母开头，仅可含字母、数字、点、下划线和连字符。`);
+        else if (instanceOwners.has(instance)) errors.push(`能力与映射：instance “${instance}” 已被 ${instanceOwners.get(instance)} 使用；同一 Endpoint 的通用 Controller 不可重复。`);
+        else instanceOwners.set(instance, capabilityId);
+        if (catalogItem?.resourceScopes?.includes("capability")) {
+          const resource = capabilityResourceFor(capabilityId, instance);
+          if (!resource) errors.push(`能力与映射：${capabilityId} 的 instance “${instance}” 尚未维护已发布能力名称 Resource KV。`);
+          else validateResource(resource.key, "capability", capabilityId, `${capabilityId} 的能力名称`);
         }
-      });
-    }
-    if (capability.id === "PlaybackController" && !["Play", "Pause"].every((operation) => capability.supportedOperations?.split(",").map((item) => item.trim()).includes(operation))) errors.push("能力与映射：PlaybackController 必须声明 Play 和 Pause 操作。");
+      }
+      if (capabilityId === "ModeController") {
+        const mappings = override.modeMappings || [];
+        const enumValues = enumEntries(source);
+        if (!enumValues.length) errors.push("能力与映射：ModeController 只能绑定已登记枚举值的物模型属性。");
+        if (mappings.length !== enumValues.length) errors.push("能力与映射：ModeController 必须映射物模型的全部枚举值。");
+        const modelValues = new Set();
+        const alexaModeValues = new Set();
+        mappings.forEach((mapping) => {
+          if (!mapping.modelValue || !mapping.alexaValue) errors.push("能力与映射：每个物模型枚举值都必须映射一个 Alexa Value。");
+          else if (!enumValues.some((item) => item.value === String(mapping.modelValue))) errors.push(`能力与映射：模式 “${mapping.modelValue}” 不属于已绑定物模型属性。`);
+          else if (modelValues.has(mapping.modelValue)) errors.push(`能力与映射：物模型枚举值 “${mapping.modelValue}” 不可重复。`);
+          else {
+            modelValues.add(mapping.modelValue);
+            const resource = modeResourceFor(capabilityId, mapping.alexaValue);
+            if (!resource) errors.push(`能力与映射：Alexa Value “${mapping.alexaValue}” 尚未维护多语言 Resource KV。`);
+            else validateResource(resource.key, "mode", capabilityId, `Alexa Value ${mapping.alexaValue}`);
+            if (!resource?.modeValue) errors.push(`能力与映射：Alexa Value ${mapping.alexaValue} 未维护稳定机器值。`);
+            else if (alexaModeValues.has(resource.modeValue)) errors.push(`能力与映射：Alexa mode 值 “${resource.modeValue}” 在同一 ModeController 中不可重复。`);
+            else alexaModeValues.add(resource.modeValue);
+          }
+        });
+      }
+      if (capabilityId === "PlaybackController" && !["Play", "Pause"].every((operation) => override.supportedOperations?.split(",").map((item) => item.trim()).includes(operation))) errors.push("能力与映射：PlaybackController 必须声明 Play 和 Pause 操作。");
+    });
   });
   if (!draft.reporting.stateReport || !draft.reporting.endpointHealth) warnings.push("状态报告：建议同时启用 StateReport 与 EndpointHealth，避免 Alexa 显示过期状态。");
   if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport，Profile 不能打开该开关。");
@@ -540,6 +587,7 @@ export function saveDraft() {
   }
   if (existingIndex >= 0 && state.profiles[existingIndex].status === "disabled") draft.status = "draft";
   draft.status = draft.status === "published" ? "ready" : draft.status;
+  if (draft.providerProjections?.alexa) draft.providerProjections.alexa.status = draft.status;
   draft.updatedAt = "2026-08-04 14:26";
   draft.updatedBy = "林宇";
   if (existingIndex >= 0) state.profiles.splice(existingIndex, 1, draft);
@@ -560,6 +608,7 @@ export function publishDraft() {
   product.alexa = "已发布";
   product.updatedAt = "2026-08-10";
   draft.status = "published";
+  if (draft.providerProjections?.alexa) draft.providerProjections.alexa.status = "published";
   draft.updatedAt = "2026-08-04 14:28";
   draft.updatedBy = "林宇";
   const existingIndex = state.profiles.findIndex((profile) => profile.id === draft.id);
@@ -620,10 +669,13 @@ function createEmptyProfile() {
     displayCategory: "LIGHT",
     adapter: "smart-home-adapter-v2",
     adapterVersion: "2.4.0",
+    catalogVersions: clone(catalogVersions),
+    semanticProfileVersion: 1,
+    providerProjections: { alexa: { semanticProfileVersion: 1, ruleCatalogVersion: catalogVersions.projection, providerMetadataVersion: catalogVersions.provider, status: "draft" } },
     status: "draft",
     updatedAt: "未保存",
     updatedBy: "林宇",
     reporting: { source: "device_reported", stateReport: true, changeReport: false, endpointHealth: true },
-    capabilities: [{ id: "PowerController", instance: "", property: "power", mapping: "direct", readOnly: false }]
+    capabilities: [{ bindingId: `binding-${Date.now()}`, semantic: "device.power", semanticSlot: "value", property: "power", providerOverrides: { alexa: { PowerController: { instance: "" } } } }]
   };
 }

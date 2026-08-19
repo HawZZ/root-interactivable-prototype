@@ -1,6 +1,7 @@
 import {
   capabilityResourceFor,
   capabilityCatalog,
+  catalogVersions,
   closeResourceEditor,
   enumEntries,
   filteredResources,
@@ -38,17 +39,20 @@ import {
   statusMeta,
   subscribe,
   updateCapability,
+  updateProjectionOverride,
   updateDraft,
   updateProductAlexaSupport,
   updateResourceDraft,
   openResourceEditor,
   saveResourceDraft,
   semanticCapabilityCatalog,
+  semanticCandidatesForSource,
+  resolveProviderProjection,
   skillLocales,
   validateResourceDraft,
   addCapability,
   removeCapability
-} from "./state.js?v=20260819v2";
+} from "./state.js?v=20260819v3";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -114,10 +118,10 @@ const annotations = {
     },
     mapping: {
       context: "配置抽屉 / 能力与映射",
-      summary: "一期链路为：物模型属性/命令 -> 设备语义 -> Alexa Capability Projection -> Enum Mapping -> Alexa Value -> Resource KV。",
+      summary: "一期链路为：物模型属性/命令 -> 按类型生成候选 -> 人工确认设备语义 -> 版本化规则生成 0..N 个 Alexa Capability。",
       items: [
-        { n: 5, title: "中立语义与 Alexa 投影", location: "关联位置：配置抽屉 > 能力与映射", fields: [["说明", "先选择物模型属性，再选择平台允许的设备语义；Alexa Capability 由 Projection Rule 自动解析，只读展示。"], ["交互", "ModeController 为每个枚举值选择 Alexa Value；平台再按 capability + instance / Alexa Value 解析 Resource KV。"], ["校验规则", "设备语义必须兼容属性类型与读写方向，投影结果、instance、Enum Mapping、Alexa Value 与资源必须完整。"]] },
-        { n: 6, title: "多 Provider 扩展边界", location: "关联位置：配置抽屉 > 投影规则", fields: [["一期", "仅生成和发布 Alexa ProviderProjection，保持 V1 的 Alexa 配置能力完整。"], ["二期", "Google Home 复用稳定设备语义，独立生成 Device Type / Trait 投影及资源；不直接复用 Alexa Resource KV。"], ["异常处理", "未来新增单厂商能力时允许另一厂商 unsupported，不制造伪映射，也不阻断已支持厂商。"]] }
+        { n: 5, title: "类型候选与人工确认", location: "关联位置：配置抽屉 > 物模型属性 / 设备语义", fields: [["候选规则", "物模型属性类型仅允许 int、float、double、enum、bool、string，并作为硬筛条件；命令使用独立 command 来源。"], ["排序提示", "单位、范围、读写方向和值结构只决定“可直接绑定 / 需转换 / 信息不足”的排序和提示，不根据属性名称自动判定语义。"], ["交互", "更换属性后清空旧语义和厂商覆盖；产品人员必须重新确认语义。"]] },
+        { n: 6, title: "版本化多 Provider 投影", location: "关联位置：配置抽屉 > Alexa 投影结果组", fields: [["一期", "产品页只执行 Alexa 规则；规则 ID、版本、条件和 0..N 个输出只读展示，instance 与 Alexa Value 等仍在输出项中维护。"], ["扩展", "同一 semanticId 分别关联 Alexa 与 Google 规则；device.power 可投影 PowerController，也可在二期独立投影 Google OnOff。"], ["边界", "Google Home 不出现在一期产品界面；Google unsupported 不影响 Alexa，规则冲突只阻断目标 Provider。"]] }
       ]
     },
     reporting: {
@@ -208,13 +212,14 @@ function renderProfilesPage() {
 
 function renderProfileRow(profile) {
   const status = statusMeta[profile.status];
-  const capabilityText = profile.capabilities.map((capability) => capability.id.replace("Controller", "")).join(" / ");
+  const projectedCapabilities = profile.capabilities.flatMap((binding) => resolveProviderProjection(binding, "alexa").outputs.map((output) => output.capabilityId));
+  const capabilityText = projectedCapabilities.map((id) => id.replace("Controller", "")).join(" / ");
   return `<tr>
     <td><input class="el-checkbox" type="checkbox" aria-label="选择 ${escapeHtml(profile.name)}" /></td>
     <td><div class="profile-name">${escapeHtml(profile.name)}${profile.id === "bedside-light-v2" ? anchor(1) : ""}</div><div class="profile-key">${escapeHtml(profile.productKey)}</div></td>
     <td><div>${escapeHtml(profile.category)}</div><span class="cell-secondary">displayCategories[0]: ${escapeHtml(profile.displayCategory)}</span></td>
     <td><div class="adapter-cell">${escapeHtml(profile.adapter)}${profile.id === "bedside-light-v2" ? anchor(2) : ""}</div><span class="cell-secondary">v${escapeHtml(profile.adapterVersion)}</span></td>
-    <td><div class="capability-cell">${escapeHtml(capabilityText)}</div><span class="cell-secondary">${profile.capabilities.length} 项能力</span></td>
+    <td><div class="capability-cell">${escapeHtml(capabilityText)}</div><span class="cell-secondary">${projectedCapabilities.length} 个 Alexa 输出</span></td>
     <td>${tag(status.label, status.type)}</td>
     <td><div>${escapeHtml(profile.updatedAt)}</div><span class="cell-secondary">${escapeHtml(profile.updatedBy)}</span></td>
     <td class="col-ops"><button class="op-link" data-action="edit-profile" data-profile-id="${profile.id}">编辑</button><span class="op-divider">|</span><button class="op-link" data-action="validate-profile" data-profile-id="${profile.id}">校验${profile.id === "smart-crib-motion-v2" ? anchor(3) : ""}</button><span class="op-divider">|</span><button class="op-link ${profile.status === "published" ? "danger" : "is-disabled"}" data-action="rollback-open" data-profile-id="${profile.id}" ${profile.status === "published" ? "" : "disabled"}>回滚</button><span class="op-divider">|</span><button class="op-link ${profile.status === "published" ? "danger" : "is-disabled"}" data-action="delist-open" data-profile-id="${profile.id}" ${profile.status === "published" ? "" : "disabled"}>下架</button></td>
@@ -305,8 +310,13 @@ function applyInstanceFieldHints() {
   });
 }
 
-function resolvedModeMappings(capability, property) {
-  if (capability.modeMappings?.length) return capability.modeMappings.map((item) => ({ ...item, alexaValue: item.alexaValue || getResource(item.resourceKey)?.modeValue || "" }));
+function projectionOverride(binding, capabilityId) {
+  return binding.providerOverrides?.alexa?.[capabilityId] || {};
+}
+
+function resolvedModeMappings(binding, property) {
+  const override = projectionOverride(binding, "ModeController");
+  if (override.modeMappings?.length) return override.modeMappings.map((item) => ({ ...item, alexaValue: item.alexaValue || getResource(item.resourceKey)?.modeValue || "" }));
   return enumEntries(property).map(({ value }) => ({
     modelValue: value,
     alexaValue: ""
@@ -317,21 +327,8 @@ function instanceSupportFor(interfaceId) {
   return capabilityCatalog.find((item) => item.id === interfaceId)?.instanceSupport || "none";
 }
 
-function compatibleCapabilities(propertyId) {
-  const property = modelPropertyCatalog.find((item) => item.id === propertyId);
-  if (!property) return [];
-  return capabilityCatalog.filter((item) => item.id !== "EndpointHealth" && item.status === "profile_ready" && (
-    item.propertyIds?.includes(property.id) || item.propertyTypes?.includes(property.type) || item.propertyKinds?.includes(property.valueKind)
-  ) && (!item.requiresWritable || property.writable));
-}
-
-function compatibleSemantics(propertyId) {
-  return semanticCapabilityCatalog.filter((item) => item.propertyIds.includes(propertyId));
-}
-
-function semanticForCapability(capability) {
-  return semanticCapabilityCatalog.find((item) => item.id === capability.semantic)
-    || semanticCapabilityCatalog.find((item) => item.alexaCapability === capability.id && item.propertyIds.includes(capability.property));
+function semanticForBinding(binding) {
+  return semanticCapabilityCatalog.find((item) => item.id === binding.semantic);
 }
 
 function capabilityStatusLabel(status) {
@@ -344,6 +341,7 @@ function mappingTemplateLabel(template) {
   return {
     direct_property: "direct - 标准属性转换",
     structured_hsb: "structured_hsb - HSB 结构化转换",
+    structured_cct: "structured_cct - 色温结构化转换",
     speaker_volume: "speaker_volume - 连续音量转换",
     playback_operations: "playback_operations - 播放操作转换",
     playback_state: "playback_state - 播放状态转换",
@@ -351,43 +349,57 @@ function mappingTemplateLabel(template) {
   }[template] || "pending - 等待通用能力包";
 }
 
-function renderCapabilityOptions(selectedId, propertyId) {
-  if (!propertyId) return `<option value="">请先选择 Momcozy 物模型属性</option>`;
-  const entries = compatibleCapabilities(propertyId);
-  if (!entries.length) return `<option value="">当前属性没有已发布的匹配 capability</option>`;
-  return `<option value="" ${selectedId ? "" : "selected"}>请选择匹配的 Alexa capability</option>${entries.map((item) => `<option value="${item.id}" ${selectedId === item.id ? "selected" : ""}>${item.id}</option>`).join("")}`;
-}
-
 function renderFieldTags(tags) {
   return `<div class="field-type-tags">${tags.map(([label, type]) => `<span class="field-type-tag field-type-tag--${type}">${escapeHtml(label)}</span>`).join("")}</div>`;
 }
 
-function renderModeMappings(capability, property, capabilityIndex) {
-  const mappings = resolvedModeMappings(capability, property);
+function renderModeMappings(binding, property, capabilityIndex) {
+  const mappings = resolvedModeMappings(binding, property);
   const entries = enumEntries(property);
   if (!entries.length) return `<div class="mapping-empty">当前属性未登记枚举值，不能用于 ModeController。</div>`;
   const options = resourcesFor("ModeController", "mode");
-  return `<section class="mode-mapping"><div class="mode-mapping__heading"><strong>枚举映射</strong><span>产品选择 Alexa Value；平台按 Capability + Alexa Value 自动关联多语言 Resource KV。</span></div><div class="mode-mapping-table"><div class="mode-mapping-table__head"><span>物模型原始值 / 业务含义</span><span>Alexa Value <b>*</b></span><span>Resource KV</span><span>语音名称预览</span></div>${mappings.map((mapping, mappingIndex) => { const resource = modeResourceFor("ModeController", mapping.alexaValue); const entry = entries.find((item) => item.value === String(mapping.modelValue)); return `<div class="mode-mapping-row"><div><code>${escapeHtml(mapping.modelValue)}</code><small>${escapeHtml(entry?.label || "未定义")}</small></div><select class="el-select" data-capability-index="${capabilityIndex}" data-mode-mapping-index="${mappingIndex}" data-mode-mapping-field="alexaValue"><option value="">请选择 Alexa Value</option>${options.map((item) => `<option value="${item.modeValue}" ${item.modeValue === mapping.alexaValue ? "selected" : ""}>${item.modeValue} · ${item.values["en-US"] || item.key}</option>`).join("")}</select><code class="mode-value-preview">${escapeHtml(resource?.key || "自动查询")}</code><div class="resource-preview">${resource ? `<strong>${escapeHtml(resource.values["en-US"] || "--")}</strong><span>de-DE: ${escapeHtml(resource.values["de-DE"] || "未配置")}</span>` : `<span>选择后预览 en-US / de-DE</span>`}</div></div>`; }).join("")}</div><p class="mode-mapping__help">IoT 原始 int 只传给 IoT 云；Alexa 只接收 Alexa Value。Resource Key 与 Locale 词条由平台维护，产品页面不选 Key、不录入翻译。只有“可写且可查询”的离散枚举可选择 ModeController；自动产生的内部状态应只上报或不暴露。</p></section>`;
+  return `<section class="mode-mapping"><div class="mode-mapping__heading"><strong>枚举映射</strong><span>产品选择 Alexa Value；平台按 Capability + Alexa Value 自动关联多语言 Resource KV。</span></div><div class="mode-mapping-table"><div class="mode-mapping-table__head"><span>物模型原始值 / 业务含义</span><span>Alexa Value <b>*</b></span><span>Resource KV</span><span>语音名称预览</span></div>${mappings.map((mapping, mappingIndex) => { const resource = modeResourceFor("ModeController", mapping.alexaValue); const entry = entries.find((item) => item.value === String(mapping.modelValue)); return `<div class="mode-mapping-row"><div><code>${escapeHtml(mapping.modelValue)}</code><small>${escapeHtml(entry?.label || "未定义")}</small></div><select class="el-select" data-capability-index="${capabilityIndex}" data-projection-capability="ModeController" data-mode-mapping-index="${mappingIndex}" data-mode-mapping-field="alexaValue"><option value="">请选择 Alexa Value</option>${options.map((item) => `<option value="${item.modeValue}" ${item.modeValue === mapping.alexaValue ? "selected" : ""}>${item.modeValue} · ${item.values["en-US"] || item.key}</option>`).join("")}</select><code class="mode-value-preview">${escapeHtml(resource?.key || "自动查询")}</code><div class="resource-preview">${resource ? `<strong>${escapeHtml(resource.values["en-US"] || "--")}</strong><span>de-DE: ${escapeHtml(resource.values["de-DE"] || "未配置")}</span>` : `<span>选择后预览 en-US / de-DE</span>`}</div></div>`; }).join("")}</div><p class="mode-mapping__help">IoT 原始 enum 值只传给 IoT 云；Alexa 只接收 Alexa Value。Resource Key 与 Locale 词条由平台维护，产品页面不选 Key、不录入翻译。</p></section>`;
+}
+
+function candidateTagType(fit) {
+  return fit === "可直接绑定" ? "success" : fit === "需转换" ? "warning" : "danger";
+}
+
+function renderProjectionOutput(binding, property, output, bindingIndex) {
+  const capabilityMeta = capabilityCatalog.find((item) => item.id === output.capabilityId);
+  const override = projectionOverride(binding, output.capabilityId);
+  const instanceSupport = instanceSupportFor(output.capabilityId);
+  const supportsInstance = instanceSupport !== "none";
+  const instanceRequired = instanceSupport === "required";
+  const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
+  const capabilityResource = capabilityResourceFor(output.capabilityId, override.instance);
+  const instanceField = supportsInstance ? `<label class="form-row"><span>Instance ${instanceRequired ? "<b>*</b>" : "<i>（可选）</i>"}</span><input class="el-input" data-capability-index="${bindingIndex}" data-projection-capability="${output.capabilityId}" data-projection-field="instance" value="${escapeHtml(override.instance || "")}" placeholder="例如 Crib.MotionMode" /><em>${instanceRequired ? "Capability Catalog 要求填写。" : "仅当设备存在多个同类语义对象时填写。"}</em></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">Catalog 不支持</div></div>`;
+  const resourceField = supportsInstance && capabilityMeta?.resourceScopes?.includes("capability") ? `<div class="form-row"><span>能力名称 Resource KV</span><div class="readonly-field">${escapeHtml(override.instance ? capabilityResource?.key || "未找到已发布的平台资源" : "未配置 instance；不解析能力名称资源")}</div>${override.instance && capabilityResource ? renderFieldTags([[`en-US：${capabilityResource.values["en-US"]}`, "success"], [`de-DE：${capabilityResource.values["de-DE"] || "未配置"}`, "info"], [`覆盖：${skillLocales.filter(([locale]) => capabilityResource.values[locale]).length}/${localePolicy.enabledLocaleCount}`, "neutral"]]) : renderFieldTags([[override.instance ? "请先在平台资源库发布对应资源" : "填写 instance 后按 capability + instance 自动解析", "neutral"]])}</div>` : "";
+  const modeField = output.capabilityId === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(binding, property, bindingIndex)}</div>` : "";
+  const operationsField = output.capabilityId === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${bindingIndex}" data-projection-capability="PlaybackController" data-projection-field="supportedOperations" value="${escapeHtml(override.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期至少声明 Play 和 Pause。</em></label>` : "";
+  return `<article class="projection-output"><header><div><strong>${escapeHtml(output.capabilityId)}</strong><small>Adapter：${escapeHtml(output.adapterTemplate)}</small></div>${tag(statusLabel, statusType)}</header><div class="projection-output-grid"><div class="form-row"><span>接口与指令</span><div class="readonly-field">${escapeHtml(capabilityMeta?.directives?.join(" / ") || "状态报告接口")}</div>${renderFieldTags([[`类型：${capabilityMeta?.type || "--"}`, "info"], [instanceSupport === "required" ? "Instance 必填" : instanceSupport === "optional" ? "Instance 可选" : "不支持 Instance", instanceRequired ? "warning" : "neutral"]])}</div>${instanceField}${resourceField}<div class="form-row"><span>转换模板</span><div class="readonly-field">${mappingTemplateLabel(output.adapterTemplate)}</div><em>产品不配置 Lambda 或协议脚本。</em></div>${modeField}${operationsField}</div></article>`;
+}
+
+function renderProjectionResult(binding, property, bindingIndex) {
+  const resolution = resolveProviderProjection(binding, "alexa");
+  if (!binding.semantic) return `<div class="projection-empty"><strong>等待设备语义</strong><span>人工选择语义后，平台再解析 Alexa 规则。</span></div>`;
+  if (resolution.status === "conflict") return `<div class="projection-empty projection-empty--danger"><strong>Catalog 规则冲突</strong><span>${escapeHtml(resolution.rules.map((item) => `${item.ruleId}@${item.version}`).join("、"))}</span></div>`;
+  if (!resolution.rule || !resolution.outputs.length) return `<div class="projection-empty projection-empty--danger"><strong>不支持 Alexa 投影</strong><span>可以保存 SemanticProfile 草稿，但 Alexa ProviderProjection 不能发布。</span></div>`;
+  const supportType = resolution.status === "ready" ? "success" : resolution.status === "conditional" ? "warning" : "info";
+  return `<section class="projection-result-group"><div class="projection-rule-head"><div><strong>${escapeHtml(resolution.rule.ruleId)}@${resolution.rule.version}</strong><span>${escapeHtml(resolution.rule.source)}</span></div>${tag(`${resolution.rule.relation} · ${resolution.status}`, supportType)}</div><div class="projection-rule-meta">${renderFieldTags([[`Catalog：${catalogVersions.projection}`, "neutral"], [`优先级：${resolution.rule.priority}`, "info"], [`输出：${resolution.outputs.length} 项`, resolution.outputs.length > 1 ? "warning" : "success"], [`条件：${Object.entries(resolution.rule.conditions || {}).map(([key, value]) => `${key}=${Array.isArray(value) ? value.join("/") : value}`).join("；") || "无"}`, "neutral"]])}</div>${resolution.outputs.map((output) => renderProjectionOutput(binding, property, output, bindingIndex)).join("")}</section>`;
 }
 
 function renderMappingSection(draft) {
-  const readyCount = capabilityCatalog.filter((item) => item.status === "profile_ready").length;
-  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>选择物模型属性与设备语义后，平台按 Projection Rule 解析 Alexa Capability；再维护 instance、Alexa Value 与 Resource KV 覆盖。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="projection-chain"><span>物模型属性 / 命令</span><b>-></b><span>中立设备语义</span><b>-></b><span>Alexa Capability</span><b>-></b><span>Enum Mapping / Alexa Value / Resource KV</span></div><div class="mapping-list">${draft.capabilities.map((capability, index) => {
-    const capabilityMeta = capabilityCatalog.find((item) => item.id === capability.id);
-    const propertyMeta = modelPropertyCatalog.find((item) => item.id === capability.property);
-    const matchingCapabilities = compatibleCapabilities(capability.property);
-    const matchingSemantics = compatibleSemantics(capability.property);
-    const semanticMeta = semanticForCapability(capability);
-    const instanceSupport = instanceSupportFor(capability.id);
-    const supportsInstance = instanceSupport !== "none";
-    const instanceRequired = instanceSupport === "required";
-    const [statusLabel, statusType] = capabilityStatusLabel(capabilityMeta?.status);
-    const capabilityResource = capabilityResourceFor(capability.id, capability.instance);
-    const resourceField = supportsInstance && capabilityMeta?.resourceScopes?.includes("capability") ? `<div class="form-row"><span>能力名称 Resource KV</span><div class="readonly-field">${escapeHtml(capability.instance ? capabilityResource?.key || "未找到已发布的平台资源" : "未配置 instance；不声明能力名称资源")}</div>${capability.instance && capabilityResource ? renderFieldTags([[`en-US：${capabilityResource.values["en-US"]}`, "success"], [`de-DE：${capabilityResource.values["de-DE"] || "未配置"}`, "info"], [`覆盖：${skillLocales.filter(([locale]) => capabilityResource.values[locale]).length}/${localePolicy.enabledLocaleCount}`, "neutral"]]) : renderFieldTags([[capability.instance ? "请先在平台资源库发布对应资源" : "Instance 可选；填写后自动解析资源", "neutral"]])}<em>平台仅在配置 instance 后按 capability + instance 解析资源；产品页面不选择 Key、不录入翻译。</em></div>` : "";
-    const propertyOption = (item) => `${item.id} · ${item.label} · ${item.type}${item.valueKind === "enum" ? " / 枚举" : ""}${item.unit !== "-" ? ` / ${item.unit}` : ""}`;
-    const propertyTags = propertyMeta ? [[`属性类型：${propertyMeta.type}`, "success"], [propertyMeta.valueKind === "enum" ? "值定义：离散枚举" : "值定义：连续/结构化", propertyMeta.valueKind === "enum" ? "warning" : "neutral"], [propertyMeta.writable ? "支持写入" : "只读状态，不能控制", propertyMeta.writable ? "success" : "danger"], [`匹配能力：${matchingCapabilities.length} 项`, "info"]] : [["请先选择物模型属性", "neutral"]];
-    const instanceField = supportsInstance ? `<label class="form-row"><span>Instance ${instanceRequired ? "<b>*</b>" : "<i>（可选）</i>"}</span><input class="el-input" data-capability-index="${index}" data-capability-field="instance" value="${escapeHtml(capability.instance)}" placeholder="例如 Crib.MotionMode" /><em>${instanceRequired ? "Capability Catalog 要求填写。" : "仅当设备存在多个同类语义对象时填写；留空则不声明该实例资源。"}</em></label>` : `<div class="form-row"><span>Instance</span><div class="readonly-field">${capabilityMeta ? "Catalog 不支持" : "等待选择 capability"}</div></div>`;
-    return `<article class="mapping-item"><header><strong>${capability.id || "待生成 Alexa interface"} ${index === 0 ? anchor(5) : ""}</strong><span>${capabilityMeta ? tag(statusLabel, statusType) : tag("待映射", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 / 命令 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性或命令</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${capability.property === item.id ? "selected" : ""}>${propertyOption(item)}</option>`).join("")}</select>${renderFieldTags(propertyTags)}</label><label class="form-row"><span>设备语义 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="semantic" ${!propertyMeta || !matchingSemantics.length ? "disabled" : ""}><option value="">请选择中立设备语义</option>${matchingSemantics.map((item) => `<option value="${item.id}" ${semanticMeta?.id === item.id ? "selected" : ""}>${item.label} · ${item.id}</option>`).join("")}</select>${renderFieldTags([[`语义 ID：${semanticMeta?.id || "--"}`, semanticMeta ? "success" : "neutral"], [`投影关系：${semanticMeta?.relation || "--"}`, "info"]])}<em>设备语义不包含 instance、Alexa Value 或厂商资源。</em></label><div class="form-row"><span>Alexa Capability Projection <b>*</b></span><div class="readonly-field">${escapeHtml(capability.id || "选择设备语义后自动生成")}</div>${renderFieldTags([[`数据类型：${capabilityMeta?.type || "--"}`, "info"], [`指令：${capabilityMeta?.directives?.join(" / ") || "--"}`, "neutral"], [instanceSupport === "required" ? "Instance 必填" : instanceSupport === "optional" ? "Instance 可选" : capabilityMeta ? "不支持 Instance" : "等待投影", instanceRequired ? "warning" : instanceSupport === "optional" ? "info" : "neutral"]])}<em>由 ProjectionRuleCatalog 只读解析，产品侧不能绕过语义直接选择 Alexa Capability。</em></div>${instanceField}${resourceField}<div class="form-row"><span>投影规则 ${index === 0 ? anchor(6) : ""}</span><div class="readonly-field">${mappingTemplateLabel(capabilityMeta?.template)}</div><em>平台规则将 Alexa 指令转换为物模型读写；产品不配置 Lambda 或协议细节。</em></div>${capability.id === "ModeController" ? `<div class="form-row form-row--wide">${renderModeMappings(capability, propertyMeta, index)}</div>` : ""}${capability.id === "PlaybackController" ? `<label class="form-row form-row--wide"><span>Supported operations <b>*</b></span><input class="el-input" data-capability-index="${index}" data-capability-field="supportedOperations" value="${escapeHtml(capability.supportedOperations || "")}" placeholder="Play, Pause" /><em>首期白噪机至少声明 Play 和 Pause；状态由 PlaybackStateReporter 上报。</em></label>` : ""}</div></article>`;
+  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与物模型映射 ${anchor(5)}</h3><p>属性类型只产生候选语义；产品人员确认语义后，平台按版本化 Projection Rule 生成 Alexa 投影结果组。</p></div><button class="el-btn" data-action="add-capability">+ 添加能力</button></div><div class="projection-chain"><span>物模型属性 / 命令</span><b>-></b><span>类型兼容候选</span><b>-></b><span>人工确认设备语义</span><b>-></b><span>0..N Alexa Capability</span><b>-></b><span>Enum Mapping / Alexa Value / Resource KV</span></div><div class="catalog-version-strip"><span>Semantic Catalog <strong>${catalogVersions.semantic}</strong></span><span>Projection Rule Catalog <strong>${catalogVersions.projection}</strong></span><span>Provider Metadata <strong>${catalogVersions.provider}</strong></span></div><div class="mapping-list">${draft.capabilities.map((binding, index) => {
+    const propertyMeta = modelPropertyCatalog.find((item) => item.id === binding.property);
+    const candidates = semanticCandidatesForSource(propertyMeta);
+    const semanticMeta = semanticForBinding(binding);
+    const selectedCandidate = candidates.find((item) => item.semantic.id === binding.semantic);
+    const resolution = resolveProviderProjection(binding, "alexa");
+    const propertyOption = (item) => item.sourceKind === "command" ? `${item.id} · ${item.label} · command` : `${item.id} · ${item.label} · ${item.type}${item.unit !== "-" ? ` / ${item.unit}` : ""}${Number.isFinite(item.min) && Number.isFinite(item.max) ? ` / ${item.min}-${item.max}` : ""}`;
+    const propertyTags = propertyMeta ? [[propertyMeta.sourceKind === "command" ? "来源：command" : `属性类型：${propertyMeta.type}`, "success"], [propertyMeta.enumValues?.length ? `枚举值：${propertyMeta.enumValues.length} 项` : propertyMeta.valueShape ? `值结构：${propertyMeta.valueShape}` : Number.isFinite(propertyMeta.min) ? `范围：${propertyMeta.min}-${propertyMeta.max}` : "值定义：未声明范围", propertyMeta.enumValues?.length ? "warning" : "neutral"], [propertyMeta.sourceKind === "command" ? `操作：${propertyMeta.operations.join("/")}` : propertyMeta.writable ? "可读写" : "只读", propertyMeta.sourceKind === "command" || propertyMeta.writable ? "success" : "info"], [`候选语义：${candidates.length} 项`, "info"]] : [["请先选择物模型属性或命令", "neutral"]];
+    const resultCount = resolution.outputs?.length || 0;
+    return `<article class="mapping-item"><header><strong>${escapeHtml(semanticMeta?.label || "待选择设备语义")} ${index === 0 ? anchor(5) : ""}</strong><span>${resultCount ? tag(`${resultCount} 个 Alexa 输出`, resolution.status === "ready" ? "success" : "warning") : tag("待投影", "info")}</span><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></header><div class="mapping-grid"><label class="form-row"><span>Momcozy 物模型属性 / 命令 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="property"><option value="">请选择已注册属性或命令</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${binding.property === item.id ? "selected" : ""}>${propertyOption(item)}</option>`).join("")}</select>${renderFieldTags(propertyTags)}<em>候选算法不读取属性 ID 或名称。</em></label><label class="form-row"><span>设备语义 <b>*</b></span><select class="el-select" data-capability-index="${index}" data-capability-field="semantic" ${!propertyMeta || !candidates.length ? "disabled" : ""}><option value="">请选择中立设备语义</option>${candidates.map((item) => `<option value="${item.semantic.id}" ${semanticMeta?.id === item.semantic.id ? "selected" : ""}>[${item.fit}] ${item.semantic.label} · ${item.semantic.id}</option>`).join("")}</select>${renderFieldTags([[`语义 ID：${semanticMeta?.id || "--"}`, semanticMeta ? "success" : "neutral"], [`类型匹配：${selectedCandidate?.fit || "--"}`, candidateTagType(selectedCandidate?.fit)], [`输入槽位：${binding.semanticSlot || "--"}`, "info"]])}<em>${escapeHtml(selectedCandidate?.notes?.length ? selectedCandidate.notes.join("；") : "类型负责筛选；单位、范围、读写和值结构只做排序和提示，最终由人确认。")}</em></label><div class="form-row form-row--wide"><div class="projection-group-label"><span>Alexa 投影结果组 <b>*</b> ${index === 0 ? anchor(6) : ""}</span><em>产品侧不可直接选择 Capability；规则冲突由平台维护者处理。</em></div>${renderProjectionResult(binding, propertyMeta, index)}</div></div></article>`;
   }).join("")}</div></section>`;
 }
 
@@ -547,11 +559,16 @@ function handleInput(event) {
   }
   if (target.dataset.modeMappingIndex !== undefined && state.editor.open) {
     const index = Number(target.dataset.capabilityIndex);
-    const capability = state.editor.draft.capabilities[index];
-    const property = modelPropertyCatalog.find((item) => item.id === capability?.property);
-    const mappings = resolvedModeMappings(capability, property).map((item) => ({ ...item }));
+    const binding = state.editor.draft.capabilities[index];
+    const property = modelPropertyCatalog.find((item) => item.id === binding?.property);
+    const mappings = resolvedModeMappings(binding, property).map((item) => ({ ...item }));
     mappings[Number(target.dataset.modeMappingIndex)][target.dataset.modeMappingField] = target.value;
-    updateCapability(index, "modeMappings", mappings);
+    updateProjectionOverride(index, "alexa", target.dataset.projectionCapability || "ModeController", "modeMappings", mappings);
+    state.editor.validation = null;
+    return;
+  }
+  if (target.dataset.projectionField && state.editor.open) {
+    updateProjectionOverride(Number(target.dataset.capabilityIndex), "alexa", target.dataset.projectionCapability, target.dataset.projectionField, target.value);
     state.editor.validation = null;
     return;
   }
@@ -562,35 +579,24 @@ function handleInput(event) {
     updateCapability(index, field, target.value);
     if (field === "property") {
       updateCapability(index, "semantic", "");
-      updateCapability(index, "id", "");
-      updateCapability(index, "instance", "");
-      updateCapability(index, "mapping", "pending");
-      updateCapability(index, "modeMappings", undefined);
-      updateCapability(index, "supportedOperations", undefined);
+      updateCapability(index, "semanticSlot", "");
+      updateCapability(index, "providerOverrides", { alexa: {} });
       state.editor.validation = null;
       render();
       return;
     }
     if (field === "semantic") {
-      const semanticItem = semanticCapabilityCatalog.find((item) => item.id === target.value);
-      const catalogItem = capabilityCatalog.find((item) => item.id === semanticItem?.alexaCapability);
-      updateCapability(index, "id", semanticItem?.alexaCapability || "");
-      updateCapability(index, "instance", "");
-      updateCapability(index, "mapping", catalogItem?.template || "pending");
-      updateCapability(index, "modeMappings", semanticItem?.alexaCapability === "ModeController" ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
-      if (semanticItem?.alexaCapability === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");
-      else updateCapability(index, "supportedOperations", undefined);
-      state.editor.validation = null;
-      render();
-      return;
-    }
-    if (field === "id") {
-      const catalogItem = capabilityCatalog.find((item) => item.id === target.value);
-      updateCapability(index, "instance", "");
-      updateCapability(index, "mapping", catalogItem?.template || "pending");
-      updateCapability(index, "modeMappings", target.value === "ModeController" ? resolvedModeMappings({ instance: "" }, modelPropertyCatalog.find((item) => item.id === state.editor.draft.capabilities[index].property)) : undefined);
-      if (target.value === "PlaybackController") updateCapability(index, "supportedOperations", "Play, Pause");
-      else updateCapability(index, "supportedOperations", undefined);
+      const binding = state.editor.draft.capabilities[index];
+      const property = modelPropertyCatalog.find((item) => item.id === binding.property);
+      const candidate = semanticCandidatesForSource(property).find((item) => item.semantic.id === target.value);
+      updateCapability(index, "semanticSlot", candidate?.slotId || "");
+      updateCapability(index, "providerOverrides", { alexa: {} });
+      const resolution = resolveProviderProjection(binding, "alexa");
+      resolution.outputs?.forEach((output) => {
+        updateProjectionOverride(index, "alexa", output.capabilityId, "instance", "");
+        if (output.capabilityId === "ModeController") updateProjectionOverride(index, "alexa", output.capabilityId, "modeMappings", resolvedModeMappings(binding, property));
+        if (output.capabilityId === "PlaybackController") updateProjectionOverride(index, "alexa", output.capabilityId, "supportedOperations", "Play, Pause");
+      });
       state.editor.validation = null;
       render();
       return;

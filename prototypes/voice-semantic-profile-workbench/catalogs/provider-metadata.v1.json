@@ -1,0 +1,34 @@
+{
+  "catalog": "ProviderMetadataCatalog",
+  "version": "2026.08.1",
+  "providers": {
+    "alexa": {
+      "definitions": [
+        { "id": "PowerController", "group": "基础控制", "type": "bool", "directives": ["TurnOn", "TurnOff"], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "BrightnessController", "group": "灯光", "type": "number 0-100", "directives": ["SetBrightness", "AdjustBrightness"], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "ColorController", "group": "灯光", "type": "color object", "directives": ["SetColor"], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "ColorTemperatureController", "group": "灯光", "type": "kelvin", "directives": ["SetColorTemperature", "IncreaseColorTemperature", "DecreaseColorTemperature"], "status": "metadata_only", "instanceSupport": "none" },
+        { "id": "ModeController", "group": "通用控制", "type": "enum", "directives": ["SetMode", "AdjustMode"], "status": "profile_ready", "instanceSupport": "required", "resourceScopes": ["capability", "mode"] },
+        { "id": "RangeController", "group": "通用控制", "type": "number / enum", "directives": ["SetRangeValue", "AdjustRangeValue"], "status": "profile_ready", "instanceSupport": "optional", "resourceScopes": ["capability"] },
+        { "id": "ToggleController", "group": "通用控制", "type": "bool", "directives": ["TurnOn", "TurnOff"], "status": "profile_ready", "instanceSupport": "optional", "resourceScopes": ["capability"] },
+        { "id": "Speaker", "group": "音频", "type": "number 0-100", "directives": ["SetVolume", "AdjustVolume"], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "PlaybackController", "group": "音频", "type": "command", "directives": ["Play", "Pause", "Stop"], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "PlaybackStateReporter", "group": "音频状态", "type": "enum", "directives": [], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "EndpointHealth", "group": "状态", "type": "connectivity", "directives": [], "status": "profile_ready", "instanceSupport": "none" },
+        { "id": "TemperatureSensor", "group": "传感", "type": "temperature", "directives": [], "status": "metadata_only", "instanceSupport": "none" },
+        { "id": "RTCSessionController", "group": "会话", "type": "rtc", "directives": [], "status": "metadata_only", "instanceSupport": "optional" }
+      ]
+    },
+    "google_home": {
+      "definitions": [
+        { "id": "OnOff", "kind": "trait", "status": "metadata_only" },
+        { "id": "Brightness", "kind": "trait", "status": "metadata_only" },
+        { "id": "ColorSetting", "kind": "trait", "status": "metadata_only" },
+        { "id": "Modes", "kind": "trait", "status": "metadata_only" },
+        { "id": "Toggles", "kind": "trait", "status": "metadata_only" },
+        { "id": "Volume", "kind": "trait", "status": "metadata_only" },
+        { "id": "TransportControl", "kind": "trait", "status": "metadata_only" }
+      ]
+    }
+  }
+}
