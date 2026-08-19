@@ -257,12 +257,14 @@ const defaultVoiceNames = {
   child_lock: { control: { "en-US": "child lock", "de-DE": "Kindersicherung" } }
 };
 
-function createLabelSet(bindingId, scope, locales, values = {}) {
+function createLabelSet(bindingId, scope, locales, values = {}, status = "draft") {
   return {
     id: `alexa.${stableToken(bindingId)}.${scope}`,
     provider: "alexa",
     scope,
-    locales: Object.fromEntries(locales.map((locale) => [locale, { primary: values[locale] || "", aliases: [] }]))
+    locales: Object.fromEntries(locales.map((locale) => [locale, { primary: values[locale] || "", aliases: [] }])),
+    status,
+    version: 1
   };
 }
 
@@ -272,11 +274,12 @@ function candidateNeedsControlName(candidate) {
 
 function initializeVoice(binding, candidate, source, locales, seedDefaults = false) {
   const defaults = seedDefaults ? defaultVoiceNames[source?.id] || {} : {};
+  const initialStatus = seedDefaults ? "published" : "draft";
   const voice = { values: {} };
-  if (candidateNeedsControlName(candidate)) voice.control = createLabelSet(binding.bindingId, "capability", locales, defaults.control || {});
+  if (candidateNeedsControlName(candidate)) voice.control = createLabelSet(binding.bindingId, "capability", locales, defaults.control || {}, initialStatus);
   if (candidate?.outputs.some((output) => output.capabilityId === "ModeController")) {
     enumEntries(source).forEach((entry) => {
-      voice.values[entry.value] = createLabelSet(binding.bindingId, `mode.${stableToken(entry.value)}`, locales, defaults.values?.[entry.value] || {});
+      voice.values[entry.value] = createLabelSet(binding.bindingId, `mode.${stableToken(entry.value)}`, locales, defaults.values?.[entry.value] || {}, initialStatus);
     });
   }
   return voice;
@@ -436,7 +439,7 @@ export const state = {
   detailProductId: "momcozy.w1_lite",
   profiles: clone(profiles),
   filters: { keyword: "", status: "all" },
-  resourceFilters: { capability: "all", scope: "all", keyword: "" },
+  resourceFilters: { product: "all", capability: "all", scope: "all", status: "all", keyword: "" },
   editor: { open: false, section: "basic", sourceId: "", draft: null, productAlexaSupported: false, validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} },
   resourceEditor: { open: false, sourceKey: "", draft: null, validation: null },
   modal: { type: "", profileId: "", productId: "", draft: null },
@@ -478,14 +481,70 @@ export function setPage(page) {
 }
 
 export function filteredResources() {
-  const { capability, scope, keyword } = state.resourceFilters;
+  const { product, capability, scope, status, keyword } = state.resourceFilters;
   const search = keyword.trim().toLowerCase();
-  return resourceRegistry.filter((item) => {
+  return voiceLabelResources().filter((item) => {
+    const matchesProduct = product === "all" || item.productId === product;
     const matchesCapability = capability === "all" || item.capability === capability;
     const matchesScope = scope === "all" || item.scope === scope;
-    const matchesKeyword = !search || [item.key, item.semantic, ...Object.values(item.values)].join(" ").toLowerCase().includes(search);
-    return matchesCapability && matchesScope && matchesKeyword;
+    const matchesStatus = status === "all" || item.status === status;
+    const localeText = Object.values(item.locales).flatMap((entry) => [entry.primary, ...(entry.aliases || [])]);
+    const matchesKeyword = !search || [item.profileName, item.productName, item.mappingId, item.capability, item.machineId, item.resourceRef, item.label, ...localeText].join(" ").toLowerCase().includes(search);
+    return matchesProduct && matchesCapability && matchesScope && matchesStatus && matchesKeyword;
   });
+}
+
+export function voiceLabelResources() {
+  return state.profiles.flatMap((profile) => profile.capabilities.flatMap((binding) => {
+    const source = modelPropertyCatalog.find((item) => item.id === binding.property);
+    const candidate = selectedCapabilityCandidate(binding, profile);
+    const capability = candidate?.outputs?.[0]?.capabilityId || "Unsupported";
+    const product = productData.find((item) => item.id === profile.productId);
+    const common = {
+      profileId: profile.id,
+      profileName: profile.name,
+      productId: profile.productId,
+      productName: product?.name || profile.productKey,
+      productKey: profile.productKey,
+      bindingId: binding.bindingId,
+      mappingId: binding.mappingId,
+      capability,
+      sourceLabel: source?.label || binding.property,
+      targetLocales: profile.targetLocales || [localePolicy.baseLocale]
+    };
+    const rows = [];
+    if (binding.voice?.control) {
+      rows.push({
+        ...common,
+        id: binding.voice.control.id,
+        scope: "capability",
+        sourceValue: "",
+        label: source?.label || binding.property,
+        machineId: stableInstanceFor(binding),
+        resourceRef: binding.voice.control.id,
+        locales: binding.voice.control.locales || {},
+        status: binding.voice.control.status || "draft",
+        version: binding.voice.control.version || 1
+      });
+    }
+    enumEntries(source).forEach((entry) => {
+      const set = binding.voice?.values?.[entry.value];
+      if (!set) return;
+      rows.push({
+        ...common,
+        id: set.id,
+        scope: "mode",
+        sourceValue: entry.value,
+        label: `${entry.label} (${entry.value})`,
+        machineId: stableProviderValueFor(binding, entry.value),
+        resourceRef: set.id,
+        locales: set.locales || {},
+        status: set.status || "draft",
+        version: set.version || 1
+      });
+    });
+    return rows;
+  }));
 }
 
 export function setResourceFilter(key, value) {
@@ -494,19 +553,25 @@ export function setResourceFilter(key, value) {
 }
 
 export function resetResourceFilters() {
-  state.resourceFilters = { capability: "all", scope: "all", keyword: "" };
+  state.resourceFilters = { product: "all", capability: "all", scope: "all", status: "all", keyword: "" };
   emit();
 }
 
-export function openResourceEditor(key = "") {
-  const source = key ? getResource(key) : null;
+export function openResourceEditor(key) {
+  const source = voiceLabelResources().find((item) => item.id === key);
+  if (!source) return false;
+  const locales = Object.fromEntries(skillLocales.map(([locale]) => {
+    const entry = source.locales?.[locale];
+    return [locale, { primary: entry?.primary || "", aliases: [entry?.aliases?.[0] || "", entry?.aliases?.[1] || ""] }];
+  }));
   state.resourceEditor = {
     open: true,
     sourceKey: key,
-    draft: clone(source || { key: "", capability: "ModeController", scope: "mode", instance: "", modeValue: "", semantic: "", values: { "en-US": "", "de-DE": "" }, status: "draft", version: 1, usage: 0 }),
+    draft: clone({ ...source, locales }),
     validation: null
   };
   emit();
+  return true;
 }
 
 export function closeResourceEditor() {
@@ -515,44 +580,46 @@ export function closeResourceEditor() {
 }
 
 export function updateResourceDraft(path, value) {
-  const [group, key] = path.split(".");
   if (!state.resourceEditor.draft) return;
-  if (key) state.resourceEditor.draft[group][key] = value;
-  else state.resourceEditor.draft[group] = value;
+  const keys = path.split(".");
+  let cursor = state.resourceEditor.draft;
+  keys.slice(0, -1).forEach((key) => {
+    cursor[key] ||= {};
+    cursor = cursor[key];
+  });
+  cursor[keys[keys.length - 1]] = value;
   state.resourceEditor.validation = null;
 }
 
 export function validateResourceDraft() {
   const draft = state.resourceEditor.draft;
   const errors = [];
-  if (!/^[A-Za-z][A-Za-z0-9._-]{2,95}$/.test(draft.key?.trim() || "")) errors.push("Resource Key 须以英文字母开头，仅含字母、数字、点、下划线和连字符。");
-  if (!draft.semantic?.trim()) errors.push("请填写资源语义说明，供维护者判断复用范围。");
-  if (!draft.capability) errors.push("请选择所属 Alexa capability。");
-  if (!draft.scope) errors.push("请选择资源范围。");
-  if (draft.scope === "capability" && !instanceNamePattern.test(draft.instance?.trim() || "")) errors.push("能力名称资源须绑定 instance：1-64 位、英文字母开头，仅含字母、数字、点、下划线和连字符。");
-  if (draft.scope === "mode" && !instanceNamePattern.test(draft.modeValue?.trim() || "")) errors.push("Alexa mode 值须为 1-64 位、英文字母开头，仅含字母、数字、点、下划线和连字符。它是 Discovery / Directive / StateReport 使用的机器值。");
-  if (!draft.values?.[localePolicy.baseLocale]?.trim()) errors.push(`必须填写 ${localePolicy.baseLocale}（英语默认）词条。`);
-  const duplicate = resourceRegistry.find((item) => item.key === draft.key && item.key !== state.resourceEditor.sourceKey);
-  if (duplicate) errors.push(`Resource Key “${draft.key}” 已存在。`);
-  const duplicatedModeValue = draft.scope === "mode" && resourceRegistry.find((item) => item.scope === "mode" && item.capability === draft.capability && item.modeValue === draft.modeValue && item.key !== state.resourceEditor.sourceKey);
-  if (duplicatedModeValue) errors.push(`Alexa mode 值 “${draft.modeValue}” 已被 ${duplicatedModeValue.key} 使用。`);
-  const duplicatedCapabilityInstance = draft.scope === "capability" && resourceRegistry.find((item) => item.scope === "capability" && item.capability === draft.capability && item.instance === draft.instance && item.key !== state.resourceEditor.sourceKey);
-  if (duplicatedCapabilityInstance) errors.push(`instance “${draft.instance}” 已被 ${duplicatedCapabilityInstance.key} 绑定。`);
+  if (!draft) return { errors: ["未找到 VoiceLabelSet"], passed: false };
+  draft.targetLocales.forEach((locale) => {
+    const entry = draft.locales?.[locale] || { primary: "", aliases: [] };
+    if (!entry.primary?.trim()) errors.push(`${locale} 缺少主名称。`);
+    const names = [entry.primary, ...(entry.aliases || [])].map((item) => String(item || "").trim().toLowerCase()).filter(Boolean);
+    if (new Set(names).size !== names.length) errors.push(`${locale} 的主名称与别名不可重复。`);
+    if ((entry.aliases || []).filter((item) => String(item || "").trim()).length > 2) errors.push(`${locale} 最多配置两个别名。`);
+  });
   state.resourceEditor.validation = { errors, passed: errors.length === 0 };
   emit();
   return state.resourceEditor.validation;
 }
 
 export function saveResourceDraft(publish = false) {
-  const validation = state.resourceEditor.validation || validateResourceDraft();
-  if (!validation.passed) return false;
+  if (!state.resourceEditor.draft) return false;
+  const validation = publish ? (state.resourceEditor.validation || validateResourceDraft()) : null;
+  if (publish && !validation.passed) return false;
   const draft = clone(state.resourceEditor.draft);
-  draft.status = publish ? "published" : "draft";
-  draft.version = state.resourceEditor.sourceKey ? (getResource(state.resourceEditor.sourceKey)?.version || 1) + 1 : 1;
-  draft.usage = getResource(state.resourceEditor.sourceKey)?.usage || 0;
-  const index = resourceRegistry.findIndex((item) => item.key === state.resourceEditor.sourceKey);
-  if (index >= 0) resourceRegistry.splice(index, 1, draft);
-  else resourceRegistry.push(draft);
+  const profile = getProfile(draft.profileId);
+  const binding = profile?.capabilities.find((item) => item.bindingId === draft.bindingId);
+  if (!binding) return false;
+  const target = draft.scope === "capability" ? binding.voice?.control : binding.voice?.values?.[draft.sourceValue];
+  if (!target || target.id !== state.resourceEditor.sourceKey) return false;
+  target.locales = clone(draft.locales);
+  target.status = publish ? "published" : "draft";
+  target.version = (target.version || 1) + 1;
   state.resourceEditor = { open: false, sourceKey: "", draft: null, validation: null };
   emit();
   return true;
