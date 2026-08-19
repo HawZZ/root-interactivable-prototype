@@ -163,7 +163,9 @@ const pageRenderers = {
   "resource-library": renderResourceLibraryPage
 };
 
-function render() {
+function render({ preserveDrawerScroll = false } = {}) {
+  const currentDrawerBody = preserveDrawerScroll ? document.querySelector(".el-drawer__body") : null;
+  const drawerScroll = currentDrawerBody ? { top: currentDrawerBody.scrollTop, left: currentDrawerBody.scrollLeft } : null;
   document.documentElement.dataset.mobileView = state.mobileView;
   $(".prototype-shell").dataset.mobileView = state.mobileView;
   renderPageHeader();
@@ -177,6 +179,16 @@ function render() {
   refreshNav();
   refreshMobileTabs();
   applyHighlight();
+  if (drawerScroll) {
+    const restoreDrawerScroll = () => {
+      const nextDrawerBody = document.querySelector(".el-drawer__body");
+      if (!nextDrawerBody) return;
+      nextDrawerBody.scrollTop = drawerScroll.top;
+      nextDrawerBody.scrollLeft = drawerScroll.left;
+    };
+    restoreDrawerScroll();
+    window.requestAnimationFrame(restoreDrawerScroll);
+  }
 }
 
 function renderPageHeader() {
@@ -633,7 +645,7 @@ function handleInput(event) {
   }
   if (target.dataset.voiceIndex !== undefined && state.editor.open) {
     updateVoiceLabel(Number(target.dataset.voiceIndex), target.dataset.voiceScope, target.dataset.voiceValue, target.dataset.voiceLocale, target.dataset.voiceField, target.dataset.aliasIndex, target.value);
-    if (event.type === "change") render();
+    if (event.type === "change") render({ preserveDrawerScroll: true });
     return;
   }
   if (target.dataset.modeMappingIndex !== undefined && state.editor.open) {
