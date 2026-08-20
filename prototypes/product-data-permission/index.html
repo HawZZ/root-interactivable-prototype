@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
   <link rel="stylesheet" href="styles/drawer.css">
+  <link rel="stylesheet" href="styles/scenarios.css">
 </head>
 <body>
   <main class="shell">
@@ -22,26 +23,31 @@
           <div class="nav-group">App</div>
           <div class="nav-group">配置中心</div>
           <div class="nav-group active2">系统管理</div>
-          <div class="nav-sub selected">数据权限管理</div>
+          <div class="nav-sub selected" id="permissionNav">数据权限管理</div>
         </aside>
 
         <section class="main">
           <header>
             <span class="crumb">系统管理 / 数据权限管理</span>
-            <span class="user">管理员 · chen.wei@momcozy.com</span>
+            <span class="user" id="currentUser">IoT管理员 · chen.wei@momcozy.com</span>
           </header>
           <div class="page">
             <div class="title-row">
               <div>
-                <h1>数据权限管理</h1>
-                <p>按产品配置用户与数据角色的可访问范围</p>
+                <h1 id="pageTitle">数据权限管理</h1>
+                <p id="pageSubtitle">按产品配置用户与数据角色的可访问范围</p>
               </div>
             </div>
 
             <div class="tabs">
-              <button class="tab active" data-tab="users">用户授权</button>
-              <button class="tab" data-tab="roles">数据角色</button>
+              <button class="tab active" id="userTab" data-tab="users">用户授权</button>
+              <button class="tab" id="roleTab" data-tab="roles">数据角色</button>
             </div>
+
+            <section id="accessDenied" class="access-denied">
+              <strong>暂无数据权限管理功能权限</strong>
+              <p>当前 IoT 平台账号没有 ERP 分配的“数据权限管理”页面/动作权限，因此不展示用户授权和数据角色管理入口。</p>
+            </section>
 
             <section id="users" class="view active">
               <div class="filters">
@@ -95,6 +101,13 @@
       <div class="note-head">
         <h2>原型批注</h2>
         <p id="noteContext">用户授权 · 页面态</p>
+        <div class="scenario-switch" aria-label="原型场景">
+          <span>原型场景</span>
+          <button class="scenario active" data-scenario="admin">IoT管理员</button>
+          <button class="scenario" data-scenario="owner">角色负责人</button>
+          <button class="scenario" data-scenario="user">普通用户</button>
+        </div>
+        <p class="scenario-help">切换后即时同步左侧身份、可见入口、操作权限与批注。</p>
       </div>
       <div id="notes"></div>
     </aside>

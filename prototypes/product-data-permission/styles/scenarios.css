@@ -1,0 +1,16 @@
+.scenario-switch{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:13px}
+.scenario-switch>span{width:100%;font-size:12px;color:#606266}
+.scenario{height:26px;padding:0 8px;border:1px solid #dcdfe6;border-radius:3px;background:#fff;color:#606266;font-size:12px;cursor:pointer}
+.scenario:hover{color:#4372ff;border-color:#a5bfff}
+.scenario.active{color:#fff;background:#4372ff;border-color:#4372ff}
+.scenario-help{line-height:1.5}
+.access-denied{display:none;margin-top:18px;padding:24px;border:1px solid #ebeef5;background:#fff;text-align:center;color:#606266}
+.access-denied strong{display:block;color:#303133;font-size:16px}
+.access-denied p{margin:10px 0 0;font-size:13px;color:#909399}
+.scenario-owner #userTab,.scenario-user .tabs{display:none}
+.scenario-owner #roles .right{display:none}
+.scenario-user #users,.scenario-user #roles{display:none}
+.scenario-user #accessDenied{display:block}
+.scenario-user #permissionNav{display:none}
+.scenario-user #pageTitle{color:#909399}
+.scenario-user #pageSubtitle{color:#b0b5bd}

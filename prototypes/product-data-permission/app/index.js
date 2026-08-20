@@ -45,6 +45,27 @@ const notes = {
   ]
 };
 
+const scenarios = {
+  admin: {
+    label: "IoT管理员",
+    user: "陈薇",
+    mail: "chen.wei@momcozy.com",
+    scope: "可管理全部用户直授、数据角色、负责人、成员、状态与产品范围。"
+  },
+  owner: {
+    label: "角色负责人",
+    user: "王琳",
+    mail: "wang.lin@momcozy.com",
+    scope: "仅可查看并维护自己负责的数据角色成员；不能进入用户授权，也不能编辑角色名称、状态、负责人或产品范围。"
+  },
+  user: {
+    label: "普通用户",
+    user: "张静",
+    mail: "zhang.jing@momcozy.com",
+    scope: "没有 ERP 分配的数据权限管理页面/动作权限；该管理入口不可见。其业务页面仍按“ERP 功能权限 AND 产品数据权限”判定。"
+  }
+};
+
 let current = users[0];
 let drawerMode = "grant";
 let activeRole = null;
@@ -52,6 +73,11 @@ let selectedMember = null;
 let grantDraft = null;
 let roleDraft = null;
 let memberDraft = null;
+let activeScenario = "admin";
+
+function isAdmin() { return activeScenario === "admin"; }
+function isOwner() { return activeScenario === "owner"; }
+function canManageMembers(role) { return isAdmin() || (isOwner() && role.owner === scenarios.owner.user); }
 
 function toast(message) {
   const element = document.querySelector("#toast");
@@ -70,7 +96,7 @@ function directProductLabel(user) {
 }
 
 function calculateScope(user) {
-  const roles = user.roles.map(name => dataRoles.find(role => role.name === name)).filter(Boolean);
+  const roles = user.roles.map(name => dataRoles.find(role => role.name === name)).filter(role => role && role.enabled);
   if (roles.some(role => role.dynamicAll)) return "全部产品（动态）";
   return [...new Set([...user.direct, ...roles.flatMap(role => role.products)])].join("、") || "—";
 }
@@ -78,7 +104,8 @@ function calculateScope(user) {
 function renderNotes(tab, context) {
   const label = { users: "用户授权 · 页面态", roles: "数据角色 · 页面态", drawer: "操作抽屉 · 当前状态" };
   document.querySelector("#noteContext").textContent = context || label[tab];
-  document.querySelector("#notes").innerHTML = notes[tab].map((note, index) =>
+  const scenarioNote = ["当前原型场景 · " + scenarios[activeScenario].label, scenarios[activeScenario].scope];
+  document.querySelector("#notes").innerHTML = [scenarioNote, ...notes[tab]].map((note, index) =>
     "<article class='note'><span class='num'>" + (index + 1) + "</span><b>" + note[0] + "</b><span>" + note[1] + "</span></article>"
   ).join("");
 }
@@ -202,6 +229,7 @@ function renderGrantRolePicker() {
 }
 
 function openGrant(user) {
+  if (!isAdmin()) return toast("当前场景仅 IoT管理员可维护用户授权");
   current = user;
   grantDraft = { direct: [...user.direct], roles: [...user.roles] };
   setDrawer("管理用户授权 · " + user.name,
@@ -241,6 +269,7 @@ function renderRoleProductPicker() {
 }
 
 function openRoleEditor(role) {
+  if (!isAdmin()) return toast("当前场景仅 IoT管理员可编辑数据角色");
   activeRole = role || null;
   roleDraft = role ? { name: role.name, owner: role.owner, enabled: role.enabled, dynamicAll: !!role.dynamicAll, products: [...role.products] } : { name: "", owner: "", enabled: true, dynamicAll: false, products: [] };
   const owner = iotAccounts.find(account => account.name === roleDraft.owner);
@@ -259,6 +288,7 @@ function openRoleEditor(role) {
 }
 
 function openRoleMembers(role, preserveDraft) {
+  if (!canManageMembers(role)) return toast("当前场景只能维护本人负责角色的成员");
   activeRole = role;
   if (!preserveDraft) memberDraft = [...role.memberNames];
   setDrawer("管理成员 · " + role.name,
@@ -287,6 +317,7 @@ function openMemberPicker(role) {
 }
 
 function openDeleteRole(role) {
+  if (!isAdmin()) return toast("当前场景仅 IoT管理员可删除数据角色");
   activeRole = role;
   setDrawer("删除数据角色 · " + role.name,
     "<div class='field'><label>删除影响</label><div class='scope'><b>" + role.name + "</b><br>负责人：" + role.owner + "<br>当前成员：" + role.memberNames.length + " 人<br>授权范围：" + roleProductLabel(role) + "</div></div>" +
@@ -295,9 +326,14 @@ function openDeleteRole(role) {
 }
 
 function renderRoleRows() {
-  document.querySelector("#roles tbody").innerHTML = dataRoles.map((role, index) =>
-    "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td><button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button><i>|</i><button class='op danger' data-role-delete='" + index + "'>删除</button></td></tr>"
-  ).join("");
+  const visibleRoles = isOwner() ? dataRoles.filter(role => role.owner === scenarios.owner.user) : dataRoles;
+  document.querySelector("#roles tbody").innerHTML = visibleRoles.map(role => {
+    const index = dataRoles.indexOf(role);
+    const operations = isAdmin()
+      ? "<button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button><i>|</i><button class='op danger' data-role-delete='" + index + "'>删除</button>"
+      : "<button class='op' data-role-members='" + index + "'>管理成员</button>";
+    return "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td>" + operations + "</td></tr>";
+  }).join("");
   document.querySelectorAll("[data-role-edit]").forEach(button => { button.onclick = () => openRoleEditor(dataRoles[Number(button.dataset.roleEdit)]); });
   document.querySelectorAll("[data-role-members]").forEach(button => { button.onclick = () => openRoleMembers(dataRoles[Number(button.dataset.roleMembers)]); });
   document.querySelectorAll("[data-role-delete]").forEach(button => { button.onclick = () => openDeleteRole(dataRoles[Number(button.dataset.roleDelete)]); });
@@ -320,6 +356,36 @@ function bindFilterActions() {
   });
 }
 
+function applyScenario(nextScenario) {
+  activeScenario = nextScenario;
+  const scenario = scenarios[activeScenario];
+  document.body.classList.remove("scenario-admin", "scenario-owner", "scenario-user");
+  document.body.classList.add("scenario-" + activeScenario);
+  document.querySelector("#currentUser").textContent = scenario.label + " · " + scenario.mail;
+  document.querySelectorAll(".scenario").forEach(button => {
+    button.classList.toggle("active", button.dataset.scenario === activeScenario);
+  });
+  document.querySelector("#drawer").classList.remove("open");
+  grantDraft = null;
+  if (activeScenario === "user") {
+    document.querySelector("#pageTitle").textContent = "IoT Admin";
+    document.querySelector("#pageSubtitle").textContent = "当前账号可访问的业务页面由 ERP 功能权限与产品数据权限共同决定";
+    renderNotes("users", "普通用户 · 数据权限管理入口不可见");
+  } else {
+    document.querySelector("#pageTitle").textContent = "数据权限管理";
+    document.querySelector("#pageSubtitle").textContent = activeScenario === "owner"
+      ? "仅维护本人负责数据角色的成员"
+      : "按产品配置用户与数据角色的可访问范围";
+    const targetTab = activeScenario === "owner" ? "roles" : "users";
+    document.querySelectorAll(".tab, .view").forEach(element => element.classList.remove("active"));
+    document.querySelector(".tab[data-tab='" + targetTab + "']").classList.add("active");
+    document.querySelector("#" + targetTab).classList.add("active");
+    renderNotes(targetTab);
+  }
+  renderRows();
+  renderRoleRows();
+}
+
 document.querySelectorAll(".tab").forEach(button => {
   button.onclick = () => {
     document.querySelectorAll(".tab, .view").forEach(element => element.classList.remove("active"));
@@ -327,6 +393,9 @@ document.querySelectorAll(".tab").forEach(button => {
     document.querySelector("#" + button.dataset.tab).classList.add("active");
     renderNotes(button.dataset.tab);
   };
+});
+document.querySelectorAll(".scenario").forEach(button => {
+  button.onclick = () => applyScenario(button.dataset.scenario);
 });
 document.querySelector(".right").onclick = () => openRoleEditor(null);
 document.querySelector("#close").onclick = closeDrawer;
@@ -420,4 +489,4 @@ document.querySelector("#confirm").onclick = () => {
 renderRows();
 renderRoleRows();
 bindFilterActions();
-renderNotes("users");
+applyScenario("admin");
