@@ -7,8 +7,7 @@
 .access-denied{display:none;margin-top:18px;padding:24px;border:1px solid #ebeef5;background:#fff;text-align:center;color:#606266}
 .access-denied strong{display:block;color:#303133;font-size:16px}
 .access-denied p{margin:10px 0 0;font-size:13px;color:#909399}
-.scenario-owner #userTab,.scenario-user .tabs{display:none}
-.scenario-owner #roles .right{display:none}
+.scenario-user .tabs{display:none}
 .scenario-user #users,.scenario-user #roles{display:none}
 .scenario-user #accessDenied{display:block}
 .scenario-user #permissionNav{display:none}

@@ -5,9 +5,9 @@ const users = [
 ];
 
 const dataRoles = [
-  { name: "北美泵产品组", owner: "王琳", enabled: true, memberNames: ["陈薇", "周凯", "李宁", "Sofia", "韩雪", "赵敏", "Luca", "Mila"], products: ["W1 Lite", "S12 Pro", "M5"] },
-  { name: "欧洲运营组", owner: "李浩", enabled: true, memberNames: ["王琳", "Ana", "Luca", "Mila", "周凯"], products: ["S12 Pro", "V2"] },
-  { name: "系统临时全量角色", owner: "全局管理员", enabled: true, memberNames: ["赵敏", "李哲", "林丹", "Grace", "Daisy", "Tom", "Eric", "Nina", "王超", "小陈", "Jasper", "Lily"], products: [], dynamicAll: true }
+  { name: "北美泵产品组", enabled: true, memberNames: ["陈薇", "周凯", "李宁", "Sofia", "韩雪", "赵敏", "Luca", "Mila"], products: ["W1 Lite", "S12 Pro", "M5"] },
+  { name: "欧洲运营组", enabled: true, memberNames: ["王琳", "Ana", "Luca", "Mila", "周凯"], products: ["S12 Pro", "V2"] },
+  { name: "系统临时全量角色", enabled: true, memberNames: ["赵敏", "李哲", "林丹", "Grace", "Daisy", "Tom", "Eric", "Nina", "王超", "小陈", "Jasper", "Lily"], products: [], dynamicAll: true }
 ];
 
 const iotAccounts = [
@@ -35,13 +35,13 @@ const notes = {
     ["系统临时全量角色", "历史全量账号作为“系统临时全量角色”在数据角色页管理，不再作为用户状态展示。"]
   ],
   roles: [
-    ["数据角色", "角色含负责人、成员与授权产品；负责人只管理成员，不自动取得产品访问权。"],
+    ["数据角色", "数据角色是成员与授权产品范围的组合；所有配置均由 IoT管理员维护，角色本身不派生管理身份。"],
     ["系统临时全量角色", "该角色的产品范围为全部产品（动态），成员仅为切换上线时冻结的有效历史账号。"],
     ["成员管理", "点击“管理成员”后搜索 IoT 平台账号；产品范围仅全局管理员可维护。"]
   ],
   drawer: [
     ["抽屉操作", "确认按钮根据当前操作执行校验。取消、关闭或点击遮罩均不保存变更。"],
-    ["账号来源", "负责人和成员候选均来自 ERP 已分配/同步到 IoT 平台的账号，可按姓名、拼音或邮箱搜索。"]
+    ["账号来源", "成员候选来自 ERP 已分配/同步到 IoT 平台的账号，可按姓名、拼音或邮箱搜索。"]
   ]
 };
 
@@ -50,13 +50,7 @@ const scenarios = {
     label: "IoT管理员",
     user: "陈薇",
     mail: "chen.wei@momcozy.com",
-    scope: "可管理全部用户直授、数据角色、负责人、成员、状态与产品范围。"
-  },
-  owner: {
-    label: "角色负责人",
-    user: "王琳",
-    mail: "wang.lin@momcozy.com",
-    scope: "仅可查看并维护自己负责的数据角色成员；不能进入用户授权，也不能编辑角色名称、状态、负责人或产品范围。"
+    scope: "可管理全部用户直授、数据角色、成员、状态与产品范围。"
   },
   user: {
     label: "普通用户",
@@ -76,8 +70,7 @@ let memberDraft = null;
 let activeScenario = "admin";
 
 function isAdmin() { return activeScenario === "admin"; }
-function isOwner() { return activeScenario === "owner"; }
-function canManageMembers(role) { return isAdmin() || (isOwner() && role.owner === scenarios.owner.user); }
+function canManageMembers() { return isAdmin(); }
 
 function toast(message) {
   const element = document.querySelector("#toast");
@@ -271,16 +264,12 @@ function renderRoleProductPicker() {
 function openRoleEditor(role) {
   if (!isAdmin()) return toast("当前场景仅 IoT管理员可编辑数据角色");
   activeRole = role || null;
-  roleDraft = role ? { name: role.name, owner: role.owner, enabled: role.enabled, dynamicAll: !!role.dynamicAll, products: [...role.products] } : { name: "", owner: "", enabled: true, dynamicAll: false, products: [] };
-  const owner = iotAccounts.find(account => account.name === roleDraft.owner);
+  roleDraft = role ? { name: role.name, enabled: role.enabled, dynamicAll: !!role.dynamicAll, products: [...role.products] } : { name: "", enabled: true, dynamicAll: false, products: [] };
   setDrawer((role ? "编辑数据角色 · " : "新建数据角色") + (role ? role.name : ""),
     "<div class='field'><label>角色名称 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleName' value='" + roleDraft.name + "' placeholder='例如：日本泵产品组'></div>" +
-    "<div class='field'><label>角色负责人 <em style='color:#f56c6c'>*</em></label><input class='el-input' id='roleOwner' value='" + (owner ? owner.name + "（" + owner.mail + "）" : roleDraft.owner) + "' placeholder='搜索姓名、拼音或邮箱'><div class='account-suggestions' id='roleOwnerSuggestions'></div><p class='help'>候选来源为 IoT 平台账号，可按姓名、拼音或邮箱模糊搜索。</p></div>" +
     "<div class='field'><label>状态</label><select class='el-select' id='roleStatus'><option value='enabled' " + (roleDraft.enabled ? "selected" : "") + ">启用</option><option value='disabled' " + (!roleDraft.enabled ? "selected" : "") + ">停用</option></select></div>" +
     "<div class='field'><label>授权产品 <em style='color:#f56c6c'>*</em></label><div class='scope'><label><input type='radio' name='roleMode' value='specified' " + (!roleDraft.dynamicAll ? "checked" : "") + "> 指定产品</label><label style='margin-left:20px'><input type='radio' name='roleMode' value='all' " + (roleDraft.dynamicAll ? "checked" : "") + "> 全部产品（动态）</label></div><p class='help'>数据角色支持指定产品或动态全部产品。</p><div id='roleProductPicker'></div></div>",
     role ? "保存角色" : "创建角色", "saveRole");
-  if (owner) document.querySelector("#roleOwner").dataset.accountMail = owner.mail;
-  bindAccountSearch("roleOwner", "roleOwnerSuggestions", [], account => { roleDraft.owner = account.name; });
   document.querySelectorAll("input[name='roleMode']").forEach(input => {
     input.onchange = () => { roleDraft.dynamicAll = input.value === "all"; renderRoleProductPicker(); };
   });
@@ -288,7 +277,7 @@ function openRoleEditor(role) {
 }
 
 function openRoleMembers(role, preserveDraft) {
-  if (!canManageMembers(role)) return toast("当前场景只能维护本人负责角色的成员");
+  if (!canManageMembers()) return toast("当前场景仅 IoT管理员可管理数据角色成员");
   activeRole = role;
   if (!preserveDraft) memberDraft = [...role.memberNames];
   setDrawer("管理成员 · " + role.name,
@@ -320,19 +309,16 @@ function openDeleteRole(role) {
   if (!isAdmin()) return toast("当前场景仅 IoT管理员可删除数据角色");
   activeRole = role;
   setDrawer("删除数据角色 · " + role.name,
-    "<div class='field'><label>删除影响</label><div class='scope'><b>" + role.name + "</b><br>负责人：" + role.owner + "<br>当前成员：" + role.memberNames.length + " 人<br>授权范围：" + roleProductLabel(role) + "</div></div>" +
+    "<div class='field'><label>删除影响</label><div class='scope'><b>" + role.name + "</b><br>当前成员：" + role.memberNames.length + " 人<br>授权范围：" + roleProductLabel(role) + "</div></div>" +
     "<div class='field'><p class='help'>确认后将从所有关联 IoT 平台账号中移除该数据角色，并立即重新计算其有效产品范围；该操作不可撤销。</p></div>",
     "确认删除", "deleteRole");
 }
 
 function renderRoleRows() {
-  const visibleRoles = isOwner() ? dataRoles.filter(role => role.owner === scenarios.owner.user) : dataRoles;
-  document.querySelector("#roles tbody").innerHTML = visibleRoles.map(role => {
+  document.querySelector("#roles tbody").innerHTML = dataRoles.map(role => {
     const index = dataRoles.indexOf(role);
-    const operations = isAdmin()
-      ? "<button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button><i>|</i><button class='op danger' data-role-delete='" + index + "'>删除</button>"
-      : "<button class='op' data-role-members='" + index + "'>管理成员</button>";
-    return "<tr><td><b>" + role.name + "</b></td><td>" + role.owner + "</td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td>" + operations + "</td></tr>";
+    const operations = "<button class='op' data-role-edit='" + index + "'>编辑</button><i>|</i><button class='op' data-role-members='" + index + "'>管理成员</button><i>|</i><button class='op danger' data-role-delete='" + index + "'>删除</button>";
+    return "<tr><td><b>" + role.name + "</b></td><td>" + role.memberNames.length + " 人</td><td>" + roleProductLabel(role) + "</td><td><span class='tag " + (role.enabled ? "success" : "info") + "'>" + (role.enabled ? "启用" : "停用") + "</span></td><td>" + operations + "</td></tr>";
   }).join("");
   document.querySelectorAll("[data-role-edit]").forEach(button => { button.onclick = () => openRoleEditor(dataRoles[Number(button.dataset.roleEdit)]); });
   document.querySelectorAll("[data-role-members]").forEach(button => { button.onclick = () => openRoleMembers(dataRoles[Number(button.dataset.roleMembers)]); });
@@ -359,7 +345,7 @@ function bindFilterActions() {
 function applyScenario(nextScenario) {
   activeScenario = nextScenario;
   const scenario = scenarios[activeScenario];
-  document.body.classList.remove("scenario-admin", "scenario-owner", "scenario-user");
+  document.body.classList.remove("scenario-admin", "scenario-user");
   document.body.classList.add("scenario-" + activeScenario);
   document.querySelector("#currentUser").textContent = scenario.label + " · " + scenario.mail;
   document.querySelectorAll(".scenario").forEach(button => {
@@ -373,10 +359,8 @@ function applyScenario(nextScenario) {
     renderNotes("users", "普通用户 · 数据权限管理入口不可见");
   } else {
     document.querySelector("#pageTitle").textContent = "数据权限管理";
-    document.querySelector("#pageSubtitle").textContent = activeScenario === "owner"
-      ? "仅维护本人负责数据角色的成员"
-      : "按产品配置用户与数据角色的可访问范围";
-    const targetTab = activeScenario === "owner" ? "roles" : "users";
+    document.querySelector("#pageSubtitle").textContent = "按产品配置用户与数据角色的可访问范围";
+    const targetTab = "users";
     document.querySelectorAll(".tab, .view").forEach(element => element.classList.remove("active"));
     document.querySelector(".tab[data-tab='" + targetTab + "']").classList.add("active");
     document.querySelector("#" + targetTab).classList.add("active");
@@ -426,23 +410,19 @@ document.querySelector("#confirm").onclick = () => {
   }
   if (drawerMode === "saveRole") {
     const name = document.querySelector("#roleName").value.trim();
-    const ownerInput = document.querySelector("#roleOwner");
-    const owner = iotAccounts.find(account => account.mail === ownerInput.dataset.accountMail)?.name;
     const enabled = document.querySelector("#roleStatus").value === "enabled";
     if (!name) return toast("请填写数据角色名称");
     if (dataRoles.some(role => role.name === name && role !== activeRole)) return toast("数据角色名称已存在");
-    if (!owner) return toast("请从 IoT 平台账号搜索结果中选择角色负责人");
     if (!roleDraft.dynamicAll && !roleDraft.products.length) return toast("请选择至少一个指定产品，或选择全部产品（动态）");
     if (activeRole) {
       const oldName = activeRole.name;
       activeRole.name = name;
-      activeRole.owner = owner;
       activeRole.enabled = enabled;
       activeRole.dynamicAll = roleDraft.dynamicAll;
       activeRole.products = roleDraft.dynamicAll ? [] : [...roleDraft.products];
       users.forEach(user => { user.roles = user.roles.map(roleName => roleName === oldName ? name : roleName); });
     } else {
-      dataRoles.push({ name, owner, enabled, memberNames: [], products: roleDraft.dynamicAll ? [] : [...roleDraft.products], dynamicAll: roleDraft.dynamicAll });
+      dataRoles.push({ name, enabled, memberNames: [], products: roleDraft.dynamicAll ? [] : [...roleDraft.products], dynamicAll: roleDraft.dynamicAll });
     }
     renderRows();
     renderRoleRows();
