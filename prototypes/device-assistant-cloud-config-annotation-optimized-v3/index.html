@@ -6984,28 +6984,12 @@
           强制新手指引
         </label>
         <div class="field-help">开启后，用户添加设备并首次进入控制页时必须进入设备助手；关闭后仍可在设置 - How to Use 中查看 Step 页面。</div>
-        <label class="check-row">
-          <input id="whitelistToggle" type="checkbox" ${state.whitelist.enabled ? "checked" : ""}>
-          草稿白名单测试
-        </label>
-        <div class="test-email-row">
-          <input class="input" id="testEmailInput" value="${escapeHtml(state.whitelist.email)}" placeholder="test@example.com" ${state.whitelist.enabled ? "" : "disabled"}>
-          <button class="btn" id="saveTestEmailBtn" type="button" ${state.whitelist.enabled ? "" : "disabled"}>保存</button>
-        </div>
       `;
       $("#forceNoviceGuideToggle")?.addEventListener("change", (event) => {
         state.forceNoviceGuide = event.target.checked;
         setDirty();
         renderEntry();
       });
-      $("#whitelistToggle")?.addEventListener("change", (event) => {
-        state.whitelist.enabled = event.target.checked;
-        renderPublishPanel();
-      });
-      $("#testEmailInput")?.addEventListener("input", (event) => {
-        state.whitelist.email = event.target.value.trim();
-      });
-      $("#saveTestEmailBtn")?.addEventListener("click", saveWhitelistEmail);
     }
 
     function selectStep(stepId, options = {}) {
@@ -11388,17 +11372,6 @@
       return v3IsPublished() ? "已发布整套配置" : "无已发布配置（正式 APP 不返回）";
     }
 
-    function saveWhitelistEmail() {
-      if (!state.whitelist.enabled) return;
-      const email = state.whitelist.email.trim();
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        showToast("请输入有效的测试邮箱");
-        return;
-      }
-      state.whitelist.email = email;
-      showToast("草稿测试邮箱已保存；仅专用测试链路可读取草稿");
-    }
-
     function currentLocaleStatus() {
       if (v3IsPublished() && state.draftLocales[state.defaultLocale]) {
         return { key: "publishedWithDraft", label: "已发布 / 有草稿", tag: "warning" };
@@ -11432,11 +11405,9 @@
         isPublished
           ? '<div class="field-help" style="margin-top:8px;">下架后会将当前已发布整套配置全量覆盖到草稿；历史快照仅用于审计，不支持直接恢复。</div><button class="btn danger" id="unpublishConfigBtn" type="button">下架设备助手配置</button>'
           : '<div class="field-help" style="margin-top:8px;">当前正式 APP 不返回设备助手配置。可编辑当前草稿并完成校验后重新发布。</div>',
-        '<div class="field-help" style="margin-top:8px;">专用测试链路和管理端预览可读取草稿；产品上架状态及产品白名单不因下架而变更。</div>',
+        '<div class="field-help" style="margin-top:8px;">草稿不配置独立白名单或测试邮箱。已在白名单管理中录入且授权当前产品的用户可读取草稿；其他用户与默认正式 APP 不可读取草稿。</div>',
         lastOperation ? '<div class="field-help" style="margin-top:8px;">最近操作：' + escapeHtml(lastOperation.label) + '（' + escapeHtml(lastOperation.at) + '）</div>' : '',
-        '<label class="check-row" style="margin-top: 8px;"><input id="forceNoviceGuideToggle" type="checkbox" ' + (state.forceNoviceGuide ? "checked" : "") + '> 强制新手指引</label>',
-        '<label class="check-row"><input id="whitelistToggle" type="checkbox" ' + (state.whitelist.enabled ? "checked" : "") + '> 草稿白名单测试</label>',
-        '<div class="test-email-row"><input class="input" id="testEmailInput" value="' + escapeHtml(state.whitelist.email) + '" placeholder="test@example.com" ' + (state.whitelist.enabled ? "" : "disabled") + '><button class="btn" id="saveTestEmailBtn" type="button" ' + (state.whitelist.enabled ? "" : "disabled") + '>保存</button></div>'
+        '<label class="check-row" style="margin-top: 8px;"><input id="forceNoviceGuideToggle" type="checkbox" ' + (state.forceNoviceGuide ? "checked" : "") + '> 强制新手指引</label>'
       ].join("");
       $("#unpublishConfigBtn")?.addEventListener("click", openUnpublishModal);
       $("#forceNoviceGuideToggle")?.addEventListener("change", function(event) {
@@ -11444,14 +11415,6 @@
         setDirty();
         renderEntry();
       });
-      $("#whitelistToggle")?.addEventListener("change", function(event) {
-        state.whitelist.enabled = event.target.checked;
-        renderPublishPanel();
-      });
-      $("#testEmailInput")?.addEventListener("input", function(event) {
-        state.whitelist.email = event.target.value.trim();
-      });
-      $("#saveTestEmailBtn")?.addEventListener("click", saveWhitelistEmail);
     }
 
     function renderSavedEntryPreview() {
@@ -11468,7 +11431,7 @@
       }
       const meta = v3PublishedMeta() || state.draftLocaleMeta[state.defaultLocale] || {};
       preview.innerHTML = '<div class="saved-preview-head"><div><div class="saved-preview-title">设备助手配置预览</div><div class="saved-preview-meta">配置级管理 / ' + state.steps.length + ' steps / ' + escapeHtml(meta.savedAt || "刚刚更新") + '</div></div><span class="tag ' + status.tag + '">' + status.label + '</span></div>'
-        + (status.key === "unpublishedWithDraft" ? '<div class="field-help">配置已下架：正式 APP 不返回内容；管理端预览与专用测试链路读取当前草稿。</div>' : '')
+        + (status.key === "unpublishedWithDraft" ? '<div class="field-help">配置已下架：正式 APP 不返回内容；管理端预览及已获当前产品授权的白名单用户可读取当前草稿。</div>' : '')
         + '<div class="saved-preview-steps">' + state.steps.map(function(step, index) { return renderSavedEntryStep(step, index); }).join("") + '</div>';
       preview.querySelectorAll("[data-entry-preview-step]").forEach(function(button) {
         button.addEventListener("click", function() {
@@ -11607,7 +11570,7 @@
           scope: "page",
           target: "#publishPanel",
           title: "配置级发布状态",
-          body: "发布与下架作用于英文结构源和全部启用语言的整套配置，不按语言分别操作。产品上架状态、产品白名单和旧版设备助手配置均不受影响。",
+          body: "发布与下架作用于英文结构源和全部启用语言的整套配置，不按语言分别操作。草稿不配置独立白名单或测试邮箱，直接继承产品白名单管理：已录入且被授权当前产品的用户可读取草稿。产品上架状态与旧版设备助手配置均不受影响。",
           loc: "新版入口 > 配置级版本控制",
           tag: "v3"
         },
