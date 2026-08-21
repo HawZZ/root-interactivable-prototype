@@ -1460,6 +1460,92 @@
       line-height: 20px;
     }
 
+    /* V3 configuration-level release control: keep the admin density while
+       giving publish state, draft access, and destructive actions clear lanes. */
+    #publishPanel.v3-release-panel {
+      gap: 12px;
+      padding: 14px;
+      background: #fff;
+      border-color: #dce6f2;
+    }
+
+    .v3-release-overview {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #dce6f2;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #f8fbff 0%, #fff 70%);
+    }
+
+    .v3-release-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e8eef6;
+    }
+
+    .v3-release-kicker {
+      margin-bottom: 3px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .v3-release-name {
+      color: var(--el-text-color-primary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    #publishPanel .status-grid {
+      gap: 0;
+    }
+
+    #publishPanel .status-row {
+      min-height: 28px;
+      padding: 5px 0;
+      border-bottom: 1px solid #eef2f6;
+    }
+
+    #publishPanel .status-row:last-child {
+      border-bottom: 0;
+    }
+
+    .v3-policy-summary {
+      display: grid;
+      gap: 3px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .v3-policy-summary strong {
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+    }
+
+    .v3-action-zone {
+      display: grid;
+      gap: 8px;
+      padding-top: 2px;
+      border-top: 1px solid var(--el-border-color-light);
+    }
+
+    .v3-action-zone .field-help,
+    .v3-operation-log {
+      margin: 0;
+    }
+
+    .v3-action-zone .btn {
+      justify-self: start;
+    }
+
     .import-language-list {
       display: grid;
       gap: 8px;
@@ -11392,21 +11478,23 @@
       const publishedMeta = v3PublishedMeta();
       const historyCount = state.configHistorySnapshots.length;
       const lastOperation = state.configOperationLog[0];
+      panel.classList.add("v3-release-panel");
       panel.innerHTML = [
-        '<div class="publish-title">配置级版本控制</div>',
+        '<section class="v3-release-overview" aria-label="设备助手配置发布状态">',
+        '<div class="v3-release-header"><div><div class="v3-release-kicker">设备助手配置</div><div class="v3-release-name">配置级版本控制</div></div><span class="tag ' + (isPublished ? "success" : "warning") + '">' + (isPublished ? "已发布" : "已下架") + '</span></div>',
         '<div class="status-grid">',
         '<div class="status-row"><span>作用范围</span><strong>英文结构源 + 全部启用语言</strong></div>',
-        '<div class="status-row"><span>发布状态</span><span class="tag ' + (isPublished ? "success" : "warning") + '">' + (isPublished ? "已发布" : "已下架") + '</span></div>',
         '<div class="status-row"><span>草稿</span><span class="tag ' + (draftMeta ? "warning" : "info") + '">' + (draftMeta ? escapeHtml(draftMeta.savedAt) : "无") + '</span></div>',
         '<div class="status-row"><span>已发布版本</span><span class="tag ' + (publishedMeta ? "success" : "info") + '">' + (publishedMeta ? escapeHtml(publishedMeta.configVersion) : "无") + '</span></div>',
         '<div class="status-row"><span>正式 APP 获取</span><span class="tag ' + (isPublished ? "success" : "info") + '">' + v3AppFetchLabel() + '</span></div>',
         '<div class="status-row"><span>历史快照</span><span class="tag info">' + historyCount + ' 份只读</span></div>',
         '</div>',
+        '</section>',
         isPublished
-          ? '<div class="field-help" style="margin-top:8px;">下架后会将当前已发布整套配置全量覆盖到草稿；历史快照仅用于审计，不支持直接恢复。</div><button class="btn danger" id="unpublishConfigBtn" type="button">下架设备助手配置</button>'
-          : '<div class="field-help" style="margin-top:8px;">当前正式 APP 不返回设备助手配置。可编辑当前草稿并完成校验后重新发布。</div>',
-        '<div class="field-help" style="margin-top:8px;">草稿不配置独立白名单或测试邮箱。已在白名单管理中录入且授权当前产品的用户可读取草稿；其他用户与默认正式 APP 不可读取草稿。</div>',
-        lastOperation ? '<div class="field-help" style="margin-top:8px;">最近操作：' + escapeHtml(lastOperation.label) + '（' + escapeHtml(lastOperation.at) + '）</div>' : '',
+          ? '<div class="v3-action-zone"><div class="field-help">下架后会将当前已发布整套配置全量覆盖到草稿；历史快照仅用于审计，不支持直接恢复。</div><button class="btn danger" id="unpublishConfigBtn" type="button">下架设备助手配置</button></div>'
+          : '<div class="v3-action-zone"><div class="field-help">当前正式 APP 不返回设备助手配置。可编辑当前草稿并完成校验后重新发布。</div></div>',
+        '<div class="v3-policy-summary"><strong>草稿访问策略</strong><span>不配置独立白名单或测试邮箱。已在白名单管理中录入且授权当前产品的用户可读取草稿；其他用户与默认正式 APP 不可读取草稿。</span></div>',
+        lastOperation ? '<div class="field-help v3-operation-log">最近操作：' + escapeHtml(lastOperation.label) + '（' + escapeHtml(lastOperation.at) + '）</div>' : '',
         '<label class="check-row" style="margin-top: 8px;"><input id="forceNoviceGuideToggle" type="checkbox" ' + (state.forceNoviceGuide ? "checked" : "") + '> 强制新手指引</label>'
       ].join("");
       $("#unpublishConfigBtn")?.addEventListener("click", openUnpublishModal);
