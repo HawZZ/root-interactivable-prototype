@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>IoT Admin · 消息推送 V3.7</title>
+  <title>IoT Admin · 消息推送 V3.8</title>
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
 </head>
@@ -33,7 +33,7 @@
             <div class="page-heading" data-anchor="page-heading">
               <div>
                 <h1>消息推送</h1>
-                <p>配置独立提醒，并将可预测的定时提醒按自然日汇总</p>
+                <p>配置普通推送，或按自然日汇总同一设备的可预测定时事项</p>
               </div>
               <div class="page-actions">
                 <div class="product-control" data-anchor="product-switcher">
@@ -44,11 +44,6 @@
                 <button class="el-btn" id="productLanguageBtn" data-anchor="product-language-entry">统一多语言</button>
                 <button class="el-btn el-btn--primary" id="primaryCreateBtn">新建推送规则</button>
               </div>
-            </div>
-
-            <div class="business-tabs" data-anchor="business-tabs">
-              <button class="business-tab active" data-page="rules">推送规则 <span id="ruleCount">0</span></button>
-              <button class="business-tab" data-page="groups">每日汇总 <span id="groupCount">0</span></button>
             </div>
 
             <section class="content-panel" id="workspace" aria-live="polite"></section>

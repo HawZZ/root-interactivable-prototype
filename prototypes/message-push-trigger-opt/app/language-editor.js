@@ -1,150 +1,27 @@
 import { $, esc, showToast } from "./dom.js";
-import { appState, productLanguageConfig, rules, supportedLanguages, dailySummaryGroups } from "./state.js";
+import { appState, productLanguageConfig, rules, supportedLanguages } from "./state.js";
 import { renderAnnotations } from "./annotations.js";
-
 const clone = value => JSON.parse(JSON.stringify(value));
 const languageName = code => supportedLanguages.find(item => item[0] === code)?.[1] || code;
 const languageHeader = code => `${languageName(code)} (${code})`;
 const validLocales = new Set(supportedLanguages.map(item => item[0]));
 const productRules = () => rules.filter(rule => rule.productId === appState.selectedProductId);
-const groups = () => dailySummaryGroups.filter(group => group.productId === appState.selectedProductId);
 const committed = () => productLanguageConfig[appState.selectedProductId] ?? (productLanguageConfig[appState.selectedProductId] = { selectedLocales: ["en-US"], values: {} });
-let draft = null;
-let importReport = null;
+let draft = null, importReport = null;
 
-function rows() {
-  return [
-    ...groups().flatMap(group => [
-      { key: `group.${group.id}.title`, label: `汇总组 · ${group.name} · Title`, limit: 100, defaultValue: group.values?.["en-US"]?.title || "" },
-      { key: `group.${group.id}.body`, label: `汇总组 · ${group.name} · Body`, limit: 200, defaultValue: group.values?.["en-US"]?.body || "" }
-    ]),
-    ...productRules().flatMap(rule => rule.dailySummaryGroupId ? [
-      { key: `rule.${rule.id}.itemLabel`, label: `规则 · ${rule.name} · 提醒项`, limit: 100, defaultValue: rule.itemLabel || "" }
-    ] : [
-      { key: `rule.${rule.id}.title`, label: `规则 · ${rule.name} · Title`, limit: 100, defaultValue: rule.title || "" },
-      { key: `rule.${rule.id}.body`, label: `规则 · ${rule.name} · Body`, limit: 200, defaultValue: rule.body || "" }
-    ])
-  ];
-}
+function rows() { return productRules().flatMap(rule => rule.ruleType === "DAILY_SUMMARY" ? [{ key: `rule.${rule.id}.title`, label: `汇总推送 · ${rule.name} · Title`, field: "title", rule, limit: 100, defaultValue: rule.title || "" }, { key: `rule.${rule.id}.body`, label: `汇总推送 · ${rule.name} · Body`, field: "body", rule, limit: 200, defaultValue: rule.body || "" }, ...(rule.items || []).map(item => ({ key: `rule.${rule.id}.items.${item.itemId}.label`, label: `汇总推送 · ${rule.name} · ${item.label || item.itemId} · 关联项`, field: "label", rule, item, limit: 100, defaultValue: item.label || "" }))] : [{ key: `rule.${rule.id}.title`, label: `普通推送 · ${rule.name} · Title`, field: "title", rule, limit: 100, defaultValue: rule.title || "" }, { key: `rule.${rule.id}.body`, label: `普通推送 · ${rule.name} · Body`, field: "body", rule, limit: 200, defaultValue: rule.body || "" }]); }
 function valuesFor(row) { return draft.values[row.key] ?? (draft.values[row.key] = { "en-US": row.defaultValue }); }
-function choices() {
-  return `<div class="locale-grid" data-anchor="language-selection">${supportedLanguages.map(([code, name]) => {
-    const checked = draft.selectedLocales.includes(code); const locked = code === "en-US";
-    return `<label class="locale-option ${checked ? "selected" : ""}"><input type="checkbox" data-locale="${code}" ${checked ? "checked" : ""} ${locked ? "disabled" : ""}><span><strong>${esc(name)}</strong><small>${code}${locked ? " · 默认" : ""}</small></span></label>`;
-  }).join("")}</div>`;
-}
-function matrix() {
-  return `<div class="matrix-wrap" data-anchor="product-language-matrix"><table class="lang-matrix product-language-matrix"><thead><tr><th style="min-width:280px">input key</th>${draft.selectedLocales.map(code => `<th style="min-width:220px">${esc(languageName(code))}<small>${code}</small></th>`).join("")}</tr></thead><tbody>${rows().map(row => `<tr><td><strong>${esc(row.label)}</strong><div class="secondary-cell">${esc(row.key)} · 最多 ${row.limit} 字符</div></td>${draft.selectedLocales.map(code => `<td><textarea data-language-key="${esc(row.key)}" data-language-locale="${code}" maxlength="${row.limit}">${esc(valuesFor(row)[code] || "")}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-}
-function issues() {
-  return rows().flatMap(row => draft.selectedLocales.map(code => {
-    const value = valuesFor(row)[code] || "";
-    return !value.trim() ? `${row.label} · ${languageName(code)} 未填写` : value.length > row.limit ? `${row.label} · ${languageName(code)} 超过 ${row.limit} 字符` : null;
-  }).filter(Boolean));
-}
-function reportBlock() {
-  if (!importReport) return "";
-  return `<div class="import-report ${importReport.blocked ? "blocked" : ""}" data-anchor="import-report"><strong>${importReport.blocked ? "导入失败" : "导入完成"}</strong><span>${esc(importReport.message)}</span>${importReport.details?.length ? `<ul>${importReport.details.map(item => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}</div>`;
-}
-function body() {
-  const missing = issues();
-  return `<div class="help-alert" data-anchor="product-language-intro"><strong>产品级多语言：</strong>汇总组 Title/Body 每组只出现一次；入组规则只维护提醒项，独立规则维护自己的 Title/Body。</div>
-    <div class="form-section"><div class="section-title"><h3>选择语言</h3><p>English 必选，其他 17 种语言按需选择</p></div>${choices()}</div>
-    <div class="form-section"><div class="section-title"><h3>多语言大表</h3><p>导入只修改当前抽屉草稿</p></div><div class="inline-actions" data-anchor="xlsx-actions"><button class="el-btn" data-export-xlsx>导出 XLSX</button><button class="el-btn" data-import-xlsx>导入 XLSX</button><input type="file" data-xlsx-file accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><span class="secondary-cell">工作表固定为 translations</span></div>${reportBlock()}${matrix()}</div>
-    <div class="form-section" data-anchor="product-language-validation"><div class="section-title"><h3>待补全提醒</h3><p>${missing.length ? "不阻塞保存" : "已选语言内容完整"}</p></div><div class="help-alert ${missing.length ? "warning" : "success"}">${missing.length ? `建议补全：${missing.slice(0, 5).map(esc).join("；")}${missing.length > 5 ? `；还有 ${missing.length - 5} 项` : ""}` : "当前已选语言的内容均已填写。"}</div></div>`;
-}
-function shell() {
-  return `<div class="drawer-host is-open" id="languageDrawer" style="z-index:1400"><div class="drawer-mask" data-language-cancel></div><aside class="drawer language-drawer"><header class="drawer-header"><div class="drawer-title"><h2>统一配置多语言</h2><p>当前产品 · 汇总组和规则共用一张 KV 大表</p></div><button class="icon-btn" data-language-cancel>×</button></header><div class="drawer-main"><div class="drawer-body"><section class="drawer-content">${body()}</section></div></div><footer class="drawer-footer"><span class="save-hint">取消不会应用导入、语言选择或内容修改</span><div class="footer-actions"><button class="el-btn" data-language-cancel>取消</button><button class="el-btn el-btn--primary" data-language-save>保存并应用</button></div></footer></aside></div>`;
-}
+function choices() { return `<div class="locale-grid" data-anchor="language-selection">${supportedLanguages.map(([code, name]) => { const checked = draft.selectedLocales.includes(code), locked = code === "en-US"; return `<label class="locale-option ${checked ? "selected" : ""}"><input type="checkbox" data-locale="${code}" ${checked ? "checked" : ""} ${locked ? "disabled" : ""}><span><strong>${esc(name)}</strong><small>${code}${locked ? " · 默认" : ""}</small></span></label>`; }).join("")}</div>`; }
+function matrix() { return `<div class="matrix-wrap" data-anchor="product-language-matrix"><table class="lang-matrix product-language-matrix"><thead><tr><th style="min-width:300px">input key</th>${draft.selectedLocales.map(code => `<th style="min-width:220px">${esc(languageName(code))}<small>${code}</small></th>`).join("")}</tr></thead><tbody>${rows().map(row => `<tr><td><strong>${esc(row.label)}</strong><div class="secondary-cell">${esc(row.key)} · 最多 ${row.limit} 字符</div></td>${draft.selectedLocales.map(code => `<td><textarea data-language-key="${esc(row.key)}" data-language-locale="${code}" maxlength="${row.limit}">${esc(valuesFor(row)[code] || "")}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div>`; }
+function issues() { return rows().flatMap(row => draft.selectedLocales.map(code => { const value = valuesFor(row)[code] || ""; return !value.trim() ? `${row.label} · ${languageName(code)} 未填写` : value.length > row.limit ? `${row.label} · ${languageName(code)} 超过 ${row.limit} 字符` : null; }).filter(Boolean)); }
+function reportBlock() { return !importReport ? "" : `<div class="import-report ${importReport.blocked ? "blocked" : ""}" data-anchor="import-report"><strong>${importReport.blocked ? "导入失败" : "导入完成"}</strong><span>${esc(importReport.message)}</span>${importReport.details?.length ? `<ul>${importReport.details.map(item => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}</div>`; }
+function body() { const missing = issues(); return `<div class="help-alert" data-anchor="product-language-intro"><strong>产品级多语言：</strong>普通推送维护 Title / Body；汇总推送维护 Title / Body 和每个关联项文本。</div><div class="form-section"><div class="section-title"><h3>选择语言</h3><p>English 必选，其他 17 种语言按需选择</p></div>${choices()}</div><div class="form-section"><div class="section-title"><h3>多语言大表</h3><p>导入只修改当前抽屉草稿</p></div><div class="inline-actions" data-anchor="xlsx-actions"><button class="el-btn" data-export-xlsx>导出 XLSX</button><button class="el-btn" data-import-xlsx>导入 XLSX</button><input type="file" data-xlsx-file accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><span class="secondary-cell">工作表固定为 translations</span></div>${reportBlock()}${matrix()}</div><div class="form-section" data-anchor="product-language-validation"><div class="section-title"><h3>待补全提醒</h3><p>${missing.length ? "不阻塞保存" : "已选语言内容完整"}</p></div><div class="help-alert ${missing.length ? "warning" : "success"}">${missing.length ? `建议补全：${missing.slice(0, 5).map(esc).join("；")}${missing.length > 5 ? `；还有 ${missing.length - 5} 项` : ""}` : "当前已选语言的内容均已填写。"}</div></div>`; }
+function shell() { return `<div class="drawer-host is-open" id="languageDrawer" style="z-index:1400"><div class="drawer-mask" data-language-cancel></div><aside class="drawer language-drawer"><header class="drawer-header"><div class="drawer-title"><h2>统一配置多语言</h2><p>当前产品 · 两类推送共用一张 KV 大表</p></div><button class="icon-btn" data-language-cancel>×</button></header><div class="drawer-main"><div class="drawer-body"><section class="drawer-content">${body()}</section></div></div><footer class="drawer-footer"><span class="save-hint">取消不会应用导入、语言选择或内容修改</span><div class="footer-actions"><button class="el-btn" data-language-cancel>取消</button><button class="el-btn el-btn--primary" data-language-save>保存并应用</button></div></footer></aside></div>`; }
 function close(onClose) { draft = null; importReport = null; $("#languageDrawer")?.remove(); onClose?.(); }
 function rerender(onClose) { const host = $("#languageDrawer"); if (!host) return; host.outerHTML = shell(); wire(onClose); renderAnnotations("language", "统一配置多语言"); }
-
-function ensureXlsx() {
-  if (!window.XLSX) { showToast("XLSX 组件加载失败，请检查网络后重试", "error"); return false; }
-  return true;
-}
-function exportXlsx() {
-  if (!ensureXlsx()) return;
-  const data = [["input key", ...draft.selectedLocales.map(languageHeader)], ...rows().map(row => [row.key, ...draft.selectedLocales.map(code => valuesFor(row)[code] || "")])];
-  const workbook = XLSX.utils.book_new();
-  const sheet = XLSX.utils.aoa_to_sheet(data);
-  sheet["!cols"] = [{ wch: 34 }, ...draft.selectedLocales.map(() => ({ wch: 36 }))];
-  XLSX.utils.book_append_sheet(workbook, sheet, "translations");
-  XLSX.writeFile(workbook, `${appState.selectedProductId}-message-push-translations.xlsx`);
-  showToast("已导出 translations.xlsx 草稿");
-}
-async function importXlsx(file, onClose) {
-  if (!ensureXlsx() || !file) return;
-  try {
-    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-    const sheet = workbook.Sheets.translations;
-    if (!sheet) throw new Error("缺少 translations 工作表");
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: false });
-    const header = data[0] || [];
-    if (header[0] !== "input key" || !header.includes("English (en-US)")) throw new Error("表头必须从 input key、English (en-US) 开始");
-    const localeColumns = [];
-    const unknownLocales = [];
-    header.slice(1).forEach((label, index) => {
-      const match = String(label || "").match(/\(([a-z]{2,3}-[A-Z]{2})\)$/);
-      const locale = match?.[1];
-      if (locale && validLocales.has(locale)) localeColumns.push({ locale, index: index + 1 });
-      else unknownLocales.push(String(label || `第 ${index + 2} 列`));
-    });
-    const keys = data.slice(1).map(row => String(row?.[0] || "").trim()).filter(Boolean);
-    const duplicates = [...new Set(keys.filter((key, index) => keys.indexOf(key) !== index))];
-    if (duplicates.length) throw new Error(`存在重复 input key：${duplicates.join("、")}`);
-    const rowMap = new Map(rows().map(row => [row.key, row]));
-    const unknownKeys = [];
-    let changedCells = 0;
-    data.slice(1).forEach(sourceRow => {
-      const key = String(sourceRow?.[0] || "").trim();
-      if (!key) return;
-      const target = rowMap.get(key);
-      if (!target) { unknownKeys.push(key); return; }
-      localeColumns.forEach(({ locale, index }) => {
-        if (index >= sourceRow.length) return;
-        valuesFor(target)[locale] = sourceRow[index] == null ? "" : String(sourceRow[index]);
-        changedCells++;
-      });
-    });
-    localeColumns.forEach(({ locale }) => { if (!draft.selectedLocales.includes(locale)) draft.selectedLocales.push(locale); });
-    draft.selectedLocales.sort((a, b) => supportedLanguages.findIndex(item => item[0] === a) - supportedLanguages.findIndex(item => item[0] === b));
-    importReport = { blocked: false, message: `已写入草稿 ${changedCells} 个单元格，保存后才会应用。`, details: [...(unknownLocales.length ? [`跳过未知语言列：${unknownLocales.join("、")}`] : []), ...(unknownKeys.length ? [`跳过未知 key：${unknownKeys.slice(0, 5).join("、")}${unknownKeys.length > 5 ? "…" : ""}`] : [])] };
-    rerender(onClose);
-  } catch (error) {
-    importReport = { blocked: true, message: error.message || "文件无法解析", details: ["当前已生效配置未发生变化。"] };
-    rerender(onClose);
-  }
-}
-
-function applyValues() {
-  Object.assign(committed(), clone(draft));
-  rows().forEach(row => {
-    const values = valuesFor(row);
-    const [kind, id, field] = row.key.split(".");
-    if (kind === "group") {
-      const group = dailySummaryGroups.find(item => item.id === id);
-      if (group) { group.values ??= {}; supportedLanguages.forEach(([locale]) => { if (Object.hasOwn(values, locale)) { group.values[locale] ??= {}; group.values[locale][field] = values[locale]; } }); }
-    } else {
-      const rule = rules.find(item => item.id === id);
-      if (rule) { rule.localeValues ??= {}; supportedLanguages.forEach(([locale]) => { if (Object.hasOwn(values, locale)) { rule.localeValues[locale] ??= {}; rule.localeValues[locale][field] = values[locale]; } }); if (field === "itemLabel") rule.itemLabel = values["en-US"] || ""; else rule[field] = values["en-US"] || ""; }
-    }
-  });
-  productRules().forEach(rule => rule.languages = String(draft.selectedLocales.length));
-}
-function wire(onClose) {
-  const host = $("#languageDrawer");
-  host.querySelectorAll("[data-language-cancel]").forEach(button => button.onclick = () => close(onClose));
-  host.querySelectorAll("[data-locale]").forEach(input => input.onchange = () => { const code = input.dataset.locale; draft.selectedLocales = input.checked ? [...new Set([...draft.selectedLocales, code])] : draft.selectedLocales.filter(item => item !== code); rerender(onClose); });
-  host.querySelectorAll("[data-language-key]").forEach(input => input.oninput = () => { const row = rows().find(item => item.key === input.dataset.languageKey); if (row) valuesFor(row)[input.dataset.languageLocale] = input.value; });
-  host.querySelector("[data-export-xlsx]")?.addEventListener("click", exportXlsx);
-  host.querySelector("[data-import-xlsx]")?.addEventListener("click", () => host.querySelector("[data-xlsx-file]").click());
-  host.querySelector("[data-xlsx-file]")?.addEventListener("change", event => importXlsx(event.target.files[0], onClose));
-  host.querySelector("[data-language-save]")?.addEventListener("click", () => { applyValues(); showToast("产品多语言已保存，待补全项不阻塞应用"); close(onClose); });
-}
-
-export function openProductLanguageDrawer({ onClose } = {}) {
-  draft = clone(committed()); draft.values ??= {}; importReport = null;
-  $("#overlayRoot").insertAdjacentHTML("beforeend", shell());
-  renderAnnotations("language", "统一配置多语言"); wire(onClose);
-}
+function ensureXlsx() { if (!window.XLSX) { showToast("XLSX 组件加载失败，请检查后重试", "error"); return false; } return true; }
+function exportXlsx() { if (!ensureXlsx()) return; const data = [["input key", ...draft.selectedLocales.map(languageHeader)], ...rows().map(row => [row.key, ...draft.selectedLocales.map(code => valuesFor(row)[code] || "")])], workbook = XLSX.utils.book_new(), sheet = XLSX.utils.aoa_to_sheet(data); sheet["!cols"] = [{ wch: 48 }, ...draft.selectedLocales.map(() => ({ wch: 36 }))]; XLSX.utils.book_append_sheet(workbook, sheet, "translations"); XLSX.writeFile(workbook, `${appState.selectedProductId}-message-push-translations.xlsx`); showToast("已导出 translations.xlsx 草稿"); }
+async function importXlsx(file, onClose) { if (!ensureXlsx() || !file) return; try { const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" }), sheet = workbook.Sheets.translations; if (!sheet) throw new Error("缺少 translations 工作表"); const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: false }), header = data[0] || []; if (header[0] !== "input key" || !header.includes("English (en-US)")) throw new Error("表头必须从 input key、English (en-US) 开始"); const localeColumns = [], unknownLocales = []; header.slice(1).forEach((label, index) => { const locale = String(label || "").match(/\(([a-z]{2,3}-[A-Z]{2})\)$/)?.[1]; if (locale && validLocales.has(locale)) localeColumns.push({ locale, index: index + 1 }); else unknownLocales.push(String(label || `第 ${index + 2} 列`)); }); const keys = data.slice(1).map(row => String(row?.[0] || "").trim()).filter(Boolean), duplicates = [...new Set(keys.filter((key, index) => keys.indexOf(key) !== index))]; if (duplicates.length) throw new Error(`存在重复 input key：${duplicates.join("、")}`); const rowMap = new Map(rows().map(row => [row.key, row])), unknownKeys = []; let changedCells = 0; data.slice(1).forEach(sourceRow => { const key = String(sourceRow?.[0] || "").trim(), target = rowMap.get(key); if (!key) return; if (!target) { unknownKeys.push(key); return; } localeColumns.forEach(({ locale, index }) => { if (index < sourceRow.length) { valuesFor(target)[locale] = sourceRow[index] == null ? "" : String(sourceRow[index]); changedCells++; } }); }); localeColumns.forEach(({ locale }) => { if (!draft.selectedLocales.includes(locale)) draft.selectedLocales.push(locale); }); draft.selectedLocales.sort((a,b) => supportedLanguages.findIndex(item => item[0] === a) - supportedLanguages.findIndex(item => item[0] === b)); importReport = { blocked: false, message: `已写入草稿 ${changedCells} 个单元格，保存后才会应用。`, details: [...(unknownLocales.length ? [`跳过未知语言列：${unknownLocales.join("、")}`] : []), ...(unknownKeys.length ? [`跳过未知 key：${unknownKeys.slice(0, 5).join("、")}${unknownKeys.length > 5 ? "…" : ""}`] : [])] }; rerender(onClose); } catch (error) { importReport = { blocked: true, message: error.message || "文件无法解析", details: ["当前已生效配置未发生变化。"] }; rerender(onClose); } }
+function applyValues() { Object.assign(committed(), clone(draft)); rows().forEach(row => { const values = valuesFor(row), rule = rules.find(item => item.id === row.rule.id); if (!rule) return; rule.localeValues ??= {}; supportedLanguages.forEach(([locale]) => { if (!Object.hasOwn(values, locale)) return; rule.localeValues[locale] ??= {}; if (row.item) { rule.localeValues[locale].items ??= {}; rule.localeValues[locale].items[row.item.itemId] = values[locale]; if (locale === "en-US") row.item.label = values[locale]; } else { rule.localeValues[locale][row.field] = values[locale]; if (locale === "en-US") rule[row.field] = values[locale]; } }); }); productRules().forEach(rule => rule.languages = String(draft.selectedLocales.length)); }
+function wire(onClose) { const host = $("#languageDrawer"); host.querySelectorAll("[data-language-cancel]").forEach(button => button.onclick = () => close(onClose)); host.querySelectorAll("[data-locale]").forEach(input => input.onchange = () => { const code = input.dataset.locale; draft.selectedLocales = input.checked ? [...new Set([...draft.selectedLocales, code])] : draft.selectedLocales.filter(item => item !== code); rerender(onClose); }); host.querySelectorAll("[data-language-key]").forEach(input => input.oninput = () => { const row = rows().find(item => item.key === input.dataset.languageKey); if (row) valuesFor(row)[input.dataset.languageLocale] = input.value; }); host.querySelector("[data-export-xlsx]")?.addEventListener("click", exportXlsx); host.querySelector("[data-import-xlsx]")?.addEventListener("click", () => host.querySelector("[data-xlsx-file]").click()); host.querySelector("[data-xlsx-file]")?.addEventListener("change", event => importXlsx(event.target.files[0], onClose)); host.querySelector("[data-language-save]")?.addEventListener("click", () => { applyValues(); showToast("产品多语言已保存，待补全项不阻塞应用"); close(onClose); }); }
+export function openProductLanguageDrawer({ onClose } = {}) { draft = clone(committed()); draft.values ??= {}; importReport = null; $("#overlayRoot").insertAdjacentHTML("beforeend", shell()); renderAnnotations("language", "统一配置多语言"); wire(onClose); }
