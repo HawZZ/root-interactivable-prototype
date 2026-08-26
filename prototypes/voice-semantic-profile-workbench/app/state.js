@@ -987,6 +987,8 @@ function runLegacyValidation() {
 }
 
 export function runValidation() {
+  if (state.editor.validation?.status === "running") return state.editor.validation;
+  state.editor.validation = createValidationState("running");
   const draft = state.editor.draft;
   const issues = [];
   const error = (section, message, location) => issues.push(createValidationIssue("error", section, message, location));
