@@ -30,6 +30,8 @@ import {
   publishDraft,
   rollbackProfile,
   runValidation,
+  locateValidationIssue,
+  invalidateValidation,
   saveDraft,
   setEditorSection,
   setFilter,
@@ -67,7 +69,7 @@ import {
   requestMappingChange,
   confirmMappingChange,
   updateVoiceLabel
-} from "./state.js?v=20260819v4";
+} from "./state.js?v=20260826v1";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -76,6 +78,39 @@ const sections = [
   ["reporting", "状态报告"],
   ["publish", "校验与发布"]
 ];
+const sectionLabels = Object.fromEntries(sections);
+
+function issuesForSection(validation, section) {
+  return validation?.status === "failed" || validation?.status === "passed"
+    ? (validation.issues || []).filter((issue) => issue.section === section)
+    : [];
+}
+
+function sectionIssueBadge(validation, section) {
+  const issues = issuesForSection(validation, section);
+  const errorCount = issues.filter((issue) => issue.severity === "error").length;
+  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
+  if (errorCount) return `<i class="drawer-section-count is-error" aria-label="${errorCount} 个阻断项">${errorCount}</i>`;
+  if (warningCount) return `<i class="drawer-section-count is-warning" aria-label="${warningCount} 个提醒">${warningCount}</i>`;
+  return "";
+}
+
+function validationIssueAction(issue, label = "定位") {
+  return `<button class="validation-issue" data-action="locate-validation-issue" data-validation-issue-id="${escapeHtml(issue.id)}"><span class="validation-issue__severity ${issue.severity === "error" ? "is-error" : "is-warning"}">${issue.severity === "error" ? "阻断" : "提醒"}</span><span>${escapeHtml(issue.message)}</span><em>${label}</em></button>`;
+}
+
+function renderValidationDock(validation, section) {
+  if (section === "publish" || !validation || validation.status === "idle") return "";
+  if (validation.status === "stale") return `<section class="validation-dock is-stale" aria-live="polite"><strong>校验结果已失效</strong><p>配置已变更；旧结果不再用于发布，请重新运行完整校验。</p></section>`;
+  const errors = (validation.issues || []).filter((issue) => issue.severity === "error");
+  const warnings = (validation.issues || []).filter((issue) => issue.severity === "warning");
+  if (validation.status === "passed") return `<section class="validation-dock is-passed" aria-live="polite"><div><strong>校验通过，可以发布</strong><p>${warnings.length ? `另有 ${warnings.length} 个提醒，不阻断发布。` : "当前草稿满足 Alexa 配置发布门禁。"}</p></div><button class="el-btn el-btn--primary" data-action="drawer-section" data-section="publish">前往校验与发布</button></section>`;
+  const contextual = issuesForSection(validation, section);
+  const otherSections = sections.filter(([key]) => key !== "publish" && key !== section).map(([key, label]) => [key, label, issuesForSection(validation, key)]).filter(([, , issues]) => issues.length);
+  const visible = contextual.slice(0, 3);
+  const firstIssue = errors[0] || warnings[0];
+  return `<section class="validation-dock is-failed" aria-live="polite"><div class="validation-dock__head"><div><strong>校验未通过：${errors.length} 个阻断项${warnings.length ? `，${warnings.length} 个提醒` : ""}</strong><p>${contextual.length ? "以下为当前步骤相关问题；完整清单在第四步。" : `本步骤无阻断；问题位于${otherSections.map(([, label, issues]) => `「${label}」${issues.length} 项`).join("、") || "其他步骤"}。`}</p></div></div>${visible.length ? `<div class="validation-dock__list">${visible.map((issue) => validationIssueAction(issue)).join("")}${contextual.length > visible.length ? `<p>其余 ${contextual.length - visible.length} 项请查看全部。</p>` : ""}</div>` : ""}<div class="validation-dock__actions">${firstIssue ? `<button class="el-btn" data-action="locate-first-validation-issue">定位第一项</button>` : ""}<button class="el-btn" data-action="drawer-section" data-section="publish">查看全部</button></div></section>`;
+}
 
 const annotations = {
   profiles: {
@@ -135,7 +170,7 @@ const annotations = {
       context: "配置抽屉 / 能力与映射",
       summary: "默认链路简化为：物模型属性/命令 -> Alexa Capability -> 多语言语音名称 -> 英语语句示例；内部协议字段只在折叠技术详情中只读展示。",
       items: [
-        { n: 5, title: "直接选择 Capability", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string 是硬筛条件；属性 ID 和名称不参与判断。Capability 以中文用途为主标题、官方 ID 为辅助信息。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容语音配置。"], ["组合输出", "一条规则产生多个 Capability 时作为一个组合选项，用户不拆分内部规则。"], ["Catalog 边界", "当前 10 个 Alexa 能力包为 profile_ready；另有 41 个官方候选仅登记为 metadata_only，不能成为可发布选项。"]] },
+        { n: 5, title: "直接选择 Capability", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string 是硬筛条件；属性 ID 和名称不参与判断。Capability 以中文用途为主标题、官方 ID 为辅助信息。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容语音配置。运行完整校验后保持当前展开项和滚动位置。"], ["就地反馈", "当前步骤只显示最多 3 条相关问题；用户主动点击定位或查看第四步完整清单。"], ["Catalog 边界", "当前 10 个 Alexa 能力包为 profile_ready；另有 41 个官方候选仅登记为 metadata_only，不能成为可发布选项。"]] },
         { n: 6, title: "多语言与语句预览", location: "关联位置：映射项 > 步骤 3-4", fields: [["语音名称", "需要区分对象的 Mode、Range、Toggle 按目标 Locale 填写一个主名称和最多两个别名；Mode 同时维护全部枚举值名称。"], ["多实例", "运动模式与音乐模式可分别映射 ModeController；平台按 mappingId 生成不同稳定 instance，即使都包含 sleep 值也不会混淆。"], ["语句", "输入完整后从 Provider Metadata 的 Alexa 官方预置模板展示 1-3 条 en-US 示例；设备名固定为 {device name}，不支持自定义句型。"]] },
         { n: 8, title: "内部模型折叠", location: "关联位置：映射项 > 技术详情", fields: [["默认界面", "不显示设备语义、规则 ID、优先级、Adapter、instance、Alexa Value、Resource KV 或 Catalog 版本。"], ["排查", "折叠技术详情只读展示内部语义、固定规则、生成的 Capability、instance 和资源引用。"], ["二期", "Google Home 复用同一中立语义，但独立选择 Trait、维护本地化资源并发布，不引用 Alexa 资源。"]] }
       ]
@@ -149,9 +184,9 @@ const annotations = {
     },
     publish: {
       context: "配置抽屉 / 校验与发布",
-      summary: "这里的发布表示需求中的配置发布状态机，不代表 Alexa 功能已经上线；V2 验收执行 V1 Alexa 需求继承回归。",
+      summary: "这里承载完整校验清单、发布门禁和发布操作；其他步骤只显示就地摘要。发布不代表 Alexa 功能已经上线。",
       items: [
-        { n: 3, title: "校验与配置发布", location: "关联位置：配置抽屉 > 底部操作栏", fields: [["说明", "先保存草稿并运行 Alexa 配置校验，再发布当前需求配置版本。"], ["按钮状态", "默认可保存草稿；发布仅在校验通过时可用；发布成功只表示配置状态变更。"], ["回归范围", "Discovery、Directive、StateReport、instance、Alexa Value 与 Resource KV 必须覆盖 V1 Alexa 需求。"]] }
+        { n: 3, title: "校验与配置发布", location: "关联位置：配置抽屉 > 第四步与底部操作栏", fields: [["说明", "运行完整校验不自动跳转；步骤 1～3 就地显示精简反馈，第四步按步骤分组展示全部结果。"], ["按钮状态", "发布仅在本步骤出现，且只在最近一次校验通过时可用；任一字段变更立即使结果失效。"], ["定位", "每条问题携带步骤、mappingId、Locale 和字段定位信息；用户点击后才切换并聚焦。"]] }
       ]
     }
   }
@@ -179,6 +214,7 @@ function render({ preserveDrawerScroll = false } = {}) {
   refreshNav();
   refreshMobileTabs();
   applyHighlight();
+  applyValidationIssueFocus();
   if (drawerScroll) {
     const restoreDrawerScroll = () => {
       const nextDrawerBody = document.querySelector(".el-drawer__body");
@@ -319,7 +355,9 @@ function renderDrawer() {
   }
   if (!state.editor.open) { mount.innerHTML = ""; return; }
   const draft = state.editor.draft;
-  mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-editor"></div><aside class="el-drawer alexa-drawer" role="dialog" aria-modal="true" aria-label="${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置"><header class="el-drawer__header"><div><h2 class="el-drawer__title">${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置</h2><p class="drawer-subtitle">${escapeHtml(draft.name || "未命名 Profile")} <span>/</span> ${escapeHtml(draft.productKey || "草稿")}</p></div><button class="el-drawer__close" data-action="close-editor" aria-label="关闭">x</button></header><div class="drawer-shell"><nav class="drawer-section-nav">${sections.map(([key, label], index) => `<button class="drawer-section-item ${state.editor.section === key ? "is-active" : ""}" data-action="drawer-section" data-section="${key}" ${!state.editor.productAlexaSupported && key !== "basic" ? "disabled" : ""}><span>${index + 1}</span>${label}</button>`).join("")}</nav><div class="el-drawer__body">${renderDrawerBody(draft)}</div></div><footer class="el-drawer__footer"><button class="el-btn" data-action="close-editor">取消</button><button class="el-btn" data-action="save-draft">保存草稿</button><button class="el-btn el-btn--primary" data-action="run-validation" ${state.editor.productAlexaSupported ? "" : "disabled"}>运行校验</button><button class="el-btn el-btn--primary" data-action="publish" ${state.editor.productAlexaSupported && state.editor.validation?.passed ? "" : "disabled"}>发布</button></footer></aside></div>`;
+  const validation = state.editor.validation;
+  const isPublishSection = state.editor.section === "publish";
+  mount.innerHTML = `<div class="el-drawer-host is-open"><div class="el-drawer__mask" data-action="close-editor"></div><aside class="el-drawer alexa-drawer" role="dialog" aria-modal="true" aria-label="${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置"><header class="el-drawer__header"><div><h2 class="el-drawer__title">${state.editor.sourceId ? "编辑" : "新建"}产品 Alexa 配置</h2><p class="drawer-subtitle">${escapeHtml(draft.name || "未命名 Profile")} <span>/</span> ${escapeHtml(draft.productKey || "草稿")}</p></div><button class="el-drawer__close" data-action="close-editor" aria-label="关闭">x</button></header><div class="drawer-shell"><nav class="drawer-section-nav">${sections.map(([key, label], index) => `<button class="drawer-section-item ${state.editor.section === key ? "is-active" : ""}" data-action="drawer-section" data-section="${key}" ${!state.editor.productAlexaSupported && key !== "basic" ? "disabled" : ""}><span class="drawer-section-index">${index + 1}</span><span class="drawer-section-label">${label}</span>${sectionIssueBadge(validation, key)}</button>`).join("")}</nav><div class="el-drawer__body">${renderDrawerBody(draft)}</div></div>${renderValidationDock(validation, state.editor.section)}<footer class="el-drawer__footer"><button class="el-btn" data-action="close-editor">取消</button><button class="el-btn" data-action="save-draft">保存草稿</button><button class="el-btn el-btn--primary" data-action="run-validation" ${state.editor.productAlexaSupported ? "" : "disabled"}>${isPublishSection ? "重新校验" : "运行完整校验"}</button>${isPublishSection ? `<button class="el-btn el-btn--primary" data-action="publish" ${state.editor.productAlexaSupported && validation?.status === "passed" ? "" : "disabled"}>发布</button>` : ""}</footer></aside></div>`;
 }
 
 function renderLegacyDrawerBody(draft) {
@@ -474,7 +512,7 @@ function renderMappingEditor(binding, index, draft) {
 }
 
 function renderMappingSection(draft) {
-  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与映射 ${anchor(5)}</h3><p>按“来源 → Alexa Capability → 多语言名称 → 英语示例”完成配置；一次只展开一项。</p></div><button class="el-btn" data-action="add-capability">+ 添加映射</button></div><div class="simple-flow"><span>物模型属性 / 命令</span><b>→</b><span>Alexa Capability</span><b>→</b><span>多语言语音名称</span><b>→</b><span>英语语句示例</span></div><div class="compact-mapping-list">${draft.capabilities.map((binding, index) => { const source = modelPropertyCatalog.find((item) => item.id === binding.property); const candidate = selectedCapabilityCandidate(binding, draft); const completion = localeCompletion(binding, draft); const issues = mappingIssues(binding, draft); const outputs = candidate?.outputs || []; const controlName = binding.voice?.control?.locales?.[localePolicy.baseLocale]?.primary || (candidate ? "使用设备名称" : "--"); const expanded = state.editor.expandedMapping === index; return `<article class="compact-mapping ${expanded ? "is-expanded" : ""}"><div class="compact-mapping__summary"><button class="mapping-expand" data-action="expand-mapping" data-index="${index}" aria-label="${expanded ? "收起" : "编辑"}映射">${expanded ? "−" : "+"}</button><div><span>物模型属性</span><strong>${escapeHtml(source?.label || "待选择")}</strong><code>${escapeHtml(source?.id || "--")}</code></div><div><span>Alexa Capability</span><strong>${escapeHtml(outputs.map((item) => item.metadata?.label || item.capabilityId).join(" + ") || "待选择")}</strong><code>${escapeHtml(outputs.map((item) => item.capabilityId).join(" + ") || "--")}</code></div><div><span>控制名称</span><strong>${escapeHtml(controlName)}</strong></div><div><span>Locale 完成度</span><strong>${completion.complete}/${completion.total}</strong></div><div class="mapping-status">${tag(issues.length ? "未完成" : "可校验", issues.length ? "warning" : "success")}</div><div class="mapping-actions"><button class="op-link" data-action="expand-mapping" data-index="${index}">编辑</button><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></div></div>${expanded ? renderMappingEditor(binding, index, draft) : ""}</article>`; }).join("") || `<div class="mapping-empty">尚未添加能力映射。</div>`}</div></section>`;
+  return `<section class="drawer-section"><div class="section-heading section-heading--row"><div><h3>能力与映射 ${anchor(5)}</h3><p>按“来源 → Alexa Capability → 多语言名称 → 英语示例”完成配置；一次只展开一项。</p></div><button class="el-btn" data-action="add-capability">+ 添加映射</button></div><div class="simple-flow"><span>物模型属性 / 命令</span><b>→</b><span>Alexa Capability</span><b>→</b><span>多语言语音名称</span><b>→</b><span>英语语句示例</span></div><div class="compact-mapping-list">${draft.capabilities.map((binding, index) => { const source = modelPropertyCatalog.find((item) => item.id === binding.property); const candidate = selectedCapabilityCandidate(binding, draft); const completion = localeCompletion(binding, draft); const issues = mappingIssues(binding, draft); const outputs = candidate?.outputs || []; const controlName = binding.voice?.control?.locales?.[localePolicy.baseLocale]?.primary || (candidate ? "使用设备名称" : "--"); const expanded = state.editor.expandedMapping === index; return `<article class="compact-mapping ${expanded ? "is-expanded" : ""}" data-mapping-id="${escapeHtml(binding.mappingId || binding.bindingId || String(index))}"><div class="compact-mapping__summary"><button class="mapping-expand" data-action="expand-mapping" data-index="${index}" aria-label="${expanded ? "收起" : "编辑"}映射">${expanded ? "−" : "+"}</button><div><span>物模型属性</span><strong>${escapeHtml(source?.label || "待选择")}</strong><code>${escapeHtml(source?.id || "--")}</code></div><div><span>Alexa Capability</span><strong>${escapeHtml(outputs.map((item) => item.metadata?.label || item.capabilityId).join(" + ") || "待选择")}</strong><code>${escapeHtml(outputs.map((item) => item.capabilityId).join(" + ") || "--")}</code></div><div><span>控制名称</span><strong>${escapeHtml(controlName)}</strong></div><div><span>Locale 完成度</span><strong>${completion.complete}/${completion.total}</strong></div><div class="mapping-status">${tag(issues.length ? "未完成" : "可校验", issues.length ? "warning" : "success")}</div><div class="mapping-actions"><button class="op-link" data-action="expand-mapping" data-index="${index}">编辑</button><button class="op-link danger" data-action="remove-capability" data-index="${index}">移除</button></div></div>${expanded ? renderMappingEditor(binding, index, draft) : ""}</article>`; }).join("") || `<div class="mapping-empty">尚未添加能力映射。</div>`}</div></section>`;
 }
 
 function renderReportingSection(draft) {
@@ -483,13 +521,20 @@ function renderReportingSection(draft) {
 
 function renderPublishSection(draft) {
   const validation = state.editor.validation;
-  return `<section class="drawer-section"><div class="section-heading"><h3>校验与发布 ${anchor(3)}</h3><p>发布表示需求中的 Alexa 配置状态变更，不表示功能已经上线。</p></div><div class="release-grid"><div class="release-readonly"><span>本期 Provider</span><strong>Alexa</strong><em>一期只实例化 Alexa ProviderMapping。</em></div><div class="release-readonly"><span>发布门禁</span><strong>Locale 与映射完整</strong><em>所有目标 Locale 主名称、Capability 和状态报告通过后才可发布。</em></div></div>${validation ? renderValidation(validation) : `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查来源、Alexa Capability、多语言主名称、别名重复、稳定机器标识与状态报告。</p></div>`}</section>`;
+  const result = !validation || validation.status === "idle"
+    ? `<div class="validation-placeholder"><strong>尚未运行校验</strong><p>检查来源、Alexa Capability、多语言主名称、别名重复、稳定机器标识与状态报告。</p></div>`
+    : validation.status === "stale"
+      ? `<div class="validation-placeholder is-stale"><strong>校验结果已失效</strong><p>草稿已变更，请重新运行完整校验。旧问题清单不会作为当前发布依据。</p></div>`
+      : renderValidation(validation);
+  return `<section class="drawer-section"><div class="section-heading"><h3>校验与发布 ${anchor(3)}</h3><p>在这里确认完整问题清单、发布门禁和发布操作；其他步骤只展示就地摘要。</p></div><div class="release-grid"><div class="release-readonly"><span>本期 Provider</span><strong>Alexa</strong><em>一期只实例化 Alexa ProviderMapping。</em></div><div class="release-readonly"><span>发布门禁</span><strong>Locale 与映射完整</strong><em>所有目标 Locale 主名称、Capability 和状态报告通过后才可发布。</em></div></div>${result}</section>`;
 }
 
 function renderValidation(validation) {
-  const errors = validation.errors.map((item) => `<li class="validation-error">${escapeHtml(item)}</li>`).join("");
-  const warnings = validation.warnings.map((item) => `<li class="validation-warning">${escapeHtml(item)}</li>`).join("");
-  return `<div class="validation-result ${validation.passed ? "is-passed" : "is-failed"}"><div class="validation-result__head"><strong>${validation.passed ? "校验通过" : `校验未通过 (${validation.errors.length})`}</strong>${tag(validation.passed ? "可发布" : "需处理", validation.passed ? "success" : "danger")}</div>${validation.passed ? `<p>Alexa Capability、多语言语音名称、稳定映射标识与状态报告均满足配置发布要求。</p>` : `<ul>${errors}</ul>`}${warnings ? `<div class="validation-warning-group"><strong>建议处理</strong><ul>${warnings}</ul></div>` : ""}</div>`;
+  const grouped = validationSections.map((section) => [section, issuesForSection(validation, section)]).filter(([, issues]) => issues.length);
+  const errors = (validation.issues || []).filter((issue) => issue.severity === "error");
+  const warnings = (validation.issues || []).filter((issue) => issue.severity === "warning");
+  const headline = validation.status === "passed" ? "校验通过，可以发布" : `校验未通过：${errors.length} 个阻断项${warnings.length ? `，${warnings.length} 个提醒` : ""}`;
+  return `<div class="validation-result ${validation.status === "passed" ? "is-passed" : "is-failed"}"><div class="validation-result__head"><div><strong>${headline}</strong><small>最近校验：${escapeHtml(validation.checkedAt || "--")}</small></div>${tag(validation.status === "passed" ? "可发布" : "需处理", validation.status === "passed" ? "success" : "danger")}</div>${validation.status === "passed" && !warnings.length ? `<p>Alexa Capability、多语言语音名称、稳定映射标识与状态报告均满足配置发布要求。</p>` : ""}<div class="validation-groups">${grouped.map(([section, issues]) => `<section class="validation-group"><header><strong>${sectionLabels[section]}</strong><span>${issues.filter((issue) => issue.severity === "error").length} 个阻断项${issues.filter((issue) => issue.severity === "warning").length ? ` · ${issues.filter((issue) => issue.severity === "warning").length} 个提醒` : ""}</span></header>${issues.map((issue) => validationIssueAction(issue, "定位")).join("")}</section>`).join("")}</div></div>`;
 }
 
 function renderAnnotations() {
@@ -550,6 +595,35 @@ function applyHighlight() {
   window.setTimeout(() => element.classList.remove("is-highlighted"), 1300);
 }
 
+function applyValidationIssueFocus() {
+  const issueId = state.editor?.focusValidationIssueId;
+  if (!issueId) return;
+  const issue = state.editor.validation?.issues?.find((item) => item.id === issueId);
+  if (!issue) return;
+  let target = null;
+  if (issue.section === "basic") {
+    if (issue.field === "productAlexaSupported") target = document.querySelector('[data-action="toggle-alexa-support"]');
+    else if (issue.field === "targetLocales") target = document.querySelector('[data-profile-locale="en-US"]');
+    else if (issue.field) target = document.querySelector(`[data-field="${issue.field}"]`);
+  } else if (issue.section === "reporting") {
+    target = document.querySelector(`[data-reporting="${issue.field}"]`);
+  } else if (issue.section === "mapping") {
+    const card = [...document.querySelectorAll("[data-mapping-id]")].find((element) => element.dataset.mappingId === issue.mappingId);
+    const mappingIndex = state.editor.draft.capabilities.findIndex((item) => (item.mappingId || item.bindingId) === issue.mappingId);
+    if (card && mappingIndex >= 0 && issue.locale) {
+      const voiceField = issue.field === "voice-alias" ? "alias" : "primary";
+      target = card.querySelector(`[data-voice-index="${mappingIndex}"][data-voice-locale="${issue.locale}"][data-voice-field="${voiceField}"]`);
+    }
+    target ||= card;
+  }
+  if (!target) return;
+  const highlight = target.closest(".compact-mapping") || target.closest(".form-row") || target;
+  highlight.classList.add("is-validation-focused");
+  target.scrollIntoView({ block: "center", behavior: "smooth" });
+  if (typeof target.focus === "function") target.focus({ preventScroll: true });
+  window.setTimeout(() => highlight.classList.remove("is-validation-focused"), 1600);
+}
+
 function handleAction(event) {
   const anchorTarget = event.target.closest("[data-anchor]");
   if (anchorTarget) {
@@ -574,7 +648,7 @@ function handleAction(event) {
     updateProductAlexaSupport(enabling);
   }
   if (action === "edit-profile") openEditor(profileId);
-  if (action === "validate-profile") { openEditor(profileId, "publish"); window.setTimeout(() => { runValidation(); setToast("已完成 Profile 配置校验", state.editor.validation.passed ? "success" : "danger"); }, 0); }
+  if (action === "validate-profile") { openEditor(profileId, "publish"); window.setTimeout(() => { runValidation(); }, 0); }
   if (action === "close-editor") closeEditor();
   if (action === "drawer-section") setEditorSection(section);
   if (action === "add-capability") addCapability();
@@ -582,7 +656,13 @@ function handleAction(event) {
   if (action === "expand-mapping") setExpandedMapping(Number(index));
   if (action === "toggle-technical") toggleTechnicalDetails(Number(index));
   if (action === "confirm-mapping-reset") confirmMappingChange();
-  if (action === "run-validation") { const validation = runValidation(); setToast(validation.passed ? "校验通过，可以发布" : "校验未通过，请处理阻断项", validation.passed ? "success" : "danger"); }
+  if (action === "run-validation") runValidation();
+  if (action === "locate-validation-issue") locateValidationIssue(trigger.dataset.validationIssueId);
+  if (action === "locate-first-validation-issue") {
+    const issues = state.editor.validation?.issues || [];
+    const issue = issues.find((item) => item.severity === "error") || issues[0];
+    if (issue) locateValidationIssue(issue.id);
+  }
   if (action === "save-draft") { saveDraft(); setToast("Profile 草稿已保存", "success"); }
   if (action === "publish") { if (publishDraft()) { setToast("Alexa 配置版本已发布；不代表功能已经上线", "success"); closeEditor(); } else setToast("发布前必须先通过校验", "danger"); }
   if (action === "rollback-open") showModal("rollback", profileId);
@@ -655,15 +735,20 @@ function handleInput(event) {
     const mappings = resolvedModeMappings(binding, property).map((item) => ({ ...item }));
     mappings[Number(target.dataset.modeMappingIndex)][target.dataset.modeMappingField] = target.value;
     updateProjectionOverride(index, "alexa", target.dataset.projectionCapability || "ModeController", "modeMappings", mappings);
-    state.editor.validation = null;
+    invalidateValidation();
+    if (event.type === "change") render({ preserveDrawerScroll: true });
     return;
   }
   if (target.dataset.projectionField && state.editor.open) {
     updateProjectionOverride(Number(target.dataset.capabilityIndex), "alexa", target.dataset.projectionCapability, target.dataset.projectionField, target.value);
-    state.editor.validation = null;
+    invalidateValidation();
+    if (event.type === "change") render({ preserveDrawerScroll: true });
     return;
   }
-  if (target.dataset.field && state.editor.open) updateDraft(target.dataset.field, target.value);
+  if (target.dataset.field && state.editor.open) {
+    updateDraft(target.dataset.field, target.value);
+    if (event.type === "change") render({ preserveDrawerScroll: true });
+  }
   if (target.dataset.capabilityIndex !== undefined && state.editor.open) {
     const index = Number(target.dataset.capabilityIndex);
     const field = target.dataset.capabilityField;
@@ -672,8 +757,8 @@ function handleInput(event) {
       updateCapability(index, "semantic", "");
       updateCapability(index, "semanticSlot", "");
       updateCapability(index, "providerOverrides", { alexa: {} });
-      state.editor.validation = null;
-      render();
+      invalidateValidation();
+      render({ preserveDrawerScroll: true });
       return;
     }
     if (field === "semantic") {
@@ -688,12 +773,15 @@ function handleInput(event) {
         if (output.capabilityId === "ModeController") updateProjectionOverride(index, "alexa", output.capabilityId, "modeMappings", resolvedModeMappings(binding, property));
         if (output.capabilityId === "PlaybackController") updateProjectionOverride(index, "alexa", output.capabilityId, "supportedOperations", "Play, Pause");
       });
-      state.editor.validation = null;
-      render();
+      invalidateValidation();
+      render({ preserveDrawerScroll: true });
       return;
     }
   }
-  if (target.dataset.reporting && state.editor.open) updateDraft(`reporting.${target.dataset.reporting}`, target.type === "checkbox" ? target.checked : target.value);
+  if (target.dataset.reporting && state.editor.open) {
+    updateDraft(`reporting.${target.dataset.reporting}`, target.type === "checkbox" ? target.checked : target.value);
+    if (event.type === "change") render({ preserveDrawerScroll: true });
+  }
 }
 
 document.addEventListener("click", handleAction);
@@ -701,5 +789,9 @@ document.addEventListener("input", handleInput);
 document.addEventListener("change", handleInput);
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeModal(); closeEditor(); closeResourceEditor(); } });
 document.querySelectorAll("[data-mobile-view-target]").forEach((button) => button.addEventListener("click", () => setMobileView(button.dataset.mobileViewTarget)));
-subscribe(render);
+subscribe((nextState) => {
+  const preserveDrawerScroll = Boolean(nextState.editor?.preserveScrollOnNextRender);
+  render({ preserveDrawerScroll });
+  if (nextState.editor) nextState.editor.preserveScrollOnNextRender = false;
+});
 render();

@@ -6,6 +6,56 @@ import {
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
+const validationSections = ["basic", "mapping", "reporting"];
+
+export const validationIssueContract = {
+  name: "ValidationIssue",
+  fields: ["id", "severity", "section", "mappingId?", "locale?", "field?", "message"]
+};
+
+function createValidationState(status = "idle") {
+  return { status, issues: [], errors: [], warnings: [], passed: false, checkedAt: null };
+}
+
+function createValidationIssue(severity, section, message, location = {}) {
+  const normalizedSection = validationSections.includes(section) ? section : "basic";
+  const { mappingId = "", locale = "", field = "", voiceScope = "", sourceValue = "" } = location;
+  return {
+    id: [severity, normalizedSection, mappingId, locale, field, message].filter(Boolean).join("::"),
+    severity,
+    section: normalizedSection,
+    mappingId,
+    locale,
+    field,
+    voiceScope,
+    sourceValue,
+    message
+  };
+}
+
+function commitValidation(issues) {
+  const uniqueIssues = [...new Map(issues.map((issue) => [issue.id, issue])).values()];
+  const errors = uniqueIssues.filter((issue) => issue.severity === "error");
+  const warnings = uniqueIssues.filter((issue) => issue.severity === "warning");
+  state.editor.validation = {
+    status: errors.length ? "failed" : "passed",
+    issues: uniqueIssues,
+    errors: errors.map((issue) => issue.message),
+    warnings: warnings.map((issue) => issue.message),
+    passed: errors.length === 0,
+    checkedAt: "刚刚"
+  };
+  state.editor.preserveScrollOnNextRender = true;
+  emit();
+  return state.editor.validation;
+}
+
+export function invalidateValidation() {
+  if (!state.editor?.open) return;
+  const validation = state.editor.validation;
+  if (!validation || validation.status === "idle" || validation.status === "stale") return;
+  state.editor.validation = createValidationState("stale");
+}
 
 export const semanticProfileContract = {
   name: "SemanticProfile",
@@ -182,16 +232,20 @@ export function generatedResourceRefs(binding) {
 }
 
 function labelSetIssues(labelSet, locales, label) {
+  return labelSetIssueDetails(labelSet, locales, label).map((item) => item.message);
+}
+
+function labelSetIssueDetails(labelSet, locales, label, location = {}) {
   const issues = [];
   locales.forEach((locale) => {
     const entry = labelSet?.locales?.[locale];
     if (!entry?.primary?.trim()) {
-      issues.push(`${label}缺少 ${locale} 主名称`);
+      issues.push({ message: `${label}缺少 ${locale} 主名称`, locale, field: "voice-primary", ...location });
       return;
     }
     const names = [entry.primary, ...(entry.aliases || [])].map((item) => item.trim().toLowerCase()).filter(Boolean);
-    if (new Set(names).size !== names.length) issues.push(`${label}的 ${locale} 主名称与别名重复`);
-    if ((entry.aliases || []).filter((item) => item.trim()).length > 2) issues.push(`${label}的 ${locale} 最多配置两个别名`);
+    if (new Set(names).size !== names.length) issues.push({ message: `${label}的 ${locale} 主名称与别名重复`, locale, field: "voice-alias", ...location });
+    if ((entry.aliases || []).filter((item) => item.trim()).length > 2) issues.push({ message: `${label}的 ${locale} 最多配置两个别名`, locale, field: "voice-alias", ...location });
   });
   return issues;
 }
@@ -201,22 +255,26 @@ export function selectedCapabilityCandidate(binding, profile) {
   return capabilityCandidatesForSource(source, profile?.targetLocales || [localePolicy.baseLocale]).find((item) => `${item.rule.ruleId}@${item.rule.version}` === binding.ruleRef);
 }
 
-export function mappingIssues(binding, profile) {
+export function mappingIssueDetails(binding, profile) {
   const issues = [];
   const locales = profile?.targetLocales || [localePolicy.baseLocale];
   const source = modelPropertyCatalog.find((item) => item.id === binding.property);
-  if (!source) return ["请选择物模型属性或命令"];
-  if (!binding.ruleRef) return ["请选择 Alexa Capability"];
+  if (!source) return [{ message: "请选择物模型属性或命令", field: "property" }];
+  if (!binding.ruleRef) return [{ message: "请选择 Alexa Capability", field: "ruleRef" }];
   const candidate = selectedCapabilityCandidate(binding, profile);
-  if (!candidate) return ["所选 Capability 与当前属性不再兼容"];
-  if (!candidate.selectable) issues.push(...candidate.reasons);
-  if (binding.voice?.control) issues.push(...labelSetIssues(binding.voice.control, locales, "控制名称"));
+  if (!candidate) return [{ message: "所选 Capability 与当前属性不再兼容", field: "ruleRef" }];
+  if (!candidate.selectable) issues.push(...candidate.reasons.map((message) => ({ message, field: "ruleRef" })));
+  if (binding.voice?.control) issues.push(...labelSetIssueDetails(binding.voice.control, locales, "控制名称", { voiceScope: "control" }));
   if (candidate.outputs.some((item) => item.capabilityId === "ModeController")) {
     const values = enumEntries(source);
-    values.forEach((entry) => issues.push(...labelSetIssues(binding.voice?.values?.[entry.value], locales, `枚举值 ${entry.value}`)));
+    values.forEach((entry) => issues.push(...labelSetIssueDetails(binding.voice?.values?.[entry.value], locales, `枚举值 ${entry.value}`, { voiceScope: "value", sourceValue: entry.value })));
   }
-  if (candidate.outputs.some((item) => item.capabilityId === "PlaybackController") && !["Play", "Pause"].every((operation) => source.operations?.includes(operation))) issues.push("播放控制命令至少需要 Play 和 Pause");
+  if (candidate.outputs.some((item) => item.capabilityId === "PlaybackController") && !["Play", "Pause"].every((operation) => source.operations?.includes(operation))) issues.push({ message: "播放控制命令至少需要 Play 和 Pause", field: "ruleRef" });
   return issues;
+}
+
+export function mappingIssues(binding, profile) {
+  return mappingIssueDetails(binding, profile).map((item) => item.message);
 }
 
 export function localeCompletion(binding, profile) {
@@ -641,7 +699,7 @@ export function setFilter(key, value) {
 export function openEditor(id = "", section = "basic") {
   const source = id ? getProfile(id) : createEmptyProfile();
   const product = productData.find((item) => item.id === source.productId);
-  state.editor = { open: true, section, sourceId: id, draft: normalizeProfile(source), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} };
+  state.editor = { open: true, section, sourceId: id, draft: normalizeProfile(source), productAlexaSupported: Boolean(product?.alexaSupported), validation: createValidationState(), isSaving: false, expandedMapping: 0, technicalDetails: {}, preserveScrollOnNextRender: false, focusValidationIssueId: "" };
   emit();
 }
 
@@ -656,7 +714,7 @@ export function openProductProfile(productId) {
     draft.category = product.category;
     draft.displayCategory = product.category === "Night Light" ? "LIGHT" : product.category === "Sound Device" ? "SPEAKER" : "OTHER";
   }
-  state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft: normalizeProfile(draft), productAlexaSupported: Boolean(product?.alexaSupported), validation: null, isSaving: false, expandedMapping: 0, technicalDetails: {} };
+  state.editor = { open: true, section: "basic", sourceId: source?.id || "", draft: normalizeProfile(draft), productAlexaSupported: Boolean(product?.alexaSupported), validation: createValidationState(), isSaving: false, expandedMapping: 0, technicalDetails: {}, preserveScrollOnNextRender: false, focusValidationIssueId: "" };
   emit();
   return true;
 }
@@ -670,6 +728,7 @@ export function closeEditor() {
 export function setEditorSection(section) {
   if (!state.editor.productAlexaSupported && section !== "basic") return;
   state.editor.section = section;
+  state.editor.focusValidationIssueId = "";
   emit();
 }
 
@@ -678,11 +737,15 @@ export function updateDraft(path, value) {
   let cursor = state.editor.draft;
   keys.slice(0, -1).forEach((key) => { cursor = cursor[key]; });
   cursor[keys[keys.length - 1]] = value;
+  invalidateValidation();
 }
 
 export function updateCapability(index, key, value) {
   const capability = state.editor.draft.capabilities[index];
-  if (capability) capability[key] = value;
+  if (capability) {
+    capability[key] = value;
+    invalidateValidation();
+  }
 }
 
 export function setExpandedMapping(index) {
@@ -706,7 +769,7 @@ export function setProfileLocale(locale, enabled) {
     const sets = [binding.voice?.control, ...Object.values(binding.voice?.values || {})].filter(Boolean);
     sets.forEach((set) => { if (enabled && !set.locales[locale]) set.locales[locale] = { primary: "", aliases: [] }; });
   });
-  state.editor.validation = null;
+  invalidateValidation();
   emit();
   return true;
 }
@@ -740,7 +803,7 @@ function applyMappingChange(index, field, value) {
       binding.providerOverrides.alexa[output.capabilityId] = override;
     });
   }
-  state.editor.validation = null;
+  invalidateValidation();
 }
 
 export function requestMappingChange(index, field, value) {
@@ -775,7 +838,7 @@ export function updateVoiceLabel(index, scope, sourceValue, locale, field, alias
     const aliases = set.locales[locale].aliases ||= [];
     aliases[Number(aliasIndex)] = value;
   }
-  state.editor.validation = null;
+  invalidateValidation();
 }
 
 export function updateProjectionOverride(index, provider, capabilityId, key, value) {
@@ -785,6 +848,7 @@ export function updateProjectionOverride(index, provider, capabilityId, key, val
   binding.providerOverrides[provider] ||= {};
   binding.providerOverrides[provider][capabilityId] ||= {};
   binding.providerOverrides[provider][capabilityId][key] = value;
+  invalidateValidation();
 }
 
 export function addCapability() {
@@ -792,12 +856,14 @@ export function addCapability() {
   state.editor.draft.capabilities.push({ bindingId: mappingId, mappingId, sourceRef: "", semanticRef: "", provider: "alexa", semantic: "", semanticSlot: "", property: "", ruleRef: "", voice: { values: {} }, providerOverrides: { alexa: {} } });
   state.editor.expandedMapping = state.editor.draft.capabilities.length - 1;
   state.editor.section = "mapping";
+  invalidateValidation();
   emit();
 }
 
 export function removeCapability(index) {
   state.editor.draft.capabilities.splice(index, 1);
   state.editor.expandedMapping = Math.min(state.editor.expandedMapping, state.editor.draft.capabilities.length - 1);
+  invalidateValidation();
   emit();
 }
 
@@ -922,55 +988,69 @@ function runLegacyValidation() {
 
 export function runValidation() {
   const draft = state.editor.draft;
-  const errors = [];
-  const warnings = [];
+  const issues = [];
+  const error = (section, message, location) => issues.push(createValidationIssue("error", section, message, location));
+  const warning = (section, message, location) => issues.push(createValidationIssue("warning", section, message, location));
   const sourceOwners = new Map();
   const instanceOwners = new Map();
-  if (!draft.name.trim()) errors.push("基础信息：Profile 名称不能为空。");
-  if (!draft.productKey.trim()) errors.push("基础信息：产品 Product Key 不能为空。");
-  if (!endpointDisplayCategoryCatalog.some((item) => item.id === draft.displayCategory && item.status === "profile_ready")) errors.push("基础信息：请选择平台已启用的 Alexa Endpoint 显示分类。");
-  if (!(draft.targetLocales || []).includes(localePolicy.baseLocale)) errors.push("基础信息：Alexa 目标 Locale 必须包含 en-US。");
-  if (!state.editor.productAlexaSupported) errors.push("Alexa 配置：当前产品未启用 Alexa，不能发布 Profile。");
-  if (!draft.capabilities.length) errors.push("能力与映射：至少需要配置一个 Alexa Capability。");
+  if (!draft.name.trim()) error("basic", "Profile 名称不能为空。", { field: "name" });
+  if (!draft.productKey.trim()) error("basic", "产品 Product Key 不能为空。", { field: "productKey" });
+  if (!endpointDisplayCategoryCatalog.some((item) => item.id === draft.displayCategory && item.status === "profile_ready")) error("basic", "请选择平台已启用的 Alexa Endpoint 显示分类。", { field: "displayCategory" });
+  if (!(draft.targetLocales || []).includes(localePolicy.baseLocale)) error("basic", "Alexa 目标 Locale 必须包含 en-US。", { field: "targetLocales", locale: localePolicy.baseLocale });
+  if (!state.editor.productAlexaSupported) error("basic", "当前产品未启用 Alexa，不能发布 Profile。", { field: "productAlexaSupported" });
+  if (!draft.capabilities.length) error("mapping", "至少需要配置一个 Alexa Capability。", { field: "capabilities" });
 
   draft.capabilities.forEach((binding, index) => {
     const source = modelPropertyCatalog.find((item) => item.id === binding.property);
-    if (!binding.bindingId) errors.push(`能力与映射：第 ${index + 1} 条映射缺少稳定 mappingId。`);
+    const mappingId = binding.mappingId || binding.bindingId || `mapping-${index + 1}`;
+    if (!binding.bindingId) error("mapping", `第 ${index + 1} 条映射缺少稳定 mappingId。`, { mappingId, field: "technical" });
     if (source) {
-      if (sourceOwners.has(source.id)) errors.push(`能力与映射：${source.id} 已被第 ${sourceOwners.get(source.id)} 条映射使用。`);
+      if (sourceOwners.has(source.id)) error("mapping", `${source.id} 已被第 ${sourceOwners.get(source.id)} 条映射使用。`, { mappingId, field: "property" });
       else sourceOwners.set(source.id, index + 1);
     }
-    mappingIssues(binding, draft).forEach((issue) => errors.push(`能力与映射：第 ${index + 1} 条 ${issue}。`));
+    mappingIssueDetails(binding, draft).forEach((issue) => error("mapping", `第 ${index + 1} 条 ${issue.message}。`, { mappingId, locale: issue.locale, field: issue.field, voiceScope: issue.voiceScope, sourceValue: issue.sourceValue }));
     const candidate = selectedCapabilityCandidate(binding, draft);
     if (!candidate) return;
-    if (candidate.fit === "信息不足") errors.push(`能力与映射：${source.id} 的候选信息不足（${candidate.notes.join("、")}）。`);
-    else if (candidate.fit === "需转换") warnings.push(`能力与映射：${source.id} 需要平台归一化（${candidate.notes.join("、")}）。`);
-    if (binding.semantic !== candidate.semantic.id || binding.semanticSlot !== candidate.slotId) errors.push(`技术契约：${binding.bindingId} 的内部语义引用与所选 Capability 规则不一致。`);
+    if (candidate.fit === "信息不足") error("mapping", `${source.id} 的候选信息不足（${candidate.notes.join("、")}）。`, { mappingId, field: "ruleRef" });
+    else if (candidate.fit === "需转换") warning("mapping", `${source.id} 需要平台归一化（${candidate.notes.join("、")}）。`, { mappingId, field: "ruleRef" });
+    if (binding.semantic !== candidate.semantic.id || binding.semanticSlot !== candidate.slotId) error("mapping", `${binding.bindingId} 的内部语义引用与所选 Capability 规则不一致。`, { mappingId, field: "technical" });
     candidate.outputs.forEach((output) => {
       if (output.metadata?.instanceSupport !== "none") {
         const instance = binding.providerOverrides?.alexa?.[output.capabilityId]?.instance;
         const expected = stableInstanceFor(binding);
-        if (instance !== expected) errors.push(`技术契约：${output.capabilityId} 的稳定 instance 已失效。`);
-        else if (instanceOwners.has(instance)) errors.push(`技术契约：instance ${instance} 与 ${instanceOwners.get(instance)} 重复。`);
+        if (instance !== expected) error("mapping", `${output.capabilityId} 的稳定 instance 已失效。`, { mappingId, field: "technical" });
+        else if (instanceOwners.has(instance)) error("mapping", `instance ${instance} 与 ${instanceOwners.get(instance)} 重复。`, { mappingId, field: "technical" });
         else instanceOwners.set(instance, binding.bindingId);
       }
       if (output.capabilityId === "ModeController") {
         const mappings = binding.providerOverrides?.alexa?.ModeController?.modeMappings || [];
         const entries = enumEntries(source);
-        if (mappings.length !== entries.length) errors.push(`技术契约：${source.id} 的稳定 Alexa Value 未覆盖全部枚举值。`);
+        if (mappings.length !== entries.length) error("mapping", `${source.id} 的稳定 Alexa Value 未覆盖全部枚举值。`, { mappingId, field: "technical" });
         entries.forEach((entry) => {
           const expected = stableProviderValueFor(binding, entry.value);
-          if (!mappings.some((item) => item.modelValue === entry.value && item.alexaValue === expected)) errors.push(`技术契约：${source.id}.${entry.value} 的 Alexa Value 已失效。`);
+          if (!mappings.some((item) => item.modelValue === entry.value && item.alexaValue === expected)) error("mapping", `${source.id}.${entry.value} 的 Alexa Value 已失效。`, { mappingId, field: "technical" });
         });
       }
     });
   });
-  if (!draft.reporting.endpointHealth) errors.push("状态报告：EndpointHealth 是 Alexa 配置发布必需项。");
-  if (!draft.reporting.stateReport) warnings.push("状态报告：StateReport 未启用；具体 Capability 的可查询属性仍须满足 Provider 契约。");
-  if (draft.reporting.changeReport) errors.push("状态报告：首期不启用 proactive ChangeReport。");
-  state.editor.validation = { errors: [...new Set(errors)], warnings: [...new Set(warnings)], passed: errors.length === 0, checkedAt: "刚刚" };
+  if (!draft.reporting.endpointHealth) error("reporting", "EndpointHealth 是 Alexa 配置发布必需项。", { field: "endpointHealth" });
+  if (!draft.reporting.stateReport) warning("reporting", "StateReport 未启用；具体 Capability 的可查询属性仍须满足 Provider 契约。", { field: "stateReport" });
+  if (draft.reporting.changeReport) error("reporting", "首期不启用 proactive ChangeReport。", { field: "changeReport" });
+  return commitValidation(issues);
+}
+
+export function locateValidationIssue(issueId) {
+  const issue = state.editor.validation?.issues?.find((item) => item.id === issueId);
+  if (!issue) return false;
+  state.editor.section = issue.section;
+  if (issue.section === "mapping" && issue.mappingId) {
+    const index = state.editor.draft.capabilities.findIndex((binding) => (binding.mappingId || binding.bindingId) === issue.mappingId);
+    if (index >= 0) state.editor.expandedMapping = index;
+  }
+  state.editor.focusValidationIssueId = issue.id;
+  state.editor.preserveScrollOnNextRender = false;
   emit();
-  return state.editor.validation;
+  return true;
 }
 
 export function saveDraft() {
@@ -985,7 +1065,7 @@ export function saveDraft() {
     if (existingIndex >= 0) {
       state.profiles[existingIndex].status = "disabled";
     }
-    state.editor.validation = null;
+    state.editor.validation = createValidationState("stale");
     emit();
     return;
   }
@@ -1003,7 +1083,7 @@ export function saveDraft() {
 }
 
 export function publishDraft() {
-  const validation = state.editor.validation || runValidation();
+  const validation = state.editor.validation?.status === "passed" ? state.editor.validation : runValidation();
   if (!validation.passed) return false;
   const draft = clone(state.editor.draft);
   const product = productData.find((item) => item.id === draft.productId);
@@ -1027,7 +1107,7 @@ export function publishDraft() {
 export function updateProductAlexaSupport(value) {
   if (!state.editor.open) return;
   state.editor.productAlexaSupported = Boolean(value);
-  state.editor.validation = null;
+  invalidateValidation();
   emit();
 }
 
