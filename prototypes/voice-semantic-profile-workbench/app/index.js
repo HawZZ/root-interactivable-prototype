@@ -208,7 +208,6 @@ function render({ preserveDrawerScroll = false } = {}) {
   $("#pageRoot").innerHTML = renderPage();
   renderAnnotations();
   renderDrawer();
-  bindDrawerSectionActions();
   applyInstanceFieldHints();
   renderModal();
   renderToast();
@@ -226,16 +225,6 @@ function render({ preserveDrawerScroll = false } = {}) {
     restoreDrawerScroll();
     window.requestAnimationFrame(restoreDrawerScroll);
   }
-}
-
-function bindDrawerSectionActions() {
-  document.querySelectorAll('[data-action="drawer-section"]').forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (!button.disabled) setEditorSection(button.dataset.section);
-    });
-  });
 }
 
 function renderPageHeader() {
@@ -541,7 +530,7 @@ function renderPublishSection(draft) {
 }
 
 function renderValidation(validation) {
-  const grouped = validationSections.map((section) => [section, issuesForSection(validation, section)]).filter(([, issues]) => issues.length);
+  const grouped = sections.filter(([section]) => section !== "publish").map(([section]) => [section, issuesForSection(validation, section)]).filter(([, issues]) => issues.length);
   const errors = (validation.issues || []).filter((issue) => issue.severity === "error");
   const warnings = (validation.issues || []).filter((issue) => issue.severity === "warning");
   const headline = validation.status === "passed" ? "校验通过，可以发布" : `校验未通过：${errors.length} 个阻断项${warnings.length ? `，${warnings.length} 个提醒` : ""}`;
