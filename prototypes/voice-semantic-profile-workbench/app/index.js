@@ -58,6 +58,8 @@ import {
   generatedResourceRefs,
   stableInstanceFor,
   utteranceExamplesForBinding,
+  updateValueBinding,
+  valueBindingsFor,
   skillLocales,
   validateResourceDraft,
   voiceLabelResources,
@@ -69,7 +71,7 @@ import {
   requestMappingChange,
   confirmMappingChange,
   updateVoiceLabel
-} from "./state.js?v=20260826v2";
+} from "./state.js?v=20260826v3";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
@@ -168,10 +170,10 @@ const annotations = {
     },
     mapping: {
       context: "配置抽屉 / 能力与映射",
-      summary: "默认链路简化为：物模型属性/命令 -> Alexa Capability -> 多语言语音名称 -> 英语语句示例；内部协议字段只在折叠技术详情中只读展示。",
+      summary: "默认链路简化为：物模型属性/命令 -> Alexa Capability -> 多语言语音名称 -> 英语语句示例。封闭值域仅在需要时显示值对应，内部协议字段仍在技术详情只读展示。",
       items: [
-        { n: 5, title: "直接选择 Capability", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string 是硬筛条件；属性 ID 和名称不参与判断。Capability 以中文用途为主标题、官方 ID 为辅助信息。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容语音配置。运行完整校验后保持当前展开项和滚动位置。"], ["就地反馈", "当前步骤只显示最多 3 条相关问题；用户主动点击定位或查看第四步完整清单。"], ["Catalog 边界", "当前 10 个 Alexa 能力包为 profile_ready；另有 41 个官方候选仅登记为 metadata_only，不能成为可发布选项。"]] },
-        { n: 6, title: "多语言与语句预览", location: "关联位置：映射项 > 步骤 3-4", fields: [["语音名称", "需要区分对象的 Mode、Range、Toggle 按目标 Locale 填写一个主名称和最多两个别名；Mode 同时维护全部枚举值名称。"], ["多实例", "运动模式与音乐模式可分别映射 ModeController；平台按 mappingId 生成不同稳定 instance，即使都包含 sleep 值也不会混淆。"], ["语句", "输入完整后从 Provider Metadata 的 Alexa 官方预置模板展示 1-3 条 en-US 示例；设备名固定为 {device name}，不支持自定义句型。"]] },
+        { n: 5, title: "候选与值对应", location: "关联位置：映射项 > 步骤 1-2", fields: [["候选规则", "int、float、double、enum、bool、string、读写方向和值域是硬约束；属性 ID 和名称不参与判断。默认展示推荐项，其余项收纳为“查看其他候选”。"], ["封闭值域", "需要值对应时，每个物模型枚举值必须选择唯一 Alexa 目标值；不可忽略、不可复用。Alexa 合法值可以未使用。物模型值数量超过目标值时卡片不可选。"], ["交互", "一次只展开一项；更换来源或 Capability 前二次确认，并清空当前项的不兼容值对应与语音配置。运行完整校验后保持当前展开项和滚动位置。"], ["Catalog 边界", "当前 10 个 Alexa 能力包为 profile_ready；另有 41 个官方候选仅登记为 metadata_only，不能成为可发布选项。"]] },
+        { n: 6, title: "多语言与语句预览", location: "关联位置：映射项 > 步骤 3-4", fields: [["语音名称", "需要区分对象的 Mode、Range、Toggle 按目标 Locale 填写一个主名称和最多两个别名；Mode 同时维护全部枚举值名称。"], ["多实例", "运动模式与音乐模式可分别映射 ModeController；平台按 mappingId 生成不同稳定 instance，即使都包含 sleep 值也不会混淆。"], ["语句", "输入完整后从 Provider Metadata 的 Alexa 官方预置模板展示 1-3 条 en-US 示例；状态上报类 PlaybackStateReporter 显示无独立语音控制示例。"]] },
         { n: 8, title: "内部模型折叠", location: "关联位置：映射项 > 技术详情", fields: [["默认界面", "不显示设备语义、规则 ID、优先级、Adapter、instance、Alexa Value、Resource KV 或 Catalog 版本。"], ["排查", "折叠技术详情只读展示内部语义、固定规则、生成的 Capability、instance 和资源引用。"], ["二期", "Google Home 复用同一中立语义，但独立选择 Trait、维护本地化资源并发布，不引用 Alexa 资源。"]] }
       ]
     },
@@ -497,7 +499,21 @@ function renderCapabilityChoices(binding, source, draft, index) {
   if (!source) return `<div class="mapping-empty">先选择物模型属性或命令，平台才会按类型给出 Capability 候选。</div>`;
   const candidates = capabilityCandidatesForSource(source, draft.targetLocales);
   if (!candidates.length) return `<div class="mapping-empty mapping-empty--danger">当前来源没有可用的 Alexa Capability 候选。可以保存草稿，但不能发布。</div>`;
-  return `<div class="capability-choice-list">${candidates.map((candidate) => { const ruleRef = `${candidate.rule.ruleId}@${candidate.rule.version}`; const ids = candidate.outputs.map((output) => output.capabilityId); const title = candidate.outputs.map((output) => output.metadata?.label || output.capabilityId).join(" + "); return `<label class="capability-choice ${binding.ruleRef === ruleRef ? "is-selected" : ""} ${candidate.selectable ? "" : "is-disabled"}"><input type="radio" name="capability-${index}" data-mapping-index="${index}" data-mapping-field="ruleRef" value="${ruleRef}" ${binding.ruleRef === ruleRef ? "checked" : ""} ${candidate.selectable ? "" : "disabled"}/><span class="capability-choice__mark"></span><span><strong>${escapeHtml(title)}</strong><code>${escapeHtml(ids.join(" + "))}</code><small>${escapeHtml(candidate.selectable ? `${candidate.fit}${candidate.notes.length ? ` · ${candidate.notes.join("；")}` : ""}` : candidate.reasons.join("；"))}</small></span>${ids.length > 1 ? tag(`${ids.length} 项组合`, "warning") : ""}</label>`; }).join("")}</div>`;
+  const card = (candidate) => { const ruleRef = `${candidate.rule.ruleId}@${candidate.rule.version}`; const ids = candidate.outputs.map((output) => output.capabilityId); const title = candidate.outputs.map((output) => output.metadata?.label || output.capabilityId).join(" + "); const status = candidate.valueMapping?.label || "直接使用"; const statusType = candidate.valueMapping?.mode === "incompatible" ? "danger" : candidate.valueMapping?.mode === "required" ? "warning" : candidate.valueMapping?.mode === "generated" ? "info" : "success"; const detail = candidate.selectable ? `${status}${candidate.notes.length ? ` · ${candidate.notes.join("；")}` : ""}` : candidate.reasons.join("；"); return `<label class="capability-choice ${binding.ruleRef === ruleRef ? "is-selected" : ""} ${candidate.selectable ? "" : "is-disabled"}"><input type="radio" name="capability-${index}" data-mapping-index="${index}" data-mapping-field="ruleRef" value="${ruleRef}" ${binding.ruleRef === ruleRef ? "checked" : ""} ${candidate.selectable ? "" : "disabled"}/><span class="capability-choice__mark"></span><span><strong>${escapeHtml(title)}</strong><code>${escapeHtml(ids.join(" + "))}</code><small>${escapeHtml(detail)}</small></span>${tag(status, statusType)}</label>`; };
+  const recommended = candidates.filter((candidate) => candidate.tier === "recommended");
+  const other = candidates.filter((candidate) => candidate.tier !== "recommended");
+  if (!recommended.length) return `<div class="capability-choice-list">${other.map(card).join("")}</div>`;
+  return `<div class="capability-choice-list">${recommended.map(card).join("")}</div>${other.length ? `<details class="capability-more"><summary>查看其他候选（${other.length}）</summary><p>这些项需要额外值对应，或无法完整表达当前物模型值域。</p><div class="capability-choice-list">${other.map(card).join("")}</div></details>` : ""}`;
+}
+
+function renderValueMapping(binding, source, candidate, index) {
+  const config = candidate?.valueMapping;
+  if (!config) return "";
+  if (config.mode === "generated") return `<div class="value-mapping-notice is-generated"><strong>模式值由平台自动生成</strong><span>每个物模型枚举值会生成稳定的 Alexa Mode Value；下一步只需维护多语言模式名称。</span></div>`;
+  if (config.mode === "direct" && config.allowedValues?.length) return `<div class="value-mapping-notice"><strong>值域天然一致</strong><span>平台已按同名值建立完整一一对应，无需额外配置。</span></div>`;
+  if (config.mode !== "required") return "";
+  const bindings = valueBindingsFor(binding, source, candidate);
+  return `<section class="value-mapping"><header><div><strong>值对应 <b>*</b></strong><span>每个物模型值必须选择唯一的 Alexa 目标值；不允许忽略或复用。</span></div><em>${bindings.filter((item) => item.semanticValue).length}/${bindings.length} 已对应</em></header><div class="value-mapping__table"><div class="value-mapping__head"><span>物模型原始值</span><span>业务含义</span><span>Alexa 目标值</span></div>${bindings.map((item) => { const entry = enumEntries(source).find((value) => value.value === item.sourceValue); return `<div class="value-mapping__row"><code>${escapeHtml(item.sourceValue)}</code><span>${escapeHtml(entry?.label || item.sourceValue)}</span><select class="el-select" data-value-binding-index="${index}" data-source-value="${escapeHtml(item.sourceValue)}"><option value="">请选择 Alexa 目标值</option>${config.allowedValues.map((targetValue) => { const occupied = bindings.some((other) => other.sourceValue !== item.sourceValue && other.semanticValue === targetValue); return `<option value="${escapeHtml(targetValue)}" ${item.semanticValue === targetValue ? "selected" : ""} ${occupied ? "disabled" : ""}>${escapeHtml(targetValue)}${occupied ? "（已使用）" : ""}</option>`; }).join("")}</select></div>`; }).join("")}</div><p>本页保存的是物模型值到中立语义值的对应；Alexa Projection 将其解析为固定协议值。</p></section>`;
 }
 
 function renderMappingEditor(binding, index, draft) {
@@ -508,7 +524,8 @@ function renderMappingEditor(binding, index, draft) {
   const modeNames = candidate?.outputs.some((output) => output.capabilityId === "ModeController") ? enumEntries(source).map((entry) => renderVoiceLabelSet(binding.voice?.values?.[entry.value], `${entry.label} (${entry.value})`, index, "value", entry.value, draft.targetLocales)).join("") : "";
   const technicalOpen = state.editor.technicalDetails[index];
   const outputIds = candidate?.outputs.map((output) => output.capabilityId) || [];
-  return `<div class="mapping-editor"><section class="mapping-step"><div class="mapping-step__number">1</div><div><h4>选择物模型属性或命令</h4><select class="el-select" data-mapping-index="${index}" data-mapping-field="property"><option value="">请选择来源</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${binding.property === item.id ? "selected" : ""}>${escapeHtml(sourceOption(item))}</option>`).join("")}</select>${source ? renderFieldTags([[source.sourceKind === "command" ? "command" : source.type, "success"], [source.sourceKind === "command" ? source.operations.join(" / ") : source.writable ? "可读写" : "只读", "info"], [source.enumValues?.length ? `${source.enumValues.length} 个枚举值` : source.valueShape || (Number.isFinite(source.min) ? `${source.min}-${source.max}` : source.unit), "neutral"]]) : ""}<p>属性名称不参与候选判断；更换来源会清空不兼容的 Capability 和语音名称。</p></div></section><section class="mapping-step"><div class="mapping-step__number">2</div><div><h4>选择 Alexa Capability</h4><p>平台按来源类型和约束筛选，最终由配置人员人工确认。</p>${renderCapabilityChoices(binding, source, draft, index)}</div></section>${candidate ? `<section class="mapping-step"><div class="mapping-step__number">3</div><div><h4>维护多语言语音名称</h4>${binding.voice?.control ? renderVoiceLabelSet(binding.voice.control, "控制名称", index, "control", "", draft.targetLocales) : `<div class="standard-name-notice">${escapeHtml(outputIds.join(" + "))} 使用 Alexa 设备名称，无需额外填写控制名称。</div>`}${modeNames}</div></section><section class="mapping-step"><div class="mapping-step__number">4</div><div><h4>英语语句示例</h4>${examples.length ? `<div class="utterance-preview">${examples.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}</div>` : `<div class="utterance-missing"><strong>输入尚未完整</strong><ul>${issues.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>`}<p>语句基于 Alexa 官方预置模型生成，实际识别结果以 Alexa 测试和认证为准。设备名固定显示为 <code>{device name}</code>，不写入发布配置。</p></div></section><div class="technical-disclosure"><button type="button" data-action="toggle-technical" data-index="${index}">${technicalOpen ? "收起" : "展开"}技术详情</button>${technicalOpen ? `<dl><div><dt>内部设备语义</dt><dd><code>${escapeHtml(binding.semantic)}</code></dd></div><div><dt>规则版本</dt><dd><code>${escapeHtml(binding.ruleRef)}</code></dd></div><div><dt>生成 Capability</dt><dd>${escapeHtml(outputIds.join(" + "))}</dd></div><div><dt>稳定 instance</dt><dd><code>${outputIds.some((id) => capabilityCatalog.find((item) => item.id === id)?.instanceSupport !== "none") ? escapeHtml(stableInstanceFor(binding)) : "不适用"}</code></dd></div><div><dt>资源引用</dt><dd>${generatedResourceRefs(binding).map((ref) => `<code>${escapeHtml(ref)}</code>`).join(" ") || "不适用"}</dd></div></dl>` : ""}</div>` : ""}</div>`;
+  const noUtterance = candidate && !candidate.outputs.some((output) => output.metadata?.utteranceTemplates?.[localePolicy.baseLocale]?.length);
+  return `<div class="mapping-editor"><section class="mapping-step"><div class="mapping-step__number">1</div><div><h4>选择物模型属性或命令</h4><select class="el-select" data-mapping-index="${index}" data-mapping-field="property"><option value="">请选择来源</option>${modelPropertyCatalog.map((item) => `<option value="${item.id}" ${binding.property === item.id ? "selected" : ""}>${escapeHtml(sourceOption(item))}</option>`).join("")}</select>${source ? renderFieldTags([[source.sourceKind === "command" ? "command" : source.type, "success"], [source.sourceKind === "command" ? source.operations.join(" / ") : source.writable ? "可读写" : "只读", "info"], [source.enumValues?.length ? `${source.enumValues.length} 个枚举值` : source.valueShape || (Number.isFinite(source.min) ? `${source.min}-${source.max}` : source.unit), "neutral"]]) : ""}<p>属性名称不参与候选判断；更换来源会清空不兼容的 Capability、值对应和语音名称。</p></div></section><section class="mapping-step"><div class="mapping-step__number">2</div><div><h4>选择 Alexa Capability</h4><p>默认显示结构和方向最匹配的候选；其他候选仍可人工确认。</p>${renderCapabilityChoices(binding, source, draft, index)}${renderValueMapping(binding, source, candidate, index)}</div></section>${candidate ? `<section class="mapping-step"><div class="mapping-step__number">3</div><div><h4>维护多语言语音名称</h4>${binding.voice?.control ? renderVoiceLabelSet(binding.voice.control, "控制名称", index, "control", "", draft.targetLocales) : `<div class="standard-name-notice">${escapeHtml(outputIds.join(" + "))} 使用 Alexa 设备名称，无需额外填写控制名称。</div>`}${modeNames}</div></section><section class="mapping-step"><div class="mapping-step__number">4</div><div><h4>英语语句示例</h4>${noUtterance ? `<div class="standard-name-notice"><strong>无独立语音控制示例</strong><span>该 Capability 用于状态上报或响应其他控制结果，不声明独立语音指令。</span></div>` : examples.length ? `<div class="utterance-preview">${examples.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}</div>` : `<div class="utterance-missing"><strong>输入尚未完整</strong><ul>${issues.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>`}<p>语句基于 Alexa 官方预置模型生成，实际识别结果以 Alexa 测试和认证为准。设备名固定显示为 <code>{device name}</code>，不写入发布配置。</p></div></section><div class="technical-disclosure"><button type="button" data-action="toggle-technical" data-index="${index}">${technicalOpen ? "收起" : "展开"}技术详情</button>${technicalOpen ? `<dl><div><dt>内部设备语义</dt><dd><code>${escapeHtml(binding.semantic)}</code></dd></div><div><dt>规则版本</dt><dd><code>${escapeHtml(binding.ruleRef)}</code></dd></div><div><dt>生成 Capability</dt><dd>${escapeHtml(outputIds.join(" + "))}</dd></div><div><dt>值对应</dt><dd>${candidate.valueMapping?.mode === "generated" ? "平台自动生成" : binding.valueBindings?.length ? `${binding.valueBindings.length} 项中立语义值对应` : "不适用"}</dd></div><div><dt>稳定 instance</dt><dd><code>${outputIds.some((id) => capabilityCatalog.find((item) => item.id === id)?.instanceSupport !== "none") ? escapeHtml(stableInstanceFor(binding)) : "不适用"}</code></dd></div><div><dt>资源引用</dt><dd>${generatedResourceRefs(binding).map((ref) => `<code>${escapeHtml(ref)}</code>`).join(" ") || "不适用"}</dd></div></dl>` : ""}</div>` : ""}</div>`;
 }
 
 function renderMappingSection(draft) {
@@ -721,6 +738,11 @@ function handleInput(event) {
   }
   if (target.dataset.mappingIndex !== undefined && target.dataset.mappingField && state.editor.open) {
     requestMappingChange(Number(target.dataset.mappingIndex), target.dataset.mappingField, target.value);
+    return;
+  }
+  if (target.dataset.valueBindingIndex !== undefined && state.editor.open) {
+    updateValueBinding(Number(target.dataset.valueBindingIndex), target.dataset.sourceValue, target.value);
+    if (event.type === "change") render({ preserveDrawerScroll: true });
     return;
   }
   if (target.dataset.voiceIndex !== undefined && state.editor.open) {

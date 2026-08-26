@@ -77,6 +77,12 @@ export const providerCapabilityMappingContract = {
   fields: ["mappingId", "sourceRef", "semanticRef", "ruleRef", "outputs", "voiceLabelSetRefs"]
 };
 
+export const semanticBindingValueContract = {
+  name: "SemanticBinding.valueBindings",
+  fields: ["sourceValue", "semanticValue"],
+  rule: "封闭值域必须完整覆盖源值，且不同源值不得复用同一语义值。"
+};
+
 export const localePolicy = {
   enabledLocaleCount: 18,
   baseLocale: "en-US",
@@ -188,6 +194,7 @@ export const modelPropertyCatalog = [
   { id: "child_lock", label: "童锁开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
   { id: "volume_0_100", label: "扬声器音量", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
   { id: "playback_state", label: "播放状态", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: false, enumValues: ["PLAYING", "PAUSED", "STOPPED"] },
+  { id: "playback_state_code", label: "播放状态（数值枚举值）", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: false, enumValues: [{ value: "0", label: "待机" }, { value: "1", label: "播放" }, { value: "2", label: "暂停" }] },
   { id: "device_online", label: "设备在线状态", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: false },
   { id: "playback_command", label: "播放控制命令", sourceKind: "command", type: null, unit: "-", operations: ["Play", "Pause", "Stop"] }
 ];
@@ -207,6 +214,34 @@ export function capabilityCandidatesForSource(source, targetLocales = [localePol
 
 export function enumEntries(property) {
   return (property?.enumValues || []).map((item) => typeof item === "object" ? { value: String(item.value), label: item.label || String(item.value) } : { value: String(item), label: String(item) });
+}
+
+export function valueBindingSchemaFor(property) {
+  return JSON.stringify(enumEntries(property).map(({ value, label }) => [value, label]));
+}
+
+export function valueBindingsFor(binding, property, candidate) {
+  const mode = candidate?.valueMapping?.mode;
+  if (!property || !["direct", "required"].includes(mode) || !candidate.valueMapping.allowedValues?.length) return [];
+  const existing = new Map((binding?.valueBindings || []).map((item) => [String(item.sourceValue), item]));
+  return enumEntries(property).map((entry) => {
+    const saved = existing.get(entry.value);
+    return { sourceValue: entry.value, semanticValue: saved?.semanticValue || (mode === "direct" ? entry.value : "") };
+  });
+}
+
+function initializeValueBindings(binding, property, candidate) {
+  const mode = candidate?.valueMapping?.mode;
+  if (!property || !["direct", "required"].includes(mode) || !candidate.valueMapping.allowedValues?.length) {
+    binding.valueBindings = [];
+    binding.valueBindingSchema = "";
+    return;
+  }
+  binding.valueBindings = enumEntries(property).map((entry) => ({
+    sourceValue: entry.value,
+    semanticValue: mode === "direct" ? entry.value : ""
+  }));
+  binding.valueBindingSchema = valueBindingSchemaFor(property);
 }
 
 function stableToken(value) {
@@ -264,6 +299,29 @@ export function mappingIssueDetails(binding, profile) {
   const candidate = selectedCapabilityCandidate(binding, profile);
   if (!candidate) return [{ message: "所选 Capability 与当前属性不再兼容", field: "ruleRef" }];
   if (!candidate.selectable) issues.push(...candidate.reasons.map((message) => ({ message, field: "ruleRef" })));
+  const valueMapping = candidate.valueMapping;
+  if (["direct", "required"].includes(valueMapping?.mode) && valueMapping.allowedValues?.length) {
+    const entries = enumEntries(source);
+    if (binding.valueBindingSchema !== valueBindingSchemaFor(source)) {
+      issues.push({ message: "物模型枚举值或业务含义已变化，请重新确认值对应关系", field: "value-bindings" });
+    }
+    const bindings = binding.valueBindings || [];
+    if (bindings.length !== entries.length) issues.push({ message: "值对应未覆盖全部物模型枚举值", field: "value-bindings" });
+    const targetValues = new Set();
+    entries.forEach((entry) => {
+      const item = bindings.find((valueBinding) => String(valueBinding.sourceValue) === entry.value);
+      if (!item?.semanticValue) {
+        issues.push({ message: `枚举值 ${entry.value} 尚未选择 Alexa 目标值`, field: "value-bindings", sourceValue: entry.value });
+        return;
+      }
+      if (!valueMapping.allowedValues.includes(item.semanticValue)) {
+        issues.push({ message: `枚举值 ${entry.value} 的 Alexa 目标值不合法`, field: "value-bindings", sourceValue: entry.value });
+        return;
+      }
+      if (targetValues.has(item.semanticValue)) issues.push({ message: `Alexa 目标值 ${item.semanticValue} 不可重复使用`, field: "value-bindings", sourceValue: entry.value });
+      targetValues.add(item.semanticValue);
+    });
+  }
   if (binding.voice?.control) issues.push(...labelSetIssueDetails(binding.voice.control, locales, "控制名称", { voiceScope: "control" }));
   if (candidate.outputs.some((item) => item.capabilityId === "ModeController")) {
     const values = enumEntries(source);
@@ -353,6 +411,7 @@ function normalizeBinding(binding, locales, seedDefaults = true) {
   const resolution = resolveProviderProjection(normalized, "alexa");
   if (!normalized.ruleRef && resolution.rule) normalized.ruleRef = `${resolution.rule.ruleId}@${resolution.rule.version}`;
   const candidate = capabilityCandidatesForSource(source, locales).find((item) => `${item.rule.ruleId}@${item.rule.version}` === normalized.ruleRef);
+  if (!normalized.valueBindings || !normalized.valueBindingSchema) initializeValueBindings(normalized, source, candidate);
   normalized.voice ||= initializeVoice(normalized, candidate, source, locales, seedDefaults);
   normalized.providerOverrides ||= { alexa: {} };
   candidate?.outputs.forEach((output) => {
@@ -374,7 +433,10 @@ function normalizeBinding(binding, locales, seedDefaults = true) {
 function normalizeProfile(profile) {
   const normalized = clone(profile);
   normalized.targetLocales ||= normalized.category === "Smart Crib" ? ["en-US", "de-DE"] : ["en-US"];
+  normalized.catalogVersions.semantic = catalogVersions.semantic;
+  normalized.catalogVersions.projection = catalogVersions.projection;
   normalized.catalogVersions.provider = catalogVersions.provider;
+  normalized.providerProjections.alexa.ruleCatalogVersion = catalogVersions.projection;
   normalized.providerProjections.alexa.providerMetadataVersion = catalogVersions.provider;
   normalized.capabilities = normalized.capabilities.map((binding) => normalizeBinding(binding, normalized.targetLocales));
   return normalized;
@@ -785,6 +847,8 @@ function applyMappingChange(index, field, value) {
     binding.semanticSlot = "";
     binding.ruleRef = "";
     binding.voice = { values: {} };
+    binding.valueBindings = [];
+    binding.valueBindingSchema = "";
     binding.providerOverrides = { alexa: {} };
   } else if (field === "ruleRef") {
     const source = modelPropertyCatalog.find((item) => item.id === binding.property);
@@ -795,6 +859,7 @@ function applyMappingChange(index, field, value) {
     binding.semanticSlot = candidate?.slotId || "";
     binding.providerOverrides = { alexa: {} };
     binding.voice = initializeVoice(binding, candidate, source, state.editor.draft.targetLocales, false);
+    initializeValueBindings(binding, source, candidate);
     candidate?.outputs.forEach((output) => {
       const override = {};
       if (output.metadata?.instanceSupport !== "none") override.instance = stableInstanceFor(binding);
@@ -841,6 +906,15 @@ export function updateVoiceLabel(index, scope, sourceValue, locale, field, alias
   invalidateValidation();
 }
 
+export function updateValueBinding(index, sourceValue, semanticValue) {
+  const binding = state.editor.draft.capabilities[index];
+  if (!binding) return;
+  const item = (binding.valueBindings || []).find((valueBinding) => String(valueBinding.sourceValue) === String(sourceValue));
+  if (!item || item.semanticValue === semanticValue) return;
+  item.semanticValue = semanticValue;
+  invalidateValidation();
+}
+
 export function updateProjectionOverride(index, provider, capabilityId, key, value) {
   const binding = state.editor.draft.capabilities[index];
   if (!binding) return;
@@ -853,7 +927,7 @@ export function updateProjectionOverride(index, provider, capabilityId, key, val
 
 export function addCapability() {
   const mappingId = `binding-${Date.now()}`;
-  state.editor.draft.capabilities.push({ bindingId: mappingId, mappingId, sourceRef: "", semanticRef: "", provider: "alexa", semantic: "", semanticSlot: "", property: "", ruleRef: "", voice: { values: {} }, providerOverrides: { alexa: {} } });
+  state.editor.draft.capabilities.push({ bindingId: mappingId, mappingId, sourceRef: "", semanticRef: "", provider: "alexa", semantic: "", semanticSlot: "", property: "", ruleRef: "", valueBindings: [], valueBindingSchema: "", voice: { values: {} }, providerOverrides: { alexa: {} } });
   state.editor.expandedMapping = state.editor.draft.capabilities.length - 1;
   state.editor.section = "mapping";
   invalidateValidation();

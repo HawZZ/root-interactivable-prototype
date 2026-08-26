@@ -1,18 +1,20 @@
 {
   "catalog": "ProviderMetadataCatalog",
-  "version": "2026.08.3",
+  "version": "2026.08.4",
   "providers": {
     "alexa": {
       "definitions": [
         {
           "id": "PowerController", "label": "电源控制", "group": "基础控制", "type": "bool",
           "directives": ["TurnOn", "TurnOff"], "status": "profile_ready", "instanceSupport": "none",
+          "valueContract": {"kind": "boolean", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, turn on the {device name}.", "Alexa, turn off the {device name}."]}
         },
         {
           "id": "BrightnessController", "label": "亮度控制", "group": "灯光", "type": "number 0-100",
           "directives": ["SetBrightness", "AdjustBrightness"], "status": "profile_ready", "instanceSupport": "none",
+          "valueContract": {"kind": "numeric", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, set the {device name} brightness to 50 percent.", "Alexa, increase the brightness on the {device name}."]}
         },
@@ -31,38 +33,44 @@
         {
           "id": "ModeController", "label": "模式控制", "group": "通用控制", "type": "enum",
           "directives": ["SetMode", "AdjustMode"], "status": "profile_ready", "instanceSupport": "required", "resourceScopes": ["capability", "mode"],
+          "valueContract": {"kind": "open", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, set the {control name} on the {device name} to {value name}.", "Alexa, set the {control name} to {value name}.", "Alexa, what's the {control name} on the {device name}?"]}
         },
         {
           "id": "RangeController", "label": "范围或强度控制", "group": "通用控制", "type": "number / enum",
           "directives": ["SetRangeValue", "AdjustRangeValue"], "status": "profile_ready", "instanceSupport": "optional", "resourceScopes": ["capability"],
+          "valueContract": {"kind": "numeric", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, set the {control name} on the {device name} to {sample value}.", "Alexa, increase the {control name} on the {device name}.", "Alexa, what's the {control name} on the {device name}?"]}
         },
         {
           "id": "ToggleController", "label": "独立开关控制", "group": "通用控制", "type": "bool",
           "directives": ["TurnOn", "TurnOff"], "status": "profile_ready", "instanceSupport": "optional", "resourceScopes": ["capability"],
+          "valueContract": {"kind": "boolean", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, turn on the {control name} on the {device name}.", "Alexa, turn off the {control name} on the {device name}."]}
         },
         {
           "id": "Speaker", "label": "音量控制", "group": "音频", "type": "number 0-100",
           "directives": ["SetVolume", "AdjustVolume"], "status": "profile_ready", "instanceSupport": "none",
+          "valueContract": {"kind": "numeric", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, set the volume on the {device name} to 50 percent.", "Alexa, turn up the volume on the {device name}."]}
         },
         {
           "id": "PlaybackController", "label": "播放控制", "group": "音频", "type": "command",
           "directives": ["Play", "Pause", "Stop"], "status": "profile_ready", "instanceSupport": "none",
+          "valueContract": {"kind": "command", "direction": "bidirectional"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
           "utteranceTemplates": {"en-US": ["Alexa, play the {device name}.", "Alexa, pause the {device name}.", "Alexa, stop the {device name}."]}
         },
         {
           "id": "PlaybackStateReporter", "label": "播放状态", "group": "音频状态", "type": "enum",
           "directives": [], "status": "profile_ready", "instanceSupport": "none",
+          "valueContract": {"kind": "closed", "allowedValues": ["PLAYING", "PAUSED", "STOPPED"], "direction": "source_to_provider", "mappingCardinality": "source_total_injective"},
           "supportedLocales": ["en-US", "en-GB", "de-DE", "fr-FR", "it-IT", "es-ES", "es-MX", "pt-BR", "ja-JP"],
-          "utteranceTemplates": {"en-US": ["Alexa, what's playing on the {device name}?"]}
+          "utteranceTemplates": {"en-US": []}
         },
         {
           "id": "EndpointHealth", "label": "在线状态", "group": "状态", "type": "connectivity",

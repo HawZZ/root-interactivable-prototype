@@ -34,10 +34,12 @@ export function providerCapabilityCandidatesForSource(source, provider, semantic
         }));
         const unavailableOutputs = outputs.filter((output) => output.metadata?.status !== "profile_ready");
         const unsupportedLocales = targetLocales.filter((locale) => outputs.some((output) => !output.metadata?.supportedLocales?.includes(locale)));
+        const valueMapping = valueMappingFor(source, rule, outputs);
         const reasons = [];
         if (rule.support !== "ready") reasons.push(`规则状态为 ${rule.support}`);
         if (unavailableOutputs.length) reasons.push(`${unavailableOutputs.map((item) => item.capabilityId).join("、")} 尚未开放`);
         if (unsupportedLocales.length) reasons.push(`不支持 Locale：${unsupportedLocales.join("、")}`);
+        if (!valueMapping.compatible) reasons.push(valueMapping.reason);
         return {
           semantic: semanticCandidate.semantic,
           slotId: semanticCandidate.slotId,
@@ -47,12 +49,27 @@ export function providerCapabilityCandidatesForSource(source, provider, semantic
           rule,
           outputs,
           selectable: reasons.length === 0,
-          reasons
+          reasons,
+          valueMapping,
+          tier: valueMapping.compatible && ["direct", "generated"].includes(valueMapping.mode) && semanticCandidate.fit === "可直接绑定" ? "recommended" : "other"
         };
       });
   });
   const fitOrder = { "可直接绑定": 0, "需转换": 1, "信息不足": 2 };
   return candidates.sort((a, b) => Number(b.selectable) - Number(a.selectable) || fitOrder[a.fit] - fitOrder[b.fit] || b.score - a.score || a.rule.ruleId.localeCompare(b.rule.ruleId));
+}
+
+function valueMappingFor(source, rule, outputs) {
+  const policy = rule.valueTransformPolicy || { mode: "direct" };
+  const contract = outputs.map((output) => output.metadata?.valueContract).find(Boolean) || { kind: "open" };
+  if (policy.mode === "generated") return { mode: "generated", compatible: true, allowedValues: [], label: "平台自动生成" };
+  if (policy.mode !== "required") return { mode: "direct", compatible: true, allowedValues: [], label: "直接使用" };
+  const sourceValues = (source.enumValues || []).map((entry) => String(typeof entry === "object" ? entry.value : entry));
+  const allowedValues = (contract.allowedValues || policy.semanticToProvider || []).map((entry) => typeof entry === "string" ? entry : entry.providerValue);
+  if (!sourceValues.length || !allowedValues.length) return { mode: "incompatible", compatible: false, allowedValues, label: "值域不兼容", reason: "缺少可用于完整映射的枚举值定义" };
+  if (sourceValues.length > allowedValues.length) return { mode: "incompatible", compatible: false, allowedValues, label: "值域不兼容", reason: `物模型有 ${sourceValues.length} 个枚举值，超过 Alexa 可用的 ${allowedValues.length} 个目标值` };
+  const direct = sourceValues.every((value) => allowedValues.includes(value)) && new Set(sourceValues).size === sourceValues.length;
+  return { mode: direct ? "direct" : "required", compatible: true, allowedValues, label: direct ? "直接使用" : "需要值对应", policy };
 }
 
 function candidateFit(source, semantic) {
