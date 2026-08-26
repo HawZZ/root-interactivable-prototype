@@ -208,6 +208,7 @@ function render({ preserveDrawerScroll = false } = {}) {
   $("#pageRoot").innerHTML = renderPage();
   renderAnnotations();
   renderDrawer();
+  bindDrawerSectionActions();
   applyInstanceFieldHints();
   renderModal();
   renderToast();
@@ -225,6 +226,16 @@ function render({ preserveDrawerScroll = false } = {}) {
     restoreDrawerScroll();
     window.requestAnimationFrame(restoreDrawerScroll);
   }
+}
+
+function bindDrawerSectionActions() {
+  document.querySelectorAll('[data-action="drawer-section"]').forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!button.disabled) setEditorSection(button.dataset.section);
+    });
+  });
 }
 
 function renderPageHeader() {
