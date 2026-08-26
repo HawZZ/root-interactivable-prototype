@@ -71,7 +71,7 @@ import {
   requestMappingChange,
   confirmMappingChange,
   updateVoiceLabel
-} from "./state.js?v=20260826v3";
+} from "./state.js?v=20260826v5";
 import { $, anchor, escapeHtml, statusClass, tag } from "./dom.js";
 
 const sections = [
