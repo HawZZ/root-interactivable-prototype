@@ -1,8 +1,9 @@
 import {
   providerCapabilityCandidatesForSource as getProviderCapabilityCandidates,
   resolveProviderProjection as resolveProjection,
-  semanticCandidatesForSource as getSemanticCandidates
-} from "./catalog-engine.js";
+  semanticCandidatesForSource as getSemanticCandidates,
+  sourceContractFor
+} from "./catalog-engine.js?v=20260827v5";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const instanceNamePattern = /^[A-Za-z][A-Za-z0-9._-]{0,63}$/;
@@ -151,6 +152,7 @@ export const statusMeta = {
 
 async function loadCatalog(relativePath) {
   const url = new URL(relativePath, import.meta.url);
+  url.search = "v=20260827v5";
   if (url.protocol === "file:") {
     const { readFile } = await import("node:fs/promises");
     return JSON.parse(await readFile(url, "utf8"));
@@ -182,17 +184,20 @@ export const alexaProfileLocales = [...new Set(capabilityCatalog.flatMap((item) 
 
 export const modelPropertyCatalog = [
   { id: "power", label: "电源开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
-  { id: "brightness", label: "夜灯亮度", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
-  { id: "ambient_temperature", label: "环境温度", sourceKind: "property", type: "float", unit: "°C", min: -20, max: 80, readable: true, writable: false },
-  { id: "target_temperature", label: "目标温度", sourceKind: "property", type: "double", unit: "°C", min: 5, max: 40, readable: true, writable: true },
+  { id: "brightness", label: "夜灯亮度", sourceKind: "property", type: "int", readable: true, writable: true, dataJson: "{\"step\":1,\"unit\":\"%\",\"min\":0,\"max\":100}" },
+  { id: "ambient_temperature", label: "环境温度", sourceKind: "property", type: "float", readable: true, writable: false, dataJson: "{\"step\":0.5,\"unit\":\"°C\",\"min\":-20,\"max\":80}" },
+  { id: "target_temperature", label: "目标温度", sourceKind: "property", type: "double", readable: true, writable: true, dataJson: "{\"step\":0.5,\"unit\":\"°C\",\"min\":5,\"max\":40}" },
   { id: "color_payload", label: "颜色与色温结构值", sourceKind: "property", type: "string", unit: "-", valueShape: "color_hsb_cct", readable: true, writable: true },
   { id: "device_label", label: "设备文本标签", sourceKind: "property", type: "string", unit: "-", valueShape: "plain_text", readable: true, writable: false },
   { id: "motion_mode", label: "运动模式", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "SOFT_ROCKING", "PLAY"] },
   { id: "music_mode", label: "音乐模式", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: ["SLEEP", "LULLABY", "WHITE_NOISE"] },
   { id: "work_mode", label: "工作模式（数值型枚举值）", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: true, enumValues: [{ value: "0", label: "空闲" }, { value: "1", label: "满载" }, { value: "2", label: "半载" }, { value: "3", label: "低功率" }] },
-  { id: "motion_level", label: "运动强度", sourceKind: "property", type: "int", unit: "level", min: 1, max: 5, readable: true, writable: true },
+  { id: "motion_level", label: "运动强度", sourceKind: "property", type: "int", readable: true, writable: true, dataJson: "{\"step\":1,\"unit\":\"\",\"min\":1,\"max\":5}" },
   { id: "child_lock", label: "童锁开关", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: true },
-  { id: "volume_0_100", label: "扬声器音量", sourceKind: "property", type: "int", unit: "%", min: 0, max: 100, readable: true, writable: true },
+  { id: "volume_0_100", label: "扬声器音量", sourceKind: "property", type: "int", readable: true, writable: true, dataJson: "{\"step\":1,\"unit\":\"%\",\"min\":0,\"max\":100}" },
+  { id: "output_power", label: "输出功率", sourceKind: "property", type: "int", readable: true, writable: true, dataJson: "{\"step\":1,\"unit\":\"%\",\"min\":0,\"max\":100}" },
+  { id: "missing_step", label: "缺少步长的数值", sourceKind: "property", type: "int", readable: true, writable: true, dataJson: "{\"unit\":\"%\",\"min\":0,\"max\":100}" },
+  { id: "numeric_enum", label: "连续数值枚举", sourceKind: "property", type: "enum", readable: true, writable: true, enumValues: [{ value: "0", label: "低" }, { value: "5", label: "中" }, { value: "10", label: "高" }] },
   { id: "playback_state", label: "播放状态", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: false, enumValues: ["PLAYING", "PAUSED", "STOPPED"] },
   { id: "playback_state_code", label: "播放状态（数值枚举值）", sourceKind: "property", type: "enum", unit: "-", readable: true, writable: false, enumValues: [{ value: "0", label: "待机" }, { value: "1", label: "播放" }, { value: "2", label: "暂停" }] },
   { id: "device_online", label: "设备在线状态", sourceKind: "property", type: "bool", unit: "-", readable: true, writable: false },
@@ -218,6 +223,10 @@ export function enumEntries(property) {
 
 export function valueBindingSchemaFor(property) {
   return JSON.stringify(enumEntries(property).map(({ value, label }) => [value, label]));
+}
+
+export function sourceContractFingerprintFor(property) {
+  return sourceContractFor(property).schemaFingerprint;
 }
 
 export function valueBindingsFor(binding, property, candidate) {
@@ -299,6 +308,9 @@ export function mappingIssueDetails(binding, profile) {
   const candidate = selectedCapabilityCandidate(binding, profile);
   if (!candidate) return [{ message: "所选 Capability 与当前属性不再兼容", field: "ruleRef" }];
   if (!candidate.selectable) issues.push(...candidate.reasons.map((message) => ({ message, field: "ruleRef" })));
+  if (binding.sourceContractFingerprint && binding.sourceContractFingerprint !== sourceContractFingerprintFor(source)) {
+    issues.push({ message: "物模型 dataJson 的范围、步长、单位或读写契约已变化，请重新确认映射", field: "source-contract" });
+  }
   const valueMapping = candidate.valueMapping;
   if (["direct", "required"].includes(valueMapping?.mode) && valueMapping.allowedValues?.length) {
     const entries = enumEntries(source);
@@ -357,7 +369,8 @@ export function utteranceExamplesForBinding(binding, profile) {
   const controlName = binding.voice?.control?.locales?.[localePolicy.baseLocale]?.primary?.trim() || "";
   const firstValue = enumEntries(source)[0]?.value;
   const valueName = binding.voice?.values?.[firstValue]?.locales?.[localePolicy.baseLocale]?.primary?.trim() || "";
-  const sampleValue = Number.isFinite(source?.min) && Number.isFinite(source?.max) ? String(Math.round((source.min + source.max) / 2)) : "50";
+  const numeric = sourceContractFor(source).numeric;
+  const sampleValue = Number.isFinite(numeric?.min) && Number.isFinite(numeric?.max) ? String((numeric.min + numeric.max) / 2) : "50";
   const examples = candidate.outputs.flatMap((output) => output.metadata?.utteranceTemplates?.[localePolicy.baseLocale] || []).map((template) => template
     .replaceAll("{control name}", controlName)
     .replaceAll("{value name}", valueName)
@@ -406,6 +419,7 @@ function normalizeBinding(binding, locales, seedDefaults = true) {
   normalized.mappingId ||= normalized.bindingId;
   normalized.sourceRef = normalized.property || "";
   normalized.semanticRef = normalized.semantic || "";
+  normalized.sourceContractFingerprint ||= sourceContractFingerprintFor(modelPropertyCatalog.find((item) => item.id === normalized.property));
   normalized.provider = "alexa";
   const source = modelPropertyCatalog.find((item) => item.id === normalized.property);
   const resolution = resolveProviderProjection(normalized, "alexa");
@@ -483,7 +497,7 @@ const profileFixtures = [
     capabilities: [
       { bindingId: "crib-mode", semantic: "device.mode", semanticSlot: "value", property: "motion_mode", providerOverrides: { alexa: { ModeController: { instance: "Crib.MotionMode", modeMappings: [{ modelValue: "SLEEP", alexaValue: "SLEEP" }, { modelValue: "SOFT_ROCKING", alexaValue: "SOFT_ROCKING" }, { modelValue: "PLAY", alexaValue: "PLAY" }] } } } },
       { bindingId: "crib-music-mode", semantic: "device.mode", semanticSlot: "value", property: "music_mode", providerOverrides: { alexa: { ModeController: {} } } },
-      { bindingId: "crib-level", semantic: "device.level", semanticSlot: "value", property: "motion_level", providerOverrides: { alexa: { RangeController: { instance: "Crib.MotionIntensity", range: "1-5" } } } },
+      { bindingId: "crib-level", semantic: "device.numeric_range", semanticSlot: "value", property: "motion_level", providerOverrides: { alexa: { RangeController: { instance: "Crib.MotionIntensity", range: "1-5" } } } },
       { bindingId: "crib-lock", semantic: "device.toggle", semanticSlot: "value", property: "child_lock", providerOverrides: { alexa: { ToggleController: { instance: "Crib.ChildLock" } } } }
     ]
   },
@@ -850,6 +864,7 @@ function applyMappingChange(index, field, value) {
     binding.valueBindings = [];
     binding.valueBindingSchema = "";
     binding.providerOverrides = { alexa: {} };
+    binding.sourceContractFingerprint = "";
   } else if (field === "ruleRef") {
     const source = modelPropertyCatalog.find((item) => item.id === binding.property);
     const candidate = capabilityCandidatesForSource(source, state.editor.draft.targetLocales).find((item) => `${item.rule.ruleId}@${item.rule.version}` === value);
@@ -857,6 +872,7 @@ function applyMappingChange(index, field, value) {
     binding.semantic = candidate?.semantic.id || "";
     binding.semanticRef = binding.semantic;
     binding.semanticSlot = candidate?.slotId || "";
+    binding.sourceContractFingerprint = sourceContractFingerprintFor(source);
     binding.providerOverrides = { alexa: {} };
     binding.voice = initializeVoice(binding, candidate, source, state.editor.draft.targetLocales, false);
     initializeValueBindings(binding, source, candidate);
@@ -996,7 +1012,7 @@ function runLegacyValidation() {
     }
     if (binding.semanticSlot && binding.semanticSlot !== candidate.slotId) errors.push(`能力与映射：${semanticItem.id} 的输入槽位已变化，请重新选择设备语义。`);
     if (candidate.fit === "信息不足") errors.push(`能力与映射：${source.id} 绑定 ${semanticItem.id} 时信息不足（${candidate.notes.join("、")}）。`);
-    if (candidate.fit === "需转换") warnings.push(`能力与映射：${source.id} 绑定 ${semanticItem.id} 需要归一化（${candidate.notes.join("、")}）。`);
+    if (candidate.status === "需要转换") warnings.push(`能力与映射：${source.id} 使用已登记 Adapter 转换（${candidate.notes.join("、")}）。`);
 
     const resolution = resolveProviderProjection(binding, "alexa");
     if (resolution.status === "conflict") {
@@ -1088,7 +1104,7 @@ export function runValidation() {
     const candidate = selectedCapabilityCandidate(binding, draft);
     if (!candidate) return;
     if (candidate.fit === "信息不足") error("mapping", `${source.id} 的候选信息不足（${candidate.notes.join("、")}）。`, { mappingId, field: "ruleRef" });
-    else if (candidate.fit === "需转换") warning("mapping", `${source.id} 需要平台归一化（${candidate.notes.join("、")}）。`, { mappingId, field: "ruleRef" });
+    else if (candidate.status === "需要转换") warning("mapping", `${source.id} 使用已登记 Adapter 转换（${candidate.notes.join("、")}）。`, { mappingId, field: "ruleRef" });
     if (binding.semantic !== candidate.semantic.id || binding.semanticSlot !== candidate.slotId) error("mapping", `${binding.bindingId} 的内部语义引用与所选 Capability 规则不一致。`, { mappingId, field: "technical" });
     candidate.outputs.forEach((output) => {
       if (output.metadata?.instanceSupport !== "none") {
