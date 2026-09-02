@@ -12,6 +12,7 @@ Site: https://hawzz.github.io/root-interactivable-prototype/
 - [IoT Admin 设备助手云端配置原型](./prototypes/device-assistant-cloud-config/)
 - [IoT Admin 设备助手云端配置原型（批注优化版 V2）](./prototypes/device-assistant-cloud-config-annotation-optimized-v2/) — 富文本编辑、JSON 整包导入导出与图片缩略图管理
 - [云端多步骤配网引导入口原型](./prototypes/multi-step-provisioning-guide/)
+- [涂鸦云配网交互方式配置原型](./prototypes/tuya-provision-interaction-mode/) — 所属平台为涂鸦云时补充 `TUYA_UI_PACKAGE` 与 `TUYA_API_BLE_WIFI`，覆盖创建/编辑抽屉与字段级校验
 - [官方韵律 Ceres 同步](./prototypes/official-rhythm-ceres-sync/) — IoT Admin 产品详情 > 高级配置 > 官方韵律，支持 Ceres 平台同步来源
 - [官方韵律草稿白名单体验 V2.1.1](./prototypes/official-rhythm-ceres-sync-v2-1-1-draft-whitelist-preview/) — 基于原需求分支新增，验证草稿韵律对白名单用户开放，不覆盖原 Ceres 同步原型
 - [消息推送 P0 规则闭环原型](./prototypes/message-push-trigger-opt/) — IoT Admin 现状设备 / 云端 / 耗材触发、English + 多语言 KV 快速导入，以及 each / discard 投递模式；事件管理与高级投递能力留待后续版本
