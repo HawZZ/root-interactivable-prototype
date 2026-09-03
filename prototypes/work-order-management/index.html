@@ -327,7 +327,6 @@
     .tag.success { color: #4d942d; border-color: #b9dfa8; background: #f0f9eb; }
     .tag.failed { color: #d44a4a; border-color: #fac2c2; background: #fef0f0; }
     .tag.rejected { color: #737b87; border-color: #d5d8de; background: #f4f4f5; }
-    .tag.notice-failed { margin-left: 5px; color: #b87503; border-color: #f5d596; background: #fff8e8; }
 
     .pagination {
       height: 64px;
@@ -728,6 +727,7 @@
                     <option value="COMPLETED">已完成</option>
                     <option value="REJECTED">已驳回</option>
                     <option value="FAILED">处理失败</option>
+                    <option value="CLOSED">已关闭</option>
                   </select>
                   <input class="control" id="timeFilter" placeholder="提交时间">
                   <button class="btn primary" id="queryButton" type="button">查询</button>
@@ -915,7 +915,7 @@
         id: "TY202609020014", sn: "BM04S****4096", fullSn: "BM04S2406E04096", user: "u_08****63", status: "COMPLETED", stage: "COMPLETED",
         recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2406E04096", confidence: "99.3%", matchResult: "MATCHED", autoDecision: "自动解绑", executionStatus: "SUCCEEDED",
         submittedAt: "2026-09-02 13:46:03", processingStartedAt: "2026-09-02 13:46:04", completedAt: "2026-09-02 13:46:11", region: "北美数据中心", tuyaId: "vde****e05", binding: "已解绑",
-        notification: "SENT", lastNotifiedAt: "2026-09-02 13:46:12", reason: "设备仍绑定在已注销的旧账号。", contact: "+1 202 555 0196",
+        notification: "FAILED", lastNotifiedAt: "--", reason: "设备仍绑定在已注销的旧账号。", contact: "+1 202 555 0196",
         events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "13:46:04" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "13:46:07" }, { seq: 3, stage: "匹配", text: "设备信息校验通过", delivery: "已投递", time: "13:46:08" }, { seq: 4, stage: "调用接口", text: "正在解除设备绑定", delivery: "已投递", time: "13:46:09" }, { seq: 5, stage: "返回结果", text: "设备解绑成功", delivery: "已投递", time: "13:46:11" }]
       },
       {
@@ -933,10 +933,10 @@
         events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "12:25:33" }, { seq: 2, stage: "识别", text: "设备信息无法识别", delivery: "已投递", time: "12:25:38" }, { seq: 3, stage: "匹配", text: "设备信息无法通过校验", delivery: "已投递", time: "12:25:38" }, { seq: 4, stage: "调用接口", text: "未发起设备解绑", delivery: "已投递", time: "12:25:38" }, { seq: 5, stage: "返回结果", text: "申请未通过", delivery: "已投递", time: "12:25:39" }]
       },
       {
-        id: "TY202609020011", sn: "BM04S****1357", fullSn: "BM04S2408A01357", user: "u_82****19", status: "FAILED", stage: "FAILED_REPLACED",
+        id: "TY202609020011", sn: "BM04S****1357", fullSn: "BM04S2408A01357", user: "u_82****19", status: "CLOSED", stage: "FAILED_REPLACED",
         recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2408A01357", confidence: "97.9%", matchResult: "MATCHED", autoDecision: "转人工处理", executionStatus: "FAILED_TERMINAL",
         submittedAt: "2026-09-02 11:44:09", processingStartedAt: "2026-09-02 11:44:10", completedAt: "2026-09-02 11:45:21", region: "北美数据中心", tuyaId: "vde****1f8", binding: "仍绑定",
-        notification: "SENT", lastNotifiedAt: "2026-09-02 11:45:22", reason: "购买二手设备后无法添加，提示设备已被其他账号绑定。", contact: "+1 202 555 0147", error: "自动重试耗尽，用户已重新申请", replacedByWorkOrderId: "TY202609020018",
+        notification: "SENT", lastNotifiedAt: "2026-09-02 11:45:22", reason: "购买二手设备后无法添加，提示设备已被其他账号绑定。", contact: "+1 202 555 0147", error: "自动重试耗尽，用户已重新申请", closeReason: "已被新工单替代", replacedByWorkOrderId: "TY202609020018",
         interfacePath: "待技术确认", httpStatus: "504", tuyaSuccess: "--", tuyaResult: "--", tuyaCode: "--", tuyaMessage: "gateway timeout", tuyaTid: "--", attemptCount: "3（原型示例）", routingVersion: "PENDING-ENDPOINT-CONFIRMATION", routingResult: "处理失败",
         events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "11:44:10" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "11:44:14" }, { seq: 3, stage: "匹配", text: "设备信息校验通过", delivery: "已投递", time: "11:44:15" }, { seq: 4, stage: "调用接口", text: "正在解除设备绑定", delivery: "已投递", time: "11:44:17" }, { seq: 5, stage: "返回结果", text: "系统处理失败，可重新申请", delivery: "已投递", time: "11:45:21" }]
       }
@@ -951,7 +951,8 @@
       PROCESSING: { label: "处理中", cls: "processing" },
       COMPLETED: { label: "已完成", cls: "success" },
       REJECTED: { label: "已驳回", cls: "rejected" },
-      FAILED: { label: "处理失败", cls: "failed" }
+      FAILED: { label: "处理失败", cls: "failed" },
+      CLOSED: { label: "已关闭", cls: "rejected" }
     };
 
     const stageMeta = {
@@ -973,12 +974,12 @@
         { target: "menuWorkOrderTarget", title: "通用工单入口", location: "关联位置：运营管理 > 工单管理", body: ["<strong>说明：</strong>在现有运营管理下新增通用“工单管理”二级菜单，不按业务类型拆菜单。", "<strong>本期范围：</strong>工单类型仅有“解绑工单”；后续类型复用同一列表、详情容器和公共字段。", "<strong>权限：</strong>无查看权限时菜单不可见。"] },
         { target: "headerTarget", title: "页面标题与面包屑", location: "关联位置：页面顶栏", body: ["<strong>路径：</strong>运营管理 > 工单管理。", "<strong>现状还原：</strong>沿用 54px 顶栏、模块标题、12px 面包屑和历史标签栏。"] },
         { target: "filterTarget", title: "通用工单筛选", location: "关联位置：列表顶部筛选区", body: ["<strong>字段：</strong>工单编号、工单类型、设备 SN、设备型号、工单状态、提交时间。", "<strong>本期类型：</strong>工单类型下拉仅有“解绑工单”，保留类型维度是为了后续扩展。", "<strong>交互：</strong>查询后回到第 1 页；重置清空全部条件并重新加载。"] },
-        { target: "statusHeaderTarget", title: "公共状态与自动阶段", location: "关联位置：主表格 > 工单状态", body: ["<strong>公共状态：</strong>待处理、处理中、已完成、已驳回、处理失败；待处理表示等待自动任务。", "<strong>类型阶段：</strong>包含接口补偿中、待人工处理和已被新工单替代；正式枚举由技术定义。", "<strong>边界：</strong>类型阶段不进入公共状态枚举。"] },
+        { target: "statusHeaderTarget", title: "列表状态收敛", location: "关联位置：主表格 > 工单状态", body: ["<strong>单一标签：</strong>每条工单只展示待处理、处理中、已完成、已驳回、处理失败或已关闭中的一个公共状态。", "<strong>筛选：</strong>增加已关闭；处理失败只返回仍可人工处置的失败工单。", "<strong>边界：</strong>识别、匹配、涂鸦调用、当前阶段和通知状态不进入该单元格，也不新增列表列或筛选项。"] },
         { target: "operationHeaderTarget", title: "统一查看入口", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>操作边界：</strong>列表始终只有查看；人工操作仅在可操作的处理失败详情 Footer 展示。"] },
         { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
       ],
       drawer: [
-        { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>结构：</strong>公共申请信息、照片、设备关联、识别与比对、自动处理记录、APP 进度事件和终态通知。"] },
+        { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>状态：</strong>Header 与列表一致，只展示一个公共状态标签；当前处理阶段放在申请信息中。", "<strong>结构：</strong>公共申请信息、照片、设备关联、识别与比对、自动处理记录、APP 进度事件和终态通知。"] },
         { target: "applicationTarget", title: "公共申请信息", location: "关联位置：详情抽屉 > 申请信息", body: ["<strong>系统携带：</strong>工单编号、工单类型、申请用户、申请 App、提交时间等基本信息，其中申请 App 示例值为 momcozy。", "<strong>用户录入：</strong>设备照片、申请原因、联系方式。SN 随 APP 请求携带，平台页面不区分其采集来源。", "<strong>联系方式：</strong>处理人员联系申请人所必需，具备工单处理权限时详情展示完整值；列表不展示，无敏感信息权限时脱敏。原型号码均为虚构示例。"] },
         { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },
         { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>工单基准：</strong>SN 随 APP 请求携带；型号、平台和涂鸦设备 ID 由服务端关联。", "<strong>平台边界：</strong>不判断 APP 的 SN 采集来源或可信性，只将工单 SN 作为照片识别结果的比对基准。", "<strong>唯一真值：</strong>绑定状态以涂鸦云查询结果为准。"] },
@@ -986,8 +987,8 @@
         { target: "executionTarget", title: "自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>自动分支：</strong>匹配则调用涂鸦；不匹配或无法识别自动驳回且不调用涂鸦。", "<strong>异常分流：</strong>临时异常自动重试；明确业务资格错误按白名单驳回；技术、未知异常或重试耗尽进入处理失败。", "<strong>审计：</strong>上传、识别、匹配、接口调用和返回结果均记录。"] },
         { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>记录：</strong>接口版本、HTTP、success/result/code/msg/tid、尝试次数、分流版本和结果。", "<strong>事实门槛：</strong>实际接口未确认前显示待技术确认；原型错误码只作交互示例，不形成生产映射。", "<strong>替代关系：</strong>新旧工单通过双向 ID 关联，旧照片、识别和错误记录不覆盖。"] },
         { target: "progressTarget", title: "APP 进度事件", location: "关联位置：详情抽屉 > APP 进度事件", body: ["<strong>五个阶段：</strong>上传、识别、匹配、调用接口、返回结果；拒绝分支的调用接口阶段输出“未发起设备解绑”。", "<strong>一致性：</strong>先落库再投递；稳定事件 ID 和工单内序号支持幂等、乱序保护与主动查询补偿。", "<strong>隐私：</strong>只输出公开阶段和文案，不下发完整识别 SN 或内部错误。"] },
-        { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>独立状态：</strong>待通知、已通知、通知失败只描述终态结果，不复用过程事件投递状态。", "<strong>触发：</strong>已完成、已驳回或处理失败均触发；最近通知时间只记录投递成功。", "<strong>渠道：</strong>复用 APP 基础设施，原型不展示具体渠道。"] },
-        { target: "drawerFooterTarget", title: "失败态人工处置", location: "关联位置：详情抽屉 > Footer", body: ["<strong>正常状态：</strong>只展示自动处理说明，不显示人工按钮。", "<strong>处理失败：</strong>仅未被替代的工单展示驳回和重试；重试前查询绑定状态，驳回原因对用户可见。", "<strong>并发：</strong>被新工单替代后旧工单只读；新建与人工重试由服务端原子抢占。"] }
+        { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>独立状态：</strong>待通知、已通知、通知失败只描述终态结果，不复用过程事件投递状态。", "<strong>触发：</strong>已完成、已驳回或处理失败触发；最近通知时间只记录投递成功。", "<strong>关闭边界：</strong>旧工单转为已关闭时保留原通知记录，不重复发送终态结果；替代关系由新工单创建结果和主动查询告知。"] },
+        { target: "drawerFooterTarget", title: "失败态人工处置", location: "关联位置：详情抽屉 > Footer", body: ["<strong>正常状态：</strong>只展示自动处理说明，不显示人工按钮。", "<strong>处理失败：</strong>仅仍可处置的工单展示驳回和重试；重试前查询绑定状态，驳回原因对用户可见。", "<strong>已关闭：</strong>被新工单替代后保存关闭原因和关联 ID，旧工单只读且不展示操作按钮。"] }
       ],
       retryModal: [
         { target: "retryModalTarget", title: "重试前先查真值", location: "关联位置：处理失败 > 重试", body: ["<strong>固定顺序：</strong>先查询涂鸦绑定状态；已解绑直接完成，仍绑定才重新调用。", "<strong>统一分流：</strong>人工重试结果仍进入相同版本化分流器，不绕过错误映射。", "<strong>并发：</strong>确认时由服务端获取同一 SN 的处理权；已被新工单抢占则拒绝本次操作。"] }
@@ -1009,11 +1010,8 @@
     }
 
     function statusTag(ticket) {
-      const meta = statusMeta[ticket.status];
-      const stage = stageMeta[ticket.stage];
-      const stageTag = stage ? `<span class="tag ${stage.cls}" style="margin-left:5px">${stage.label}</span>` : "";
-      const notice = ["COMPLETED", "REJECTED", "FAILED"].includes(ticket.status) && ticket.notification === "FAILED" ? '<span class="tag notice-failed">通知失败</span>' : "";
-      return `<span class="tag ${meta.cls}">${meta.label}</span>${stageTag}${notice}`;
+      const meta = statusMeta[ticket.status] || { label: "未知状态", cls: "rejected" };
+      return `<span class="tag ${meta.cls}">${meta.label}</span>`;
     }
 
     function renderTable() {
@@ -1027,7 +1025,7 @@
         (!typeQuery || ticket.type === typeQuery) &&
         (!snQuery || ticket.sn.toLowerCase().includes(snQuery) || ticket.fullSn.toLowerCase().includes(snQuery)) &&
         (!modelQuery || ticket.deviceModel.toLowerCase().includes(modelQuery)) &&
-        (!statusQuery || ticket.status === statusQuery)
+        (!statusQuery || (statusQuery === "FAILED" ? ticket.status === "FAILED" && !ticket.replacedByWorkOrderId : ticket.status === statusQuery))
       );
 
       $("#tableBody").innerHTML = filtered.map(ticket => `
@@ -1118,7 +1116,7 @@
       $("#recognitionAlert").innerHTML = recognitionAlert;
 
       const retrying = ticket.executionStatus === "RETRYING";
-      const terminalFailure = ticket.status === "FAILED";
+      const terminalFailure = ["FAILED", "CLOSED"].includes(ticket.status);
       if (retrying) {
         $("#failureAlert").innerHTML = `<div class="alert warning" style="margin-bottom:14px"><i data-lucide="refresh-cw" width="16"></i><span><strong>自动补偿中：</strong>${escapeHtml(ticket.error)}。系统将在再次调用前查询涂鸦绑定状态，无需人工操作。</span></div>`;
       } else if (terminalFailure) {
@@ -1146,13 +1144,12 @@
       ].join("");
       let replacementAlert = "";
       if (ticket.replacesWorkOrderId) replacementAlert = `<div class="alert" style="margin-top:12px"><i data-lucide="link" width="16"></i><span>本工单替代旧工单 <span class="mono">${escapeHtml(ticket.replacesWorkOrderId)}</span>；APP 默认展示本工单。</span></div>`;
-      if (ticket.replacedByWorkOrderId) replacementAlert = `<div class="alert warning" style="margin-top:12px"><i data-lucide="lock-keyhole" width="16"></i><span>已由新工单 <span class="mono">${escapeHtml(ticket.replacedByWorkOrderId)}</span> 替代；旧工单保留审计且操作失效。</span></div>`;
+      if (ticket.replacedByWorkOrderId) replacementAlert = `<div class="alert warning" style="margin-top:12px"><i data-lucide="lock-keyhole" width="16"></i><span>关闭原因：${escapeHtml(ticket.closeReason || "已被新工单替代")}。新工单 <span class="mono">${escapeHtml(ticket.replacedByWorkOrderId)}</span>；旧工单保留审计且操作失效。</span></div>`;
       $("#replacementAlert").innerHTML = replacementAlert;
 
       let notificationState = '<span class="tag pending">待通知</span>';
-      if (["REJECTED", "COMPLETED", "FAILED"].includes(ticket.status)) {
-        notificationState = ticket.notification === "FAILED" ? '<span class="tag failed">通知失败</span>' : '<span class="tag success">已通知</span>';
-      }
+      if (ticket.notification === "FAILED") notificationState = '<span class="tag failed">通知失败</span>';
+      if (ticket.notification === "SENT") notificationState = '<span class="tag success">已通知</span>';
       $("#notificationInfo").innerHTML = [
         descriptionItem("通知状态", notificationState),
         descriptionItem("最近通知时间", ticket.lastNotifiedAt || "--")
