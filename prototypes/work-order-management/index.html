@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin - 工单管理交互原型</title>
+  <style>
+    :root {
+      --primary: #4372ff;
+      --primary-hover: #2f60ea;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --danger: #f56c6c;
+      --info: #909399;
+      --sidebar: #001529;
+      --sidebar-active: #102b50;
+      --page: #f5f7fa;
+      --panel: #fff;
+      --text: #303133;
+      --regular: #606266;
+      --secondary: #909399;
+      --placeholder: #a8abb2;
+      --border: #dcdfe6;
+      --light-border: #e4e7ed;
+      --lighter-border: #ebeef5;
+      --annotation: #f5b400;
+      --annotation-width: 384px;
+      --canvas-width: 1440px;
+      --radius: 4px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+      background: #eef1f5;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea { font: inherit; }
+
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; }
+
+    .mobile-switcher { display: none; }
+
+    .prototype-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--annotation-width);
+      min-height: 100vh;
+    }
+
+    .product-stage {
+      min-width: 0;
+      overflow: auto;
+      background: #dfe4eb;
+    }
+
+    .product-canvas {
+      position: relative;
+      width: var(--canvas-width);
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--page);
+    }
+
+    .admin-sidebar {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 208px;
+      color: #a6b1c2;
+      background: var(--sidebar);
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      color: #91d126;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .brand-name small {
+      display: block;
+      margin-bottom: 1px;
+      color: #91d126;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .menu {
+      height: calc(100vh - 64px);
+      padding-bottom: 20px;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .menu::-webkit-scrollbar { display: none; }
+
+    .menu-group,
+    .menu-item {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      color: #a6b1c2;
+      font-size: 14px;
+      text-decoration: none;
+      position: relative;
+    }
+
+    .menu-group { min-height: 56px; }
+    .menu-group:hover,
+    .menu-item:hover { color: #fff; background: rgba(255, 255, 255, .04); }
+    .menu-icon { width: 18px; height: 18px; flex: 0 0 18px; }
+    .menu-caret { margin-left: auto; color: #6d7a8e; }
+    .menu-children .menu-item { padding-left: 44px; }
+    .menu-item.active { color: #fff; background: var(--sidebar-active); }
+    .menu-item.active::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--primary);
+    }
+
+    .admin-main {
+      min-height: 100vh;
+      margin-left: 208px;
+      background: var(--page);
+    }
+
+    .top-header {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: #fff;
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 inset;
+    }
+
+    .header-title { font-size: 18px; font-weight: 500; }
+    .breadcrumb { display: flex; gap: 8px; margin-top: 3px; color: var(--secondary); font-size: 12px; }
+    .breadcrumb strong { color: var(--regular); font-weight: 400; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+
+    .icon-button {
+      width: 32px;
+      height: 32px;
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      color: var(--regular);
+      border: 1px solid transparent;
+      border-radius: 50%;
+      background: transparent;
+    }
+
+    .icon-button:hover { color: var(--primary); background: #f2f5ff; }
+    .avatar { width: 30px; height: 30px; display: grid; place-items: center; color: #fff; font-size: 12px; border-radius: 50%; background: #565e6d; }
+
+    .tab-strip {
+      height: 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 0 16px;
+      color: var(--secondary);
+      border-bottom: 1px solid var(--light-border);
+      background: #fff;
+    }
+
+    .history-tab {
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 4px 4px 0 0;
+      color: var(--secondary);
+      background: transparent;
+      white-space: nowrap;
+    }
+
+    .history-tab.active { color: var(--primary); background: #f7f9ff; }
+    .tab-close { font-size: 14px; color: #a8abb2; }
+    .tabs-overflow { margin-left: auto; padding-bottom: 9px; }
+
+    .page-content { padding: 16px 24px 24px; }
+
+    .list-panel {
+      min-height: calc(100vh - 126px);
+      padding: 20px 16px 0;
+      border: 1px solid #f0f2f5;
+      border-radius: 2px;
+      background: #fff;
+    }
+
+    .page-tools {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control {
+      width: 176px;
+      height: 32px;
+      padding: 0 11px;
+      color: var(--regular);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      background: #fff;
+    }
+
+    .control::placeholder { color: var(--placeholder); }
+    .control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(67, 114, 255, .12); }
+    select.control { appearance: auto; }
+
+    .btn {
+      min-width: 64px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--regular);
+      background: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn:hover { color: var(--primary); border-color: #a3c5ff; background: #f7f9ff; }
+    .btn.primary { color: #fff; border-color: var(--primary); background: var(--primary); }
+    .btn.primary:hover { border-color: var(--primary-hover); background: var(--primary-hover); }
+    .btn.danger { color: var(--danger); border-color: #f9b7b7; background: #fff; }
+    .btn.danger:hover { color: #fff; border-color: var(--danger); background: var(--danger); }
+    .btn.text { min-width: auto; height: auto; padding: 0; border: 0; color: var(--primary); background: transparent; font-weight: 400; }
+    .btn.text:hover { color: var(--primary-hover); background: transparent; }
+    .btn:disabled { color: #c0c4cc; border-color: #e4e7ed; background: #f5f7fa; }
+    .btn.loading { pointer-events: none; opacity: .82; }
+
+    .spin {
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .table-wrap { position: relative; overflow: hidden; border-top: 1px solid var(--lighter-border); }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+    th {
+      height: 44px;
+      padding: 0 10px;
+      color: var(--secondary);
+      border-bottom: 1px solid var(--lighter-border);
+      background: #fafafa;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    td {
+      height: 54px;
+      padding: 8px 10px;
+      color: var(--regular);
+      border-bottom: 1px solid var(--lighter-border);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    tbody tr:hover td { background: #f7f9ff; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .muted { color: var(--secondary); }
+
+    .tag {
+      min-width: 54px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .tag.pending { color: #b87503; border-color: #f5d596; background: #fff8e8; }
+    .tag.processing { color: #2f67d8; border-color: #bfd1ff; background: #eef4ff; }
+    .tag.success { color: #4d942d; border-color: #b9dfa8; background: #f0f9eb; }
+    .tag.failed { color: #d44a4a; border-color: #fac2c2; background: #fef0f0; }
+    .tag.rejected { color: #737b87; border-color: #d5d8de; background: #f4f4f5; }
+    .tag.notice-failed { margin-left: 5px; color: #b87503; border-color: #f5d596; background: #fff8e8; }
+
+    .pagination {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      color: var(--regular);
+      font-size: 13px;
+    }
+    .page-button { width: 32px; min-width: 32px; padding: 0; }
+    .page-button.current { color: var(--primary); border-color: var(--primary); }
+    .page-size { width: 92px; }
+
+    .empty-state {
+      display: none;
+      min-height: 360px;
+      place-items: center;
+      color: var(--secondary);
+      text-align: center;
+    }
+    .empty-state.visible { display: grid; }
+    .empty-icon { width: 52px; height: 52px; margin: 0 auto 12px; color: #c0c4cc; }
+
+    .drawer-scrim,
+    .modal-scrim {
+      position: absolute;
+      inset: 0;
+      display: none;
+      background: rgba(0, 0, 0, .28);
+      z-index: 20;
+    }
+    .drawer-scrim.open,
+    .modal-scrim.open { display: block; }
+
+    .drawer {
+      position: absolute;
+      inset: 0 0 0 auto;
+      width: 720px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .2s ease;
+      background: #fff;
+      box-shadow: -6px 0 18px rgba(0, 0, 0, .14);
+      z-index: 21;
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--light-border);
+    }
+    .drawer-title-row { display: flex; align-items: center; gap: 10px; }
+    .drawer-title { margin: 0; font-size: 16px; font-weight: 500; }
+    .drawer-body { flex: 1; min-height: 0; padding: 20px; overflow-y: auto; }
+    .drawer-footer {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 20px;
+      border-top: 1px solid var(--light-border);
+      background: #fff;
+    }
+    .footer-note { color: var(--secondary); font-size: 12px; }
+    .footer-actions { display: flex; gap: 12px; margin-left: auto; }
+
+    .section { margin-bottom: 24px; }
+    .section:last-child { margin-bottom: 4px; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 12px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--lighter-border);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .section-extra { color: var(--secondary); font-size: 12px; font-weight: 400; }
+
+    .description-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; }
+    .description-item { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; font-size: 13px; line-height: 22px; }
+    .description-item .label { color: var(--secondary); text-align: right; }
+    .description-item .value { color: var(--regular); overflow-wrap: anywhere; }
+    .full-span { grid-column: 1 / -1; }
+
+    .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .evidence-card {
+      position: relative;
+      height: 144px;
+      overflow: hidden;
+      border: 1px solid var(--light-border);
+      border-radius: 4px;
+      background: #f5f7fa;
+    }
+    .evidence-card img { width: 100%; height: 100%; object-fit: cover; }
+    .evidence-label {
+      position: absolute;
+      inset: auto 0 0;
+      padding: 7px 9px;
+      color: #fff;
+      background: rgba(0, 0, 0, .54);
+      font-size: 12px;
+    }
+    .serial-photo {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: linear-gradient(145deg, #d8dadd, #f4f5f6);
+    }
+    .serial-sticker {
+      width: 88%;
+      padding: 14px 16px;
+      transform: rotate(-2deg);
+      border: 1px solid #c8cbd0;
+      color: #3d4249;
+      background: #fdfdfd;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .14);
+      font-size: 11px;
+      line-height: 1.7;
+    }
+    .serial-sticker strong { display: block; margin-bottom: 3px; font-size: 13px; }
+
+    .alert {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #bfd1ff;
+      border-radius: 4px;
+      color: #41619c;
+      background: #f2f6ff;
+      font-size: 12px;
+      line-height: 20px;
+    }
+    .alert.error { color: #b84c4c; border-color: #fac2c2; background: #fef0f0; }
+    .alert.warning { color: #946311; border-color: #f5d596; background: #fff8e8; }
+    .alert.success { color: #4d7d37; border-color: #b9dfa8; background: #f0f9eb; }
+
+    .timeline { margin: 0; padding: 0; list-style: none; }
+    .timeline-item { position: relative; min-height: 54px; padding-left: 22px; }
+    .timeline-item::before { content: ""; position: absolute; top: 6px; left: 5px; width: 7px; height: 7px; border: 2px solid var(--primary); border-radius: 50%; background: #fff; }
+    .timeline-item::after { content: ""; position: absolute; top: 17px; bottom: -4px; left: 9px; width: 1px; background: var(--light-border); }
+    .timeline-item:last-child::after { display: none; }
+    .timeline-title { color: var(--regular); font-size: 13px; }
+    .timeline-meta { margin-top: 4px; color: var(--secondary); font-size: 12px; }
+
+    .execution-loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid #bfd1ff;
+      color: #41619c;
+      background: #f2f6ff;
+    }
+    .execution-loading.visible { display: flex; }
+
+    .modal-scrim { z-index: 30; align-items: flex-start; justify-content: flex-end; padding: 150px 140px 0 0; }
+    .modal-scrim.open { display: flex; }
+    .modal {
+      width: 440px;
+      overflow: hidden;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 14px 38px rgba(0, 0, 0, .22);
+    }
+    .modal-header,
+    .modal-footer { display: flex; align-items: center; padding: 0 20px; }
+    .modal-header { min-height: 56px; justify-content: space-between; border-bottom: 1px solid var(--light-border); }
+    .modal-title { margin: 0; font-size: 16px; font-weight: 500; }
+    .modal-body { padding: 20px; color: var(--regular); font-size: 14px; line-height: 22px; }
+    .modal-footer { min-height: 64px; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--light-border); }
+    .form-field { margin-top: 16px; }
+    .form-field label { display: block; margin-bottom: 8px; color: var(--regular); font-size: 13px; }
+    .required { color: var(--danger); }
+    .modal .control { width: 100%; }
+    .modal textarea.control { height: 72px; padding-top: 7px; resize: none; }
+    .field-error { min-height: 18px; margin-top: 4px; color: var(--danger); font-size: 12px; }
+
+    .toast {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      z-index: 50;
+      min-width: 280px;
+      max-width: 460px;
+      padding: 11px 16px;
+      transform: translate(-50%, -18px);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid #b9dfa8;
+      border-radius: 4px;
+      color: #4d7d37;
+      background: #f0f9eb;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+      font-size: 13px;
+      transition: .18s ease;
+    }
+    .toast.error { color: #b84c4c; border-color: #fac2c2; background: #fef0f0; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    .prototype-annotations {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      background: #fff;
+      border-left: 1px solid #d7dce3;
+      overflow: hidden;
+    }
+    .annotation-head { padding: 18px 18px 14px; border-bottom: 1px solid var(--light-border); }
+    .annotation-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .annotation-title { margin: 0; font-size: 18px; font-weight: 600; }
+    .annotation-badge { padding: 3px 7px; color: #8c6b00; border: 1px solid #f3d67a; border-radius: 4px; background: #fff8d8; font-size: 11px; }
+    .annotation-caption { margin-top: 8px; color: var(--secondary); font-size: 12px; line-height: 19px; }
+    .annotation-context {
+      padding: 10px 18px;
+      color: #5c6470;
+      border-bottom: 1px solid var(--light-border);
+      background: #fafbfc;
+      font-size: 12px;
+    }
+    .annotation-list { padding: 14px; overflow-y: auto; }
+    .annotation-card {
+      position: relative;
+      width: 100%;
+      margin: 0 0 10px;
+      padding: 12px 12px 12px 42px;
+      border: 1px solid var(--light-border);
+      border-left: 3px solid var(--annotation);
+      border-radius: 4px;
+      color: var(--regular);
+      background: #fff;
+      text-align: left;
+    }
+    .annotation-card:hover,
+    .annotation-card.active { border-color: #e8bd30; background: #fffdf3; }
+    .annotation-number {
+      position: absolute;
+      top: 11px;
+      left: 10px;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #332800;
+      background: var(--annotation);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .annotation-card h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 600; }
+    .annotation-location { margin-top: 4px; color: var(--secondary); font-size: 11px; }
+    .annotation-body { margin-top: 8px; font-size: 12px; line-height: 19px; }
+    .annotation-body div + div { margin-top: 4px; }
+    .annotation-body strong { color: var(--text); }
+
+    .note-anchor {
+      position: absolute;
+      z-index: 10;
+      width: 22px;
+      height: 22px;
+      display: none;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      color: #332800;
+      background: var(--annotation);
+      box-shadow: 0 2px 7px rgba(0, 0, 0, .2);
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .highlight-target { position: relative; outline: 2px solid var(--annotation) !important; outline-offset: 2px; }
+
+    .product-note { position: relative; }
+    .product-note > .note-anchor { display: grid; top: 0; right: 0; left: auto; transform: translate(50%, -50%); }
+
+    @media (max-width: 980px) {
+      .mobile-switcher {
+        position: fixed;
+        inset: auto 12px 12px 12px;
+        z-index: 100;
+        height: 44px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+      }
+      .mobile-switcher button { border: 0; color: var(--regular); background: transparent; }
+      .mobile-switcher button.active { color: #fff; border-radius: 4px; background: var(--primary); }
+      .prototype-shell { display: block; }
+      .product-stage,
+      .prototype-annotations { display: none; }
+      body.mobile-product .product-stage { display: block; min-height: 100vh; }
+      body.mobile-notes .prototype-annotations { display: grid; height: calc(100vh - 68px); }
+    }
+  </style>
+</head>
+<body class="mobile-product">
+  <div class="mobile-switcher" aria-label="移动端原型视图切换">
+    <button type="button" class="active" data-mobile="product">产品页面</button>
+    <button type="button" data-mobile="notes">原型批注</button>
+  </div>
+
+  <div class="prototype-shell">
+    <main class="product-stage" aria-label="IoT Admin 产品页面">
+      <div class="product-canvas" id="productCanvas">
+        <aside class="admin-sidebar">
+          <div class="brand">
+            <div class="brand-name"><small>路特创新</small>AIoT Platform</div>
+          </div>
+          <nav class="menu" aria-label="主菜单">
+            <div class="menu-group"><i data-lucide="gauge" class="menu-icon"></i><span>概览</span></div>
+            <div class="menu-group"><i data-lucide="boxes" class="menu-icon"></i><span>智能产品</span><span class="menu-caret">⌄</span></div>
+            <div class="menu-children"><div class="menu-item">产品列表</div><div class="menu-item">消息推送</div></div>
+            <div class="menu-group"><i data-lucide="monitor-cog" class="menu-icon"></i><span>设备管理</span><span class="menu-caret">›</span></div>
+            <div class="menu-group"><i data-lucide="smartphone" class="menu-icon"></i><span>App</span><span class="menu-caret">›</span></div>
+            <div class="menu-group"><i data-lucide="sliders-horizontal" class="menu-icon"></i><span>配置中心</span><span class="menu-caret">›</span></div>
+            <div class="menu-group"><i data-lucide="factory" class="menu-icon"></i><span>生产管理</span><span class="menu-caret">›</span></div>
+            <div class="menu-group product-note" id="menuOperationTarget">
+              <i data-lucide="briefcase-business" class="menu-icon"></i><span>运营管理</span><span class="menu-caret">⌄</span>
+            </div>
+            <div class="menu-children">
+              <div class="menu-item">兑换码</div>
+              <div class="menu-item active product-note" id="menuWorkOrderTarget">工单管理</div>
+            </div>
+          </nav>
+        </aside>
+
+        <section class="admin-main">
+          <header class="top-header product-note" id="headerTarget">
+            <div>
+              <div class="header-title">运营管理</div>
+              <div class="breadcrumb"><strong>工单管理</strong><span>/</span><span>运营管理</span></div>
+            </div>
+            <div class="header-actions">
+              <button class="icon-button" title="智能助手" aria-label="智能助手"><i data-lucide="bot" width="17"></i></button>
+              <button class="icon-button" title="消息" aria-label="消息"><i data-lucide="bell" width="17"></i></button>
+              <span class="avatar">张</span>
+            </div>
+          </header>
+
+          <div class="tab-strip">
+            <button class="history-tab">概览</button>
+            <button class="history-tab">产品列表</button>
+            <button class="history-tab">设备列表</button>
+            <button class="history-tab">兑换码管理</button>
+            <button class="history-tab active">工单管理 <span class="tab-close">×</span></button>
+            <span class="tabs-overflow">···</span>
+          </div>
+
+          <div class="page-content">
+            <section class="list-panel">
+              <div class="page-tools">
+                <div class="filter-form product-note" id="filterTarget">
+                  <input class="control" id="ticketFilter" placeholder="工单编号">
+                  <select class="control" id="typeFilter" aria-label="工单类型">
+                    <option value="">工单类型</option>
+                    <option value="解绑工单">解绑工单</option>
+                  </select>
+                  <input class="control" id="snFilter" placeholder="SN">
+                  <input class="control" id="modelFilter" placeholder="产品型号">
+                  <select class="control" id="statusFilter" aria-label="工单状态">
+                    <option value="">工单状态</option>
+                    <option value="PENDING">待处理</option>
+                    <option value="PROCESSING">处理中</option>
+                    <option value="COMPLETED">已完成</option>
+                    <option value="REJECTED">已驳回</option>
+                  </select>
+                  <input class="control" id="timeFilter" placeholder="提交时间">
+                  <button class="btn primary" id="queryButton" type="button">查询</button>
+                  <button class="btn" id="resetButton" type="button">重置</button>
+                </div>
+                <button class="btn page-button" id="refreshButton" type="button" title="刷新" aria-label="刷新"><i data-lucide="refresh-cw" width="14"></i></button>
+              </div>
+
+              <div class="table-wrap product-note" id="tableTarget">
+                <table aria-label="工单管理列表">
+                  <colgroup>
+                    <col style="width: 150px"><col style="width: 100px"><col style="width: 128px">
+                    <col style="width: 110px"><col style="width: 92px"><col style="width: 110px">
+                    <col style="width: 145px"><col style="width: 150px"><col style="width: 72px">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>工单编号</th><th>工单类型</th><th>设备 SN</th><th>设备型号</th><th>所属平台</th><th>申请用户</th>
+                      <th class="product-note" id="statusHeaderTarget">工单状态</th><th>提交时间</th><th class="product-note" id="operationHeaderTarget">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableBody"></tbody>
+                </table>
+                <div class="empty-state" id="emptyState">
+                  <div>
+                    <i data-lucide="inbox" class="empty-icon"></i>
+                    <div>暂无符合条件的工单</div>
+                    <div class="muted" style="margin-top:6px;font-size:12px">请调整筛选条件后重新查询</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pagination product-note" id="paginationTarget">
+                <span id="totalLabel">共 7 条</span>
+                <button class="btn page-button" disabled aria-label="上一页"><i data-lucide="chevron-left" width="14"></i></button>
+                <button class="btn page-button current">1</button>
+                <button class="btn page-button" disabled aria-label="下一页"><i data-lucide="chevron-right" width="14"></i></button>
+                <select class="control page-size" aria-label="每页条数"><option>10条/页</option><option>20条/页</option></select>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <div class="drawer-scrim" id="drawerScrim"></div>
+        <aside class="drawer" id="detailDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+          <header class="drawer-header product-note" id="drawerHeaderTarget">
+            <div class="drawer-title-row"><h2 class="drawer-title" id="drawerTitle">工单详情</h2><span id="drawerStatus"></span></div>
+            <button class="icon-button" id="drawerClose" type="button" title="关闭" aria-label="关闭"><i data-lucide="x" width="19"></i></button>
+          </header>
+          <div class="drawer-body">
+            <div class="execution-loading product-note" id="executionLoading">
+              <span class="spin"></span><div><strong id="loadingTitle">正在调用涂鸦解绑接口</strong><div id="loadingText" style="margin-top:3px">同步请求返回前保持处理中，请勿重复操作。</div></div>
+            </div>
+
+            <section class="section product-note" id="applicationTarget">
+              <h3 class="section-title">申请信息 <span class="section-extra" id="ticketIdExtra"></span></h3>
+              <div class="description-grid" id="applicationInfo"></div>
+            </section>
+
+            <section class="section product-note" id="evidenceTarget">
+              <h3 class="section-title">设备照片 <span class="section-extra">2 张</span></h3>
+              <div class="evidence-grid">
+                <div class="evidence-card">
+                  <img src="assets/bm04s-product.jpg" alt="用户上传的设备画面示例">
+                  <div class="evidence-label">设备持有照片（脱敏示例）</div>
+                </div>
+                <div class="evidence-card">
+                  <div class="serial-photo"><div class="serial-sticker"><strong>Model: BM04S</strong>SN: <span id="evidenceSn">BM04S2408A01357</span><br>Input: 5V ⎓ 2A<br>Made for Momcozy</div></div>
+                  <div class="evidence-label">设备 SN 标签照片（虚构示例）</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section product-note" id="mappingTarget">
+              <h3 class="section-title">设备信息 <span class="section-extra">数据来源：服务端关联</span></h3>
+              <div class="description-grid" id="mappingInfo"></div>
+              <div class="alert" style="margin-top:12px"><i data-lucide="info" width="16"></i><span>绑定状态以涂鸦云查询结果为唯一真值源；APP 不提交涂鸦设备 ID。</span></div>
+            </section>
+
+            <section class="section product-note" id="executionTarget">
+              <h3 class="section-title">处理记录 <span class="section-extra" id="executionSummary"></span></h3>
+              <div id="failureAlert"></div>
+              <ol class="timeline" id="timeline"></ol>
+            </section>
+
+            <section class="section product-note" id="notificationTarget">
+              <h3 class="section-title">APP 结果通知</h3>
+              <div class="description-grid" id="notificationInfo"></div>
+            </section>
+          </div>
+          <footer class="drawer-footer product-note" id="drawerFooterTarget">
+            <div class="footer-note" id="footerNote">操作会写入审计日志</div>
+            <div class="footer-actions" id="footerActions"></div>
+          </footer>
+        </aside>
+
+        <div class="modal-scrim" id="unbindModal" aria-hidden="true">
+          <section class="modal product-note" id="unbindModalTarget" role="dialog" aria-modal="true" aria-labelledby="unbindTitle">
+            <header class="modal-header"><h3 class="modal-title" id="unbindTitle">确认解绑设备？</h3><button class="icon-button modal-close" data-close="unbindModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
+            <div class="modal-body">
+              <div class="alert warning"><i data-lucide="triangle-alert" width="16"></i><span>确认后平台将立即同步调用涂鸦解绑接口。接口返回成功前，工单保持“处理中”。</span></div>
+              <p style="margin:16px 0 0">该操作将解除设备原有绑定关系，请确认继续。</p>
+            </div>
+            <footer class="modal-footer"><button class="btn modal-close" data-close="unbindModal">取消</button><button class="btn primary" id="confirmUnbind">确认解绑</button></footer>
+          </section>
+        </div>
+
+        <div class="modal-scrim" id="rejectModal" aria-hidden="true">
+          <section class="modal product-note" id="rejectModalTarget" role="dialog" aria-modal="true" aria-labelledby="rejectTitle">
+            <header class="modal-header"><h3 class="modal-title" id="rejectTitle">驳回解绑申请</h3><button class="icon-button modal-close" data-close="rejectModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
+            <div class="modal-body">
+              <div class="form-field" style="margin-top:0"><label><span class="required">*</span> 驳回原因</label><select class="control" id="rejectReason"><option value="">请选择驳回原因</option><option>SN 与照片不一致</option><option>照片无法辨识</option><option>设备不在支持范围</option><option>设备信息不存在</option><option>其他</option></select><div class="field-error" id="rejectError"></div></div>
+              <div class="form-field"><label>补充说明</label><textarea class="control" id="rejectRemark" placeholder="可填写对 APP 用户公开的补充说明"></textarea></div>
+            </div>
+            <footer class="modal-footer"><button class="btn modal-close" data-close="rejectModal">取消</button><button class="btn danger" id="confirmReject">确认驳回</button></footer>
+          </section>
+        </div>
+
+        <div class="modal-scrim" id="retryModal" aria-hidden="true">
+          <section class="modal product-note" id="retryModalTarget" role="dialog" aria-modal="true" aria-labelledby="retryTitle">
+            <header class="modal-header"><h3 class="modal-title" id="retryTitle">重试解绑</h3><button class="icon-button modal-close" data-close="retryModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
+            <div class="modal-body">
+              <div class="alert"><i data-lucide="shield-check" width="16"></i><span>系统会先查询涂鸦当前绑定状态。若已解绑则直接完成工单；仅在仍绑定时再次调用同步解绑接口。</span></div>
+              <p style="margin:16px 0 0">该操作不会重复审核，查询、重试和返回结果均记录审计日志。</p>
+            </div>
+            <footer class="modal-footer"><button class="btn modal-close" data-close="retryModal">取消</button><button class="btn primary" id="confirmRetry">确认重试</button></footer>
+          </section>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+
+    <aside class="prototype-annotations" aria-label="原型批注">
+      <div class="annotation-head">
+        <div class="annotation-title-row"><h2 class="annotation-title">原型批注</h2><span class="annotation-badge">最小页面改动</span></div>
+        <div class="annotation-caption">黄色编号为评审锚点，不属于真实 IoT Admin。产品页面固定为 1440px 画布。</div>
+      </div>
+      <div class="annotation-context" id="annotationContext">列表页批注</div>
+      <div class="annotation-list" id="annotationList"></div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script>
+    const tickets = [
+      {
+        id: "TY202609020018", sn: "BM04S****1357", fullSn: "BM04S2408A01357", model: "BM04S / BM04S", user: "u_82****19",
+        status: "PENDING", executionStatus: "NOT_STARTED", submittedAt: "2026-09-02 15:42:18", reviewedAt: "--", reviewer: "--", region: "北美数据中心",
+        tuyaId: "vde****1f8", binding: "已绑定（非当前申请人）", retryCount: 0, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
+        reason: "购买二手设备后无法添加，提示设备已被其他账号绑定。", contact: "+1 202 555 0147"
+      },
+      {
+        id: "TY202609020017", sn: "BM04S****8421", fullSn: "BM04S2408B08421", model: "BM04S / BM04-2", user: "u_16****05",
+        status: "PROCESSING", executionStatus: "PROCESSING", submittedAt: "2026-09-02 15:21:06", reviewedAt: "2026-09-02 15:38:10", reviewer: "李晓",
+        region: "欧洲数据中心", tuyaId: "vde****7b2", binding: "解绑处理中", retryCount: 0, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
+        reason: "原账号无法登录，需要解除旧绑定后重新添加。", contact: "+44 7700 900182"
+      },
+      {
+        id: "TY202609020016", sn: "BM04S****3198", fullSn: "BM04S2407C03198", model: "BM04S / BM04S", user: "u_39****77",
+        status: "PROCESSING", executionStatus: "FAILED", submittedAt: "2026-09-02 14:56:43", reviewedAt: "2026-09-02 15:10:22", reviewer: "李晓",
+        region: "北美数据中心", tuyaId: "vde****c31", binding: "待重试前复核", retryCount: 1, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "already-unbound",
+        error: "同步请求传输超时（TUYA_TIMEOUT）", reason: "更换手机后无法恢复原账号，希望重新绑定设备。", contact: "+1 202 555 0189"
+      },
+      {
+        id: "TY202609020015", sn: "BM04S****6720", fullSn: "BM04S2407D06720", model: "BM04S / BM04S", user: "u_51****42",
+        status: "PROCESSING", executionStatus: "FAILED", submittedAt: "2026-09-02 14:30:11", reviewedAt: "2026-09-02 14:45:19", reviewer: "陈静",
+        region: "亚太数据中心", tuyaId: "vde****912", binding: "仍绑定", retryCount: 1, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
+        error: "涂鸦返回业务失败（DEVICE_OFFLINE）", reason: "设备由家人转交，原账号已停用。", contact: "+86 188 0000 6720"
+      },
+      {
+        id: "TY202609020014", sn: "BM04S****4096", fullSn: "BM04S2406E04096", model: "BM04S / BM04-2", user: "u_08****63",
+        status: "COMPLETED", executionStatus: "SUCCEEDED", submittedAt: "2026-09-02 13:46:03", reviewedAt: "2026-09-02 14:02:17", reviewer: "陈静",
+        region: "北美数据中心", tuyaId: "vde****e05", binding: "已解绑", retryCount: 0, notification: "SENT", lastNotifiedAt: "2026-09-02 14:02:20", retryOutcome: "still-bound",
+        reason: "设备仍绑定在已注销的旧账号。", contact: "+1 202 555 0196"
+      },
+      {
+        id: "TY202609020013", sn: "BM04S****2214", fullSn: "BM04S2406F02214", model: "BM04S / BM04S", user: "u_62****31",
+        status: "COMPLETED", executionStatus: "SUCCEEDED", submittedAt: "2026-09-02 13:12:55", reviewedAt: "2026-09-02 13:28:06", reviewer: "王璐",
+        region: "欧洲数据中心", tuyaId: "vde****3ac", binding: "已解绑", retryCount: 0, notification: "FAILED", lastNotifiedAt: "--", retryOutcome: "still-bound",
+        reason: "二手购入设备，无法联系原持有人解绑。", contact: "+49 1512 345 2214"
+      },
+      {
+        id: "TY202609020012", sn: "BM04S****9083", fullSn: "BM04S2406G09083", model: "BM04S / BM04S", user: "u_74****88",
+        status: "REJECTED", executionStatus: "NOT_STARTED", submittedAt: "2026-09-02 12:25:32", reviewedAt: "2026-09-02 12:44:51", reviewer: "王璐",
+        region: "北美数据中心", tuyaId: "vde****61b", binding: "未执行解绑", retryCount: 0, notification: "SENT", lastNotifiedAt: "2026-09-02 12:44:54", retryOutcome: "still-bound",
+        rejectReason: "SN 与照片不一致", reason: "旧账号无法找回，希望解除绑定。", contact: "+1 202 555 0183"
+      }
+    ].map(ticket => ({ type: "解绑工单", deviceModel: "BM04S", platform: "涂鸦云", app: "momcozy", ...ticket }));
+
+    const statusMeta = {
+      PENDING: { label: "待处理", cls: "pending" },
+      PROCESSING: { label: "处理中", cls: "processing" },
+      COMPLETED: { label: "已完成", cls: "success" },
+      REJECTED: { label: "已驳回", cls: "rejected" }
+    };
+
+    const annotations = {
+      list: [
+        { target: "menuWorkOrderTarget", title: "通用工单入口", location: "关联位置：运营管理 > 工单管理", body: ["<strong>说明：</strong>在现有运营管理下新增通用“工单管理”二级菜单，不按业务类型拆菜单。", "<strong>本期范围：</strong>工单类型仅有“解绑工单”；后续类型复用同一列表、详情容器和公共字段。", "<strong>权限：</strong>无查看权限时菜单不可见。"] },
+        { target: "headerTarget", title: "页面标题与面包屑", location: "关联位置：页面顶栏", body: ["<strong>路径：</strong>运营管理 > 工单管理。", "<strong>现状还原：</strong>沿用 54px 顶栏、模块标题、12px 面包屑和历史标签栏。"] },
+        { target: "filterTarget", title: "通用工单筛选", location: "关联位置：列表顶部筛选区", body: ["<strong>字段：</strong>工单编号、工单类型、设备 SN、设备型号、工单状态、提交时间。", "<strong>本期类型：</strong>工单类型下拉仅有“解绑工单”，保留类型维度是为了后续扩展。", "<strong>交互：</strong>查询后回到第 1 页；重置清空全部条件并重新加载。"] },
+        { target: "statusHeaderTarget", title: "公共状态与类型状态", location: "关联位置：主表格 > 工单状态", body: ["<strong>公共状态：</strong>待处理、处理中、已完成、已驳回。", "<strong>类型状态：</strong>解绑接口失败不是新的公共终态，展示为“处理中 + 解绑失败”，仍可进入补偿流程。", "<strong>边界：</strong>通用工单状态不使用带有 UNBIND 语义的公共枚举。"] },
+        { target: "operationHeaderTarget", title: "查看详情", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>状态差异：</strong>待处理显示驳回/解绑；执行失败显示重试解绑；通知失败展示失败状态与待技术评估的补偿说明；其他状态只读。"] },
+        { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
+      ],
+      drawer: [
+        { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>结构：</strong>公共申请信息、设备信息、类型专属处理记录、通知信息和状态化操作区。"] },
+        { target: "applicationTarget", title: "公共申请信息", location: "关联位置：详情抽屉 > 申请信息", body: ["<strong>系统携带：</strong>工单编号、工单类型、申请用户、申请 App、提交时间等基本信息，其中申请 App 示例值为 momcozy。", "<strong>用户录入：</strong>设备照片、申请原因、联系方式。SN 随 APP 请求携带，平台页面不区分其采集来源。", "<strong>联系方式：</strong>处理人员联系申请人所必需，具备工单处理权限时详情展示完整值；列表不展示，无敏感信息权限时脱敏。原型号码均为虚构示例。"] },
+        { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },
+        { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>公共关联：</strong>每张设备类工单至少关联设备 SN、设备型号、所属平台。", "<strong>平台边界：</strong>平台使用 APP 请求携带的 SN 关联设备记录并固化设备型号、所属平台快照，不判断 SN 的采集来源、决策过程和可信性。", "<strong>类型扩展：</strong>解绑工单额外展示数据中心、云端设备 ID 和绑定状态；APP 不提交云端设备 ID。", "<strong>唯一真值：</strong>本期涂鸦设备的绑定状态以涂鸦云查询结果为准。"] },
+        { target: "executionTarget", title: "执行与失败补偿", location: "关联位置：详情抽屉 > 处理记录", body: ["<strong>同步接口：</strong>点击解绑后公共状态进入 PROCESSING，解绑执行状态进入 PROCESSING，等待本次同步响应。", "<strong>失败：</strong>明确失败或传输超时时公共状态仍为 PROCESSING，解绑执行状态为 FAILED；重试前必须重新查询绑定状态。", "<strong>审计：</strong>驳回、解绑、同步调用、查询、重试和结果均按时间线记录。"] },
+        { target: "notificationTarget", title: "APP 结果通知", location: "关联位置：详情抽屉 > APP 结果通知", body: ["<strong>状态：</strong>非终态统一为待通知；终态投递成功为已通知；终态投递失败为通知失败。", "<strong>基础设施：</strong>复用 APP 现有消息中心和系统推送，原型不展示渠道。", "<strong>最近通知时间：</strong>只记录最近一次投递成功时间，失败尝试不覆盖。", "<strong>重试策略：</strong>必须支持失败补偿；手动或自动重试由技术评估后确定，因此原型不提供固定重试按钮。"] },
+        { target: "drawerFooterTarget", title: "类型化操作区", location: "关联位置：详情抽屉 > Footer", body: ["<strong>解绑工单待处理：</strong>驳回、解绑；不设置人工核对清单或勾选门槛。", "<strong>解绑执行失败：</strong>重试解绑，先查绑定状态。", "<strong>通知失败：</strong>业务终态不回滚；重试方式待技术评估。", "<strong>扩展规则：</strong>按钮由工单类型和状态共同决定。"] }
+      ],
+      unbind: [
+        { target: "unbindModalTarget", title: "解绑确认", location: "关联位置：解绑确认弹窗", body: ["<strong>触发：</strong>待处理的解绑工单点击“解绑”。", "<strong>功能提示：</strong>确认后立即锁定工单并同步调用涂鸦，响应成功前不展示解绑完成。", "<strong>边界：</strong>不设置额外人工核对清单；状态条件更新保证只有首个处理动作生效。"] }
+      ],
+      reject: [
+        { target: "rejectModalTarget", title: "驳回原因", location: "关联位置：驳回弹窗", body: ["<strong>校验：</strong>驳回原因必填；未选择时弹窗保持打开并展示字段错误。", "<strong>结果：</strong>确认后进入 REJECTED，绝不调用涂鸦解绑接口；公开原因通知 APP。"] }
+      ],
+      retry: [
+        { target: "retryModalTarget", title: "失败后安全重试", location: "关联位置：重试解绑弹窗", body: ["<strong>固定顺序：</strong>查询涂鸦绑定状态 → 已解绑则直接成功；仍绑定才再次调用同步解绑。", "<strong>超时保护：</strong>禁止在未知上一次调用实际结果时直接重复解绑。", "<strong>演示：</strong>工单 016 复核后直接成功；工单 015 复核仍绑定后再次调用并成功。"] }
+      ]
+    };
+
+    let selectedTicket = null;
+    let currentContext = "list";
+    let toastTimer = null;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+    }
+
+    function statusTag(ticket) {
+      const meta = statusMeta[ticket.status];
+      const executionFailure = ticket.executionStatus === "FAILED" ? '<span class="tag failed" style="margin-left:5px">解绑失败</span>' : "";
+      const notice = ["COMPLETED", "REJECTED"].includes(ticket.status) && ticket.notification === "FAILED" ? '<span class="tag notice-failed">通知失败</span>' : "";
+      return `<span class="tag ${meta.cls}">${meta.label}</span>${executionFailure}${notice}`;
+    }
+
+    function renderTable() {
+      const ticketQuery = $("#ticketFilter").value.trim().toLowerCase();
+      const typeQuery = $("#typeFilter").value;
+      const snQuery = $("#snFilter").value.trim().toLowerCase();
+      const modelQuery = $("#modelFilter").value.trim().toLowerCase();
+      const statusQuery = $("#statusFilter").value;
+      const filtered = tickets.filter(ticket =>
+        (!ticketQuery || ticket.id.toLowerCase().includes(ticketQuery)) &&
+        (!typeQuery || ticket.type === typeQuery) &&
+        (!snQuery || ticket.sn.toLowerCase().includes(snQuery) || ticket.fullSn.toLowerCase().includes(snQuery)) &&
+        (!modelQuery || ticket.deviceModel.toLowerCase().includes(modelQuery)) &&
+        (!statusQuery || ticket.status === statusQuery)
+      );
+
+      $("#tableBody").innerHTML = filtered.map(ticket => `
+        <tr>
+          <td class="mono" title="${ticket.id}">${ticket.id}</td>
+          <td>${ticket.type}</td>
+          <td class="mono">${ticket.sn}</td>
+          <td>${ticket.deviceModel}</td>
+          <td>${ticket.platform}</td>
+          <td class="mono">${ticket.user}</td>
+          <td>${statusTag(ticket)}</td>
+          <td>${ticket.submittedAt}</td>
+          <td><button type="button" class="btn text view-ticket" data-id="${ticket.id}">查看</button></td>
+        </tr>`).join("");
+
+      $("#emptyState").classList.toggle("visible", filtered.length === 0);
+      $("#tableBody").style.display = filtered.length ? "table-row-group" : "none";
+      $("#totalLabel").textContent = `共 ${filtered.length} 条`;
+      $$(".view-ticket").forEach(button => button.addEventListener("click", () => openDrawer(button.dataset.id)));
+    }
+
+    function descriptionItem(label, value, full = false) {
+      return `<div class="description-item ${full ? "full-span" : ""}"><span class="label">${label}</span><span class="value">${value}</span></div>`;
+    }
+
+    function timelineFor(ticket) {
+      const base = [
+        { title: "APP 提交解绑工单", meta: `${ticket.submittedAt} · ${ticket.user}` },
+        { title: "服务端校验设备映射及涂鸦绑定状态", meta: `${ticket.submittedAt.slice(0, 16)} · 校验通过` }
+      ];
+      if (ticket.status === "PENDING") return base;
+      if (ticket.status === "REJECTED") return base.concat([{ title: `工单驳回：${ticket.rejectReason}`, meta: `${ticket.reviewedAt} · ${ticket.reviewer}` }, { title: "终态结果已通知 APP", meta: `${ticket.lastNotifiedAt} · 投递成功` }]);
+      base.push({ title: "平台操作员发起解绑，锁定工单", meta: `${ticket.reviewedAt} · ${ticket.reviewer}` });
+      if (ticket.status === "PROCESSING" && ticket.executionStatus === "PROCESSING") {
+        if (ticket.error && ticket.retryCount > 1) {
+          return base.concat([
+            { title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" },
+            { title: "重试前查询确认设备仍绑定", meta: "允许发起新的同步解绑调用" },
+            { title: "同步重试涂鸦解绑接口", meta: "处理中 · 操作已锁定" }
+          ]);
+        }
+        return base.concat([{ title: "同步调用涂鸦解绑接口", meta: "处理中 · 操作已锁定" }]);
+      }
+      if (ticket.status === "PROCESSING" && ticket.executionStatus === "FAILED") return base.concat([{ title: ticket.error, meta: `${ticket.reviewedAt} · 第 ${ticket.retryCount} 次执行` }]);
+      if (ticket.error && ticket.retryOutcome === "already-unbound") {
+        base.push({ title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" });
+        base.push({ title: "重试前查询确认设备已解绑", meta: "直接收敛为成功，未再次调用解绑接口" });
+      } else if (ticket.error) {
+        base.push({ title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" });
+        base.push({ title: "重试前查询确认设备仍绑定", meta: "允许重新调用同步解绑" });
+        base.push({ title: "涂鸦同步重试返回解绑成功", meta: `${ticket.reviewedAt} · 设备已解绑` });
+      } else {
+        base.push({ title: "涂鸦同步返回解绑成功", meta: `${ticket.reviewedAt} · 设备已解绑` });
+      }
+      base.push({ title: ticket.notification === "FAILED" ? "APP 结果通知投递失败" : "APP 结果通知成功", meta: ticket.notification === "FAILED" ? "等待通知失败补偿" : `${ticket.lastNotifiedAt} · 投递成功` });
+      return base;
+    }
+
+    function renderDrawer() {
+      if (!selectedTicket) return;
+      const ticket = selectedTicket;
+      $("#drawerStatus").innerHTML = statusTag(ticket);
+      $("#ticketIdExtra").textContent = ticket.id;
+      $("#evidenceSn").textContent = ticket.fullSn;
+      $("#applicationInfo").innerHTML = [
+        descriptionItem("工单编号", `<span class="mono">${ticket.id}</span>`),
+        descriptionItem("工单类型", ticket.type),
+        descriptionItem("申请 App", ticket.app),
+        descriptionItem("申请用户", `<span class="mono">${ticket.user}</span>`),
+        descriptionItem("联系方式", ticket.contact),
+        descriptionItem("申请原因", escapeHtml(ticket.reason), true),
+        descriptionItem("提交时间", ticket.submittedAt),
+        descriptionItem("处理人员", ticket.reviewer),
+        descriptionItem("处理时间", ticket.reviewedAt),
+        descriptionItem("当前状态", statusMeta[ticket.status].label)
+      ].join("");
+
+      $("#mappingInfo").innerHTML = [
+        descriptionItem("设备 SN", `<span class="mono">${ticket.fullSn}</span>`),
+        descriptionItem("设备型号", ticket.deviceModel),
+        descriptionItem("所属平台", ticket.platform),
+        descriptionItem("通讯方式", "WIFI+BLE"),
+        descriptionItem("绑定类型", "强绑定"),
+        descriptionItem("设备类型", "ipc设备"),
+        descriptionItem("数据中心", ticket.region),
+        descriptionItem("涂鸦设备 ID", `<span class="mono">${ticket.tuyaId}</span>`),
+        descriptionItem("绑定状态", ticket.binding)
+      ].join("");
+
+      const failed = ticket.executionStatus === "FAILED";
+      $("#failureAlert").innerHTML = failed ? `<div class="alert error" style="margin-bottom:14px"><i data-lucide="circle-x" width="16"></i><span><strong>最近执行失败：</strong>${escapeHtml(ticket.error)}。重试前必须重新查询涂鸦绑定状态。</span></div>` : "";
+      $("#executionSummary").textContent = ticket.retryCount ? `已执行 ${ticket.retryCount} 次` : "";
+      $("#timeline").innerHTML = timelineFor(ticket).map(item => `<li class="timeline-item"><div class="timeline-title">${escapeHtml(item.title)}</div><div class="timeline-meta">${escapeHtml(item.meta)}</div></li>`).join("");
+
+      let notificationState = '<span class="tag pending">待通知</span>';
+      if (["REJECTED", "COMPLETED"].includes(ticket.status)) {
+        notificationState = ticket.notification === "FAILED" ? '<span class="tag failed">通知失败</span>' : '<span class="tag success">已通知</span>';
+      }
+      $("#notificationInfo").innerHTML = [
+        descriptionItem("通知状态", notificationState),
+        descriptionItem("最近通知时间", ticket.lastNotifiedAt || "--")
+      ].join("");
+
+      const actions = [];
+      if (ticket.status === "PENDING") {
+        actions.push('<button class="btn danger" id="rejectButton">驳回</button>', '<button class="btn primary" id="unbindButton">解绑</button>');
+        $("#footerNote").textContent = "处理动作会写入操作人、时间和结果";
+      } else if (ticket.status === "PROCESSING" && ticket.executionStatus === "FAILED") {
+        actions.push('<button class="btn primary" id="retryButton"><i data-lucide="rotate-cw" width="14"></i>重试解绑</button>');
+        $("#footerNote").textContent = "重试前先查询涂鸦绑定状态";
+      } else if (["COMPLETED", "REJECTED"].includes(ticket.status) && ticket.notification === "FAILED") {
+        $("#footerNote").textContent = "通知重试方式待技术评估，不影响工单终态";
+      } else {
+        $("#footerNote").textContent = ticket.status === "PROCESSING" ? "同步请求处理中，操作已锁定" : "当前工单已进入终态";
+      }
+      $("#footerActions").innerHTML = actions.join("");
+      $("#unbindButton")?.addEventListener("click", () => openModal("unbindModal", "unbind"));
+      $("#rejectButton")?.addEventListener("click", () => openModal("rejectModal", "reject"));
+      $("#retryButton")?.addEventListener("click", () => openModal("retryModal", "retry"));
+      window.lucide?.createIcons();
+    }
+
+    function openDrawer(id) {
+      selectedTicket = tickets.find(ticket => ticket.id === id);
+      renderDrawer();
+      $("#drawerScrim").classList.add("open");
+      $("#detailDrawer").classList.add("open");
+      currentContext = "drawer";
+      renderAnnotations();
+    }
+
+    function closeDrawer() {
+      $("#drawerScrim").classList.remove("open");
+      $("#detailDrawer").classList.remove("open");
+      $("#executionLoading").classList.remove("visible");
+      currentContext = "list";
+      renderAnnotations();
+    }
+
+    function openModal(id, context) {
+      $("#" + id).classList.add("open");
+      $("#" + id).setAttribute("aria-hidden", "false");
+      currentContext = context;
+      renderAnnotations();
+    }
+
+    function closeModal(id) {
+      $("#" + id).classList.remove("open");
+      $("#" + id).setAttribute("aria-hidden", "true");
+      currentContext = $("#detailDrawer").classList.contains("open") ? "drawer" : "list";
+      renderAnnotations();
+    }
+
+    function showToast(message, error = false) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.toggle("error", error);
+      toast.classList.add("show");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function setLoading(title, text) {
+      $("#loadingTitle").textContent = title;
+      $("#loadingText").textContent = text;
+      $("#executionLoading").classList.add("visible");
+      $("#footerActions").innerHTML = '<button class="btn primary loading" disabled><span class="spin"></span>处理中</button>';
+      $("#footerNote").textContent = "操作处理中，请勿关闭或重复提交";
+    }
+
+    function confirmUnbind() {
+      closeModal("unbindModal");
+      selectedTicket.status = "PROCESSING";
+      selectedTicket.executionStatus = "PROCESSING";
+      selectedTicket.reviewedAt = "2026-09-02 16:08:32";
+      selectedTicket.reviewer = "张子豪";
+      selectedTicket.binding = "解绑处理中";
+      renderTable();
+      renderDrawer();
+      setLoading("正在同步调用涂鸦解绑接口", "同步响应返回前，工单保持“处理中”。");
+      window.setTimeout(() => {
+        selectedTicket.status = "COMPLETED";
+        selectedTicket.executionStatus = "SUCCEEDED";
+        selectedTicket.binding = "已解绑";
+        selectedTicket.notification = "SENT";
+        selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
+        $("#executionLoading").classList.remove("visible");
+        renderTable();
+        renderDrawer();
+        showToast("涂鸦同步返回成功，工单已完成并通知 APP");
+      }, 1400);
+    }
+
+    function confirmReject() {
+      const reason = $("#rejectReason").value;
+      if (!reason) {
+        $("#rejectError").textContent = "请选择驳回原因";
+        $("#rejectReason").focus();
+        return;
+      }
+      $("#rejectError").textContent = "";
+      selectedTicket.status = "REJECTED";
+      selectedTicket.executionStatus = "NOT_STARTED";
+      selectedTicket.rejectReason = reason;
+      selectedTicket.reviewedAt = "2026-09-02 16:08:32";
+      selectedTicket.reviewer = "张子豪";
+      selectedTicket.notification = "SENT";
+      selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
+      selectedTicket.binding = "未执行解绑";
+      closeModal("rejectModal");
+      renderTable();
+      renderDrawer();
+      showToast("工单已驳回，未调用涂鸦解绑接口");
+    }
+
+    function confirmRetry() {
+      closeModal("retryModal");
+      const outcome = selectedTicket.retryOutcome;
+      setLoading("正在查询涂鸦当前绑定状态", "重试前安全复核，暂不调用解绑接口。");
+      window.setTimeout(() => {
+        if (outcome === "already-unbound") {
+          selectedTicket.status = "COMPLETED";
+          selectedTicket.executionStatus = "SUCCEEDED";
+          selectedTicket.binding = "已解绑";
+          selectedTicket.notification = "SENT";
+          selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
+          $("#executionLoading").classList.remove("visible");
+          renderTable();
+          renderDrawer();
+          showToast("查询确认设备已解绑，未重复调用解绑接口");
+          return;
+        }
+        selectedTicket.status = "PROCESSING";
+        selectedTicket.executionStatus = "PROCESSING";
+        selectedTicket.binding = "仍绑定，正在重试解绑";
+        selectedTicket.retryCount += 1;
+        renderTable();
+        renderDrawer();
+        setLoading("设备仍绑定，正在同步重试解绑", "已完成状态复核，开始本次同步调用。");
+        window.setTimeout(() => {
+          selectedTicket.status = "COMPLETED";
+          selectedTicket.executionStatus = "SUCCEEDED";
+          selectedTicket.binding = "已解绑";
+          selectedTicket.notification = "SENT";
+          selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
+          $("#executionLoading").classList.remove("visible");
+          renderTable();
+          renderDrawer();
+          showToast("重试解绑成功，工单已完成");
+        }, 1300);
+      }, 1000);
+    }
+
+    function clearHighlights() {
+      $$(".highlight-target").forEach(element => element.classList.remove("highlight-target"));
+      $$(".note-anchor").forEach(anchor => anchor.remove());
+    }
+
+    function highlightAnnotation(index) {
+      clearHighlights();
+      const note = annotations[currentContext][index];
+      const target = document.getElementById(note.target);
+      if (!target) return;
+      target.classList.add("highlight-target");
+      target.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+      const anchor = document.createElement("span");
+      anchor.className = "note-anchor";
+      anchor.textContent = index + 1;
+      anchor.style.display = "grid";
+      anchor.style.top = "4px";
+      anchor.style.right = "4px";
+      anchor.style.left = "auto";
+      anchor.style.transform = "translate(50%, -50%)";
+      target.appendChild(anchor);
+      $$(".annotation-card").forEach((card, cardIndex) => card.classList.toggle("active", cardIndex === index));
+    }
+
+    function renderAnnotations() {
+      clearHighlights();
+      const contextLabels = { list: "列表页批注", drawer: `详情抽屉批注 · ${selectedTicket?.id || ""}`, unbind: "解绑确认弹窗批注", reject: "驳回弹窗批注", retry: "失败重试弹窗批注" };
+      $("#annotationContext").textContent = contextLabels[currentContext];
+      const notes = annotations[currentContext];
+      $("#annotationList").innerHTML = notes.map((note, index) => `
+        <button class="annotation-card" type="button" data-index="${index}">
+          <span class="annotation-number">${index + 1}</span>
+          <h3>${note.title}</h3>
+          <div class="annotation-location">${note.location}</div>
+          <div class="annotation-body">${note.body.map(line => `<div>${line}</div>`).join("")}</div>
+        </button>`).join("");
+      $$(".annotation-card").forEach(card => card.addEventListener("click", () => highlightAnnotation(Number(card.dataset.index))));
+      notes.forEach((note, index) => {
+        const target = document.getElementById(note.target);
+        if (!target) return;
+        const anchor = document.createElement("span");
+        anchor.className = "note-anchor";
+        anchor.textContent = index + 1;
+        anchor.style.display = "grid";
+        anchor.style.top = "4px";
+        anchor.style.right = "4px";
+        anchor.style.left = "auto";
+        anchor.style.transform = "translate(50%, -50%)";
+        target.appendChild(anchor);
+      });
+    }
+
+    $("#queryButton").addEventListener("click", () => { renderTable(); showToast("查询完成"); });
+    $("#resetButton").addEventListener("click", () => {
+      ["ticketFilter", "snFilter", "modelFilter", "timeFilter"].forEach(id => $("#" + id).value = "");
+      $("#typeFilter").value = "";
+      $("#statusFilter").value = "";
+      renderTable();
+      showToast("筛选条件已重置");
+    });
+    $("#refreshButton").addEventListener("click", event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.innerHTML = '<span class="spin"></span>';
+      window.setTimeout(() => { button.disabled = false; button.innerHTML = '<i data-lucide="refresh-cw" width="14"></i>'; window.lucide?.createIcons(); renderTable(); showToast("列表已刷新"); }, 700);
+    });
+    $("#drawerClose").addEventListener("click", closeDrawer);
+    $("#drawerScrim").addEventListener("click", closeDrawer);
+    $$(".modal-close").forEach(button => button.addEventListener("click", () => closeModal(button.dataset.close)));
+    $$(".modal-scrim").forEach(scrim => scrim.addEventListener("click", event => { if (event.target === scrim) closeModal(scrim.id); }));
+    $("#confirmUnbind").addEventListener("click", confirmUnbind);
+    $("#confirmReject").addEventListener("click", confirmReject);
+    $("#confirmRetry").addEventListener("click", confirmRetry);
+    $("#rejectReason").addEventListener("change", () => $("#rejectError").textContent = "");
+
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      const openModalElement = $$(".modal-scrim.open")[0];
+      if (openModalElement) closeModal(openModalElement.id);
+      else if ($("#detailDrawer").classList.contains("open")) closeDrawer();
+    });
+
+    $$("[data-mobile]").forEach(button => button.addEventListener("click", () => {
+      const notes = button.dataset.mobile === "notes";
+      document.body.classList.toggle("mobile-notes", notes);
+      document.body.classList.toggle("mobile-product", !notes);
+      $$("[data-mobile]").forEach(item => item.classList.toggle("active", item === button));
+    }));
+
+    renderTable();
+    renderAnnotations();
+    window.lucide?.createIcons();
+  </script>
+</body>
+</html>
