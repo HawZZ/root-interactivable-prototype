@@ -985,7 +985,7 @@
         { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>工单基准：</strong>SN 随 APP 请求携带；型号、平台和涂鸦设备 ID 由服务端关联。", "<strong>平台边界：</strong>不判断 APP 的 SN 采集来源或可信性，只将工单 SN 作为照片识别结果的比对基准。", "<strong>唯一真值：</strong>绑定状态以涂鸦云查询结果为准。"] },
         { target: "recognitionTarget", title: "识别与比对", location: "关联位置：详情抽屉 > 识别与比对", body: ["<strong>必存结果：</strong>识别 SN、置信度、识别状态、匹配结果、规则版本和自动决策。", "<strong>判断：</strong>置信度决定识别结果是否有效；有效 SN 再按规范化规则与工单 SN 等值比较。", "<strong>技术边界：</strong>AI/OCR 选型、阈值和候选策略由技术侧定义。"] },
         { target: "executionTarget", title: "自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>自动分支：</strong>匹配则调用涂鸦；不匹配或无法识别自动驳回且不调用涂鸦。", "<strong>异常分流：</strong>临时异常自动重试；明确业务资格错误按白名单驳回；技术、未知异常或重试耗尽进入处理失败。", "<strong>审计：</strong>上传、识别、匹配、接口调用和返回结果均记录。"] },
-        { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>记录：</strong>接口版本、HTTP、success/result/code/msg/tid、尝试次数、分流版本和结果。", "<strong>事实门槛：</strong>实际接口未确认前显示待技术确认；原型错误码只作交互示例，不形成生产映射。", "<strong>替代关系：</strong>新旧工单通过双向 ID 关联，旧照片、识别和错误记录不覆盖。"] },
+        { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>接口调用结果：</strong>翻译涂鸦响应字段 success，表示本次接口调用是否成功。", "<strong>解绑返回结果：</strong>翻译响应字段 result，表示解绑接口返回的业务布尔值；不等于最终解绑真值。", "<strong>最终判断：</strong>无论两个字段为何值，是否已解绑仍以涂鸦绑定状态查询结果为准；原始字段名和值保留供技术审计。"] },
         { target: "progressTarget", title: "APP 进度事件", location: "关联位置：详情抽屉 > APP 进度事件", body: ["<strong>五个阶段：</strong>上传、识别、匹配、调用接口、返回结果；拒绝分支的调用接口阶段输出“未发起设备解绑”。", "<strong>一致性：</strong>先落库再投递；稳定事件 ID 和工单内序号支持幂等、乱序保护与主动查询补偿。", "<strong>隐私：</strong>只输出公开阶段和文案，不下发完整识别 SN 或内部错误。"] },
         { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>独立状态：</strong>待通知、已通知、通知失败只描述终态结果，不复用过程事件投递状态。", "<strong>触发：</strong>已完成、已驳回或处理失败触发；最近通知时间只记录投递成功。", "<strong>关闭边界：</strong>旧工单转为已关闭时保留原通知记录，不重复发送终态结果；替代关系由新工单创建结果和主动查询告知。"] },
         { target: "drawerFooterTarget", title: "失败态人工处置", location: "关联位置：详情抽屉 > Footer", body: ["<strong>正常状态：</strong>只展示自动处理说明，不显示人工按钮。", "<strong>处理失败：</strong>仅仍可处置的工单展示驳回和重试；重试前查询绑定状态，驳回原因对用户可见。", "<strong>已关闭：</strong>被新工单替代后保存关闭原因和关联 ID，旧工单只读且不展示操作按钮。"] }
@@ -1049,6 +1049,12 @@
 
     function descriptionItem(label, value, full = false) {
       return `<div class="description-item ${full ? "full-span" : ""}"><span class="label">${label}</span><span class="value">${value}</span></div>`;
+    }
+
+    function tuyaBooleanResult(value, successLabel, failureLabel, fieldName) {
+      if (value === "true") return `<span class="tag success">${successLabel}</span> <span class="mono">${fieldName}=true</span>`;
+      if (value === "false") return `<span class="tag failed">${failureLabel}</span> <span class="mono">${fieldName}=false</span>`;
+      return `<span class="muted">--</span>`;
     }
 
     function timelineFor(ticket) {
@@ -1134,7 +1140,8 @@
       $("#tuyaAuditInfo").innerHTML = [
         descriptionItem("接口路径/版本", `<span class="mono">${escapeHtml(ticket.interfacePath)}</span>`),
         descriptionItem("HTTP 状态", escapeHtml(ticket.httpStatus)),
-        descriptionItem("success / result", `<span class="mono">${escapeHtml(ticket.tuyaSuccess)} / ${escapeHtml(ticket.tuyaResult)}</span>`),
+        descriptionItem("接口调用结果", tuyaBooleanResult(ticket.tuyaSuccess, "调用成功", "调用失败", "success")),
+        descriptionItem("解绑返回结果", tuyaBooleanResult(ticket.tuyaResult, "返回成功", "未返回成功", "result")),
         descriptionItem("code", `<span class="mono">${escapeHtml(ticket.tuyaCode)}</span>`),
         descriptionItem("msg", `<span class="mono">${escapeHtml(ticket.tuyaMessage)}</span>`),
         descriptionItem("tid", `<span class="mono">${escapeHtml(ticket.tuyaTid)}</span>`),
