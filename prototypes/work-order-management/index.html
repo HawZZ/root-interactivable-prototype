@@ -483,6 +483,22 @@
     .timeline-title { color: var(--regular); font-size: 13px; }
     .timeline-meta { margin-top: 4px; color: var(--secondary); font-size: 12px; }
 
+    .progress-events { overflow: hidden; border: 1px solid var(--light-border); border-radius: 4px; }
+    .progress-event {
+      display: grid;
+      grid-template-columns: 42px 78px minmax(0, 1fr) 68px 132px;
+      align-items: center;
+      min-height: 42px;
+      border-bottom: 1px solid var(--light-border);
+      color: var(--regular);
+      font-size: 12px;
+    }
+    .progress-event:last-child { border-bottom: 0; }
+    .progress-event > span { min-width: 0; padding: 9px 10px; overflow-wrap: anywhere; }
+    .progress-event .sequence { color: var(--secondary); text-align: center; }
+    .progress-event .event-time { color: var(--secondary); font-variant-numeric: tabular-nums; }
+    .progress-event.header { min-height: 36px; background: #fafafa; color: var(--secondary); font-weight: 500; }
+
     .execution-loading {
       display: none;
       align-items: center;
@@ -761,10 +777,6 @@
             <button class="icon-button" id="drawerClose" type="button" title="关闭" aria-label="关闭"><i data-lucide="x" width="19"></i></button>
           </header>
           <div class="drawer-body">
-            <div class="execution-loading product-note" id="executionLoading">
-              <span class="spin"></span><div><strong id="loadingTitle">正在调用涂鸦解绑接口</strong><div id="loadingText" style="margin-top:3px">同步请求返回前保持处理中，请勿重复操作。</div></div>
-            </div>
-
             <section class="section product-note" id="applicationTarget">
               <h3 class="section-title">申请信息 <span class="section-extra" id="ticketIdExtra"></span></h3>
               <div class="description-grid" id="applicationInfo"></div>
@@ -790,55 +802,33 @@
               <div class="alert" style="margin-top:12px"><i data-lucide="info" width="16"></i><span>绑定状态以涂鸦云查询结果为唯一真值源；APP 不提交涂鸦设备 ID。</span></div>
             </section>
 
+            <section class="section product-note" id="recognitionTarget">
+              <h3 class="section-title">识别与比对 <span class="section-extra">自动处理结果</span></h3>
+              <div class="description-grid" id="recognitionInfo"></div>
+              <div id="recognitionAlert"></div>
+            </section>
+
             <section class="section product-note" id="executionTarget">
-              <h3 class="section-title">处理记录 <span class="section-extra" id="executionSummary"></span></h3>
+              <h3 class="section-title">自动处理记录 <span class="section-extra" id="executionSummary"></span></h3>
               <div id="failureAlert"></div>
               <ol class="timeline" id="timeline"></ol>
             </section>
 
+            <section class="section product-note" id="progressTarget">
+              <h3 class="section-title">APP 进度事件 <span class="section-extra">按工单内序号排列</span></h3>
+              <div class="progress-events" id="progressEvents"></div>
+            </section>
+
             <section class="section product-note" id="notificationTarget">
-              <h3 class="section-title">APP 结果通知</h3>
+              <h3 class="section-title">APP 终态通知</h3>
               <div class="description-grid" id="notificationInfo"></div>
             </section>
           </div>
           <footer class="drawer-footer product-note" id="drawerFooterTarget">
-            <div class="footer-note" id="footerNote">操作会写入审计日志</div>
+            <div class="footer-note" id="footerNote">全流程自动处理，无需人工操作</div>
             <div class="footer-actions" id="footerActions"></div>
           </footer>
         </aside>
-
-        <div class="modal-scrim" id="unbindModal" aria-hidden="true">
-          <section class="modal product-note" id="unbindModalTarget" role="dialog" aria-modal="true" aria-labelledby="unbindTitle">
-            <header class="modal-header"><h3 class="modal-title" id="unbindTitle">确认解绑设备？</h3><button class="icon-button modal-close" data-close="unbindModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
-            <div class="modal-body">
-              <div class="alert warning"><i data-lucide="triangle-alert" width="16"></i><span>确认后平台将立即同步调用涂鸦解绑接口。接口返回成功前，工单保持“处理中”。</span></div>
-              <p style="margin:16px 0 0">该操作将解除设备原有绑定关系，请确认继续。</p>
-            </div>
-            <footer class="modal-footer"><button class="btn modal-close" data-close="unbindModal">取消</button><button class="btn primary" id="confirmUnbind">确认解绑</button></footer>
-          </section>
-        </div>
-
-        <div class="modal-scrim" id="rejectModal" aria-hidden="true">
-          <section class="modal product-note" id="rejectModalTarget" role="dialog" aria-modal="true" aria-labelledby="rejectTitle">
-            <header class="modal-header"><h3 class="modal-title" id="rejectTitle">驳回解绑申请</h3><button class="icon-button modal-close" data-close="rejectModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
-            <div class="modal-body">
-              <div class="form-field" style="margin-top:0"><label><span class="required">*</span> 驳回原因</label><select class="control" id="rejectReason"><option value="">请选择驳回原因</option><option>SN 与照片不一致</option><option>照片无法辨识</option><option>设备不在支持范围</option><option>设备信息不存在</option><option>其他</option></select><div class="field-error" id="rejectError"></div></div>
-              <div class="form-field"><label>补充说明</label><textarea class="control" id="rejectRemark" placeholder="可填写对 APP 用户公开的补充说明"></textarea></div>
-            </div>
-            <footer class="modal-footer"><button class="btn modal-close" data-close="rejectModal">取消</button><button class="btn danger" id="confirmReject">确认驳回</button></footer>
-          </section>
-        </div>
-
-        <div class="modal-scrim" id="retryModal" aria-hidden="true">
-          <section class="modal product-note" id="retryModalTarget" role="dialog" aria-modal="true" aria-labelledby="retryTitle">
-            <header class="modal-header"><h3 class="modal-title" id="retryTitle">重试解绑</h3><button class="icon-button modal-close" data-close="retryModal" aria-label="关闭"><i data-lucide="x" width="18"></i></button></header>
-            <div class="modal-body">
-              <div class="alert"><i data-lucide="shield-check" width="16"></i><span>系统会先查询涂鸦当前绑定状态。若已解绑则直接完成工单；仅在仍绑定时再次调用同步解绑接口。</span></div>
-              <p style="margin:16px 0 0">该操作不会重复审核，查询、重试和返回结果均记录审计日志。</p>
-            </div>
-            <footer class="modal-footer"><button class="btn modal-close" data-close="retryModal">取消</button><button class="btn primary" id="confirmRetry">确认重试</button></footer>
-          </section>
-        </div>
 
         <div class="toast" id="toast" role="status" aria-live="polite"></div>
       </div>
@@ -858,48 +848,55 @@
   <script>
     const tickets = [
       {
-        id: "TY202609020018", sn: "BM04S****1357", fullSn: "BM04S2408A01357", model: "BM04S / BM04S", user: "u_82****19",
-        status: "PENDING", executionStatus: "NOT_STARTED", submittedAt: "2026-09-02 15:42:18", reviewedAt: "--", reviewer: "--", region: "北美数据中心",
-        tuyaId: "vde****1f8", binding: "已绑定（非当前申请人）", retryCount: 0, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
-        reason: "购买二手设备后无法添加，提示设备已被其他账号绑定。", contact: "+1 202 555 0147"
+        id: "TY202609020018", sn: "BM04S****1357", fullSn: "BM04S2408A01357", user: "u_82****19", status: "PENDING", stage: "QUEUED",
+        recognitionStatus: "PENDING", recognizedSn: "--", confidence: "--", matchResult: "PENDING", autoDecision: "等待自动处理", executionStatus: "NOT_STARTED",
+        submittedAt: "2026-09-02 15:42:18", processingStartedAt: "--", completedAt: "--", region: "北美数据中心", tuyaId: "vde****1f8", binding: "待查询",
+        notification: "PENDING", lastNotifiedAt: "--", reason: "购买二手设备后无法添加，提示设备已被其他账号绑定。", contact: "+1 202 555 0147",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "15:42:19" }]
       },
       {
-        id: "TY202609020017", sn: "BM04S****8421", fullSn: "BM04S2408B08421", model: "BM04S / BM04-2", user: "u_16****05",
-        status: "PROCESSING", executionStatus: "PROCESSING", submittedAt: "2026-09-02 15:21:06", reviewedAt: "2026-09-02 15:38:10", reviewer: "李晓",
-        region: "欧洲数据中心", tuyaId: "vde****7b2", binding: "解绑处理中", retryCount: 0, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
-        reason: "原账号无法登录，需要解除旧绑定后重新添加。", contact: "+44 7700 900182"
+        id: "TY202609020017", sn: "BM04S****8421", fullSn: "BM04S2408B08421", user: "u_16****05", status: "PROCESSING", stage: "RECOGNIZING",
+        recognitionStatus: "PROCESSING", recognizedSn: "--", confidence: "--", matchResult: "PENDING", autoDecision: "等待识别结果", executionStatus: "NOT_STARTED",
+        submittedAt: "2026-09-02 15:21:06", processingStartedAt: "2026-09-02 15:21:07", completedAt: "--", region: "欧洲数据中心", tuyaId: "vde****7b2", binding: "待查询",
+        notification: "PENDING", lastNotifiedAt: "--", reason: "原账号无法登录，需要解除旧绑定后重新添加。", contact: "+44 7700 900182",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "15:21:07" }, { seq: 2, stage: "识别", text: "正在识别设备信息", delivery: "已投递", time: "15:21:08" }]
       },
       {
-        id: "TY202609020016", sn: "BM04S****3198", fullSn: "BM04S2407C03198", model: "BM04S / BM04S", user: "u_39****77",
-        status: "PROCESSING", executionStatus: "FAILED", submittedAt: "2026-09-02 14:56:43", reviewedAt: "2026-09-02 15:10:22", reviewer: "李晓",
-        region: "北美数据中心", tuyaId: "vde****c31", binding: "待重试前复核", retryCount: 1, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "already-unbound",
-        error: "同步请求传输超时（TUYA_TIMEOUT）", reason: "更换手机后无法恢复原账号，希望重新绑定设备。", contact: "+1 202 555 0189"
+        id: "TY202609020016", sn: "BM04S****3198", fullSn: "BM04S2407C03198", user: "u_39****77", status: "PROCESSING", stage: "UNBINDING",
+        recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2407C03198", confidence: "98.6%", matchResult: "MATCHED", autoDecision: "自动解绑", executionStatus: "PROCESSING",
+        submittedAt: "2026-09-02 14:56:43", processingStartedAt: "2026-09-02 14:56:44", completedAt: "--", region: "北美数据中心", tuyaId: "vde****c31", binding: "解绑处理中",
+        notification: "PENDING", lastNotifiedAt: "--", reason: "更换手机后无法恢复原账号，希望重新绑定设备。", contact: "+1 202 555 0189",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "14:56:44" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "14:56:47" }, { seq: 3, stage: "匹配", text: "设备信息校验通过", delivery: "已投递", time: "14:56:48" }, { seq: 4, stage: "调用接口", text: "正在解除设备绑定", delivery: "已投递", time: "14:56:49" }]
       },
       {
-        id: "TY202609020015", sn: "BM04S****6720", fullSn: "BM04S2407D06720", model: "BM04S / BM04S", user: "u_51****42",
-        status: "PROCESSING", executionStatus: "FAILED", submittedAt: "2026-09-02 14:30:11", reviewedAt: "2026-09-02 14:45:19", reviewer: "陈静",
-        region: "亚太数据中心", tuyaId: "vde****912", binding: "仍绑定", retryCount: 1, notification: "PENDING", lastNotifiedAt: "--", retryOutcome: "still-bound",
-        error: "涂鸦返回业务失败（DEVICE_OFFLINE）", reason: "设备由家人转交，原账号已停用。", contact: "+86 188 0000 6720"
+        id: "TY202609020015", sn: "BM04S****6720", fullSn: "BM04S2407D06720", user: "u_51****42", status: "PROCESSING", stage: "COMPENSATING",
+        recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2407D06720", confidence: "97.4%", matchResult: "MATCHED", autoDecision: "自动解绑", executionStatus: "FAILED",
+        submittedAt: "2026-09-02 14:30:11", processingStartedAt: "2026-09-02 14:30:12", completedAt: "--", region: "亚太数据中心", tuyaId: "vde****912", binding: "待补偿前查询",
+        notification: "PENDING", lastNotifiedAt: "--", error: "同步请求传输超时（TUYA_TIMEOUT）", reason: "设备由家人转交，原账号已停用。", contact: "+86 188 0000 6720",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "14:30:12" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "14:30:15" }, { seq: 3, stage: "匹配", text: "设备信息校验通过", delivery: "已投递", time: "14:30:16" }, { seq: 4, stage: "调用接口", text: "正在解除设备绑定", delivery: "已投递", time: "14:30:17" }, { seq: 5, stage: "返回结果", text: "系统正在继续处理", delivery: "已投递", time: "14:30:27" }]
       },
       {
-        id: "TY202609020014", sn: "BM04S****4096", fullSn: "BM04S2406E04096", model: "BM04S / BM04-2", user: "u_08****63",
-        status: "COMPLETED", executionStatus: "SUCCEEDED", submittedAt: "2026-09-02 13:46:03", reviewedAt: "2026-09-02 14:02:17", reviewer: "陈静",
-        region: "北美数据中心", tuyaId: "vde****e05", binding: "已解绑", retryCount: 0, notification: "SENT", lastNotifiedAt: "2026-09-02 14:02:20", retryOutcome: "still-bound",
-        reason: "设备仍绑定在已注销的旧账号。", contact: "+1 202 555 0196"
+        id: "TY202609020014", sn: "BM04S****4096", fullSn: "BM04S2406E04096", user: "u_08****63", status: "COMPLETED", stage: "COMPLETED",
+        recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2406E04096", confidence: "99.3%", matchResult: "MATCHED", autoDecision: "自动解绑", executionStatus: "SUCCEEDED",
+        submittedAt: "2026-09-02 13:46:03", processingStartedAt: "2026-09-02 13:46:04", completedAt: "2026-09-02 13:46:11", region: "北美数据中心", tuyaId: "vde****e05", binding: "已解绑",
+        notification: "SENT", lastNotifiedAt: "2026-09-02 13:46:12", reason: "设备仍绑定在已注销的旧账号。", contact: "+1 202 555 0196",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "13:46:04" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "13:46:07" }, { seq: 3, stage: "匹配", text: "设备信息校验通过", delivery: "已投递", time: "13:46:08" }, { seq: 4, stage: "调用接口", text: "正在解除设备绑定", delivery: "已投递", time: "13:46:09" }, { seq: 5, stage: "返回结果", text: "设备解绑成功", delivery: "已投递", time: "13:46:11" }]
       },
       {
-        id: "TY202609020013", sn: "BM04S****2214", fullSn: "BM04S2406F02214", model: "BM04S / BM04S", user: "u_62****31",
-        status: "COMPLETED", executionStatus: "SUCCEEDED", submittedAt: "2026-09-02 13:12:55", reviewedAt: "2026-09-02 13:28:06", reviewer: "王璐",
-        region: "欧洲数据中心", tuyaId: "vde****3ac", binding: "已解绑", retryCount: 0, notification: "FAILED", lastNotifiedAt: "--", retryOutcome: "still-bound",
-        reason: "二手购入设备，无法联系原持有人解绑。", contact: "+49 1512 345 2214"
+        id: "TY202609020013", sn: "BM04S****2214", fullSn: "BM04S2406F02214", user: "u_62****31", status: "REJECTED", stage: "REJECTED_MISMATCH",
+        recognitionStatus: "SUCCEEDED", recognizedSn: "BM04S2406F02991", confidence: "96.8%", matchResult: "MISMATCHED", autoDecision: "自动驳回", executionStatus: "NOT_STARTED",
+        submittedAt: "2026-09-02 13:12:55", processingStartedAt: "2026-09-02 13:12:56", completedAt: "2026-09-02 13:13:00", region: "欧洲数据中心", tuyaId: "vde****3ac", binding: "未调用涂鸦解绑接口",
+        notification: "SENT", lastNotifiedAt: "2026-09-02 13:13:01", rejectReason: "照片中的设备编号与申请设备不一致，请确认后重新申请。", reason: "二手购入设备，无法联系原持有人解绑。", contact: "+49 1512 345 2214",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "13:12:56" }, { seq: 2, stage: "识别", text: "设备信息识别完成", delivery: "已投递", time: "13:12:59" }, { seq: 3, stage: "匹配", text: "设备信息无法通过校验", delivery: "已投递", time: "13:13:00" }, { seq: 4, stage: "调用接口", text: "未发起设备解绑", delivery: "已投递", time: "13:13:00" }, { seq: 5, stage: "返回结果", text: "申请未通过", delivery: "已投递", time: "13:13:01" }]
       },
       {
-        id: "TY202609020012", sn: "BM04S****9083", fullSn: "BM04S2406G09083", model: "BM04S / BM04S", user: "u_74****88",
-        status: "REJECTED", executionStatus: "NOT_STARTED", submittedAt: "2026-09-02 12:25:32", reviewedAt: "2026-09-02 12:44:51", reviewer: "王璐",
-        region: "北美数据中心", tuyaId: "vde****61b", binding: "未执行解绑", retryCount: 0, notification: "SENT", lastNotifiedAt: "2026-09-02 12:44:54", retryOutcome: "still-bound",
-        rejectReason: "SN 与照片不一致", reason: "旧账号无法找回，希望解除绑定。", contact: "+1 202 555 0183"
+        id: "TY202609020012", sn: "BM04S****9083", fullSn: "BM04S2406G09083", user: "u_74****88", status: "REJECTED", stage: "REJECTED_UNRECOGNIZED",
+        recognitionStatus: "FAILED", recognizedSn: "--", confidence: "31.4%", matchResult: "UNAVAILABLE", autoDecision: "自动驳回", executionStatus: "NOT_STARTED",
+        submittedAt: "2026-09-02 12:25:32", processingStartedAt: "2026-09-02 12:25:33", completedAt: "2026-09-02 12:25:38", region: "北美数据中心", tuyaId: "vde****61b", binding: "未调用涂鸦解绑接口",
+        notification: "SENT", lastNotifiedAt: "2026-09-02 12:25:39", recognitionFailure: "未获得达到有效阈值的唯一 SN 候选", rejectReason: "未能从照片中识别设备编号，请确认照片清晰后重新申请。", reason: "旧账号无法找回，希望解除绑定。", contact: "+1 202 555 0183",
+        events: [{ seq: 1, stage: "上传", text: "申请材料已提交", delivery: "已投递", time: "12:25:33" }, { seq: 2, stage: "识别", text: "设备信息无法识别", delivery: "已投递", time: "12:25:38" }, { seq: 3, stage: "匹配", text: "设备信息无法通过校验", delivery: "已投递", time: "12:25:38" }, { seq: 4, stage: "调用接口", text: "未发起设备解绑", delivery: "已投递", time: "12:25:38" }, { seq: 5, stage: "返回结果", text: "申请未通过", delivery: "已投递", time: "12:25:39" }]
       }
-    ].map(ticket => ({ type: "解绑工单", deviceModel: "BM04S", platform: "涂鸦云", app: "momcozy", ...ticket }));
+    ].map(ticket => ({ type: "解绑工单", deviceModel: "BM04S", platform: "涂鸦云", app: "momcozy", matchRuleVersion: "SN-NORMALIZE-V1", ...ticket }));
 
     const statusMeta = {
       PENDING: { label: "待处理", cls: "pending" },
@@ -908,32 +905,36 @@
       REJECTED: { label: "已驳回", cls: "rejected" }
     };
 
+    const stageMeta = {
+      QUEUED: { label: "等待识别", cls: "pending" },
+      RECOGNIZING: { label: "识别中", cls: "processing" },
+      MATCHING: { label: "比对中", cls: "processing" },
+      UNBINDING: { label: "自动解绑中", cls: "processing" },
+      COMPENSATING: { label: "接口补偿中", cls: "failed" },
+      COMPLETED: { label: "已解绑", cls: "success" },
+      REJECTED_MISMATCH: { label: "SN 不匹配", cls: "rejected" },
+      REJECTED_UNRECOGNIZED: { label: "无法识别", cls: "rejected" }
+    };
+
     const annotations = {
       list: [
         { target: "menuWorkOrderTarget", title: "通用工单入口", location: "关联位置：运营管理 > 工单管理", body: ["<strong>说明：</strong>在现有运营管理下新增通用“工单管理”二级菜单，不按业务类型拆菜单。", "<strong>本期范围：</strong>工单类型仅有“解绑工单”；后续类型复用同一列表、详情容器和公共字段。", "<strong>权限：</strong>无查看权限时菜单不可见。"] },
         { target: "headerTarget", title: "页面标题与面包屑", location: "关联位置：页面顶栏", body: ["<strong>路径：</strong>运营管理 > 工单管理。", "<strong>现状还原：</strong>沿用 54px 顶栏、模块标题、12px 面包屑和历史标签栏。"] },
         { target: "filterTarget", title: "通用工单筛选", location: "关联位置：列表顶部筛选区", body: ["<strong>字段：</strong>工单编号、工单类型、设备 SN、设备型号、工单状态、提交时间。", "<strong>本期类型：</strong>工单类型下拉仅有“解绑工单”，保留类型维度是为了后续扩展。", "<strong>交互：</strong>查询后回到第 1 页；重置清空全部条件并重新加载。"] },
-        { target: "statusHeaderTarget", title: "公共状态与类型状态", location: "关联位置：主表格 > 工单状态", body: ["<strong>公共状态：</strong>待处理、处理中、已完成、已驳回。", "<strong>类型状态：</strong>解绑接口失败不是新的公共终态，展示为“处理中 + 解绑失败”，仍可进入补偿流程。", "<strong>边界：</strong>通用工单状态不使用带有 UNBIND 语义的公共枚举。"] },
-        { target: "operationHeaderTarget", title: "查看详情", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>状态差异：</strong>待处理显示驳回/解绑；执行失败显示重试解绑；通知失败展示失败状态与待技术评估的补偿说明；其他状态只读。"] },
+        { target: "statusHeaderTarget", title: "公共状态与自动阶段", location: "关联位置：主表格 > 工单状态", body: ["<strong>公共状态：</strong>待处理、处理中、已完成、已驳回；待处理表示等待自动任务，不再等待人工。", "<strong>类型阶段：</strong>等待识别、识别中、比对中、自动解绑中、接口补偿中、SN 不匹配、无法识别。", "<strong>边界：</strong>类型阶段不进入公共状态枚举。"] },
+        { target: "operationHeaderTarget", title: "只读查看", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>自动化：</strong>操作列只有查看；平台不提供人工驳回、解绑或重试入口。"] },
         { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
       ],
       drawer: [
-        { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>结构：</strong>公共申请信息、设备信息、类型专属处理记录、通知信息和状态化操作区。"] },
+        { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>结构：</strong>公共申请信息、照片、设备关联、识别与比对、自动处理记录、APP 进度事件和终态通知。"] },
         { target: "applicationTarget", title: "公共申请信息", location: "关联位置：详情抽屉 > 申请信息", body: ["<strong>系统携带：</strong>工单编号、工单类型、申请用户、申请 App、提交时间等基本信息，其中申请 App 示例值为 momcozy。", "<strong>用户录入：</strong>设备照片、申请原因、联系方式。SN 随 APP 请求携带，平台页面不区分其采集来源。", "<strong>联系方式：</strong>处理人员联系申请人所必需，具备工单处理权限时详情展示完整值；列表不展示，无敏感信息权限时脱敏。原型号码均为虚构示例。"] },
         { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },
-        { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>公共关联：</strong>每张设备类工单至少关联设备 SN、设备型号、所属平台。", "<strong>平台边界：</strong>平台使用 APP 请求携带的 SN 关联设备记录并固化设备型号、所属平台快照，不判断 SN 的采集来源、决策过程和可信性。", "<strong>类型扩展：</strong>解绑工单额外展示数据中心、云端设备 ID 和绑定状态；APP 不提交云端设备 ID。", "<strong>唯一真值：</strong>本期涂鸦设备的绑定状态以涂鸦云查询结果为准。"] },
-        { target: "executionTarget", title: "执行与失败补偿", location: "关联位置：详情抽屉 > 处理记录", body: ["<strong>同步接口：</strong>点击解绑后公共状态进入 PROCESSING，解绑执行状态进入 PROCESSING，等待本次同步响应。", "<strong>失败：</strong>明确失败或传输超时时公共状态仍为 PROCESSING，解绑执行状态为 FAILED；重试前必须重新查询绑定状态。", "<strong>审计：</strong>驳回、解绑、同步调用、查询、重试和结果均按时间线记录。"] },
-        { target: "notificationTarget", title: "APP 结果通知", location: "关联位置：详情抽屉 > APP 结果通知", body: ["<strong>状态：</strong>非终态统一为待通知；终态投递成功为已通知；终态投递失败为通知失败。", "<strong>基础设施：</strong>复用 APP 现有消息中心和系统推送，原型不展示渠道。", "<strong>最近通知时间：</strong>只记录最近一次投递成功时间，失败尝试不覆盖。", "<strong>重试策略：</strong>必须支持失败补偿；手动或自动重试由技术评估后确定，因此原型不提供固定重试按钮。"] },
-        { target: "drawerFooterTarget", title: "类型化操作区", location: "关联位置：详情抽屉 > Footer", body: ["<strong>解绑工单待处理：</strong>驳回、解绑；不设置人工核对清单或勾选门槛。", "<strong>解绑执行失败：</strong>重试解绑，先查绑定状态。", "<strong>通知失败：</strong>业务终态不回滚；重试方式待技术评估。", "<strong>扩展规则：</strong>按钮由工单类型和状态共同决定。"] }
-      ],
-      unbind: [
-        { target: "unbindModalTarget", title: "解绑确认", location: "关联位置：解绑确认弹窗", body: ["<strong>触发：</strong>待处理的解绑工单点击“解绑”。", "<strong>功能提示：</strong>确认后立即锁定工单并同步调用涂鸦，响应成功前不展示解绑完成。", "<strong>边界：</strong>不设置额外人工核对清单；状态条件更新保证只有首个处理动作生效。"] }
-      ],
-      reject: [
-        { target: "rejectModalTarget", title: "驳回原因", location: "关联位置：驳回弹窗", body: ["<strong>校验：</strong>驳回原因必填；未选择时弹窗保持打开并展示字段错误。", "<strong>结果：</strong>确认后进入 REJECTED，绝不调用涂鸦解绑接口；公开原因通知 APP。"] }
-      ],
-      retry: [
-        { target: "retryModalTarget", title: "失败后安全重试", location: "关联位置：重试解绑弹窗", body: ["<strong>固定顺序：</strong>查询涂鸦绑定状态 → 已解绑则直接成功；仍绑定才再次调用同步解绑。", "<strong>超时保护：</strong>禁止在未知上一次调用实际结果时直接重复解绑。", "<strong>演示：</strong>工单 016 复核后直接成功；工单 015 复核仍绑定后再次调用并成功。"] }
+        { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>工单基准：</strong>SN 随 APP 请求携带；型号、平台和涂鸦设备 ID 由服务端关联。", "<strong>平台边界：</strong>不判断 APP 的 SN 采集来源或可信性，只将工单 SN 作为照片识别结果的比对基准。", "<strong>唯一真值：</strong>绑定状态以涂鸦云查询结果为准。"] },
+        { target: "recognitionTarget", title: "识别与比对", location: "关联位置：详情抽屉 > 识别与比对", body: ["<strong>必存结果：</strong>识别 SN、置信度、识别状态、匹配结果、规则版本和自动决策。", "<strong>判断：</strong>置信度决定识别结果是否有效；有效 SN 再按规范化规则与工单 SN 等值比较。", "<strong>技术边界：</strong>AI/OCR 选型、阈值和候选策略由技术侧定义。"] },
+        { target: "executionTarget", title: "自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>自动分支：</strong>匹配则调用涂鸦；不匹配或无法识别自动驳回且不调用涂鸦。", "<strong>系统异常：</strong>涂鸦失败/超时保持处理中并自动补偿，不得按用户材料问题驳回。", "<strong>审计：</strong>上传、识别、匹配、接口调用和返回结果均记录；拒绝分支将接口阶段记为已跳过。"] },
+        { target: "progressTarget", title: "APP 进度事件", location: "关联位置：详情抽屉 > APP 进度事件", body: ["<strong>五个阶段：</strong>上传、识别、匹配、调用接口、返回结果；拒绝分支的调用接口阶段输出“未发起设备解绑”。", "<strong>一致性：</strong>先落库再投递；稳定事件 ID 和工单内序号支持幂等、乱序保护与主动查询补偿。", "<strong>隐私：</strong>只输出公开阶段和文案，不下发完整识别 SN 或内部错误。"] },
+        { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>独立状态：</strong>待通知、已通知、通知失败只描述终态结果，不复用过程事件投递状态。", "<strong>触发：</strong>自动解绑成功或自动驳回后触发；最近通知时间只记录投递成功。", "<strong>渠道：</strong>复用 APP 基础设施，原型不展示具体渠道。"] },
+        { target: "drawerFooterTarget", title: "只读 Footer", location: "关联位置：详情抽屉 > Footer", body: ["<strong>页面行为：</strong>固定显示“全流程自动处理，无需人工操作”。", "<strong>禁止：</strong>不展示驳回、解绑、重试解绑或人工核对按钮。", "<strong>异常：</strong>系统补偿由后台自动任务执行，具体策略由技术定义。"] }
       ]
     };
 
@@ -950,9 +951,10 @@
 
     function statusTag(ticket) {
       const meta = statusMeta[ticket.status];
-      const executionFailure = ticket.executionStatus === "FAILED" ? '<span class="tag failed" style="margin-left:5px">解绑失败</span>' : "";
+      const stage = stageMeta[ticket.stage];
+      const stageTag = stage ? `<span class="tag ${stage.cls}" style="margin-left:5px">${stage.label}</span>` : "";
       const notice = ["COMPLETED", "REJECTED"].includes(ticket.status) && ticket.notification === "FAILED" ? '<span class="tag notice-failed">通知失败</span>' : "";
-      return `<span class="tag ${meta.cls}">${meta.label}</span>${executionFailure}${notice}`;
+      return `<span class="tag ${meta.cls}">${meta.label}</span>${stageTag}${notice}`;
     }
 
     function renderTable() {
@@ -993,36 +995,14 @@
     }
 
     function timelineFor(ticket) {
-      const base = [
-        { title: "APP 提交解绑工单", meta: `${ticket.submittedAt} · ${ticket.user}` },
-        { title: "服务端校验设备映射及涂鸦绑定状态", meta: `${ticket.submittedAt.slice(0, 16)} · 校验通过` }
-      ];
-      if (ticket.status === "PENDING") return base;
-      if (ticket.status === "REJECTED") return base.concat([{ title: `工单驳回：${ticket.rejectReason}`, meta: `${ticket.reviewedAt} · ${ticket.reviewer}` }, { title: "终态结果已通知 APP", meta: `${ticket.lastNotifiedAt} · 投递成功` }]);
-      base.push({ title: "平台操作员发起解绑，锁定工单", meta: `${ticket.reviewedAt} · ${ticket.reviewer}` });
-      if (ticket.status === "PROCESSING" && ticket.executionStatus === "PROCESSING") {
-        if (ticket.error && ticket.retryCount > 1) {
-          return base.concat([
-            { title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" },
-            { title: "重试前查询确认设备仍绑定", meta: "允许发起新的同步解绑调用" },
-            { title: "同步重试涂鸦解绑接口", meta: "处理中 · 操作已锁定" }
-          ]);
-        }
-        return base.concat([{ title: "同步调用涂鸦解绑接口", meta: "处理中 · 操作已锁定" }]);
-      }
-      if (ticket.status === "PROCESSING" && ticket.executionStatus === "FAILED") return base.concat([{ title: ticket.error, meta: `${ticket.reviewedAt} · 第 ${ticket.retryCount} 次执行` }]);
-      if (ticket.error && ticket.retryOutcome === "already-unbound") {
-        base.push({ title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" });
-        base.push({ title: "重试前查询确认设备已解绑", meta: "直接收敛为成功，未再次调用解绑接口" });
-      } else if (ticket.error) {
-        base.push({ title: `首次同步调用失败：${ticket.error}`, meta: "失败结果已记录" });
-        base.push({ title: "重试前查询确认设备仍绑定", meta: "允许重新调用同步解绑" });
-        base.push({ title: "涂鸦同步重试返回解绑成功", meta: `${ticket.reviewedAt} · 设备已解绑` });
-      } else {
-        base.push({ title: "涂鸦同步返回解绑成功", meta: `${ticket.reviewedAt} · 设备已解绑` });
-      }
-      base.push({ title: ticket.notification === "FAILED" ? "APP 结果通知投递失败" : "APP 结果通知成功", meta: ticket.notification === "FAILED" ? "等待通知失败补偿" : `${ticket.lastNotifiedAt} · 投递成功` });
-      return base;
+      const actionTitle = {
+        "上传": "APP 材料和照片引用已持久化",
+        "识别": ticket.recognitionStatus === "FAILED" ? "图像识别未获得有效唯一 SN" : ticket.recognitionStatus === "PROCESSING" ? "图像识别服务正在处理" : "图像识别结果已保存",
+        "匹配": ticket.matchResult === "MATCHED" ? "识别 SN 与工单 SN 匹配" : ticket.matchResult === "MISMATCHED" ? "识别 SN 与工单 SN 不匹配，自动驳回" : ticket.matchResult === "UNAVAILABLE" ? "无有效识别 SN，自动驳回" : "正在按规则比对 SN",
+        "调用接口": "平台自动调用涂鸦解绑 API",
+        "返回结果": ticket.status === "COMPLETED" ? "涂鸦解绑成功，工单自动完成" : ticket.status === "REJECTED" ? `工单自动驳回：${ticket.rejectReason}` : "涂鸦响应异常，进入自动补偿"
+      };
+      return ticket.events.map(event => ({ title: actionTitle[event.stage], meta: `${ticket.submittedAt.slice(0, 10)} ${event.time} · 进度事件 #${event.seq} 已生成` }));
     }
 
     function renderDrawer() {
@@ -1030,7 +1010,7 @@
       const ticket = selectedTicket;
       $("#drawerStatus").innerHTML = statusTag(ticket);
       $("#ticketIdExtra").textContent = ticket.id;
-      $("#evidenceSn").textContent = ticket.fullSn;
+      $("#evidenceSn").textContent = ticket.recognizedSn === "--" ? "待识别 / 无法辨识" : ticket.recognizedSn;
       $("#applicationInfo").innerHTML = [
         descriptionItem("工单编号", `<span class="mono">${ticket.id}</span>`),
         descriptionItem("工单类型", ticket.type),
@@ -1039,13 +1019,13 @@
         descriptionItem("联系方式", ticket.contact),
         descriptionItem("申请原因", escapeHtml(ticket.reason), true),
         descriptionItem("提交时间", ticket.submittedAt),
-        descriptionItem("处理人员", ticket.reviewer),
-        descriptionItem("处理时间", ticket.reviewedAt),
-        descriptionItem("当前状态", statusMeta[ticket.status].label)
+        descriptionItem("自动处理开始", ticket.processingStartedAt),
+        descriptionItem("完成时间", ticket.completedAt),
+        descriptionItem("当前阶段", stageMeta[ticket.stage].label)
       ].join("");
 
       $("#mappingInfo").innerHTML = [
-        descriptionItem("设备 SN", `<span class="mono">${ticket.fullSn}</span>`),
+        descriptionItem("工单 SN", `<span class="mono">${ticket.fullSn}</span>`),
         descriptionItem("设备型号", ticket.deviceModel),
         descriptionItem("所属平台", ticket.platform),
         descriptionItem("通讯方式", "WIFI+BLE"),
@@ -1056,10 +1036,31 @@
         descriptionItem("绑定状态", ticket.binding)
       ].join("");
 
+      const recognitionLabels = { PENDING: "等待识别", PROCESSING: "识别中", SUCCEEDED: "识别成功", FAILED: "无法识别" };
+      const matchLabels = { PENDING: "待比对", MATCHED: "匹配", MISMATCHED: "不匹配", UNAVAILABLE: "不可比对" };
+      $("#recognitionInfo").innerHTML = [
+        descriptionItem("识别状态", recognitionLabels[ticket.recognitionStatus]),
+        descriptionItem("识别 SN", `<span class="mono">${ticket.recognizedSn}</span>`),
+        descriptionItem("置信度", ticket.confidence),
+        descriptionItem("匹配结果", matchLabels[ticket.matchResult]),
+        descriptionItem("规则版本", `<span class="mono">${ticket.matchRuleVersion}</span>`),
+        descriptionItem("自动决策", ticket.autoDecision)
+      ].join("");
+
+      let recognitionAlert = "";
+      if (ticket.matchResult === "MATCHED") recognitionAlert = '<div class="alert success" style="margin-top:12px"><i data-lucide="circle-check" width="16"></i><span>识别结果有效且 SN 匹配，系统自动进入涂鸦解绑流程。</span></div>';
+      if (ticket.matchResult === "MISMATCHED") recognitionAlert = '<div class="alert warning" style="margin-top:12px"><i data-lucide="triangle-alert" width="16"></i><span>识别 SN 与工单 SN 不匹配，系统已自动驳回，未调用涂鸦解绑接口。</span></div>';
+      if (ticket.recognitionStatus === "FAILED") recognitionAlert = `<div class="alert error" style="margin-top:12px"><i data-lucide="circle-x" width="16"></i><span>${escapeHtml(ticket.recognitionFailure)}。系统已自动驳回，未调用涂鸦解绑接口。</span></div>`;
+      $("#recognitionAlert").innerHTML = recognitionAlert;
+
       const failed = ticket.executionStatus === "FAILED";
-      $("#failureAlert").innerHTML = failed ? `<div class="alert error" style="margin-bottom:14px"><i data-lucide="circle-x" width="16"></i><span><strong>最近执行失败：</strong>${escapeHtml(ticket.error)}。重试前必须重新查询涂鸦绑定状态。</span></div>` : "";
-      $("#executionSummary").textContent = ticket.retryCount ? `已执行 ${ticket.retryCount} 次` : "";
+      $("#failureAlert").innerHTML = failed ? `<div class="alert warning" style="margin-bottom:14px"><i data-lucide="refresh-cw" width="16"></i><span><strong>自动补偿中：</strong>${escapeHtml(ticket.error)}。系统将在再次调用前查询涂鸦绑定状态，无需人工操作。</span></div>` : "";
+      $("#executionSummary").textContent = `已生成 ${ticket.events.length} 条阶段事件`;
       $("#timeline").innerHTML = timelineFor(ticket).map(item => `<li class="timeline-item"><div class="timeline-title">${escapeHtml(item.title)}</div><div class="timeline-meta">${escapeHtml(item.meta)}</div></li>`).join("");
+
+      $("#progressEvents").innerHTML = `
+        <div class="progress-event header"><span class="sequence">序号</span><span>阶段</span><span>APP 公开文案</span><span>投递</span><span>时间</span></div>
+        ${ticket.events.map(event => `<div class="progress-event"><span class="sequence">#${event.seq}</span><span>${event.stage}</span><span>${escapeHtml(event.text)}</span><span><span class="tag success">${event.delivery}</span></span><span class="event-time">${ticket.submittedAt.slice(0, 10)} ${event.time}</span></div>`).join("")}`;
 
       let notificationState = '<span class="tag pending">待通知</span>';
       if (["REJECTED", "COMPLETED"].includes(ticket.status)) {
@@ -1070,22 +1071,8 @@
         descriptionItem("最近通知时间", ticket.lastNotifiedAt || "--")
       ].join("");
 
-      const actions = [];
-      if (ticket.status === "PENDING") {
-        actions.push('<button class="btn danger" id="rejectButton">驳回</button>', '<button class="btn primary" id="unbindButton">解绑</button>');
-        $("#footerNote").textContent = "处理动作会写入操作人、时间和结果";
-      } else if (ticket.status === "PROCESSING" && ticket.executionStatus === "FAILED") {
-        actions.push('<button class="btn primary" id="retryButton"><i data-lucide="rotate-cw" width="14"></i>重试解绑</button>');
-        $("#footerNote").textContent = "重试前先查询涂鸦绑定状态";
-      } else if (["COMPLETED", "REJECTED"].includes(ticket.status) && ticket.notification === "FAILED") {
-        $("#footerNote").textContent = "通知重试方式待技术评估，不影响工单终态";
-      } else {
-        $("#footerNote").textContent = ticket.status === "PROCESSING" ? "同步请求处理中，操作已锁定" : "当前工单已进入终态";
-      }
-      $("#footerActions").innerHTML = actions.join("");
-      $("#unbindButton")?.addEventListener("click", () => openModal("unbindModal", "unbind"));
-      $("#rejectButton")?.addEventListener("click", () => openModal("rejectModal", "reject"));
-      $("#retryButton")?.addEventListener("click", () => openModal("retryModal", "retry"));
+      $("#footerNote").textContent = failed ? "全流程自动处理，当前由系统执行接口补偿" : "全流程自动处理，无需人工操作";
+      $("#footerActions").innerHTML = "";
       window.lucide?.createIcons();
     }
 
@@ -1101,22 +1088,7 @@
     function closeDrawer() {
       $("#drawerScrim").classList.remove("open");
       $("#detailDrawer").classList.remove("open");
-      $("#executionLoading").classList.remove("visible");
       currentContext = "list";
-      renderAnnotations();
-    }
-
-    function openModal(id, context) {
-      $("#" + id).classList.add("open");
-      $("#" + id).setAttribute("aria-hidden", "false");
-      currentContext = context;
-      renderAnnotations();
-    }
-
-    function closeModal(id) {
-      $("#" + id).classList.remove("open");
-      $("#" + id).setAttribute("aria-hidden", "true");
-      currentContext = $("#detailDrawer").classList.contains("open") ? "drawer" : "list";
       renderAnnotations();
     }
 
@@ -1129,96 +1101,6 @@
       toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2200);
     }
 
-    function setLoading(title, text) {
-      $("#loadingTitle").textContent = title;
-      $("#loadingText").textContent = text;
-      $("#executionLoading").classList.add("visible");
-      $("#footerActions").innerHTML = '<button class="btn primary loading" disabled><span class="spin"></span>处理中</button>';
-      $("#footerNote").textContent = "操作处理中，请勿关闭或重复提交";
-    }
-
-    function confirmUnbind() {
-      closeModal("unbindModal");
-      selectedTicket.status = "PROCESSING";
-      selectedTicket.executionStatus = "PROCESSING";
-      selectedTicket.reviewedAt = "2026-09-02 16:08:32";
-      selectedTicket.reviewer = "张子豪";
-      selectedTicket.binding = "解绑处理中";
-      renderTable();
-      renderDrawer();
-      setLoading("正在同步调用涂鸦解绑接口", "同步响应返回前，工单保持“处理中”。");
-      window.setTimeout(() => {
-        selectedTicket.status = "COMPLETED";
-        selectedTicket.executionStatus = "SUCCEEDED";
-        selectedTicket.binding = "已解绑";
-        selectedTicket.notification = "SENT";
-        selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
-        $("#executionLoading").classList.remove("visible");
-        renderTable();
-        renderDrawer();
-        showToast("涂鸦同步返回成功，工单已完成并通知 APP");
-      }, 1400);
-    }
-
-    function confirmReject() {
-      const reason = $("#rejectReason").value;
-      if (!reason) {
-        $("#rejectError").textContent = "请选择驳回原因";
-        $("#rejectReason").focus();
-        return;
-      }
-      $("#rejectError").textContent = "";
-      selectedTicket.status = "REJECTED";
-      selectedTicket.executionStatus = "NOT_STARTED";
-      selectedTicket.rejectReason = reason;
-      selectedTicket.reviewedAt = "2026-09-02 16:08:32";
-      selectedTicket.reviewer = "张子豪";
-      selectedTicket.notification = "SENT";
-      selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
-      selectedTicket.binding = "未执行解绑";
-      closeModal("rejectModal");
-      renderTable();
-      renderDrawer();
-      showToast("工单已驳回，未调用涂鸦解绑接口");
-    }
-
-    function confirmRetry() {
-      closeModal("retryModal");
-      const outcome = selectedTicket.retryOutcome;
-      setLoading("正在查询涂鸦当前绑定状态", "重试前安全复核，暂不调用解绑接口。");
-      window.setTimeout(() => {
-        if (outcome === "already-unbound") {
-          selectedTicket.status = "COMPLETED";
-          selectedTicket.executionStatus = "SUCCEEDED";
-          selectedTicket.binding = "已解绑";
-          selectedTicket.notification = "SENT";
-          selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
-          $("#executionLoading").classList.remove("visible");
-          renderTable();
-          renderDrawer();
-          showToast("查询确认设备已解绑，未重复调用解绑接口");
-          return;
-        }
-        selectedTicket.status = "PROCESSING";
-        selectedTicket.executionStatus = "PROCESSING";
-        selectedTicket.binding = "仍绑定，正在重试解绑";
-        selectedTicket.retryCount += 1;
-        renderTable();
-        renderDrawer();
-        setLoading("设备仍绑定，正在同步重试解绑", "已完成状态复核，开始本次同步调用。");
-        window.setTimeout(() => {
-          selectedTicket.status = "COMPLETED";
-          selectedTicket.executionStatus = "SUCCEEDED";
-          selectedTicket.binding = "已解绑";
-          selectedTicket.notification = "SENT";
-          selectedTicket.lastNotifiedAt = "2026-09-02 16:08:35";
-          $("#executionLoading").classList.remove("visible");
-          renderTable();
-          renderDrawer();
-          showToast("重试解绑成功，工单已完成");
-        }, 1300);
-      }, 1000);
-    }
 
     function clearHighlights() {
       $$(".highlight-target").forEach(element => element.classList.remove("highlight-target"));
@@ -1246,7 +1128,7 @@
 
     function renderAnnotations() {
       clearHighlights();
-      const contextLabels = { list: "列表页批注", drawer: `详情抽屉批注 · ${selectedTicket?.id || ""}`, unbind: "解绑确认弹窗批注", reject: "驳回弹窗批注", retry: "失败重试弹窗批注" };
+      const contextLabels = { list: "列表页批注", drawer: `详情抽屉批注 · ${selectedTicket?.id || ""}` };
       $("#annotationContext").textContent = contextLabels[currentContext];
       const notes = annotations[currentContext];
       $("#annotationList").innerHTML = notes.map((note, index) => `
@@ -1288,18 +1170,10 @@
     });
     $("#drawerClose").addEventListener("click", closeDrawer);
     $("#drawerScrim").addEventListener("click", closeDrawer);
-    $$(".modal-close").forEach(button => button.addEventListener("click", () => closeModal(button.dataset.close)));
-    $$(".modal-scrim").forEach(scrim => scrim.addEventListener("click", event => { if (event.target === scrim) closeModal(scrim.id); }));
-    $("#confirmUnbind").addEventListener("click", confirmUnbind);
-    $("#confirmReject").addEventListener("click", confirmReject);
-    $("#confirmRetry").addEventListener("click", confirmRetry);
-    $("#rejectReason").addEventListener("change", () => $("#rejectError").textContent = "");
 
     document.addEventListener("keydown", event => {
       if (event.key !== "Escape") return;
-      const openModalElement = $$(".modal-scrim.open")[0];
-      if (openModalElement) closeModal(openModalElement.id);
-      else if ($("#detailDrawer").classList.contains("open")) closeDrawer();
+      if ($("#detailDrawer").classList.contains("open")) closeDrawer();
     });
 
     $$("[data-mobile]").forEach(button => button.addEventListener("click", () => {
