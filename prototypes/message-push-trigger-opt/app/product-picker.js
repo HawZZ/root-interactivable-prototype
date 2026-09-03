@@ -1,5 +1,5 @@
-import {$,esc} from "./dom.js";
-import {appState,products} from "./state.js";
+import {$,esc} from "./ui.js?v=20260903";
+import {appState,products} from "./state.js?v=20260903";
 
 let state={open:false,query:""};
 const active=()=>products.find(item=>item.id===appState.selectedProductId)||products[0];
