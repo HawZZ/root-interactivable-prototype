@@ -1502,7 +1502,7 @@
         title: "编辑产品入口",
         location: "关联位置：BM04S 行 > 编辑",
         target: "#editButton",
-        body: ["<strong>点击：</strong>打开标题为“编辑产品信息”的同一右侧抽屉。", "<strong>回填：</strong>展示 BM04S 的涂鸦云、WIFI+BLE、TUYA_API_BLE_WIFI 等现有配置。"]
+        body: ["<strong>点击：</strong>打开标题为“编辑产品信息”的同一右侧抽屉。", "<strong>回填：</strong>展示 BM04S 的涂鸦云、WIFI+BLE、TUYA_API_BLE_WIFI 等现有配置。", "<strong>锁定：</strong>BM04S 已上架，配网交互方式展示但不可修改。"]
       }
     ];
 
@@ -1685,6 +1685,7 @@
       $("#drawerTitle").textContent = editing ? "编辑产品信息" : "创建产品";
       $("#productId").disabled = editing;
       $("#communicationTrigger").disabled = editing;
+      $("#interactionTrigger").disabled = editing;
       $("#model").disabled = editing;
 
       setFieldValue("productId", editing ? "2092498275428589570" : "");
@@ -1783,9 +1784,11 @@
         return false;
       }
 
-      help.textContent = state.platform === "root"
-        ? "ROOT 云沿用现有 CONNECT_* 枚举"
-        : "涂鸦云下用于区分 UI 包配网与 API 自编排配网";
+      help.textContent = state.drawerMode === "edit"
+        ? "产品上架后不可修改"
+        : state.platform === "root"
+          ? "ROOT 云沿用现有 CONNECT_* 枚举"
+          : "涂鸦云下用于区分 UI 包配网与 API 自编排配网";
       return true;
     }
 
