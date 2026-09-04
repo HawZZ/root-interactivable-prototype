@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin 功能版本生命周期交互原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --aside: #001529;
+      --aside-active: #0b2a4a;
+      --page: #f5f7fa;
+      --panel: #fff;
+      --primary: #4372ff;
+      --primary-hover: #315fd8;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --danger: #f56c6c;
+      --info: #909399;
+      --text: #303133;
+      --regular: #606266;
+      --secondary: #909399;
+      --border: #dcdfe6;
+      --border-light: #ebeef5;
+      --table-head: #f7f8fa;
+      --anchor: #ffb020;
+      --radius: 4px;
+      --shadow: 0 8px 26px rgba(20, 33, 61, .12);
+      --font: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--page); color: var(--text); font-family: var(--font); font-size: 14px; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; }
+    .prototype-shell { display: grid; grid-template-columns: minmax(720px, 1fr) 410px; min-height: 100vh; }
+    .prototype-pane { min-width: 0; overflow: auto; background: #edf0f4; }
+    .annotation-pane { min-width: 0; border-left: 1px solid var(--border); background: #fff; overflow: auto; max-height: 100vh; position: sticky; top: 0; }
+    .demo-toolbar { position: sticky; top: 0; z-index: 80; width: 1440px; min-height: 52px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.97); border: 1px solid var(--border); border-top: 0; box-shadow: 0 3px 12px rgba(31,45,61,.08); }
+    .demo-toolbar strong { font-size: 13px; }
+    .demo-toolbar select { height: 34px; min-width: 260px; padding: 0 30px 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text); }
+    .demo-hint { color: var(--secondary); font-size: 12px; margin-left: auto; }
+    .canvas-wrap { width: 1440px; margin: 18px auto 34px; background: #fff; border: 1px solid var(--border); box-shadow: 0 3px 16px rgba(31,45,61,.08); }
+    .admin-app { min-height: 900px; display: grid; grid-template-columns: 208px minmax(0, 1fr); background: var(--page); }
+    .sidebar { background: var(--aside); color: rgba(255,255,255,.72); min-height: 900px; }
+    .brand { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.08); color: #fff; font-weight: 700; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius); background: #85b436; color: #fff; font-size: 12px; font-weight: 800; }
+    .brand small { display: block; color: rgba(255,255,255,.45); font-size: 11px; font-weight: 400; }
+    .menu { padding: 10px 0; }
+    .menu-group { height: 32px; padding: 0 18px; display: flex; align-items: center; color: rgba(255,255,255,.35); font-size: 12px; }
+    .menu-item { height: 42px; padding: 0 18px; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; }
+    .menu-item.active { color: #fff; background: var(--aside-active); border-left-color: var(--primary); }
+    .menu-icon { width: 16px; text-align: center; opacity: .8; }
+    .admin-main { min-width: 0; }
+    .topbar { height: 54px; background: #fff; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); }
+    .breadcrumb { color: var(--secondary); font-size: 12px; }
+    .breadcrumb strong { color: var(--text); font-weight: 500; }
+    .userbar { display: flex; align-items: center; gap: 10px; color: var(--regular); font-size: 13px; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #ecf5ff; color: var(--primary); font-weight: 700; }
+    .content { padding: 20px 24px 28px; }
+    .summary { background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius); margin-bottom: 14px; }
+    .summary-head { min-height: 60px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--border-light); }
+    .title-line { display: flex; align-items: center; gap: 10px; }
+    .title-line h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    .cloud-label { color: var(--secondary); font-size: 12px; }
+    .summary-actions { display: flex; align-items: center; gap: 8px; }
+    .summary-meta { padding: 14px 18px; display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 12px 20px; }
+    .meta-label { color: var(--secondary); font-size: 12px; margin-bottom: 3px; }
+    .meta-value { color: var(--text); min-height: 20px; }
+    .tabs { height: 48px; background: #fff; border: 1px solid var(--border-light); display: flex; align-items: stretch; padding: 0 16px; margin-bottom: 14px; }
+    .tab { min-width: 90px; padding: 0 14px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--regular); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .work-panel { background: #fff; border: 1px solid var(--border-light); }
+    .panel-head { min-height: 64px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--border-light); }
+    .panel-title { margin: 0; font-size: 15px; font-weight: 600; }
+    .panel-subtitle { margin-top: 3px; color: var(--secondary); font-size: 12px; }
+    .version-tools { display: flex; align-items: center; gap: 8px; }
+    .version-select { height: 34px; min-width: 168px; padding: 0 28px 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text); }
+    .notice { margin: 14px 16px 0; padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; border: 1px solid #c6e2ff; background: #ecf5ff; color: #3b6fa8; font-size: 12px; line-height: 1.6; }
+    .notice.warning { border-color: #f3d19e; background: #fdf6ec; color: #9a681f; }
+    .notice.danger { border-color: #fab6b6; background: #fef0f0; color: #b64040; }
+    .section { padding: 16px; border-bottom: 1px solid var(--border-light); }
+    .section:last-child { border-bottom: 0; }
+    .section-head { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .section-title { margin: 0; font-size: 14px; font-weight: 600; }
+    .count { color: var(--secondary); font-size: 12px; font-weight: 400; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { height: 46px; padding: 8px 10px; border: 1px solid var(--border-light); text-align: left; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th { height: 42px; background: var(--table-head); color: var(--regular); font-size: 12px; font-weight: 600; }
+    td { color: var(--regular); font-size: 13px; }
+    .col-type { width: 80px; }
+    .col-id { width: 120px; }
+    .col-name { width: 140px; }
+    .col-identifier { width: 145px; }
+    .col-datatype { width: 105px; }
+    .col-source { width: 96px; }
+    .col-actions { width: 140px; }
+    .action-link { padding: 2px 5px; border: 0; background: transparent; color: var(--primary); font-size: 13px; }
+    .action-link.danger { color: var(--danger); }
+    .action-link:disabled { color: #c0c4cc; }
+    .tag { display: inline-flex; height: 24px; padding: 0 8px; align-items: center; border: 1px solid var(--border); border-radius: 2px; background: #fff; color: var(--regular); font-size: 12px; white-space: nowrap; }
+    .tag.success { color: #529b2e; border-color: #b3e19d; background: #f0f9eb; }
+    .tag.warning { color: #b88230; border-color: #f3d19e; background: #fdf6ec; }
+    .tag.danger { color: #c45656; border-color: #fab6b6; background: #fef0f0; }
+    .tag.info { color: #73767a; border-color: #c8c9cc; background: #f4f4f5; }
+    .tag.primary { color: #337ecc; border-color: #a0cfff; background: #ecf5ff; }
+    .btn { height: 34px; padding: 0 13px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--regular); display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+    .btn:hover:not(:disabled) { border-color: #a0cfff; color: var(--primary); }
+    .btn.primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .btn.primary:hover:not(:disabled) { border-color: var(--primary-hover); background: var(--primary-hover); color: #fff; }
+    .btn.danger { color: var(--danger); border-color: #fbc4c4; }
+    .btn:disabled { color: #a8abb2; border-color: #e4e7ed; background: #f5f7fa; }
+    .btn.loading { pointer-events: none; opacity: .8; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .empty { padding: 28px; text-align: center; color: var(--secondary); border: 1px dashed var(--border); }
+    .annotated { position: relative; }
+    .anchor { position: absolute; z-index: 12; top: -9px; right: -9px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--anchor); color: #633900; border: 2px solid #fff; box-shadow: 0 2px 7px rgba(0,0,0,.2); font-size: 11px; font-weight: 800; cursor: pointer; }
+    .is-highlight { outline: 3px solid rgba(255,176,32,.55); outline-offset: 3px; }
+    .overlay { position: fixed; inset: 0 410px 0 0; z-index: 120; background: rgba(0,0,0,.42); display: flex; align-items: center; justify-content: center; }
+    .modal { width: 520px; max-height: 78vh; overflow: auto; background: #fff; border-radius: 6px; box-shadow: var(--shadow); }
+    .modal.wide { width: 720px; }
+    .modal-head { min-height: 54px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); }
+    .modal-title { margin: 0; font-size: 16px; font-weight: 600; }
+    .icon-btn { width: 30px; height: 30px; border: 0; background: transparent; color: var(--secondary); font-size: 20px; }
+    .modal-body { padding: 18px; }
+    .modal-foot { padding: 12px 18px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-light); }
+    .drawer-wrap { position: fixed; inset: 0 410px 0 0; z-index: 120; background: rgba(0,0,0,.28); display: flex; justify-content: flex-end; }
+    .drawer { width: 720px; height: 100%; background: #fff; box-shadow: -8px 0 24px rgba(0,0,0,.16); display: grid; grid-template-rows: auto 1fr auto; }
+    .drawer-head { min-height: 58px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); }
+    .drawer-body { padding: 18px; overflow: auto; }
+    .drawer-foot { padding: 12px 18px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-light); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 13px; color: var(--text); }
+    .required::before { content: "*"; color: var(--danger); margin-right: 3px; }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; color: var(--text); background: #fff; }
+    .field input, .field select { height: 38px; }
+    .field textarea { min-height: 82px; resize: vertical; }
+    .field input:disabled, .field select:disabled, .field textarea:disabled { background: #f5f7fa; color: #909399; }
+    .help { color: var(--secondary); font-size: 12px; line-height: 1.5; }
+    .error { color: var(--danger); font-size: 12px; }
+    .diff-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .diff-box { min-height: 132px; padding: 12px; border: 1px solid var(--border-light); background: #fafafa; }
+    .diff-value { font-size: 22px; font-weight: 600; }
+    .diff-label { color: var(--secondary); font-size: 12px; }
+    .diff-definition { margin-top: 9px; color: var(--regular); font-size: 12px; line-height: 1.55; white-space: normal; }
+    .definition-panel { margin: 0 0 16px; padding: 12px; border: 1px solid var(--border-light); background: #fafafa; color: var(--regular); font-size: 12px; line-height: 1.65; }
+    .definition-panel strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 13px; }
+    .issue-list { display: grid; gap: 10px; }
+    .issue { padding: 12px; border: 1px solid #fab6b6; background: #fef0f0; }
+    .issue strong { display: block; margin-bottom: 4px; color: #b64040; }
+    .issue p { margin: 0; color: #8c4a4a; font-size: 12px; line-height: 1.6; }
+    .toast { position: fixed; z-index: 160; top: 76px; left: 50%; transform: translateX(-50%); min-width: 300px; max-width: 520px; padding: 11px 16px; border: 1px solid #b3e19d; background: #f0f9eb; color: #529b2e; box-shadow: var(--shadow); display: flex; align-items: center; gap: 9px; }
+    .toast.error { border-color: #fab6b6; background: #fef0f0; color: #c45656; }
+    .annotation-head { position: sticky; top: 0; z-index: 10; padding: 16px 18px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.98); }
+    .annotation-head h2 { margin: 0; font-size: 16px; }
+    .annotation-head p { margin: 5px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.5; }
+    .annotation-doc { padding: 14px; }
+    .note-stack { display: grid; gap: 10px; }
+    .note-card { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--border-light); border-radius: 6px; background: #fff; cursor: pointer; }
+    .note-card:hover, .note-card.active { border-color: #f3c15b; background: #fffaf0; }
+    .note-number { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--anchor); color: #633900; font-size: 12px; font-weight: 800; }
+    .note-title { margin: 1px 0 4px; font-size: 13px; font-weight: 700; }
+    .note-location { color: var(--secondary); font-size: 11px; margin-bottom: 7px; }
+    .note-lines { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+    .note-lines li { color: var(--regular); font-size: 12px; line-height: 1.55; }
+    .note-lines strong { color: var(--text); font-weight: 600; }
+    .mobile-switch { display: none; position: sticky; top: 0; z-index: 200; padding: 8px; background: #fff; border-bottom: 1px solid var(--border); gap: 8px; }
+    @media (max-width: 1000px) {
+      .prototype-shell { display: block; }
+      .mobile-switch { display: flex; }
+      .prototype-pane, .annotation-pane { max-height: none; position: static; }
+      body[data-mobile-tab="prototype"] .annotation-pane { display: none; }
+      body[data-mobile-tab="annotations"] .prototype-pane { display: none; }
+      .demo-toolbar { position: static; }
+      .annotation-pane { border-left: 0; }
+      .overlay, .drawer-wrap { right: 0; }
+    }
+  </style>
+</head>
+<body data-mobile-tab="prototype">
+  <div class="mobile-switch">
+    <button class="btn primary" data-mobile="prototype">产品原型</button>
+    <button class="btn" data-mobile="annotations">原型批注</button>
+  </div>
+  <div class="prototype-shell">
+    <main class="prototype-pane">
+      <div class="demo-toolbar">
+        <strong>评审场景</strong>
+        <select id="scenarioSelect" aria-label="评审场景"></select>
+        <span class="demo-hint">场景切换仅用于原型评审，不属于正式产品界面</span>
+      </div>
+      <div class="canvas-wrap" id="screen"></div>
+    </main>
+    <aside class="annotation-pane" aria-label="原型批注">
+      <header class="annotation-head">
+        <h2>原型批注</h2>
+        <p id="annotationScope">页面级规则随当前页面、弹窗或抽屉切换。</p>
+      </header>
+      <article class="annotation-doc" id="doc"></article>
+    </aside>
+  </div>
+  <div id="overlayRoot"></div>
+  <div id="toastRoot"></div>
+
+  <script>
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const baseRows = [
+      { id: "2042155627014897664", kind: "standard", type: "属性", name: "开关", identifier: "power", dataType: "Bool", definition: "0-关闭；1-开启", note: "设备电源开关", origin: "inherited" },
+      { id: "2042155627014897666", kind: "standard", type: "属性", name: "运行状态", identifier: "runState", dataType: "Enum", definition: "0-停止；1-运行；2-充电", note: "设备当前状态", origin: "inherited" },
+      { id: "2042155627014897665", kind: "standard", type: "属性", name: "电量", identifier: "battery", dataType: "Int32", definition: "0~100，步进1", note: "设备剩余电量", origin: "inherited" },
+      { id: "2042155627006509057", kind: "custom", type: "事件", name: "吸乳完成", identifier: "pump_finish", dataType: "消息", definition: "出参：--", note: "一次吸乳过程完成", origin: "inherited" },
+      { id: "2042155627010703362", kind: "custom", type: "属性", name: "模式时间", identifier: "mode_time", dataType: "Int32", definition: "0~100000000(s)", note: "当前模式运行时长", origin: "inherited" }
+    ];
+    const additions = [
+      { id: "TEMP-20260902-01", kind: "standard", type: "属性", name: "加热档位", identifier: "heating_level", dataType: "Int32", definition: "0~5，步进1", note: "新固件支持的加热能力", origin: "new" },
+      { id: "TEMP-20260902-02", kind: "custom", type: "服务", name: "智能节律", identifier: "smart_rhythm", dataType: "服务", definition: "入参：mode、level", note: "本版本新增控制能力", origin: "new" }
+    ];
+    const scenarioDefinitions = [
+      { id: "onlineDraft", label: "已上架 · 版本2迭代中（主场景）" },
+      { id: "devFirst", label: "开发中 · 首版迭代中" },
+      { id: "listingDraft", label: "上架中 · 版本2迭代中" },
+      { id: "downNoDraft", label: "已下架 · 无迭代版本" },
+      { id: "publishedReadOnly", label: "已上架 · 已发布版本只读" },
+      { id: "compatBlocked", label: "异常数据 · 兼容性校验阻断" },
+      { id: "publishFailure", label: "已上架 · 发布请求失败" },
+      { id: "permissionDenied", label: "无操作权限" }
+    ];
+
+    function makeScenario(id) {
+      const common = {
+        scenarioId: id,
+        productName: "M5 Pro 智能吸奶器",
+        productId: "2075767415740338177",
+        productModel: "M5PRO",
+        productCode: "M5P-2026",
+        category: "Breast Pump",
+        templateId: "1907328212561108993",
+        permission: true,
+        selectedVersion: "v2",
+        validationLoading: false,
+        actionLoading: false,
+        overlay: null,
+        drawer: null,
+        toast: null,
+        highlight: null,
+        blocked: false,
+        publishFailure: false
+      };
+      if (id === "devFirst") return { ...common, productStatus: "开发中", selectedVersion: "v1", versions: [{ id: "v1", name: "版本1", status: "迭代中", base: null }], rows: baseRows.map((r, i) => ({ ...r, id: `TEMP-V1-${i + 1}`, origin: "new" })) };
+      if (id === "listingDraft") return { ...common, productStatus: "上架中", versions: [{ id: "v2", name: "版本2", status: "迭代中", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(clone(additions)) };
+      if (id === "downNoDraft") return { ...common, productStatus: "已下架", selectedVersion: "v2", versions: [{ id: "v2", name: "版本2", status: "已发布", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows) };
+      if (id === "publishedReadOnly") return { ...common, productStatus: "已上架", selectedVersion: "v2", versions: [{ id: "v2", name: "版本2", status: "已发布", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(additions.map(r => ({ ...r, origin: "inherited" }))) };
+      if (id === "compatBlocked") return { ...common, productStatus: "已上架", selectedVersion: "v2", blocked: true, versions: [{ id: "v2", name: "版本2", status: "迭代中", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(clone(additions)).map(r => r.identifier === "runState" ? { ...r, issue: "数据类型由 Enum 变更为 Int32" } : r) };
+      if (id === "publishFailure") return { ...common, productStatus: "已上架", publishFailure: true, versions: [{ id: "v2", name: "版本2", status: "迭代中", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(clone(additions)) };
+      if (id === "permissionDenied") return { ...common, productStatus: "已上架", permission: false, selectedVersion: "v2", versions: [{ id: "v2", name: "版本2", status: "迭代中", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(clone(additions)) };
+      return { ...common, productStatus: "已上架", versions: [{ id: "v2", name: "版本2", status: "迭代中", base: "v1" }, { id: "v1", name: "版本1", status: "已发布", base: null }], rows: clone(baseRows).concat(clone(additions)) };
+    }
+
+    let state = makeScenario("onlineDraft");
+    const selectedVersion = () => state.versions.find(v => v.id === state.selectedVersion) || state.versions[0];
+    const hasDraft = () => state.versions.some(v => v.status === "迭代中");
+    const canEdit = () => state.permission && selectedVersion().status === "迭代中";
+    const canCreate = () => state.permission && !hasDraft();
+    const canPublish = () => state.permission && selectedVersion().status === "迭代中";
+    const statusClass = status => status === "已上架" ? "success" : status === "开发中" ? "warning" : status === "上架中" ? "primary" : "info";
+    const versionClass = status => status === "已发布" ? "success" : "warning";
+    const q = selector => document.querySelector(selector);
+
+    function anchor(number) { return `<button class="anchor" type="button" data-note-target="${number}" aria-label="查看批注${number}">${number}</button>`; }
+    function annotated(number, content, className = "") { return `<span class="annotated ${state.highlight === number ? "is-highlight" : ""} ${className}" data-annotated="${number}">${content}${anchor(number)}</span>`; }
+    function productNotice() {
+      if (!state.permission) return `<div class="notice warning">当前账号仅有查看权限。版本内容和发布操作均不可用。</div>`;
+      if (selectedVersion().status === "已发布") return `<div class="notice">当前查看的是已发布版本，功能内容保持只读。新建版本后可继续新增能力。</div>`;
+      if (state.blocked) return `<div class="notice danger">最终校验发现异常契约数据。正常页面无法形成此修改，当前版本不能发布，请排查旧数据、接口绕过或并发写入。</div>`;
+      if (state.productStatus === "开发中" && selectedVersion().name === "版本1") return `<div class="notice warning">发布首版后，测试设备才能使用稳定物模型完成数据解析和落库。</div>`;
+      return `<div class="notice">当前为迭代中版本。历史功能契约保持只读，本版本新增功能可在发布前编辑或删除。</div>`;
+    }
+
+    function renderRows(kind) {
+      const rows = state.rows.filter(row => row.kind === kind);
+      if (!rows.length) return `<div class="empty">暂无${kind === "standard" ? "标准" : "自定义"}功能</div>`;
+      return `<table>
+        <thead><tr><th class="col-type">功能类型</th><th class="col-id">ID</th><th class="col-name">名称</th><th class="col-identifier">标识符</th><th class="col-datatype">数据类型</th><th>数据定义</th><th class="col-source">来源</th><th class="col-actions">操作</th></tr></thead>
+        <tbody>${rows.map((row, index) => {
+          const currentEditable = canEdit();
+          const inherited = row.origin === "inherited" || selectedVersion().status === "已发布";
+          const sourceTag = selectedVersion().status === "已发布" ? `<span class="tag info">已发布</span>` : inherited ? `<span class="tag info">历史功能</span>` : `<span class="tag primary">本版新增</span>`;
+          const issueTag = row.issue ? ` <span class="tag danger">不兼容修改</span>` : "";
+          const noteNo = kind === "standard" && index === 0 ? 5 : (!inherited && index === rows.findIndex(r => r.origin === "new") ? 6 : null);
+          const rowAttrs = noteNo ? ` class="${state.highlight === noteNo ? "is-highlight" : ""}" data-annotated="${noteNo}"` : "";
+          const rowContent = `<tr${rowAttrs}>
+            <td>${row.type}</td><td title="${row.id}">${row.id}</td><td>${row.name}${issueTag}</td><td><code>${row.identifier}</code></td><td>${row.dataType}</td><td title="${row.definition}">${row.definition}</td><td>${sourceTag}</td>
+            <td class="${noteNo ? "annotated" : ""}"><button class="action-link" data-action="edit" data-row="${row.id}" ${!currentEditable ? "disabled" : ""}>编辑</button><button class="action-link danger" data-action="delete" data-row="${row.id}" ${!currentEditable || inherited ? "disabled" : ""}>删除</button>${noteNo ? anchor(noteNo) : ""}</td>
+          </tr>`;
+          return rowContent;
+        }).join("")}</tbody>
+      </table>`;
+    }
+
+    function renderScreen() {
+      const version = selectedVersion();
+      const newVersionButton = `<button class="btn" data-action="new-version" ${!canCreate() ? "disabled" : ""} title="${canCreate() ? "创建下一功能版本" : "当前已有迭代中的功能版本"}">＋ 新建版本</button>`;
+      const publishButton = version.status === "迭代中" ? `<button class="btn primary ${state.validationLoading ? "loading" : ""}" data-action="publish" ${!canPublish() || state.validationLoading ? "disabled" : ""}>${state.validationLoading ? "校验中..." : "发布功能版本"}</button>` : "";
+      q("#screen").innerHTML = `<div class="admin-app">
+        <aside class="sidebar">
+          <div class="brand"><span class="brand-mark">IoT</span><span>LuteOS Admin<small>AIoT Platform</small></span></div>
+          <nav class="menu"><div class="menu-group">产品中心</div><div class="menu-item active"><span class="menu-icon">■</span>智能产品</div><div class="menu-item"><span class="menu-icon">□</span>产品分类</div><div class="menu-item"><span class="menu-icon">◇</span>产品模板</div><div class="menu-group">设备管理</div><div class="menu-item"><span class="menu-icon">○</span>设备列表</div><div class="menu-item"><span class="menu-icon">△</span>固件管理</div><div class="menu-item"><span class="menu-icon">↗</span>OTA任务</div><div class="menu-group">配置中心</div><div class="menu-item"><span class="menu-icon">≡</span>物模型池</div><div class="menu-item"><span class="menu-icon">⌁</span>消息推送</div></nav>
+        </aside>
+        <section class="admin-main">
+          <header class="topbar"><div class="breadcrumb">智能产品　/　产品列表　/　<strong>${state.productName}</strong></div><div class="userbar"><span>帮助中心</span><span class="avatar">张</span><span>张子豪</span></div></header>
+          <main class="content">
+            <section class="summary">
+              <div class="summary-head"><div class="title-line"><h1>${state.productName}</h1><span class="cloud-label">ROOT云</span>${annotated(1, `<span class="tag ${statusClass(state.productStatus)}">${state.productStatus}</span>`)}</div><div class="summary-actions"><button class="btn" disabled>编辑产品信息</button></div></div>
+              <div class="summary-meta"><div><div class="meta-label">产品ID</div><div class="meta-value">${state.productId}</div></div><div><div class="meta-label">产品分类</div><div class="meta-value">${state.category}</div></div><div><div class="meta-label">产品型号</div><div class="meta-value">${state.productModel}</div></div><div><div class="meta-label">产品代码</div><div class="meta-value">${state.productCode}</div></div><div><div class="meta-label">产品模板ID</div><div class="meta-value">${state.templateId}</div></div></div>
+            </section>
+            <nav class="tabs"><button class="tab">基础信息</button><button class="tab active">功能设计</button><button class="tab">扩展程序</button><button class="tab">设备调试</button><button class="tab">配网引导</button><button class="tab">高级配置</button></nav>
+            <section class="work-panel">
+              <header class="panel-head"><div><h2 class="panel-title">功能设计</h2><div class="panel-subtitle">维护产品实际启用的标准功能和自定义功能</div></div><div class="version-tools">${annotated(2, `<select class="version-select" data-action="select-version">${state.versions.map(v => `<option value="${v.id}" ${v.id === state.selectedVersion ? "selected" : ""}>${v.name} · ${v.status}</option>`).join("")}</select>`)}${annotated(3, newVersionButton)}${publishButton ? annotated(4, publishButton) : ""}</div></header>
+              ${productNotice()}
+              <section class="section"><div class="section-head"><h3 class="section-title">标准功能 <span class="count">${state.rows.filter(r => r.kind === "standard").length}项</span></h3>${annotated(7, `<button class="btn primary" data-action="add" data-kind="standard" ${!canEdit() ? "disabled" : ""}>＋ 新增标准功能</button>`)}</div>${renderRows("standard")}</section>
+              <section class="section"><div class="section-head"><h3 class="section-title">自定义功能 <span class="count">${state.rows.filter(r => r.kind === "custom").length}项</span></h3><button class="btn primary" data-action="add" data-kind="custom" ${!canEdit() ? "disabled" : ""}>＋ 新增自定义功能</button></div>${renderRows("custom")}</section>
+            </section>
+          </main>
+        </section>
+      </div>`;
+    }
+
+    function baseNotes() {
+      const notes = [
+        { number: 1, title: "产品状态只表达经营状态", location: "产品详情 > 产品标题", lines: ["<strong>说明：</strong>开发中、上架中、已上架、已下架均不再决定草稿能否编辑。", "<strong>状态：</strong>产品状态切换不改变任何功能版本状态。"] },
+        { number: 2, title: "功能版本选择", location: "功能设计 > 版本选择器", lines: ["<strong>数据：</strong>展示版本号与迭代中/已发布状态。", "<strong>交互：</strong>切换到已发布版本后页面只读；切换到草稿后按兼容规则编辑。"] }
+      ];
+      notes.push(
+        { number: 3, title: "新建版本", location: "功能设计 > 版本操作区", lines: ["<strong>位置：</strong>与版本选择器相邻，避免被理解为产品级新建动作。", `<strong>当前状态：</strong>${canCreate() ? "可点击；当前不存在迭代中版本。" : "禁用；当前已有迭代中版本或用户无权限。"}`, "<strong>按钮形态：</strong>固定展示的普通描边按钮，与主按钮“发布功能版本”区分操作层级。", "<strong>点击结果：</strong>复制最新已发布版本，生成下一功能版本草稿。"] }
+      );
+      if (canPublish()) notes.push(
+        { number: 4, title: "发布功能版本", location: "功能设计 > 版本操作区", lines: ["<strong>触发条件：</strong>当前版本为迭代中且用户有发布权限。", "<strong>按钮形态：</strong>主按钮；与“新建版本”按状态互斥展示。", "<strong>流程图：</strong>点击发布 → 自动校验 → 差异确认/阻断 → 发布结果。", "<strong>边界：</strong>发布不改变产品状态，也不自动切换设备。"] }
+      );
+      notes.push(
+        { number: 5, title: "历史功能", location: "标准功能 > 首行样例", lines: ["<strong>说明：</strong>继承自基础已发布版本。", "<strong>允许：</strong>名称、描述和备注等非契约信息。", "<strong>禁止：</strong>删除、改标识符、改类型、改历史参数结构。"] },
+        { number: 6, title: "本版新增功能", location: "功能列表 > 来源列", lines: ["<strong>说明：</strong>当前草稿新增且从未发布。", "<strong>交互：</strong>发布前可以完整编辑或删除。", "<strong>发布后：</strong>转为历史功能，下一版本不可删除。"] },
+        { number: 7, title: "新增功能入口", location: "标准功能/自定义功能 > 区块操作", lines: ["<strong>本次变更：</strong>仅根据功能版本状态和用户权限控制入口是否可用。", "<strong>点击后：</strong>分别复用现有“新增标准功能”和“新增自定义功能”抽屉。", "<strong>不调整：</strong>抽屉结构、字段、校验、依赖处理和提交逻辑均保持现状。"] }
+      );
+      return notes;
+    }
+
+    function overlayNotes() {
+      if (state.drawer?.mode === "add") return [
+        { number: 12, title: "复用现有新增抽屉", location: `功能设计 > ${state.drawer.kind === "standard" ? "新增标准功能" : "新增自定义功能"}抽屉`, lines: ["<strong>说明：</strong>本需求不重新设计该抽屉，原型仅示意复用现有组件。", "<strong>保持现状：</strong>字段、布局、校验、功能依赖处理、保存接口和反馈文案均不变。", "<strong>需求边界：</strong>本次只新增版本权限判断，不新增抽屉前端改造。"] }
+      ];
+      if (state.drawer) return [
+        { number: 12, title: state.drawer.mode === "add" ? "新增功能抽屉" : "编辑功能抽屉", location: "功能设计 > 右侧抽屉", lines: ["<strong>说明：</strong>沿用现有右侧表单方式，避免新增页面。", `<strong>来源：</strong>${state.drawer.inherited ? "历史功能" : "本版新增"}。`] },
+        { number: 13, title: "契约字段权限", location: "抽屉 > 标识符及数据定义", lines: ["<strong>历史功能：</strong>契约字段只读，仅展示信息可改。", "<strong>本版新增：</strong>发布前完整可编辑。"] },
+        { number: 14, title: "保存校验", location: "抽屉 > 底部按钮", lines: ["<strong>必填：</strong>名称、标识符、功能类型和数据类型。", "<strong>异常：</strong>标识符重复时保留抽屉并定位字段。", "<strong>成功：</strong>更新列表并显示保存成功提示。"] }
+      ];
+      if (state.overlay?.type === "newVersion") return [
+        { number: 9, title: "新建功能版本确认", location: "产品详情 > 新建版本弹窗", lines: ["<strong>基础版本：</strong>固定为最新已发布版本。", "<strong>新版本：</strong>按现有递增规则生成。"] },
+        { number: 10, title: "单草稿约束", location: "新建版本弹窗 > 确定", lines: ["<strong>校验：</strong>提交时再次确认不存在其他草稿。", "<strong>并发：</strong>重复请求返回已创建草稿，不生成分支。"] }
+      ];
+      if (state.overlay?.type === "publishReview") return [
+        { number: 16, title: "发布差异与校验结果", location: "发布弹窗 > 差异统计", lines: ["<strong>新增功能：</strong>基础版本不存在、由当前草稿新增的属性、事件或服务。", "<strong>展示信息修改：</strong>仅名称、描述、备注等信息发生变化，不改变设备通信规则。", "<strong>兼容性校验：</strong>重新核验历史功能未被删除、契约字段未被修改。正常页面操作下应始终通过。", "<strong>异常处理：</strong>校验不通过时不进入二次确认，直接展示阻断原因。"] },
+        { number: 17, title: "发布影响提示", location: "发布弹窗 > 功能提示", lines: ["<strong>不可逆：</strong>发布后版本只读且不能撤销/废弃。", "<strong>设备边界：</strong>不会自动切换设备、固件或扩展程序。"] },
+        { number: 18, title: "确认发布", location: "发布弹窗 > 底部按钮", lines: ["<strong>状态：</strong>点击后进入加载态，禁止重复提交。", "<strong>成功：</strong>版本变为已发布，页面切换只读并刷新模型缓存。", "<strong>失败：</strong>保留弹窗和草稿状态，提示失败原因，允许用户重试。"] }
+      ];
+      if (state.overlay?.type === "publishBlocked") return [
+        { number: 19, title: "异常兼容性阻断", location: "发布最终校验结果", lines: ["<strong>正常规则：</strong>页面和写接口已禁止删除历史功能或修改契约字段。", "<strong>兜底场景：</strong>仅当旧数据异常、接口绕过、并发写入或服务缺陷形成不兼容数据时触发。", "<strong>当前问题：</strong>历史功能runState的数据类型异常。"] },
+        { number: 20, title: "异常问题定位", location: "校验结果 > 问题列表", lines: ["<strong>展示：</strong>功能类型、名称、标识符、异常字段和阻断原因。", "<strong>处理：</strong>不能由用户在发布弹窗内修复，应返回编辑页或由技术侧修正异常数据。"] }
+      ];
+      if (state.overlay?.type === "deleteRow") return [
+        { number: 15, title: "删除草稿新增功能", location: "功能列表 > 删除确认", lines: ["<strong>触发条件：</strong>仅本版新增且尚未发布的功能可删除。", "<strong>结果：</strong>删除不会改变任何已发布版本或历史通信契约。"] }
+      ];
+      return baseNotes();
+    }
+
+    function renderDoc() {
+      const notes = overlayNotes();
+      q("#annotationScope").textContent = state.drawer?.mode === "add" ? "当前批注范围：复用现有新增功能抽屉" : state.drawer ? "当前批注范围：功能配置抽屉" : state.overlay ? "当前批注范围：当前弹窗" : `当前批注范围：${state.productStatus} · ${selectedVersion().name}${selectedVersion().status}`;
+      q("#doc").innerHTML = `<div class="note-stack">${notes.map(n => `<section class="note-card ${state.highlight === n.number ? "active" : ""}" data-note-card="${n.number}"><span class="note-number">${n.number}</span><div><h3 class="note-title">${n.title}</h3><div class="note-location">关联位置：${n.location}</div><ul class="note-lines">${n.lines.map(line => `<li>${line}</li>`).join("")}</ul></div></section>`).join("")}</div>`;
+    }
+
+    function renderOverlay() {
+      const root = q("#overlayRoot");
+      if (state.drawer) {
+        const d = state.drawer;
+        const inherited = d.inherited;
+        root.innerHTML = `<div class="drawer-wrap"><section class="drawer">
+          <header class="drawer-head annotated ${state.highlight === 12 ? "is-highlight" : ""}" data-annotated="12"><h2 class="modal-title">${d.mode === "add" ? `新增${d.kind === "standard" ? "标准" : "自定义"}功能` : "编辑功能"}</h2><button class="icon-btn" data-action="close-overlay">×</button>${anchor(12)}</header>
+          <div class="drawer-body">${renderFunctionForm(d, inherited, d.mode !== "add")}</div>
+          <footer class="drawer-foot ${d.mode !== "add" ? `annotated ${state.highlight === 14 ? "is-highlight" : ""}` : ""}" ${d.mode !== "add" ? `data-annotated="14"` : ""}><button class="btn" data-action="close-overlay">取消</button><button class="btn primary" data-action="save-drawer" ${d.error ? "" : ""}>保存</button>${d.mode !== "add" ? anchor(14) : ""}</footer>
+        </section></div>`;
+        return;
+      }
+      if (!state.overlay) { root.innerHTML = ""; return; }
+      const o = state.overlay;
+      if (o.type === "newVersion") root.innerHTML = `<div class="overlay"><section class="modal"><header class="modal-head annotated ${state.highlight === 9 ? "is-highlight" : ""}" data-annotated="9"><h2 class="modal-title">新建功能版本</h2><button class="icon-btn" data-action="close-overlay">×</button>${anchor(9)}</header><div class="modal-body"><div class="field"><label>基础版本</label><input value="${selectedVersion().name} · 已发布" disabled><span class="help">新版本将完整复制最新已发布版本的功能定义。</span></div><div class="field"><label>新版本</label><input value="版本${Math.max(...state.versions.map(v => Number(v.name.replace("版本", "")))) + 1}" disabled></div></div><footer class="modal-foot annotated ${state.highlight === 10 ? "is-highlight" : ""}" data-annotated="10"><button class="btn" data-action="close-overlay">取消</button><button class="btn primary ${state.actionLoading ? "loading" : ""}" data-action="confirm-new-version" ${state.actionLoading ? "disabled" : ""}>${state.actionLoading ? "创建中..." : "确定"}</button>${anchor(10)}</footer></section></div>`;
+      if (o.type === "deleteRow") root.innerHTML = `<div class="overlay"><section class="modal"><header class="modal-head"><h2 class="modal-title">删除功能</h2><button class="icon-btn" data-action="close-overlay">×</button></header><div class="modal-body annotated ${state.highlight === 15 ? "is-highlight" : ""}" data-annotated="15"><p>确认删除本版本新增功能“${o.row.name}”吗？该功能尚未发布，删除不会影响历史版本。</p>${anchor(15)}</div><footer class="modal-foot"><button class="btn" data-action="close-overlay">取消</button><button class="btn danger" data-action="confirm-delete">删除</button></footer></section></div>`;
+      if (o.type === "publishReview") root.innerHTML = `<div class="overlay"><section class="modal wide"><header class="modal-head"><h2 class="modal-title">发布${selectedVersion().name}</h2><button class="icon-btn" data-action="close-overlay">×</button></header><div class="modal-body"><div class="diff-summary annotated ${state.highlight === 16 ? "is-highlight" : ""}" data-annotated="16"><div class="diff-box"><div class="diff-value" style="color:#337ecc">${state.rows.filter(r => r.origin === "new").length}</div><div class="diff-label">新增功能</div><div class="diff-definition">基础版本中不存在，由当前草稿新增的属性、事件或服务。</div></div><div class="diff-box"><div class="diff-value" style="color:#b88230">0</div><div class="diff-label">展示信息修改</div><div class="diff-definition">名称、描述、备注等变化，不影响设备通信规则。</div></div><div class="diff-box"><div class="diff-value" style="color:#529b2e;font-size:18px">通过</div><div class="diff-label">兼容性校验</div><div class="diff-definition">历史功能未删除，契约字段未发生异常修改。</div></div>${anchor(16)}</div><div class="definition-panel"><strong>为什么发布时仍需兼容性校验</strong>正常页面和写接口已经禁止修改历史契约。发布时服务端仍会重新核验基础版本，用于防止旧数据异常、接口绕过、并发写入或服务缺陷造成不兼容结果。</div><div class="notice warning annotated ${state.highlight === 17 ? "is-highlight" : ""}" data-annotated="17">发布后该功能版本不可修改，且本阶段不支持撤销或废弃。新版本只会成为可选物模型，不会自动切换设备、固件或扩展程序。${anchor(17)}</div></div><footer class="modal-foot annotated ${state.highlight === 18 ? "is-highlight" : ""}" data-annotated="18"><button class="btn" data-action="close-overlay">取消</button><button class="btn primary ${state.actionLoading ? "loading" : ""}" data-action="confirm-publish" ${state.actionLoading ? "disabled" : ""}>${state.actionLoading ? "发布中..." : "确认发布"}</button>${anchor(18)}</footer></section></div>`;
+      if (o.type === "publishBlocked") root.innerHTML = `<div class="overlay"><section class="modal wide"><header class="modal-head"><h2 class="modal-title">兼容性校验未通过</h2><button class="icon-btn" data-action="close-overlay">×</button></header><div class="modal-body"><div class="notice danger annotated ${state.highlight === 19 ? "is-highlight" : ""}" data-annotated="19">最终校验发现异常契约数据。正常页面无法形成此修改，可能来自旧数据、接口绕过、并发写入或服务异常，当前版本不能发布。${anchor(19)}</div><div class="issue-list annotated ${state.highlight === 20 ? "is-highlight" : ""}" data-annotated="20"><div class="issue"><strong>属性 · 运行状态 · runState</strong><p>异常字段：数据类型；基础版本：Enum；当前草稿：Int32。请返回检查草稿，无法通过页面恢复时由技术侧修正异常数据。</p></div>${anchor(20)}</div></div><footer class="modal-foot"><button class="btn primary" data-action="close-overlay">返回检查</button></footer></section></div>`;
+    }
+
+    function renderFunctionForm(d, inherited, annotateContract = true) {
+      const f = d.form;
+      return `<div class="form-grid ${annotateContract ? `annotated ${state.highlight === 13 ? "is-highlight" : ""}` : ""}" ${annotateContract ? `data-annotated="13"` : ""}>
+        <div class="field"><label class="required">功能类型</label><select data-field="type" ${inherited ? "disabled" : ""}><option ${f.type === "属性" ? "selected" : ""}>属性</option><option ${f.type === "事件" ? "selected" : ""}>事件</option><option ${f.type === "服务" ? "selected" : ""}>服务</option></select></div>
+        <div class="field"><label class="required">名称</label><input data-field="name" value="${escapeHtml(f.name)}" placeholder="请输入功能名称"></div>
+        <div class="field full"><label class="required">标识符</label><input data-field="identifier" value="${escapeHtml(f.identifier)}" placeholder="例如 heating_level" ${inherited ? "disabled" : ""}>${d.error === "duplicate" ? `<span class="error">标识符已存在，请更换后保存。</span>` : `<span class="help">发布后标识符不可修改。</span>`}</div>
+        <div class="field"><label class="required">数据类型</label><select data-field="dataType" ${inherited ? "disabled" : ""}><option>Bool</option><option ${f.dataType === "Int32" ? "selected" : ""}>Int32</option><option ${f.dataType === "Enum" ? "selected" : ""}>Enum</option><option ${f.dataType === "消息" ? "selected" : ""}>消息</option><option ${f.dataType === "服务" ? "selected" : ""}>服务</option></select></div>
+        <div class="field"><label>来源</label><input value="${inherited ? "历史功能" : "本版新增"}" disabled></div>
+        <div class="field full"><label>数据定义</label><textarea data-field="definition" ${inherited ? "disabled" : ""}>${escapeHtml(f.definition)}</textarea><span class="help">历史功能的数据类型、范围、枚举和参数结构保持只读。</span></div>
+        <div class="field full"><label>备注</label><textarea data-field="note">${escapeHtml(f.note)}</textarea></div>${annotateContract ? anchor(13) : ""}
+      </div>`;
+    }
+    function escapeHtml(value = "") { return String(value).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])); }
+
+    function renderToast() {
+      q("#toastRoot").innerHTML = state.toast ? `<div class="toast ${state.toast.type === "error" ? "error" : ""}"><span>${state.toast.type === "error" ? "!" : "✓"}</span>${state.toast.message}</div>` : "";
+    }
+    function render() { renderScreen(); renderOverlay(); renderDoc(); renderToast(); }
+    function showToast(message, type = "success") { state.toast = { message, type }; renderToast(); setTimeout(() => { state.toast = null; renderToast(); }, 2400); }
+    function closeOverlay() { state.overlay = null; state.drawer = null; state.highlight = null; render(); }
+    function findRow(id) { return state.rows.find(row => row.id === id); }
+    function openDrawer(mode, row = null, kind = "standard") {
+      const source = row || { id: `TEMP-${Date.now()}`, kind, type: kind === "standard" ? "属性" : "事件", name: "", identifier: "", dataType: kind === "standard" ? "Int32" : "消息", definition: "", note: "", origin: "new" };
+      state.drawer = { mode, rowId: row?.id || null, kind, inherited: row ? row.origin === "inherited" : false, form: clone(source), error: null };
+      state.highlight = null; render();
+    }
+
+    document.addEventListener("click", event => {
+      const mobile = event.target.closest("[data-mobile]");
+      if (mobile) { document.body.dataset.mobileTab = mobile.dataset.mobile; document.querySelectorAll("[data-mobile]").forEach(b => b.classList.toggle("primary", b === mobile)); return; }
+      const note = event.target.closest("[data-note-card], [data-note-target]");
+      if (note) { state.highlight = Number(note.dataset.noteCard || note.dataset.noteTarget); render(); return; }
+      const actionEl = event.target.closest("[data-action]");
+      if (!actionEl || actionEl.disabled) return;
+      const action = actionEl.dataset.action;
+      if (action === "close-overlay") return closeOverlay();
+      if (action === "new-version") { state.overlay = { type: "newVersion" }; render(); return; }
+      if (action === "confirm-new-version") {
+        state.actionLoading = true; render();
+        setTimeout(() => {
+          const number = Math.max(...state.versions.map(v => Number(v.name.replace("版本", "")))) + 1;
+          const base = selectedVersion().id;
+          state.versions.unshift({ id: `v${number}`, name: `版本${number}`, status: "迭代中", base });
+          state.selectedVersion = `v${number}`;
+          state.rows = state.rows.map(r => ({ ...r, origin: "inherited", issue: undefined }));
+          state.actionLoading = false; state.overlay = null; render(); showToast(`版本${number}创建成功，已复制${state.versions.find(v => v.id === base).name}的功能定义。`);
+        }, 650); return;
+      }
+      if (action === "publish") {
+        state.validationLoading = true; render();
+        setTimeout(() => { state.validationLoading = false; state.overlay = { type: state.blocked ? "publishBlocked" : "publishReview" }; render(); }, 650); return;
+      }
+      if (action === "confirm-publish") {
+        state.actionLoading = true; render();
+        setTimeout(() => {
+          if (state.publishFailure) {
+            state.actionLoading = false;
+            render();
+            showToast("发布失败：版本服务暂时不可用，请稍后重试。当前草稿未发生变化。", "error");
+            return;
+          }
+          selectedVersion().status = "已发布";
+          state.rows = state.rows.map(r => ({ ...r, origin: "inherited" }));
+          state.actionLoading = false; state.overlay = null; render(); showToast(`${selectedVersion().name}发布成功。当前设备使用版本未发生变化。`);
+        }, 760); return;
+      }
+      if (action === "add") return openDrawer("add", null, actionEl.dataset.kind);
+      if (action === "edit") return openDrawer("edit", findRow(actionEl.dataset.row), findRow(actionEl.dataset.row).kind);
+      if (action === "delete") { state.overlay = { type: "deleteRow", row: clone(findRow(actionEl.dataset.row)) }; render(); return; }
+      if (action === "confirm-delete") { state.rows = state.rows.filter(r => r.id !== state.overlay.row.id); state.overlay = null; render(); showToast("本版本新增功能已删除。"); return; }
+      if (action === "save-drawer") {
+        const d = state.drawer;
+        if (!d.form.name.trim() || !d.form.identifier.trim()) { d.error = "required"; render(); showToast("请填写功能名称和标识符。", "error"); return; }
+        const duplicate = state.rows.some(r => r.identifier === d.form.identifier && r.id !== d.rowId);
+        if (duplicate) { d.error = "duplicate"; render(); return; }
+        if (d.mode === "add") state.rows.push({ ...d.form, id: `TEMP-${Date.now()}`, origin: "new" });
+        else {
+          const row = findRow(d.rowId);
+          row.name = d.form.name; row.note = d.form.note;
+          if (!d.inherited) Object.assign(row, d.form, { id: row.id, origin: row.origin });
+        }
+        closeOverlay(); showToast(d.mode === "add" ? "功能已添加到当前草稿。" : "功能修改已保存。"); return;
+      }
+    });
+
+    document.addEventListener("change", event => {
+      if (event.target.matches("[data-action='select-version']")) { state.selectedVersion = event.target.value; state.highlight = null; render(); return; }
+      if (event.target.id === "scenarioSelect") { state = makeScenario(event.target.value); renderScenarioSelect(); render(); return; }
+      if (state.drawer && event.target.dataset.field) { state.drawer.form[event.target.dataset.field] = event.target.value; state.drawer.error = null; }
+    });
+    document.addEventListener("input", event => { if (state.drawer && event.target.dataset.field) { state.drawer.form[event.target.dataset.field] = event.target.value; state.drawer.error = null; } });
+
+    function renderScenarioSelect() { q("#scenarioSelect").innerHTML = scenarioDefinitions.map(item => `<option value="${item.id}" ${item.id === state.scenarioId ? "selected" : ""}>${item.label}</option>`).join(""); }
+    renderScenarioSelect();
+    render();
+  </script>
+</body>
+</html>

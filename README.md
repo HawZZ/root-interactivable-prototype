@@ -6,6 +6,7 @@ Site: https://hawzz.github.io/root-interactivable-prototype/
 
 ## Pages
 
+- [IoT Admin 功能版本生命周期与首版主动发布原型](./prototypes/function-version-lifecycle/) — 覆盖首版主动发布、后续版本创建、向前兼容编辑和发布校验
 - [IoT Admin 产品管理主线可控开放原型](./prototypes/controlled-release-strategy/)
 - [IoT Admin 审计日志原型](./prototypes/iot-admin-audit-log/)
 - [配置中心 - 音源管理](./prototypes/platform-audio-resource-pool/)
