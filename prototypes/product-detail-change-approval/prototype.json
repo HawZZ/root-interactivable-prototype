@@ -1,0 +1,24 @@
+{
+  "id": "product-detail-change-approval",
+  "path": "/prototypes/product-detail-change-approval/",
+  "title": "产品详情变更审批原型",
+  "summary": "覆盖产品详情与上架范围变更、上架/下架审批、冻结快照、审批处理和失败后的重试应用流程。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "product-detail-change-approval",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "变更审批",
+    "冻结快照",
+    "产品详情"
+  ],
+  "updatedAt": "2026-08-17T07:57:02Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

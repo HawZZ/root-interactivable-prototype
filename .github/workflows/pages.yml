@@ -24,6 +24,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate metadata
+        run: npm run catalog:check
+
+      - name: Run catalog tests
+        run: npm test
+
+      - name: Build static catalog
+        run: npm run build
+
+      - name: Capture prototype previews
+        run: npm run previews
+
+      - name: Validate routes and links
+        run: npm run check:links
+
+      - name: Run browser tests
+        run: npm run test:e2e
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -31,7 +63,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment

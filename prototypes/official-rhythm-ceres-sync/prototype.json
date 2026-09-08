@@ -1,0 +1,23 @@
+{
+  "id": "official-rhythm-ceres-sync",
+  "path": "/prototypes/official-rhythm-ceres-sync/",
+  "title": "官方韵律 Ceres 同步",
+  "summary": "IoT Admin 产品详情 > 高级配置 > 官方韵律，承接 Ceres 同步来源。",
+  "productLine": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "official-rhythm-ceres-sync",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "AIoT Platform",
+    "Prototype"
+  ],
+  "updatedAt": "2026-07-06T09:12:49Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
+}

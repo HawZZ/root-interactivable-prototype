@@ -1,0 +1,24 @@
+{
+  "id": "product-sync-to-production",
+  "path": "/prototypes/product-sync-to-production/",
+  "title": "产品同步到生产环境原型",
+  "summary": "在产品详情页新增同步到生产环境功能，将所有 step 数据及三元组（含产品 secret 证书）同步至生产环境，支持 productKey 冲突检测与强制覆盖。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "product-sync-to-production",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "产品同步",
+    "生产环境",
+    "ProductKey"
+  ],
+  "updatedAt": "2026-07-23T09:59:07Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
+}

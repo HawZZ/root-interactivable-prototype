@@ -1,0 +1,25 @@
+{
+  "id": "message-push-trigger-opt",
+  "path": "/prototypes/message-push-trigger-opt/",
+  "title": "消息推送 P0 规则闭环原型",
+  "summary": "首期闭环覆盖现状设备 / 云端 / 耗材触发、English + 多语言 KV 快速导入，以及 each / discard 投递模式。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "message-push-trigger-opt",
+  "version": "v3.8",
+  "status": "active",
+  "tags": [
+    "消息推送",
+    "P0 规则闭环",
+    "多语言 KV",
+    "each / discard"
+  ],
+  "updatedAt": "2026-09-03T09:12:00Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

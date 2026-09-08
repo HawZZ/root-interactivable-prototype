@@ -1,0 +1,24 @@
+{
+  "id": "platform-audio-resource-pool",
+  "path": "/prototypes/platform-audio-resource-pool/",
+  "title": "音源管理",
+  "summary": "承载音源资源池、产品配置和导入管理等流程。",
+  "productLine": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "platform-audio-resource-pool",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "音源",
+    "资源池",
+    "产品配置"
+  ],
+  "updatedAt": "2026-06-23T03:21:23Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
+}

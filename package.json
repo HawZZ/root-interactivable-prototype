@@ -1,0 +1,19 @@
+{
+  "name": "root-interactivable-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "catalog:sync": "node scripts/sync-metadata.mjs",
+    "catalog:check": "node scripts/sync-metadata.mjs --check",
+    "build": "node scripts/build-site.mjs",
+    "previews": "node scripts/capture-previews.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "test": "node --test tests/catalog.test.mjs",
+    "test:e2e": "node --test tests/hub.test.mjs",
+    "verify": "npm run catalog:check && npm test && npm run build && npm run previews && npm run check:links && npm run test:e2e"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

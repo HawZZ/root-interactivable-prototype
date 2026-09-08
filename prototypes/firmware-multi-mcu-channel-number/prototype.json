@@ -1,0 +1,25 @@
+{
+  "id": "firmware-multi-mcu-channel-number",
+  "path": "/prototypes/firmware-multi-mcu-channel-number/",
+  "title": "固件多 MCU 通道号 + 虚拟版本原型",
+  "summary": "固件管理新增通道号字段，支持虚拟版本任务发布、APP 版本比较、全部 MCU 固件下发与 100% 完成后版本回写。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "firmware-multi-mcu-channel-number",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "通道号",
+    "多MCU",
+    "虚拟版本",
+    "OTA"
+  ],
+  "updatedAt": "2026-08-13T09:33:50Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

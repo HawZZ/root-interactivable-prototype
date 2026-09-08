@@ -1,0 +1,24 @@
+{
+  "id": "official-rhythm-ceres-sync-v2-1-1-draft-whitelist-preview",
+  "path": "/prototypes/official-rhythm-ceres-sync-v2-1-1-draft-whitelist-preview/",
+  "title": "官方韵律草稿白名单体验",
+  "summary": "基于原 Ceres 同步需求新增的独立优化分支，验证草稿韵律对当前产品白名单用户开放。",
+  "productLine": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "official-rhythm-ceres-sync",
+  "version": "v2.1.1",
+  "status": "draft",
+  "tags": [
+    "草稿体验",
+    "产品白名单",
+    "独立分支"
+  ],
+  "updatedAt": "2026-09-01T10:15:18Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

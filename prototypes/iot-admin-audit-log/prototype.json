@@ -1,0 +1,24 @@
+{
+  "id": "iot-admin-audit-log",
+  "path": "/prototypes/iot-admin-audit-log/",
+  "title": "审计日志原型",
+  "summary": "用于查看日志列表、操作详情、筛选条件和对象追踪体验。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "iot-admin-audit-log",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "审计",
+    "日志",
+    "追踪"
+  ],
+  "updatedAt": "2026-06-23T03:21:23Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
+}

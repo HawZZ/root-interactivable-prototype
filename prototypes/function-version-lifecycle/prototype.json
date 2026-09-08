@@ -1,0 +1,24 @@
+{
+  "id": "function-version-lifecycle",
+  "path": "/prototypes/function-version-lifecycle/",
+  "title": "功能版本生命周期与首版主动发布",
+  "summary": "覆盖开发中、上架中、已上架和已下架产品的功能版本创建、编辑、发布与兼容性校验。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "function-version-lifecycle",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "功能版本",
+    "首版发布",
+    "物模型"
+  ],
+  "updatedAt": "2026-09-04T10:07:43Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "device-auth-method",
+  "path": "/prototypes/device-auth-method/",
+  "title": "设备验证方式配置原型",
+  "summary": "产品详情基础信息编辑抽屉新增验证方式字段，覆盖四方案互斥单选、切换二次确认、保存生效语义与审计日志覆盖。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "device-auth-method",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "基础信息",
+    "验证方式",
+    "二次确认"
+  ],
+  "updatedAt": "2026-07-27T07:20:37Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

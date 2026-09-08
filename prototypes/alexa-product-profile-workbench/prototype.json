@@ -1,0 +1,24 @@
+{
+  "id": "alexa-product-profile-workbench",
+  "path": "/prototypes/alexa-product-profile-workbench/",
+  "title": "Alexa Product Profile 配置工作台",
+  "summary": "面向 Momcozy 自研设备的 Alexa Product Profile 配置，覆盖物模型优先映射、共享 Adapter、能力覆盖决策、Safety Gate 与发布回滚。",
+  "productLine": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "alexa-product-profile-workbench",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "Alexa",
+    "Product Profile",
+    "IoT Model"
+  ],
+  "updatedAt": "2026-08-11T07:25:39Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

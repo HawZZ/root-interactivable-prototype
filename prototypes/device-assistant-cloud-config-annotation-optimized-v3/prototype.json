@@ -1,0 +1,24 @@
+{
+  "id": "device-assistant-cloud-config-annotation-optimized-v3",
+  "path": "/prototypes/device-assistant-cloud-config-annotation-optimized-v3/",
+  "title": "设备助手云端配置原型（批注优化版 V3）",
+  "summary": "用于配置设备助手、新手指导和高级配置的管理体验。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "device-assistant-cloud-config",
+  "version": "v3",
+  "status": "active",
+  "tags": [
+    "设备助手",
+    "云端配置",
+    "新手指导"
+  ],
+  "updatedAt": "2026-08-21T03:24:37Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

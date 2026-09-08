@@ -1,0 +1,24 @@
+{
+  "id": "tuya-provision-interaction-mode",
+  "path": "/prototypes/tuya-provision-interaction-mode/",
+  "title": "涂鸦云配网交互方式配置原型",
+  "summary": "所属平台为涂鸦云时补充配网交互方式，覆盖 TUYA_UI_PACKAGE、TUYA_API_BLE_WIFI、创建/编辑抽屉和通讯方式校验。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "tuya-provision-interaction-mode",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "涂鸦云",
+    "配网交互",
+    "BM04S"
+  ],
+  "updatedAt": "2026-09-04T01:37:34Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

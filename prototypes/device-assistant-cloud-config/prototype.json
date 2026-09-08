@@ -1,0 +1,24 @@
+{
+  "id": "device-assistant-cloud-config",
+  "path": "/prototypes/device-assistant-cloud-config/",
+  "title": "设备助手云端配置原型",
+  "summary": "用于配置设备助手、新手指导和高级配置的管理体验。",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "device-assistant-cloud-config",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "设备助手",
+    "云端配置",
+    "新手指导"
+  ],
+  "updatedAt": "2026-07-01T02:36:57Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
+}

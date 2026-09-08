@@ -1,0 +1,24 @@
+{
+  "id": "controlled-release-strategy-annotation-optimized-v3",
+  "path": "/prototypes/controlled-release-strategy-annotation-optimized-v3/",
+  "title": "产品管理主线可控开放原型（批注优化版 V3）",
+  "summary": "固件 / 扩展程序版本冲突路由机制：精准测试 / 全面接管二选一弹窗 + 命中优先级漏斗（MAGI v7）",
+  "productLine": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "controlled-release-strategy",
+  "version": "v3",
+  "status": "active",
+  "tags": [
+    "冲突路由",
+    "固件配置",
+    "扩展程序"
+  ],
+  "updatedAt": "2026-08-24T07:36:45Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
