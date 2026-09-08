@@ -3,7 +3,8 @@
   "path": "/prototypes/platform-audio-resource-pool/",
   "title": "音源管理",
   "summary": "承载音源资源池、产品配置和导入管理等流程。",
-  "productLine": "配置中心",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
   "surface": "web",
   "systems": [
     "web"

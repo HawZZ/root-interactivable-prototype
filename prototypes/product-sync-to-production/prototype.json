@@ -4,6 +4,7 @@
   "title": "产品同步到生产环境原型",
   "summary": "在产品详情页新增同步到生产环境功能，将所有 step 数据及三元组（含产品 secret 证书）同步至生产环境，支持 productKey 冲突检测与强制覆盖。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

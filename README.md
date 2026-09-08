@@ -24,9 +24,13 @@ the exact version they require.
 4. Commit the prototype, generated metadata, and any hub changes together.
 
 The publishing command derives paths, timestamps, and the most recent
-publisher from Git. It also infers title, product line, surface, systems,
-series, version, status, and tags from the page and directory name. Ambiguous
-values are recorded as `未分类` instead of being guessed.
+publisher from Git. It also infers title, product line, business area, surface,
+systems, series, version, status, and tags from the page and directory name.
+Ambiguous values are recorded as `未分类` instead of being guessed.
+
+`IoT Admin`, `AIoT Platform`, and `配置中心` are business areas within the
+`IoT Admin` Web product line. The hub keeps them available as a secondary
+filter instead of presenting them as separate product lines.
 
 For reliable automatic classification, prototypes may expose these HTML meta
 tags:
@@ -35,6 +39,7 @@ tags:
 <meta name="description" content="Short prototype summary">
 <meta name="keywords" content="tag one, tag two">
 <meta name="prototype:product-line" content="IoT Admin">
+<meta name="prototype:business-area" content="配置中心">
 <meta name="prototype:surface" content="app">
 <meta name="prototype:systems" content="ios, android">
 ```

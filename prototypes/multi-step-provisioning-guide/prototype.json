@@ -4,6 +4,7 @@
   "title": "云端多步骤配网引导入口原型",
   "summary": "展示产品详情配网引导、多步骤独立入口、编辑抽屉和原型批注。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

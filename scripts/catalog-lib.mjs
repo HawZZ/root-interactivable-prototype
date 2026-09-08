@@ -6,6 +6,7 @@ export const BASE_PATH = "/root-interactivable-prototype";
 export const VALID_SURFACES = new Set(["web", "app"]);
 export const VALID_SYSTEMS = new Set(["web", "ios", "android", "mobile-common"]);
 export const VALID_STATUSES = new Set(["active", "draft", "archived"]);
+export const IOT_ADMIN_BUSINESS_AREAS = new Set(["IoT Admin", "AIoT Platform", "配置中心"]);
 
 const ENTITY_MAP = {
   "&amp;": "&",
@@ -62,10 +63,26 @@ export function inferSurface({ slug, title = "", kicker = "", html = "" }) {
 
 export function inferProductLine({ kicker = "", title = "", search = "", surface = "web" }) {
   const haystack = `${kicker} ${title} ${search}`;
+  if (surface === "app" || /Momcozy/i.test(haystack)) return "Momcozy APP";
+  if (/AIoT Platform|IoT Admin/i.test(haystack) || /配置中心/.test(haystack)) return "IoT Admin";
+  return "未分类";
+}
+
+export function normalizeProductLine(value, surface = "web") {
+  const clean = String(value || "").trim();
+  if (surface === "web" && IOT_ADMIN_BUSINESS_AREAS.has(clean)) return "IoT Admin";
+  return clean;
+}
+
+export function inferBusinessArea({ productLine = "", kicker = "", title = "", search = "", surface = "web" }) {
+  const declared = String(productLine || "").trim();
+  if (IOT_ADMIN_BUSINESS_AREAS.has(declared)) return declared;
+  if (surface === "app" || declared === "Momcozy APP") return "Momcozy APP";
+
+  const haystack = `${kicker} ${title} ${search}`;
   if (/AIoT Platform/i.test(haystack)) return "AIoT Platform";
   if (/配置中心/.test(haystack)) return "配置中心";
   if (/IoT Admin/i.test(haystack)) return "IoT Admin";
-  if (surface === "app" || /Momcozy/i.test(haystack)) return "Momcozy APP";
   return "未分类";
 }
 
@@ -89,6 +106,7 @@ export function extractHtmlMetadata(html, slug) {
     .map((item) => item.trim())
     .filter(Boolean);
   const declaredProductLine = readMeta(html, "prototype:product-line");
+  const declaredBusinessArea = readMeta(html, "prototype:business-area");
   const declaredSystems = readMeta(html, "prototype:systems")
     .split(/[,，]/)
     .map((item) => item.trim().toLowerCase())
@@ -100,6 +118,7 @@ export function extractHtmlMetadata(html, slug) {
     summary: invalidTemplate(description) ? "" : description,
     keywords,
     declaredProductLine: invalidTemplate(declaredProductLine) ? "" : declaredProductLine,
+    declaredBusinessArea: invalidTemplate(declaredBusinessArea) ? "" : declaredBusinessArea,
     declaredSystems
   };
 }
@@ -178,7 +197,15 @@ export async function buildMetadata(root, slug, legacyCards = new Map()) {
   const gitInfo = gitMetadata(root, relativeDir);
   const htmlStats = await stat(htmlPath);
   const summary = existing.summary || legacy.summary || extracted.summary || `${title}交互原型。`;
-  const productLine = existing.productLine || extracted.declaredProductLine || inferProductLine({
+  const historicalProductLine = existing.productLine || extracted.declaredProductLine;
+  const businessArea = existing.businessArea || extracted.declaredBusinessArea || inferBusinessArea({
+    productLine: historicalProductLine,
+    kicker: legacy.kicker,
+    title,
+    search: legacy.search,
+    surface
+  });
+  const productLine = normalizeProductLine(historicalProductLine, surface) || inferProductLine({
     kicker: legacy.kicker,
     title,
     search: legacy.search,
@@ -195,6 +222,7 @@ export async function buildMetadata(root, slug, legacyCards = new Map()) {
     title,
     summary,
     productLine,
+    businessArea,
     surface,
     systems,
     seriesId: existing.seriesId || inferredSeries.seriesId,
@@ -226,6 +254,7 @@ export function validateMetadata(entries) {
     if (!entry.title?.trim()) errors.push(`${prefix}: missing title`);
     if (!entry.summary?.trim()) errors.push(`${prefix}: missing summary`);
     if (!entry.productLine?.trim()) errors.push(`${prefix}: missing productLine`);
+    if (!entry.businessArea?.trim()) errors.push(`${prefix}: missing businessArea`);
     if (!VALID_SURFACES.has(entry.surface)) errors.push(`${prefix}: invalid surface`);
     if (!Array.isArray(entry.systems) || entry.systems.length === 0 || entry.systems.some((item) => !VALID_SYSTEMS.has(item))) {
       errors.push(`${prefix}: invalid systems`);
@@ -281,7 +310,7 @@ export function createCatalog(entries) {
   });
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     repository: "https://github.com/HawZZ/root-interactivable-prototype",
     basePath: BASE_PATH,

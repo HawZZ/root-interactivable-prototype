@@ -4,6 +4,7 @@
   "title": "固件多 MCU 通道号 + 虚拟版本原型",
   "summary": "固件管理新增通道号字段，支持虚拟版本任务发布、APP 版本比较、全部 MCU 固件下发与 100% 完成后版本回写。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

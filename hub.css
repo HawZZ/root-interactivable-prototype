@@ -213,7 +213,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .facet-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 0.7fr)) minmax(170px, 1fr) auto;
+  grid-template-columns: repeat(4, minmax(130px, 0.7fr)) minmax(160px, 1fr) auto;
   align-items: end;
   gap: 12px;
   padding: 16px 24px 20px;
@@ -304,6 +304,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .badge { padding: 0 7px; border: 1px solid var(--line); background: var(--surface-subtle); color: var(--muted); }
 .badge.surface { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); background: var(--accent-soft); color: var(--accent); }
+.badge.business-area { border-color: #d8d2c4; background: #f8f5ee; color: #635b4c; }
 .badge.active { border-color: color-mix(in srgb, var(--success) 22%, var(--line)); background: var(--success-soft); color: var(--success); }
 .badge.draft { border-color: color-mix(in srgb, var(--warning) 24%, var(--line)); background: var(--warning-soft); color: var(--warning); }
 
@@ -413,7 +414,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 @media (max-width: 1040px) {
   .library { grid-template-columns: 1fr; }
-  .facet-row { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
+  .facet-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .reset-button { width: 100%; }
 }
 
 @media (max-width: 760px) {

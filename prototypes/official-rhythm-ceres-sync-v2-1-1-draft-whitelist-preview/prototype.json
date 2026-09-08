@@ -3,7 +3,8 @@
   "path": "/prototypes/official-rhythm-ceres-sync-v2-1-1-draft-whitelist-preview/",
   "title": "官方韵律草稿白名单体验",
   "summary": "基于原 Ceres 同步需求新增的独立优化分支，验证草稿韵律对当前产品白名单用户开放。",
-  "productLine": "AIoT Platform",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
   "surface": "web",
   "systems": [
     "web"

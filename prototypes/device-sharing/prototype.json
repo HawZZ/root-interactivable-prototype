@@ -4,6 +4,7 @@
   "title": "设备共享原型",
   "summary": "覆盖设备拥有者发起和管理共享、成员注册与通知、权限查看、版本兼容及取消共享链路。",
   "productLine": "Momcozy APP",
+  "businessArea": "Momcozy APP",
   "surface": "app",
   "systems": [
     "mobile-common"

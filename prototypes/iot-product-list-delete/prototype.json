@@ -4,6 +4,7 @@
   "title": "产品列表删除功能原型",
   "summary": "产品列表操作列受控软删，覆盖权限、产品状态、后端关联检查、阻断弹窗和键入产品 ID 二次确认。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

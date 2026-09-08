@@ -3,7 +3,8 @@
   "path": "/prototypes/product-data-permission/",
   "title": "IoT 平台产品数据权限管理原型",
   "summary": "覆盖 ERP 功能权限与产品数据权限联动、用户直授、数据角色、临时全量账号及产品反向授权核查。",
-  "productLine": "AIoT Platform",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
   "surface": "web",
   "systems": [
     "web"

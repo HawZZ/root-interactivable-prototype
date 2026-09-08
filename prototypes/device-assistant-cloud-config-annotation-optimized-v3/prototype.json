@@ -4,6 +4,7 @@
   "title": "设备助手云端配置原型（批注优化版 V3）",
   "summary": "用于配置设备助手、新手指导和高级配置的管理体验。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

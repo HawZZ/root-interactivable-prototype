@@ -4,6 +4,7 @@
   "title": "审计日志原型",
   "summary": "用于查看日志列表、操作详情、筛选条件和对象追踪体验。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

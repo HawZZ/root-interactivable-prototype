@@ -4,6 +4,7 @@
   "title": "ProductProfile 产品详情动态接入原型",
   "summary": "在产品详情现状上新增动态接入字段，覆盖 ProductProfile 查看、字段约束、生成预览、gate 校验和原型批注同步。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

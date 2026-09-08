@@ -3,7 +3,8 @@
   "path": "/prototypes/voice-semantic-profile-workbench/",
   "title": "设备助手语义配置 V2",
   "summary": "面向 Alexa 一期配置，简化物模型属性到 Capability 的映射，支持多 Locale 语音名称、英语语句预览与技术详情追溯，并为 Google Home 投影预留中立语义模型。",
-  "productLine": "AIoT Platform",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
   "surface": "web",
   "systems": [
     "web"

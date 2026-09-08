@@ -4,6 +4,7 @@
   "title": "消息推送 P0 规则闭环原型",
   "summary": "首期闭环覆盖现状设备 / 云端 / 耗材触发、English + 多语言 KV 快速导入，以及 each / discard 投递模式。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

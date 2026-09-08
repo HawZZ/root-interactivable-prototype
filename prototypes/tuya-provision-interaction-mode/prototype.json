@@ -4,6 +4,7 @@
   "title": "涂鸦云配网交互方式配置原型",
   "summary": "所属平台为涂鸦云时补充配网交互方式，覆盖 TUYA_UI_PACKAGE、TUYA_API_BLE_WIFI、创建/编辑抽屉和通讯方式校验。",
   "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"

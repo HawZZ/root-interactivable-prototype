@@ -8,6 +8,7 @@ const els = {
   seriesTotal: document.querySelector("#seriesTotal"),
   search: document.querySelector("#searchInput"),
   productLines: document.querySelector("#productLines"),
+  businessArea: document.querySelector("#businessAreaFilter"),
   surface: document.querySelector("#surfaceFilter"),
   system: document.querySelector("#systemFilter"),
   status: document.querySelector("#statusFilter"),
@@ -31,6 +32,7 @@ const params = new URLSearchParams(location.search);
 const state = {
   query: params.get("q") || "",
   productLine: params.get("productLine") || "all",
+  businessArea: params.get("businessArea") || "all",
   surface: params.get("surface") || "all",
   system: params.get("system") || "all",
   status: params.get("status") || "all",
@@ -92,6 +94,7 @@ function seriesSearchText(group) {
     entry.title,
     entry.summary,
     entry.productLine,
+    entry.businessArea,
     entry.surface,
     entry.systems.join(" "),
     entry.seriesId,
@@ -106,6 +109,7 @@ function syncUrl() {
   const next = new URLSearchParams();
   if (state.query) next.set("q", state.query);
   if (state.productLine !== "all") next.set("productLine", state.productLine);
+  if (state.businessArea !== "all") next.set("businessArea", state.businessArea);
   if (state.surface !== "all") next.set("surface", state.surface);
   if (state.system !== "all") next.set("system", state.system);
   if (state.status !== "all") next.set("status", state.status);
@@ -155,6 +159,7 @@ function getFilteredSeries() {
     if (state.view === "recent" && !hasRecent) return false;
     if (query && !seriesSearchText(group).includes(query)) return false;
     if (state.productLine !== "all" && !group.versions.some((entry) => entry.productLine === state.productLine)) return false;
+    if (state.businessArea !== "all" && !group.versions.some((entry) => entry.businessArea === state.businessArea)) return false;
     if (state.surface !== "all" && !group.versions.some((entry) => entry.surface === state.surface)) return false;
     if (state.system !== "all" && !group.versions.some((entry) => entry.systems.includes(state.system))) return false;
     if (state.status !== "all" && latest.status !== state.status) return false;
@@ -233,7 +238,11 @@ function cardMarkup(group) {
         <div class="preview-frame">${previewMarkup(latest)}</div>
         <div class="card-content">
           <div class="card-topline">
-            <div class="badges"><span class="badge">${escapeHtml(latest.productLine)}</span>${badgeMarkup(latest)}</div>
+            <div class="badges">
+              <span class="badge">${escapeHtml(latest.productLine)}</span>
+              <span class="badge business-area">业务域 · ${escapeHtml(latest.businessArea)}</span>
+              ${badgeMarkup(latest)}
+            </div>
             <button class="favorite-button" type="button" data-action="favorite" aria-pressed="${isFavorite}" aria-label="${isFavorite ? "取消收藏" : "收藏"}${escapeHtml(latest.title)}">
               ${isFavorite ? "已收藏" : "收藏"}
             </button>
@@ -262,6 +271,7 @@ function render() {
   syncUrl();
   renderProductLines();
   els.search.value = state.query;
+  els.businessArea.value = state.businessArea;
   els.surface.value = state.surface;
   els.system.value = state.system;
   els.status.value = state.status;
@@ -276,12 +286,13 @@ function render() {
 }
 
 function clearFilters() {
-  Object.assign(state, { query: "", productLine: "all", surface: "all", system: "all", status: "all", sort: "updated-desc", view: "all" });
+  Object.assign(state, { query: "", productLine: "all", businessArea: "all", surface: "all", system: "all", status: "all", sort: "updated-desc", view: "all" });
   render();
 }
 
 function bindEvents() {
   els.search.addEventListener("input", () => { state.query = els.search.value.trim(); render(); });
+  els.businessArea.addEventListener("change", () => { state.businessArea = els.businessArea.value; render(); });
   els.surface.addEventListener("change", () => { state.surface = els.surface.value; render(); });
   els.system.addEventListener("change", () => { state.system = els.system.value; render(); });
   els.status.addEventListener("change", () => { state.status = els.status.value; render(); });
@@ -342,6 +353,9 @@ async function init() {
     const systems = [...new Set(catalog.entries.flatMap((entry) => entry.systems))]
       .sort((a, b) => collator.compare(systemLabels[a] || a, systemLabels[b] || b));
     els.system.insertAdjacentHTML("beforeend", systems.map((system) => `<option value="${escapeHtml(system)}">${escapeHtml(systemLabels[system] || system)}</option>`).join(""));
+    const businessAreas = [...new Set(catalog.entries.map((entry) => entry.businessArea))]
+      .sort((a, b) => collator.compare(a, b));
+    els.businessArea.insertAdjacentHTML("beforeend", businessAreas.map((businessArea) => `<option value="${escapeHtml(businessArea)}">${escapeHtml(businessArea)}</option>`).join(""));
     bindEvents();
     render();
   } catch (error) {

@@ -3,7 +3,8 @@
   "path": "/prototypes/official-rhythm-ceres-sync/",
   "title": "官方韵律 Ceres 同步",
   "summary": "IoT Admin 产品详情 > 高级配置 > 官方韵律，承接 Ceres 同步来源。",
-  "productLine": "AIoT Platform",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
   "surface": "web",
   "systems": [
     "web"

@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   buildMetadata,
   createCatalog,
+  inferBusinessArea,
   inferProductLine,
   inferSeriesVersion,
   inferSurface,
@@ -34,6 +35,10 @@ test("infers APP and product-line metadata without treating platform as the prim
   const surface = inferSurface({ slug: "device-sharing", title: "设备共享原型", kicker: "APP · V1.0", html: "" });
   assert.equal(surface, "app");
   assert.equal(inferProductLine({ kicker: "APP · V1.0", title: "设备共享原型", search: "", surface }), "Momcozy APP");
+  assert.equal(inferProductLine({ kicker: "AIoT Platform", title: "语义配置", search: "", surface: "web" }), "IoT Admin");
+  assert.equal(inferProductLine({ kicker: "配置中心", title: "音源管理", search: "", surface: "web" }), "IoT Admin");
+  assert.equal(inferBusinessArea({ productLine: "AIoT Platform", surface: "web" }), "AIoT Platform");
+  assert.equal(inferBusinessArea({ productLine: "配置中心", surface: "web" }), "配置中心");
   assert.equal(inferSurface({ slug: "iot-admin-audit-log", title: "审计日志", kicker: "IoT Admin", html: "" }), "web");
   assert.equal(inferSurface({ slug: "work-order-management", title: "工单管理", kicker: "IoT Admin", html: "" }), "web");
 });
@@ -68,4 +73,11 @@ test("preserves every route present at the September 8, 2026 migration baseline"
   const deviceAssistant = catalog.series.find((group) => group.seriesId === "device-assistant-cloud-config");
   assert.deepEqual(deviceAssistant.versions.map((entry) => entry.version), ["v3", "v2", "v1"]);
   assert.equal(catalog.entries.find((entry) => entry.id === "device-sharing").surface, "app");
+  const webEntries = catalog.entries.filter((entry) => entry.surface === "web");
+  assert.equal(webEntries.length, 23);
+  assert.ok(webEntries.every((entry) => entry.productLine === "IoT Admin"));
+  assert.deepEqual(
+    [...new Set(webEntries.map((entry) => entry.businessArea))].sort(),
+    ["AIoT Platform", "IoT Admin", "配置中心"].sort()
+  );
 });

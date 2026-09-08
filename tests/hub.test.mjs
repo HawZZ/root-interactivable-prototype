@@ -32,8 +32,14 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
 
     await page.locator("#resetFilters").click();
     await page.locator('[data-product-line="IoT Admin"]').click();
-    assert.ok(await page.locator(".prototype-card").count() > 1);
+    assert.equal(await page.locator(".prototype-card").count(), 19);
     assert.match(page.url(), /productLine=IoT\+Admin/);
+    assert.equal(await page.locator("#productLines button").count(), 3);
+
+    await page.locator("#businessAreaFilter").selectOption("AIoT Platform");
+    assert.equal(await page.locator(".prototype-card").count(), 4);
+    assert.match(page.url(), /businessArea=AIoT\+Platform/);
+    assert.equal(await page.locator(".business-area").first().innerText(), "业务域 · AIoT Platform");
 
     await page.locator("#resetFilters").click();
     await page.locator("#searchInput").fill("device-assistant-cloud-config");
