@@ -21,7 +21,7 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
     await page.goto(`${server.origin}${BASE_PATH}/`, { waitUntil: "networkidle" });
     await page.locator(".prototype-card").first().waitFor({ state: "visible" });
     assert.equal(await page.locator("#entryTotal").innerText(), "24");
-    assert.equal(await page.locator("#seriesTotal").innerText(), "20");
+    assert.equal(await page.locator("#seriesTotal").innerText(), "19");
     assert.equal(await page.getByText("undefined", { exact: true }).count(), 0);
     assert.ok(await page.locator(".preview-frame img").count() > 0);
 
@@ -32,14 +32,20 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
 
     await page.locator("#resetFilters").click();
     await page.locator('[data-product-line="IoT Admin"]').click();
-    assert.equal(await page.locator(".prototype-card").count(), 19);
+    assert.equal(await page.locator(".prototype-card").count(), 18);
     assert.match(page.url(), /productLine=IoT\+Admin/);
     assert.equal(await page.locator("#productLines button").count(), 3);
 
     await page.locator("#businessAreaFilter").selectOption("AIoT Platform");
-    assert.equal(await page.locator(".prototype-card").count(), 4);
+    assert.equal(await page.locator(".prototype-card").count(), 3);
     assert.match(page.url(), /businessArea=AIoT\+Platform/);
     assert.equal(await page.locator(".business-area").first().innerText(), "业务域 · AIoT Platform");
+
+    await page.locator("#searchInput").fill("Alexa Product Profile");
+    const semanticCard = page.locator('[data-series-id="alexa-product-profile-workbench"]');
+    assert.equal(await semanticCard.count(), 1);
+    await semanticCard.locator('[data-action="versions"]').click();
+    assert.deepEqual(await semanticCard.locator(".version-code").allInnerTexts(), ["v2", "v1"]);
 
     await page.locator("#resetFilters").click();
     await page.locator("#searchInput").fill("device-assistant-cloud-config");

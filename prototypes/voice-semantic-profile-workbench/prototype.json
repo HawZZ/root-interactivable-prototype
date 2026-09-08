@@ -9,7 +9,7 @@
   "systems": [
     "web"
   ],
-  "seriesId": "voice-semantic-profile-workbench",
+  "seriesId": "alexa-product-profile-workbench",
   "version": "v2",
   "status": "active",
   "tags": [

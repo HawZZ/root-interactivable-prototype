@@ -72,6 +72,9 @@ test("preserves every route present at the September 8, 2026 migration baseline"
   const catalog = createCatalog(entries);
   const deviceAssistant = catalog.series.find((group) => group.seriesId === "device-assistant-cloud-config");
   assert.deepEqual(deviceAssistant.versions.map((entry) => entry.version), ["v3", "v2", "v1"]);
+  const semanticConfig = catalog.series.find((group) => group.seriesId === "alexa-product-profile-workbench");
+  assert.deepEqual(semanticConfig.versions.map((entry) => entry.version), ["v2", "v1"]);
+  assert.equal(semanticConfig.latestId, "voice-semantic-profile-workbench");
   assert.equal(catalog.entries.find((entry) => entry.id === "device-sharing").surface, "app");
   const webEntries = catalog.entries.filter((entry) => entry.surface === "web");
   assert.equal(webEntries.length, 23);
