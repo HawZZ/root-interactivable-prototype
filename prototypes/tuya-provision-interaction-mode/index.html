@@ -1308,14 +1308,18 @@
                     <div class="form-label required">
                       <span class="info-dot has-tooltip" tabindex="0" aria-describedby="interactionTypeTooltip">!
                         <span class="field-tooltip" id="interactionTypeTooltip" role="tooltip">
-                          <span class="tooltip-title">两种配网交互方式的差异</span>
+                          <span class="tooltip-title">三种配网交互方式的差异</span>
                           <span class="tooltip-option">
                             <span class="tooltip-option-code">TUYA_UI_PACKAGE</span>
-                            <span class="tooltip-option-copy">使用涂鸦 UI 包，由涂鸦提供主要配网页面并编排配网流程。适用于现有涂鸦 UI 包产品。</span>
+                            <span class="tooltip-option-copy">使用涂鸦 UI Kit，由涂鸦提供主要配网页面并编排配网流程。适用于现有涂鸦 UI Kit 产品。</span>
                           </span>
                           <span class="tooltip-option">
                             <span class="tooltip-option-code">TUYA_API_BLE_WIFI</span>
                             <span class="tooltip-option-copy">使用 Momcozy APP 自研页面，APP 调用涂鸦 SDK API 自行编排 BLE + Wi-Fi 配网流程。适用于 BM04S 等 API 自编排产品。</span>
+                          </span>
+                          <span class="tooltip-option">
+                            <span class="tooltip-option-code">TUYA_API_WIFI</span>
+                            <span class="tooltip-option-copy">使用 Momcozy APP 自研页面，APP 调用涂鸦 SDK API 自行编排纯 Wi-Fi 配网流程，不要求 BLE。</span>
                           </span>
                           <span class="tooltip-note">选择原则：按照 APP 实际接入和流程编排方式选择；该字段不表示 Wi-Fi 列表来源。</span>
                         </span>
@@ -1326,7 +1330,7 @@
                         <button type="button" class="select-trigger placeholder" id="interactionTrigger">请选择</button>
                         <div class="select-menu" id="interactionMenu"></div>
                       </div>
-                      <div class="helper-text" id="interactionHelp">涂鸦云下用于区分 UI 包配网与 API 自编排配网</div>
+                      <div class="helper-text" id="interactionHelp">涂鸦云下用于区分 UI Kit、BLE+Wi-Fi API 与纯 Wi-Fi API</div>
                     </div>
                   </div>
                 </div>
@@ -1444,6 +1448,7 @@
           <button type="button" data-scenario="current">现状</button>
           <button type="button" class="active" data-scenario="target">目标</button>
           <button type="button" data-scenario="validation">校验</button>
+          <button type="button" data-scenario="wifi">纯 Wi-Fi</button>
         </div>
         <div class="scenario-summary" id="scenarioSummary"></div>
       </div>
@@ -1473,8 +1478,9 @@
         { value: "CONNECT_F0_F7", label: "CONNECT_F0_F7（配网过程发送两个指令，支持三元组）" }
       ],
       tuya: [
-        { value: "TUYA_UI_PACKAGE", label: "涂鸦 UI 包配网", code: "TUYA_UI_PACKAGE" },
-        { value: "TUYA_API_BLE_WIFI", label: "涂鸦 API BLE+Wi-Fi 配网", code: "TUYA_API_BLE_WIFI" }
+        { value: "TUYA_UI_PACKAGE", label: "涂鸦 UI Kit", code: "TUYA_UI_PACKAGE" },
+        { value: "TUYA_API_BLE_WIFI", label: "涂鸦 API for BLE+Wi-Fi", code: "TUYA_API_BLE_WIFI" },
+        { value: "TUYA_API_WIFI", label: "涂鸦 API for Wi-Fi", code: "TUYA_API_WIFI" }
       ],
       meari: []
     };
@@ -1482,7 +1488,8 @@
     const scenarioCopy = {
       current: "还原现状：创建/编辑均由右侧抽屉承载；选择涂鸦云后，配网交互方式整行隐藏。",
       target: "目标方案：沿用创建/编辑抽屉，仅在原位置插入一行配网交互方式，其他结构不改。",
-      validation: "校验状态：演示 TUYA_API_BLE_WIFI 与通讯方式不匹配时的字段级拦截。"
+      validation: "校验状态：演示 TUYA_API_BLE_WIFI 与通讯方式不匹配时的字段级拦截。",
+      wifi: "纯 Wi-Fi 状态：演示 TUYA_API_WIFI 可用于 WIFI 产品，不额外要求 BLE。"
     };
 
     const listAnnotations = [
@@ -1530,7 +1537,7 @@
           title: "现状问题",
           location: "关联位置：确定按钮",
           target: "#footerTarget",
-          body: ["<strong>结果：</strong>平台无法为涂鸦产品配置 UI 包或 API 自编排模式。", "<strong>需求起点：</strong>必须先开放字段显示，再谈两个新枚举。"]
+          body: ["<strong>结果：</strong>平台无法为涂鸦产品配置 UI Kit、BLE+Wi-Fi API 或纯 Wi-Fi API 模式。", "<strong>需求起点：</strong>必须先开放字段显示，再提供三个明确枚举。"]
         }
       ],
       target: [
@@ -1550,7 +1557,7 @@
           title: "通讯方式约束",
           location: "关联位置：通讯方式",
           target: "#communicationTarget",
-          body: ["<strong>规则：</strong>TUYA_API_BLE_WIFI 要求通讯方式为 WIFI+BLE。", "<strong>TUYA_UI_PACKAGE：</strong>不新增通讯方式限制。", "<strong>异常：</strong>不匹配时在交互方式字段下提示并阻止保存。"]
+          body: ["<strong>BLE+Wi-Fi：</strong>TUYA_API_BLE_WIFI 要求通讯方式为 WIFI+BLE。", "<strong>纯 Wi-Fi：</strong>TUYA_API_WIFI 要求通讯方式至少包含 WIFI，不要求 BLE。", "<strong>UI Kit：</strong>TUYA_UI_PACKAGE 不新增通讯方式限制。", "<strong>异常：</strong>不匹配时在交互方式字段下提示并阻止保存。"]
         },
         {
           title: "新增表单行",
@@ -1562,7 +1569,7 @@
           title: "涂鸦枚举",
           location: "关联位置：配网交互方式提示图标与下拉框",
           target: ".info-dot.has-tooltip",
-          body: ["<strong>TUYA_UI_PACKAGE：</strong>使用涂鸦 UI 包，由涂鸦提供主要页面并编排流程。", "<strong>TUYA_API_BLE_WIFI：</strong>使用 APP 自研页面，由 APP 调用涂鸦 API 编排 BLE+Wi-Fi 流程。", "<strong>Tips：</strong>悬浮或聚焦字段标签旁的信息图标查看差异及选择原则。", "<strong>隔离：</strong>不展示 ROOT 的 CONNECT_*。"]
+          body: ["<strong>TUYA_UI_PACKAGE：</strong>展示为涂鸦 UI Kit，由涂鸦提供主要页面并编排流程。", "<strong>TUYA_API_BLE_WIFI：</strong>使用 APP 自研页面，由 APP 调用涂鸦 API 编排 BLE+Wi-Fi 流程。", "<strong>TUYA_API_WIFI：</strong>使用 APP 自研页面，由 APP 调用涂鸦 API 编排纯 Wi-Fi 流程。", "<strong>Tips：</strong>悬浮或聚焦字段标签旁的信息图标查看差异及选择原则。", "<strong>隔离：</strong>不展示 ROOT 的 CONNECT_*。"]
         },
         {
           title: "既有字段不联动",
@@ -1608,6 +1615,26 @@
           target: "#routeTarget",
           body: ["<strong>约束：</strong>校验失败不会重置路由方式、配网方式或其他已填写内容。", "<strong>不处理：</strong>APP SDK 错误、绑定查询超时和 Wi-Fi 扫描失败不属于平台表单。"]
         }
+      ],
+      wifi: [
+        {
+          title: "纯 Wi-Fi 配置",
+          location: "关联位置：通讯方式与配网交互方式",
+          target: "#communicationTarget",
+          body: ["<strong>通讯方式：</strong>WIFI。", "<strong>交互方式：</strong>TUYA_API_WIFI。", "<strong>结果：</strong>能力匹配，可通过保存校验，不额外要求 BLE。"]
+        },
+        {
+          title: "纯 Wi-Fi API 枚举",
+          location: "关联位置：配网交互方式",
+          target: "#interactionControl",
+          body: ["<strong>展示文案：</strong>涂鸦 API for Wi-Fi。", "<strong>后端值：</strong>TUYA_API_WIFI。", "<strong>边界：</strong>只定义 API 编排能力，不表示 Wi-Fi 列表来源。"]
+        },
+        {
+          title: "保存规则",
+          location: "关联位置：抽屉底部操作区",
+          target: "#footerTarget",
+          body: ["<strong>WIFI / WIFI+BLE：</strong>允许保存 TUYA_API_WIFI。", "<strong>BLE-only：</strong>阻止保存并提示通讯方式至少支持 Wi-Fi。", "<strong>不联动：</strong>不修改配网方式、路由方式或原子化配网。"]
+        }
       ]
     };
 
@@ -1629,7 +1656,7 @@
           title: "跨平台枚举隔离",
           location: "关联位置：配网交互方式下拉框",
           target: "#interactionControl",
-          body: ["<strong>约束：</strong>ROOT 云不出现 TUYA_UI_PACKAGE 或 TUYA_API_BLE_WIFI。", "<strong>页面改动：</strong>无。"]
+          body: ["<strong>约束：</strong>ROOT 云不出现 TUYA_UI_PACKAGE、TUYA_API_BLE_WIFI 或 TUYA_API_WIFI。", "<strong>页面改动：</strong>无。"]
         }
       ],
       meari: [
@@ -1643,7 +1670,7 @@
           title: "不显示涂鸦枚举",
           location: "关联位置：原子化配网之后",
           target: "#routeTarget",
-          body: ["<strong>约束：</strong>觅睿云下不出现两个 TUYA_* 值。", "<strong>页面结构：</strong>不因本需求新增表单行。"]
+          body: ["<strong>约束：</strong>觅睿云下不出现三个 TUYA_* 值。", "<strong>页面结构：</strong>不因本需求新增表单行。"]
         }
       ]
     };
@@ -1784,11 +1811,18 @@
         return false;
       }
 
+      if (state.platform === "tuya" && state.interaction === "TUYA_API_WIFI" && !state.communication.includes("WIFI")) {
+        control.classList.add("is-error");
+        help.className = "error-text";
+        help.textContent = "该配网交互方式要求通讯方式至少支持 Wi-Fi";
+        return false;
+      }
+
       help.textContent = state.drawerMode === "edit"
         ? "产品上架后不可修改"
         : state.platform === "root"
           ? "ROOT 云沿用现有 CONNECT_* 枚举"
-          : "涂鸦云下用于区分 UI 包配网与 API 自编排配网";
+          : "涂鸦云下用于区分 UI Kit、BLE+Wi-Fi API 与纯 Wi-Fi API";
       return true;
     }
 
@@ -1801,6 +1835,9 @@
       if (nextScenario === "validation") {
         state.communication = "BLE";
         state.interaction = "TUYA_API_BLE_WIFI";
+      } else if (nextScenario === "wifi") {
+        state.communication = "WIFI";
+        state.interaction = "TUYA_API_WIFI";
       } else if (state.drawerMode === "edit") {
         state.communication = "WIFI+BLE";
         state.interaction = "TUYA_API_BLE_WIFI";
