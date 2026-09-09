@@ -958,24 +958,25 @@
     }
     tickets.push(manualSuccess, manualMismatch);
     for (const [suffix, source, lookup] of [
-      ["031", "MANUAL", { authorized: true, unique: true, deviceId: "demo-31", bound: true }],
-      ["032", "IMAGE", { authorized: true, unique: true, deviceId: "demo-32", bound: false }],
-      ["033", "MANUAL", { authorized: true, confirmedAbsent: true, mappingVerified: true, regionVerified: true }],
-      ["034", "IMAGE", { error: "设备映射不唯一" }]
+      ["031", "MANUAL", { authorized: true, deviceId: "demo-31", bound: true }],
+      ["032", "IMAGE", { authorized: true, deviceId: "demo-32", bound: false }],
+      ["033", "MANUAL", { authorized: true, confirmedAbsent: true, regionVerified: true }],
+      ["034", "IMAGE", { authorized: true, transient: true, error: "涂鸦设备查询超时" }]
     ]) {
       const selectedSn = "BM04S2409A00" + suffix;
       const validation = WorkOrderWorkflow.validateSn(null, source === "MANUAL" ? selectedSn : null, { valid: true, sn: selectedSn });
       const route = WorkOrderWorkflow.routeLookup(lookup);
       const completed = ["COMPLETE", "UNBIND"].includes(route.action);
+      const retrying = route.action === "RETRY";
       const ticket = { ...manualSuccess, id: "TY202609090" + suffix, fullSn: "", sn: selectedSn,
         manualSn: source === "MANUAL" ? selectedSn : null, selectedSn, snSource: source,
         recognitionStatus: validation.recognitionStatus, recognizedSn: source === "IMAGE" ? selectedSn : null,
         confidence: source === "IMAGE" ? "98.1%" : null, matchResult: "SKIPPED",
-        status: completed ? "COMPLETED" : route.action === "REJECT" ? "REJECTED" : "FAILED",
-        stage: completed ? "COMPLETED" : route.action === "REJECT" ? "REJECTED_NOT_FOUND" : "FAILED_TECHNICAL",
-        binding: completed ? "已解绑" : "未确认", tuyaId: lookup.deviceId || "--",
-        lookupSummary: route.action === "COMPLETE" ? "设备存在，查询确认未绑定，无需调用解绑" : route.action === "UNBIND" ? "设备存在且绑定，已调用解绑并查询确认未绑定" : route.action === "REJECT" ? "已排除权限、数据区和映射异常，确认设备不存在" : "设备映射不唯一，未执行解绑",
-        autoDecision: completed ? "处理完成" : route.action === "REJECT" ? "自动驳回" : "处理失败",
+        status: completed ? "COMPLETED" : route.action === "REJECT" ? "REJECTED" : retrying ? "PROCESSING" : "FAILED",
+        stage: completed ? "COMPLETED" : route.action === "REJECT" ? "REJECTED_NOT_FOUND" : retrying ? "COMPENSATING" : "FAILED_TECHNICAL",
+        binding: completed ? "已解绑" : retrying ? "查询未完成" : "未确认", tuyaId: lookup.deviceId || "--",
+        lookupSummary: route.action === "COMPLETE" ? "设备存在，查询确认未绑定，无需调用解绑" : route.action === "UNBIND" ? "设备存在且绑定，已调用解绑并查询确认未绑定" : route.action === "REJECT" ? "已排除权限和数据区异常，确认设备不存在" : retrying ? "设备查询超时，正在自动重试" : "设备查询异常，未执行解绑",
+        autoDecision: completed ? "处理完成" : route.action === "REJECT" ? "自动驳回" : retrying ? "自动重试中" : "处理失败",
         error: lookup.error || "--", rejectReason: route.action === "REJECT" ? "未找到该 SN 对应的设备" : "",
         attemptCount: route.action === "UNBIND" ? "1" : "0", tuyaSuccess: route.action === "UNBIND" ? "true" : "--", tuyaResult: route.action === "UNBIND" ? "true" : "--",
         httpStatus: route.action === "UNBIND" ? "200" : "--", executionStatus: route.action === "UNBIND" ? "SUCCEEDED" : "NOT_STARTED",
@@ -1018,7 +1019,7 @@
         { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
       ],
       drawer: [
-        { target: "recognitionTarget", title: "缺少 APP SN 的回退分支", location: "关联位置：详情 > 识别与比对", body: ["<strong>选取：</strong>APP SN 未提供、null 或空白时允许受理，优先手动 SN，否则图片识别。手动查询失败不切换图片。", "<strong>展示：</strong>APP SN 显示未提供，SN 比对不适用；本次使用 SN 和来源独立保存。手动分支识别已跳过、置信度不适用。", "<strong>查询：</strong>唯一设备存在且绑定才调用解绑，已未绑定直接完成。确认不存在返回 UNBIND_DEVICE_NOT_FOUND；权限、映射、数据区和查询异常不作为不存在。", "<strong>处理权：</strong>定位后按稳定设备 ID 复用活跃工单，跨来源互斥。SN 查询能力由技术确认，APP 不接收原绑定账号。"] },
+        { target: "recognitionTarget", title: "缺少 APP SN 的回退分支", location: "关联位置：详情 > 识别与比对", body: ["<strong>选取：</strong>APP SN 未提供、null 或空白时允许受理，优先手动 SN，否则图片识别。手动查询失败不切换图片。", "<strong>展示：</strong>APP SN 显示未提供，SN 比对不适用；本次使用 SN 和来源独立保存。手动分支识别已跳过、置信度不适用。", "<strong>查询：</strong>SN 查询的业务结果仅有查到唯一设备和确认查不到设备。查到后按绑定状态处理；确认查不到返回 UNBIND_DEVICE_NOT_FOUND。超时、权限、数据区或接口异常属于查询未完成。", "<strong>处理权：</strong>定位后按稳定设备 ID 复用活跃工单，跨来源互斥。SN 查询能力由技术确认，APP 不接收原绑定账号。"] },
         { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>状态：</strong>Header 与列表一致，只展示一个公共状态标签；当前处理阶段放在申请信息中。", "<strong>结构：</strong>公共申请信息、照片、设备关联、识别与比对、自动处理记录和终态通知。"] },
         { target: "applicationTarget", title: "公共申请信息", location: "关联位置：详情抽屉 > 申请信息", body: ["<strong>系统携带：</strong>工单编号、工单类型、申请用户、申请 App、提交时间等基本信息，其中申请 App 示例值为 momcozy。", "<strong>用户录入：</strong>设备照片、申请原因、联系方式和可选 manualSn。deviceSn 由 APP 自动采集，两者独立保存。", "<strong>联系方式：</strong>处理人员联系申请人所必需，ERP 角色授予工单管理读写权限，详情展示完整值；列表不展示。原型号码均为虚构示例。"] },
         { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },

@@ -28,8 +28,9 @@
     return { method: "IMAGE", recognitionStatus: "SUCCEEDED", selectedSn: normalize(recognition.sn), snSource: "IMAGE", comparisonSkipped: !hasDeviceSn, matched, errorCode: !hasDeviceSn || matched ? null : "UNBIND_SN_MISMATCH" };
   }
   function routeLookup(result) {
-    if (result.authorized === true && result.confirmedAbsent === true && result.mappingVerified === true && result.regionVerified === true && !result.error) return { action: "REJECT", errorCode: "UNBIND_DEVICE_NOT_FOUND" };
-    if (result.error || result.authorized !== true || result.unique !== true || !result.deviceId) return { action: result.transient ? "RETRY" : "FAIL", errorCode: result.transient ? null : "WORK_ORDER_PROCESSING_FAILED" };
+    if (result.error || result.authorized !== true || result.regionVerified === false) return { action: result.transient ? "RETRY" : "FAIL", errorCode: result.transient ? null : "WORK_ORDER_PROCESSING_FAILED" };
+    if (result.confirmedAbsent === true) return { action: "REJECT", errorCode: "UNBIND_DEVICE_NOT_FOUND" };
+    if (!result.deviceId) return { action: "FAIL", errorCode: "WORK_ORDER_PROCESSING_FAILED" };
     if (result.bound === false) return { action: "COMPLETE", errorCode: "NONE" };
     if (result.bound === true) return { action: "UNBIND", errorCode: null };
     return { action: "FAIL", errorCode: "WORK_ORDER_PROCESSING_FAILED" };
