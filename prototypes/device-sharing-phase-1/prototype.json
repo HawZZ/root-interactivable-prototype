@@ -1,0 +1,25 @@
+{
+  "id": "device-sharing-phase-1",
+  "path": "/prototypes/device-sharing-phase-1/",
+  "title": "设备共享一期 · 配网后引导（已上线）",
+  "summary": "归档已上线的配网后设备共享引导，后续共享页面仅作上下文。",
+  "productLine": "Momcozy APP",
+  "businessArea": "Momcozy APP",
+  "surface": "app",
+  "systems": [
+    "mobile-common"
+  ],
+  "seriesId": "device-sharing-phase-1",
+  "version": "v1.0",
+  "status": "active",
+  "tags": [
+    "设备共享",
+    "1期",
+    "已上线"
+  ],
+  "updatedAt": "2026-09-10T03:51:17.586Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

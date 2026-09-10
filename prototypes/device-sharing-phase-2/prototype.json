@@ -1,0 +1,25 @@
+{
+  "id": "device-sharing-phase-2",
+  "path": "/prototypes/device-sharing-phase-2/",
+  "title": "设备共享二期 · 已注册用户共享",
+  "summary": "仅向已注册账号共享，覆盖地区输入、授权确认、通知、权限与取消退出；PRD 含原文变更对照。",
+  "productLine": "Momcozy APP",
+  "businessArea": "Momcozy APP",
+  "surface": "app",
+  "systems": [
+    "mobile-common"
+  ],
+  "seriesId": "device-sharing-phase-2",
+  "version": "v1.0",
+  "status": "draft",
+  "tags": [
+    "设备共享",
+    "2期",
+    "已注册用户"
+  ],
+  "updatedAt": "2026-09-10T03:51:18.330Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

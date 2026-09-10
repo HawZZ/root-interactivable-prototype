@@ -1,0 +1,25 @@
+{
+  "id": "device-sharing-phase-3",
+  "path": "/prototypes/device-sharing-phase-3/",
+  "title": "设备共享三期 · 未注册邀请草案",
+  "summary": "面向自研、涂鸦 SDK、觅睿 SDK 设备的未注册邀请能力草案，待技术验证。",
+  "productLine": "Momcozy APP",
+  "businessArea": "Momcozy APP",
+  "surface": "app",
+  "systems": [
+    "mobile-common"
+  ],
+  "seriesId": "device-sharing-phase-3",
+  "version": "v1.0",
+  "status": "draft",
+  "tags": [
+    "设备共享",
+    "3期",
+    "能力草案"
+  ],
+  "updatedAt": "2026-09-10T03:51:19.125Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
