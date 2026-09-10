@@ -285,7 +285,7 @@ P2-AC-01～13 保留原编号并扩展必要子项；新增 P2-AC-14（Meari 决
 | P2-AC-13 | 从配网后引导进入添加共享 | 仅一期已上线入口上下文，带入当前设备并衔接二期规则，不重新列为二期新增 | [一期入口上下文](https://hawzz.github.io/root-interactivable-prototype/prototypes/device-sharing-phase-2/?page=network-setup) |
 | P2-AC-14 | Meari 有效邀请，前台 SDK 事件或系统通知/邮件进入 APP；接受/拒绝/失败/未知组合 | 强制二选一，无关闭/遮罩/Escape/返回；退出不等于拒绝；接受经云端+SDK 核验后先导航设备页再弹下一条，实际成功日计额度并关联原操作；拒绝成功停留底层页、释放待接受；失败保留弹窗重试，未知查询终态 | [邀请决策](https://hawzz.github.io/root-interactivable-prototype/prototypes/device-sharing-phase-2/?page=meari-invitation)、[接受后的设备页](https://hawzz.github.io/root-interactivable-prototype/prototypes/device-sharing-phase-2/?page=recipient-device) |
 | P2-AC-15 | 登录/启动/前台恢复，重复与多邀请，低版本升级，创建满暂定 7 天及旧通知/并发 | 有效邀请去重排队；升级后恢复；待接受占额且不可撤回，重复不续期，拒绝/过期可重发；过期自动移除待处理项并释放名额而不删审计，阻断陈旧操作；自研/Tuya 已建联不受邀请期限影响；SDK/7 天待技术确认 | [邀请恢复与生命周期](https://hawzz.github.io/root-interactivable-prototype/prototypes/device-sharing-phase-2/?page=meari-invitation) |
-| P2-AC-16 | 以去重请求、关系事实和月末设备快照构造跨月样本；加入提交失败、确认取消、重复重试、Meari 次月接受；核对客诉基线 | 共享发起成功率仅以实际提交去重请求为分母，取消不计；Meari 成功回补原请求月份且接受不增分母；月末共享率分子/分母按设备去重；6/7 月客诉基线 12 条/月，目标 ≤4.8 条/月，8 月不完整数据不纳入基线；上线数据留空且结论待验证 | [指标采集表（发布后补链）](https://momcozy-in.feishu.cn/) |
+| P2-AC-16 | 以去重请求、关系事实和月末设备快照构造跨月样本；加入提交失败、确认取消、重复重试、Meari 次月接受；核对客诉基线 | 共享发起成功率仅以实际提交去重请求为分母，取消不计；Meari 成功回补原请求月份且接受不增分母；月末共享率分子/分母按设备去重；6/7 月客诉基线 12 条/月，目标 ≤4.8 条/月，8 月不完整数据不纳入基线；上线数据留空且结论待验证 | [设备共享二期埋点需求表](https://momcozy-in.feishu.cn/sheets/WYD3sgmmRhFjxBtLXbycyU8bnEc) |
 
 全页需验证中英文、失败提示与实际状态一致，通讯录/扫码旧演示不进入二期。Rev.3356 明确配网来源提交成功进入 Device Tab；具体导航按来源保留，不能统一改回管理列表而遗漏原文路径。
 
@@ -315,7 +315,7 @@ P2-AC-01～13 保留原编号并扩展必要子项；新增 P2-AC-14（Meari 决
 
 ## 10. APP / SDK 与后台指标采集
 
-详细需求：设备共享二期埋点需求表（飞书电子表格，发布完成后在此回填正式链接）。历史文档 [设备共享二期 APP 埋点需求单](https://momcozy-in.feishu.cn/docx/REe5dbgBvoSejbxH7OxcOG7WnUh) 仅保留迁移说明与历史正文。
+详细需求：[设备共享二期埋点需求表（飞书电子表格）](https://momcozy-in.feishu.cn/sheets/WYD3sgmmRhFjxBtLXbycyU8bnEc)。历史文档 [设备共享二期 APP 埋点需求单](https://momcozy-in.feishu.cn/docx/REe5dbgBvoSejbxH7OxcOG7WnUh) 仅保留迁移说明与历史正文。
 
 本次采集仅服务于第 3 章可由 APP/SDK 与后台计算的两项指标：**共享发起成功率 ≥80%**和**设备共享率相对基准提升 ≥20%**。登录异常客诉降低由客服业务数据核验，不纳入 APP 埋点；组件复用率、接入/开发效率提升不进入本版指标。
 
