@@ -2,7 +2,7 @@
   "id": "device-sharing-phase-2",
   "path": "/prototypes/device-sharing-phase-2/",
   "title": "设备共享二期 · 已注册用户共享",
-  "summary": "仅向已注册账号共享，覆盖地区输入、授权确认、通知、权限与取消退出；PRD 含原文变更对照。",
+  "summary": "所有厂商指定APP已注册账号；自研、涂鸦直接建联，仅觅睿接受或拒绝邀请，覆盖待接受额度、过期和恢复。",
   "productLine": "Momcozy APP",
   "businessArea": "Momcozy APP",
   "surface": "app",
