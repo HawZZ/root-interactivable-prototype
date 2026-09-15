@@ -2,7 +2,7 @@
   "id": "work-order-management",
   "path": "/prototypes/work-order-management/",
   "title": "工单管理一期（解绑工单）",
-  "summary": "通用工单入口与公共状态模型，本期覆盖 APP 申请、平台驳回或解绑、同步调用涂鸦及结果通知。",
+  "summary": "通用工单入口与公共状态模型，本期覆盖 APP 侧图片识别、平台按手动优先校验 SN、自动调用涂鸦解绑及终态通知。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
