@@ -2,7 +2,7 @@
   "id": "device-sharing-phase-3",
   "path": "/prototypes/device-sharing-phase-3/",
   "title": "设备共享三期 · 未注册用户共享",
-  "summary": "自研与 Tuya 支持未注册账号邀请并在注册后直接建联；Meari 未注册账号阻断，主动撤销能力待技术确认。",
+  "summary": "自研与 Tuya 支持未注册邀请并在注册后直接建联；Meari 未注册仅发送邮件或短信注册指引，主动撤销能力待技术确认。",
   "productLine": "Momcozy APP",
   "businessArea": "Momcozy APP",
   "surface": "app",
