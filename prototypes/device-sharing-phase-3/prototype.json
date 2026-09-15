@@ -1,8 +1,8 @@
 {
   "id": "device-sharing-phase-3",
   "path": "/prototypes/device-sharing-phase-3/",
-  "title": "设备共享三期 · 未注册邀请草案",
-  "summary": "面向自研、涂鸦 SDK、觅睿 SDK 设备的未注册邀请能力草案，待技术验证。",
+  "title": "设备共享三期 · 未注册用户共享",
+  "summary": "自研与 Tuya 支持未注册账号邀请并在注册后直接建联；Meari 未注册账号阻断，主动撤销能力待技术确认。",
   "productLine": "Momcozy APP",
   "businessArea": "Momcozy APP",
   "surface": "app",
@@ -15,7 +15,7 @@
   "tags": [
     "设备共享",
     "3期",
-    "能力草案"
+    "未注册用户"
   ],
   "updatedAt": "2026-09-10T03:53:00Z",
   "lastPublisher": "HawZZ",
