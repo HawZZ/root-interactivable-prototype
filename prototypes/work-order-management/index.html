@@ -1147,8 +1147,8 @@
       const matchLabels = { EMPTY: "未提供", IGNORED: "未参与（手动 SN 优先）", SKIPPED: "不适用（未携带 APP SN）", PENDING: "待比对", MATCHED: "匹配", MISMATCHED: "不匹配" };
       const lookupLabels = { UNBIND: "设备存在且已绑定", COMPLETE: "设备存在但已未绑定", REJECT: "确认设备不存在", RETRY: "查询异常，自动重试", FAIL: "查询失败，停止自动处理" };
       const sourceLabels = { MANUAL: "手动输入 SN", RECOGNIZED: "APP 识别 SN" };
-      const manualLookup = ticket.manualLookupResult ? lookupLabels[ticket.manualLookupResult] : ticket.selectedSnSource === "MANUAL" ? ticket.binding : ticket.manualSn ? "未查询（未选用）" : "未提供";
-      const recognizedLookup = ticket.recognizedLookupResult ? lookupLabels[ticket.recognizedLookupResult] : ticket.selectedSnSource === "RECOGNIZED" ? ticket.binding : ticket.recognizedSn ? "未查询（未选用）" : "未提供";
+      const manualLookup = ticket.manualLookupResult ? lookupLabels[ticket.manualLookupResult] : ticket.manualMatchResult === "MISMATCHED" ? "未查询（比对未通过）" : ticket.selectedSnSource === "MANUAL" ? ticket.binding : ticket.manualSn ? "未查询（未选用）" : "未提供";
+      const recognizedLookup = ticket.recognizedLookupResult ? lookupLabels[ticket.recognizedLookupResult] : ticket.recognizedMatchResult === "MISMATCHED" ? "未查询（比对未通过）" : ticket.selectedSnSource === "RECOGNIZED" ? ticket.binding : ticket.recognizedSn ? "未查询（未选用）" : "未提供";
       $("#recognitionInfo").innerHTML = [
         descriptionItem("APP 携带 SN", `<span class="mono">${escapeHtml(ticket.fullSn || "未提供")}</span>`),
         descriptionItem("手动输入 SN", `<span class="mono">${escapeHtml(ticket.manualSn || "未提供")}</span>`),
