@@ -218,6 +218,39 @@
       background: #fff;
     }
 
+    .region-tabs {
+      height: 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 28px;
+      margin: -4px 0 16px;
+      padding: 0 4px;
+      border-bottom: 1px solid var(--light-border);
+    }
+
+    .region-tab {
+      position: relative;
+      height: 40px;
+      padding: 0 2px;
+      color: var(--regular);
+      border: 0;
+      background: transparent;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .region-tab:hover { color: var(--primary); }
+    .region-tab.active { color: var(--primary); font-weight: 500; }
+    .region-tab.active::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+
     .page-tools {
       display: flex;
       align-items: flex-start;
@@ -716,6 +749,13 @@
 
           <div class="page-content">
             <section class="list-panel">
+              <nav class="region-tabs product-note" id="regionTabsTarget" aria-label="数据中心">
+                <button class="region-tab active" type="button" role="tab" aria-selected="true" data-region="DEV">测试数据</button>
+                <button class="region-tab" type="button" role="tab" aria-selected="false" data-region="NA">北美数据中心</button>
+                <button class="region-tab" type="button" role="tab" aria-selected="false" data-region="AP">亚太数据中心</button>
+                <button class="region-tab" type="button" role="tab" aria-selected="false" data-region="EU">欧洲数据中心</button>
+                <button class="region-tab" type="button" role="tab" aria-selected="false" data-region="CN">中国数据中心</button>
+              </nav>
               <div class="page-tools">
                 <div class="filter-form product-note" id="filterTarget">
                   <input class="control" id="ticketFilter" placeholder="工单编号">
@@ -759,7 +799,7 @@
                 <div class="empty-state" id="emptyState">
                   <div>
                     <i data-lucide="inbox" class="empty-icon"></i>
-                    <div>暂无符合条件的工单</div>
+                    <div>当前数据中心暂无符合条件的工单</div>
                     <div class="muted" style="margin-top:6px;font-size:12px">请调整筛选条件后重新查询</div>
                   </div>
                 </div>
@@ -809,7 +849,7 @@
             </section>
 
             <section class="section product-note" id="recognitionTarget">
-              <h3 class="section-title">SN 校验 <span class="section-extra">平台比对结果</span></h3>
+              <h3 class="section-title">SN 校验 <span class="section-extra">输入与匹配结果</span></h3>
               <div class="description-grid" id="recognitionInfo"></div>
               <div id="recognitionAlert"></div>
             </section>
@@ -877,6 +917,8 @@
   <script src="workflow.js"></script>
   <script>
     const authorized = new URLSearchParams(location.search).get("permission") !== "denied";
+    const regions = WorkOrderWorkflow.regions;
+    const regionCodeByLabel = Object.fromEntries(Object.entries(regions).map(([code, label]) => [label, code]));
     const tickets = [
       {
         id: "TY202609020019", sn: "BM04S****7746", fullSn: "BM04S2408H07746", user: "u_93****26", status: "FAILED", stage: "FAILED_TECHNICAL",
@@ -946,10 +988,11 @@
     ].map(ticket => ({
       type: "解绑工单", deviceModel: "BM04S", platform: "涂鸦云", app: "momcozy", matchRuleVersion: "SN-NORMALIZE-V1",
       interfacePath: "待技术确认", httpStatus: "--", tuyaSuccess: "--", tuyaResult: "--", tuyaCode: "--", tuyaMessage: "--", tuyaTid: "--", attemptCount: "0", routingVersion: "待技术定义", routingResult: "--",
-      ...ticket
+      ...ticket,
+      regionCode: regionCodeByLabel[ticket.region]
     }));
 
-    const manualSuccess = { ...tickets.find(t => t.status === "COMPLETED"), id: "TY202609080021", manualSn: "BM04S2406E04096", recognizedSn: "BM04S2406E09999", selectedSn: "BM04S2406E04096", selectedSnSource: "MANUAL", manualMatchResult: "MATCHED", recognizedMatchResult: "IGNORED", notification: "SENT", lastNotifiedAt: "2026-09-08 10:00:01" };
+    const manualSuccess = { ...tickets.find(t => t.status === "COMPLETED"), id: "TY202609080021", region: regions.DEV, regionCode: "DEV", manualSn: "BM04S2406E04096", recognizedSn: "BM04S2406E09999", selectedSn: "BM04S2406E04096", selectedSnSource: "MANUAL", manualMatchResult: "MATCHED", recognizedMatchResult: "IGNORED", notification: "SENT", lastNotifiedAt: "2026-09-08 10:00:01" };
     const manualPriorityMismatch = { ...manualSuccess, id: "TY202609080020", status: "REJECTED", stage: "REJECTED_MISMATCH", manualSn: "BM04S2406E09999", recognizedSn: "BM04S2406E04096", selectedSn: null, selectedSnSource: null, manualMatchResult: "MISMATCHED", recognizedMatchResult: "IGNORED", matchResult: "MISMATCHED", binding: "未查询", autoDecision: "自动驳回", executionStatus: "NOT_STARTED", notification: "SENT", rejectReason: "手动输入 SN 与设备 SN 不匹配，请确认后重新申请。", httpStatus: "--", tuyaSuccess: "--", tuyaResult: "--", tuyaCode: "--", tuyaMessage: "--", tuyaTid: "--", attemptCount: "0", events: [{ seq: 1, stage: "提交", text: "APP 字段和材料已保存", time: "10:00:00" }, { seq: 2, stage: "SN 校验", text: "手动 SN 不匹配，识别 SN 未参与", time: "10:00:01" }, { seq: 3, stage: "设备查询", text: "SN 校验未通过，设备查询已跳过", time: "10:00:01" }, { seq: 4, stage: "调用接口", text: "未发起设备解绑", time: "10:00:01" }] };
     tickets.push(manualSuccess, manualPriorityMismatch);
 
@@ -1011,20 +1054,21 @@
       list: [
         { target: "menuWorkOrderTarget", title: "通用工单入口", location: "关联位置：运营管理 > 工单管理", body: ["<strong>说明：</strong>在现有运营管理下新增通用“工单管理”二级菜单，不按业务类型拆菜单。", "<strong>本期范围：</strong>工单类型仅有“解绑工单”；后续类型复用同一列表、详情容器和公共字段。", "<strong>权限：</strong>无查看权限时菜单不可见。"] },
         { target: "headerTarget", title: "页面标题与面包屑", location: "关联位置：页面顶栏", body: ["<strong>路径与权限：</strong>运营管理 > 工单管理。ERP 统一登录角色授予页面读写权限；页面和接口同时校验，未授权拒绝访问。原型 ?permission=denied 可验证拒绝态；生产权限由服务端校验。", "<strong>现状还原：</strong>沿用 54px 顶栏、模块标题、12px 面包屑和历史标签栏。"] },
+        { target: "regionTabsTarget", title: "数据中心分区", location: "关联位置：工单列表 > 数据中心页签", body: ["<strong>现状事实：</strong>沿用 IoT Admin 固定五分区：DEV 测试数据、NA 北美、AP 亚太、EU 欧洲、CN 中国数据中心；不提供“全部”。", "<strong>数据边界：</strong>工单创建时固化 region，列表、详情、重试和驳回都在当前 region 内查询与鉴权，禁止跨区检索或迁移。", "<strong>交互：</strong>默认测试数据；切换页签保留筛选条件、回到第 1 页并关闭已打开详情，当前列表只展示所选分区工单。"] },
         { target: "filterTarget", title: "通用工单筛选", location: "关联位置：列表顶部筛选区", body: ["<strong>字段：</strong>工单编号、工单类型、设备 SN、设备型号、工单状态、提交时间。", "<strong>本期类型：</strong>工单类型下拉仅有“解绑工单”，保留类型维度是为了后续扩展。", "<strong>交互：</strong>查询后回到第 1 页；重置清空全部条件并重新加载。"] },
         { target: "statusHeaderTarget", title: "列表状态收敛", location: "关联位置：主表格 > 工单状态", body: ["<strong>单一标签：</strong>每条工单只展示待处理、处理中、已完成、已驳回、处理失败或已关闭中的一个公共状态。", "<strong>筛选：</strong>增加已关闭；处理失败只返回仍可人工处置的失败工单。", "<strong>边界：</strong>SN 校验、涂鸦调用、当前阶段和通知状态不进入该单元格，也不新增列表列或筛选项。"] },
         { target: "operationHeaderTarget", title: "统一查看入口", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>操作边界：</strong>列表始终只有查看；人工操作仅在可操作的处理失败详情 Footer 展示。"] },
         { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
       ],
       drawer: [
-        { target: "recognitionTarget", title: "缺少 APP 携带 SN", location: "关联位置：详情 > SN 校验", body: ["<strong>候选：</strong>deviceSn 未提供、null 或空白时跳过字符串比对；manualSn 有值时只选手动 SN，没有手动 SN 才选 recognizedSn。", "<strong>通过条件：</strong>选定 SN 能够查询到设备且存在绑定关系才可解绑；手动 SN 查询失败、不存在或未绑定均不回退识别 SN。", "<strong>失败分流：</strong>选定 SN 确认不存在返回 UNBIND_DEVICE_NOT_FOUND；存在但未绑定返回 UNBIND_NOT_ELIGIBLE；查询异常进入重试或处理失败。", "<strong>边界：</strong>识别由 APP 完成，平台不对接 AI/OCR；定位后按稳定设备 ID 复用活跃工单。"] },
+        { target: "recognitionTarget", title: "SN 校验边界", location: "关联位置：详情 > SN 校验", body: ["<strong>有 APP 携带 SN：</strong>进入匹配过程；平台按手动输入优先规则取值，与 APP 携带 SN 比较，只展示一个匹配结果。", "<strong>无 APP 携带 SN：</strong>不执行匹配；平台按同一优先级取值后直接进入涂鸦处理。", "<strong>展示边界：</strong>本区只展示三项输入、校验方式和匹配结果，不展示候选身份、分别匹配、分别查询、本次使用 SN、命中来源或自动决策。", "<strong>结果归属：</strong>设备查询、绑定状态、涂鸦设备 ID 和接口响应统一在“涂鸦调用记录”展示。"] },
         { target: "drawerHeaderTarget", title: "通用详情抽屉", location: "关联位置：工单详情 > Header", body: ["<strong>容器：</strong>沿用现状 720px 右侧抽屉、56px Header 和 64px Footer。", "<strong>状态：</strong>Header 与列表一致，只展示一个公共状态标签；当前处理阶段放在申请信息中。", "<strong>结构：</strong>公共申请信息、照片、设备关联、SN 校验、自动处理记录和终态通知。"] },
         { target: "applicationTarget", title: "公共申请信息", location: "关联位置：详情抽屉 > 申请信息", body: ["<strong>系统携带：</strong>工单编号、工单类型、申请用户、申请 App、提交时间等基本信息，其中申请 App 示例值为 momcozy。", "<strong>SN 字段：</strong>deviceSn 为配网过程从设备获取并由 APP 携带；manualSn 为用户手动输入；recognizedSn 为 APP 图片识别结果，三者独立保存。", "<strong>联系方式：</strong>处理人员联系申请人所必需，ERP 角色授予工单管理读写权限，详情展示完整值；列表不展示。原型号码均为虚构示例。"] },
         { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },
-        { target: "mappingTarget", title: "公共设备关联", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>设备关联：</strong>型号、平台和涂鸦设备 ID 由服务端根据最终命中 SN 关联；APP 不提交涂鸦设备 ID。", "<strong>平台边界：</strong>平台不判断 APP 的 SN 采集或识别过程可信性，只执行统一规范化、等值比较和涂鸦查询。", "<strong>唯一真值：</strong>设备是否存在及绑定状态以涂鸦云查询结果为准。"] },
-        { target: "recognitionTarget", title: "三字段 SN 校验", location: "关联位置：详情抽屉 > SN 校验", body: ["<strong>字段：</strong>独立展示 APP 携带 SN（deviceSn）、手动输入 SN（manualSn）和 APP 识别 SN（recognizedSn），不展示识别状态、置信度或模型版本。", "<strong>优先级：</strong>manualSn 有值时只使用手动 SN；没有手动 SN 时才使用 recognizedSn。未选用字段展示“未参与”。", "<strong>有 APP SN：</strong>选定 SN 与 deviceSn 比较，匹配后查询涂鸦；不匹配时驳回且不回退另一字段。", "<strong>无 APP SN：</strong>不执行字符串比对，只查询选定 SN；存在且绑定才进入解绑。manualSn、recognizedSn 均为空时同步拒绝受理。"] },
+        { target: "mappingTarget", title: "公共设备信息", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>展示：</strong>仅展示设备型号、所属平台、通讯方式、绑定类型、设备类型和数据中心。", "<strong>边界：</strong>三个 SN 统一在“SN 校验”展示；涂鸦设备 ID、设备查询和绑定状态统一在“涂鸦调用记录”展示，避免模块间重复。"] },
+        { target: "recognitionTarget", title: "三字段 SN 校验", location: "关联位置：详情抽屉 > SN 校验", body: ["<strong>输入：</strong>APP 携带 SN（deviceSn）、手动输入 SN（manualSn）和 APP 识别 SN（recognizedSn）。", "<strong>优先级：</strong>manualSn 有值时优先使用；没有 manualSn 时才使用 recognizedSn，但页面不额外展示“候选 SN/命中来源”。", "<strong>匹配过程：</strong>存在 deviceSn 时展示“匹配校验”及单一匹配结果；匹配成功才进入涂鸦处理，不匹配自动驳回。", "<strong>非匹配过程：</strong>缺少 deviceSn 时展示“无需匹配/不适用”，直接进入涂鸦处理；云端结果查看下一模块。"] },
         { target: "executionTarget", title: "自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>自动分支：</strong>校验通过后只用选定 SN 查询涂鸦；存在且绑定则解绑，有 APP SN 且已未绑定则直接完成。选定 SN 不匹配时自动驳回。", "<strong>异常分流：</strong>临时异常自动重试；明确业务资格错误按白名单驳回；技术、未知异常或重试耗尽进入处理失败。任何失败均不回退未选用 SN。", "<strong>审计：</strong>字段接收、SN 校验、设备查询、接口调用和终态结果均记录，APP 仅接收终态。"] },
-        { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>接口调用结果：</strong>翻译涂鸦响应字段 success，表示本次接口调用是否成功。", "<strong>解绑返回结果：</strong>翻译响应字段 result，表示解绑接口返回的业务布尔值；不等于最终解绑真值。", "<strong>最终判断：</strong>无论两个字段为何值，是否已解绑仍以涂鸦绑定状态查询结果为准；原始字段名和值保留供技术审计。"] },
+        { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>查询记录：</strong>展示请求 SN、设备查询结果、涂鸦设备 ID 和绑定状态；匹配不通过时明确为未查询。", "<strong>接口调用结果：</strong>翻译涂鸦响应字段 success，表示本次接口调用是否成功。", "<strong>解绑返回结果：</strong>翻译响应字段 result，表示解绑接口返回的业务布尔值；不等于最终解绑真值。", "<strong>最终判断：</strong>无论两个字段为何值，是否已解绑仍以涂鸦绑定状态查询结果为准；原始字段名和值保留供技术审计。"] },
         { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>返回：</strong>APP 只接收终态 workOrderId、success、errorCode；精简查询未结束返回 isTerminal=false。结果版本支持去重和防止旧失败覆盖新成功。通知失败不改变业务结果。", "<strong>触发：</strong>已完成、已驳回或处理失败触发；最近通知时间只记录投递成功。", "<strong>关闭边界：</strong>旧工单转为已关闭时保留原通知记录，不重复发送终态结果；替代关系由新工单创建结果和主动查询告知。"] },
         { target: "drawerFooterTarget", title: "失败态人工处置", location: "关联位置：详情抽屉 > Footer", body: ["<strong>正常状态：</strong>只展示自动处理说明，不显示人工按钮。", "<strong>处理失败：</strong>仅仍可处置的工单展示驳回和重试；重试前查询绑定状态，驳回原因对用户可见。", "<strong>已关闭：</strong>被新工单替代后保存关闭原因和关联 ID，旧工单只读且不展示操作按钮。"] }
       ],
@@ -1038,6 +1082,7 @@
 
     let selectedTicket = null;
     let currentContext = "list";
+    let activeRegion = "DEV";
     let toastTimer = null;
 
     const $ = (selector) => document.querySelector(selector);
@@ -1060,6 +1105,7 @@
       const modelQuery = $("#modelFilter").value.trim().toLowerCase();
       const statusQuery = $("#statusFilter").value;
       const filtered = tickets.filter(ticket =>
+        ticket.regionCode === activeRegion &&
         (!ticketQuery || ticket.id.toLowerCase().includes(ticketQuery)) &&
         (!typeQuery || ticket.type === typeQuery) &&
         (!snQuery || ticket.sn.toLowerCase().includes(snQuery) || ticket.fullSn.toLowerCase().includes(snQuery)) &&
@@ -1086,6 +1132,17 @@
       $$(".view-ticket").forEach(button => button.addEventListener("click", () => openDrawer(button.dataset.id)));
     }
 
+    function setRegion(regionCode) {
+      activeRegion = WorkOrderWorkflow.normalizeRegion(regionCode);
+      $$(".region-tab").forEach(tab => {
+        const selected = tab.dataset.region === activeRegion;
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("aria-selected", String(selected));
+      });
+      if ($("#detailDrawer").classList.contains("open")) closeDrawer();
+      renderTable();
+    }
+
     function descriptionItem(label, value, full = false) {
       return `<div class="description-item ${full ? "full-span" : ""}"><span class="label">${label}</span><span class="value">${value}</span></div>`;
     }
@@ -1099,7 +1156,7 @@
     function timelineFor(ticket) {
       const actionTitle = {
         "提交": "APP 字段和材料已保存",
-        "SN 校验": ticket.matchResult === "MATCHED" ? "至少一个 APP 候选 SN 与设备 SN 匹配" : ticket.matchResult === "MISMATCHED" ? "两个 APP 候选 SN 均与设备 SN 不匹配" : ticket.matchResult === "SKIPPED" ? "未携带设备 SN，跳过字符串比对" : "正在执行候选 SN 校验",
+        "SN 校验": ticket.matchResult === "MATCHED" ? "按优先级选定的 SN 与设备 SN 匹配" : ticket.matchResult === "MISMATCHED" ? "按优先级选定的 SN 与设备 SN 不匹配" : ticket.matchResult === "SKIPPED" ? "未携带设备 SN，跳过字符串比对" : "正在执行候选 SN 校验",
         "设备查询": ticket.lookupSummary || "平台查询涂鸦设备及账号绑定状态",
         "调用接口": ticket.executionStatus === "NOT_STARTED" ? "未发起设备解绑，调用接口已跳过" : "平台自动调用涂鸦解绑 API"
       };
@@ -1133,41 +1190,28 @@
       ].join("");
 
       $("#mappingInfo").innerHTML = [
-        descriptionItem("APP 携带 SN", `<span class="mono">${ticket.fullSn || "未提供"}</span>`),
         descriptionItem("设备型号", ticket.deviceModel),
         descriptionItem("所属平台", ticket.platform),
         descriptionItem("通讯方式", "WIFI+BLE"),
         descriptionItem("绑定类型", "强绑定"),
         descriptionItem("设备类型", "ipc设备"),
-        descriptionItem("数据中心", ticket.region),
-        descriptionItem("涂鸦设备 ID", `<span class="mono">${ticket.tuyaId}</span>`),
-        descriptionItem("绑定状态", ticket.binding)
+        descriptionItem("数据中心", ticket.region)
       ].join("");
 
-      const matchLabels = { EMPTY: "未提供", IGNORED: "未参与（手动 SN 优先）", SKIPPED: "不适用（未携带 APP SN）", PENDING: "待比对", MATCHED: "匹配", MISMATCHED: "不匹配" };
-      const lookupLabels = { UNBIND: "设备存在且已绑定", COMPLETE: "设备存在但已未绑定", REJECT: "确认设备不存在", RETRY: "查询异常，自动重试", FAIL: "查询失败，停止自动处理" };
-      const sourceLabels = { MANUAL: "手动输入 SN", RECOGNIZED: "APP 识别 SN" };
-      const manualLookup = ticket.manualLookupResult ? lookupLabels[ticket.manualLookupResult] : ticket.manualMatchResult === "MISMATCHED" ? "未查询（比对未通过）" : ticket.selectedSnSource === "MANUAL" ? ticket.binding : ticket.manualSn ? "未查询（未选用）" : "未提供";
-      const recognizedLookup = ticket.recognizedLookupResult ? lookupLabels[ticket.recognizedLookupResult] : ticket.recognizedMatchResult === "MISMATCHED" ? "未查询（比对未通过）" : ticket.selectedSnSource === "RECOGNIZED" ? ticket.binding : ticket.recognizedSn ? "未查询（未选用）" : "未提供";
+      const matchLabels = { PENDING: "待匹配", MATCHED: "匹配", MISMATCHED: "不匹配" };
+      const hasDeviceSn = Boolean(ticket.fullSn);
       $("#recognitionInfo").innerHTML = [
         descriptionItem("APP 携带 SN", `<span class="mono">${escapeHtml(ticket.fullSn || "未提供")}</span>`),
         descriptionItem("手动输入 SN", `<span class="mono">${escapeHtml(ticket.manualSn || "未提供")}</span>`),
         descriptionItem("APP 识别 SN", `<span class="mono">${escapeHtml(ticket.recognizedSn || "未提供")}</span>`),
-        descriptionItem("SN 比对", ticket.fullSn ? `按优先级使用${ticket.manualSn ? "手动输入 SN" : "APP 识别 SN"}比对` : "不适用（未携带 APP SN）"),
-        descriptionItem("手动 SN 匹配", matchLabels[ticket.manualMatchResult] || "--"),
-        descriptionItem("识别 SN 匹配", matchLabels[ticket.recognizedMatchResult] || "--"),
-        descriptionItem("手动候选查询", escapeHtml(manualLookup)),
-        descriptionItem("识别候选查询", escapeHtml(recognizedLookup)),
-        descriptionItem("本次使用 SN", `<span class="mono">${escapeHtml(ticket.selectedSn || "--")}</span>`),
-        descriptionItem("命中来源", sourceLabels[ticket.selectedSnSource] || "--"),
-        descriptionItem("规则版本", `<span class="mono">${ticket.matchRuleVersion}</span>`),
-        descriptionItem("自动决策", ticket.autoDecision)
+        descriptionItem("校验方式", hasDeviceSn ? "匹配校验" : "无需匹配"),
+        descriptionItem("匹配结果", hasDeviceSn ? (matchLabels[ticket.matchResult] || "待匹配") : "不适用（未携带 APP SN）")
       ].join("");
 
       let recognitionAlert = "";
-      if (ticket.lookupSummary) recognitionAlert = `<div class="alert" style="margin-top:12px">${escapeHtml(ticket.lookupSummary)}</div>`;
-      if (ticket.matchResult === "MATCHED") recognitionAlert = '<div class="alert success" style="margin-top:12px"><i data-lucide="circle-check" width="16"></i><span>按优先级选定的 SN 与设备 SN 匹配，系统继续查询涂鸦设备状态。</span></div>';
-      if (ticket.matchResult === "MISMATCHED") recognitionAlert = '<div class="alert warning" style="margin-top:12px"><i data-lucide="triangle-alert" width="16"></i><span>按优先级选定的 SN 与 APP 携带 SN 不匹配，系统已自动驳回，未查询设备或调用解绑接口。</span></div>';
+      if (!hasDeviceSn) recognitionAlert = '<div class="alert" style="margin-top:12px"><i data-lucide="info" width="16"></i><span>未携带 APP SN，无需执行匹配；平台按手动输入优先规则进入涂鸦处理，结果见“涂鸦调用记录”。</span></div>';
+      if (ticket.matchResult === "MATCHED") recognitionAlert = '<div class="alert success" style="margin-top:12px"><i data-lucide="circle-check" width="16"></i><span>SN 匹配成功，平台继续执行涂鸦处理，结果见“涂鸦调用记录”。</span></div>';
+      if (ticket.matchResult === "MISMATCHED") recognitionAlert = '<div class="alert warning" style="margin-top:12px"><i data-lucide="triangle-alert" width="16"></i><span>SN 不匹配，系统已自动驳回，不调用涂鸦接口。</span></div>';
       $("#recognitionAlert").innerHTML = recognitionAlert;
 
       const retrying = ticket.executionStatus === "RETRYING";
@@ -1183,6 +1227,10 @@
       $("#timeline").innerHTML = timelineFor(ticket).map(item => `<li class="timeline-item"><div class="timeline-title">${escapeHtml(item.title)}</div><div class="timeline-meta">${escapeHtml(item.meta)}</div></li>`).join("");
 
       $("#tuyaAuditInfo").innerHTML = [
+        descriptionItem("请求 SN", `<span class="mono">${escapeHtml(ticket.selectedSn || ticket.manualSn || ticket.recognizedSn || "--")}</span>`),
+        descriptionItem("设备查询结果", escapeHtml(ticket.matchResult === "MISMATCHED" ? "未查询（SN 不匹配）" : ticket.lookupSummary || ticket.binding)),
+        descriptionItem("涂鸦设备 ID", `<span class="mono">${escapeHtml(ticket.tuyaId)}</span>`),
+        descriptionItem("绑定状态", escapeHtml(ticket.binding)),
         descriptionItem("接口路径/版本", `<span class="mono">${escapeHtml(ticket.interfacePath)}</span>`),
         descriptionItem("HTTP 状态", escapeHtml(ticket.httpStatus)),
         descriptionItem("接口调用结果", tuyaBooleanResult(ticket.tuyaSuccess, "调用成功", "调用失败", "success")),
@@ -1230,7 +1278,8 @@
 
     function openDrawer(id) {
       if (!authorized) return;
-      selectedTicket = tickets.find(ticket => ticket.id === id);
+      selectedTicket = tickets.find(ticket => ticket.id === id && ticket.regionCode === activeRegion);
+      if (!selectedTicket) { showToast("当前数据中心未找到该工单", true); return; }
       renderDrawer();
       $("#drawerScrim").classList.add("open");
       $("#detailDrawer").classList.add("open");
@@ -1335,6 +1384,7 @@
     }
 
     $("#queryButton").addEventListener("click", () => { renderTable(); showToast("查询完成"); });
+    $$(".region-tab").forEach(tab => tab.addEventListener("click", () => setRegion(tab.dataset.region)));
     $("#resetButton").addEventListener("click", () => {
       ["ticketFilter", "snFilter", "modelFilter", "timeFilter"].forEach(id => $("#" + id).value = "");
       $("#typeFilter").value = "";

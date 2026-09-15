@@ -8,6 +8,13 @@
     WORK_ORDER_REJECTED: "解绑申请被人工驳回",
     WORK_ORDER_PROCESSING_FAILED: "系统处理失败，未能确认解绑成功"
   });
+  const regions = Object.freeze({
+    DEV: "测试数据",
+    NA: "北美数据中心",
+    AP: "亚太数据中心",
+    EU: "欧洲数据中心",
+    CN: "中国数据中心"
+  });
   // Prototype normalization only; the production rule is versioned by the service.
   const normalize = value => String(value ?? "").trim();
   function buildCandidates(manualSn, recognizedSn) {
@@ -29,6 +36,24 @@
     if (manualValue) return { sn: manualValue, source: "MANUAL" };
     const recognizedValue = normalize(recognizedSn);
     return recognizedValue ? { sn: recognizedValue, source: "RECOGNIZED" } : null;
+  }
+  function normalizeRegion(regionCode) {
+    const normalized = normalize(regionCode).toUpperCase();
+    if (!Object.hasOwn(regions, normalized)) throw new Error("INVALID_REGION");
+    return normalized;
+  }
+  function assignRegion(ticket, requestRegion) {
+    const regionCode = normalizeRegion(requestRegion);
+    if (ticket.regionCode && normalizeRegion(ticket.regionCode) !== regionCode) throw new Error("REGION_IMMUTABLE");
+    return { ...ticket, regionCode };
+  }
+  function listByRegion(tickets, requestRegion) {
+    const regionCode = normalizeRegion(requestRegion);
+    return tickets.filter(ticket => ticket.regionCode === regionCode);
+  }
+  function canAccessRegion(ticket, requestRegion, authorized) {
+    if (!authorized || !ticket?.regionCode) return false;
+    return ticket.regionCode === normalizeRegion(requestRegion);
   }
   function validateSn(deviceSn, manualSn, recognizedSn) {
     const normalizedDeviceSn = normalize(deviceSn);
@@ -117,10 +142,13 @@
     if (previous && previous.workOrderId !== incoming.workOrderId) throw new Error("WORK_ORDER_MISMATCH");
     return previous && previous.resultVersion >= incoming.resultVersion ? previous : incoming;
   }
-  function canHandle(ticket, authorized) {
-    return authorized && ticket.status === "FAILED" && !ticket.replacedByWorkOrderId;
+  function canHandle(ticket, authorized, requestRegion) {
+    const stateAllows = authorized && ticket.status === "FAILED" && !ticket.replacedByWorkOrderId;
+    const effectiveRegion = requestRegion || ticket.regionCode;
+    const regionAllows = effectiveRegion ? canAccessRegion(ticket, effectiveRegion, true) : true;
+    return stateAllows && regionAllows;
   }
-  const api = { errors, buildCandidates, selectInputCandidate, validateSn, routeLookup, selectTuyaCandidate, resultCode, query, notification, acceptResult, canHandle };
+  const api = { errors, regions, buildCandidates, selectInputCandidate, normalizeRegion, assignRegion, listByRegion, canAccessRegion, validateSn, routeLookup, selectTuyaCandidate, resultCode, query, notification, acceptResult, canHandle };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.WorkOrderWorkflow = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
