@@ -1026,6 +1026,24 @@
       tickets.push(ticket);
     }
 
+    const pendingReviewSnapshot = {
+      ...tickets.find(ticket => ticket.id === "TY202609020018"),
+      id: "TY202609160003", region: regions.DEV, regionCode: "DEV",
+      submittedAt: "2026-09-16 10:03:18", replacesWorkOrderId: "TY202609160001"
+    };
+    const failedReviewSnapshot = {
+      ...tickets.find(ticket => ticket.id === "TY202609020019"),
+      id: "TY202609160002", region: regions.DEV, regionCode: "DEV",
+      submittedAt: "2026-09-16 09:58:27", processingStartedAt: "2026-09-16 09:58:28", completedAt: "2026-09-16 09:59:02"
+    };
+    const closedReviewSnapshot = {
+      ...tickets.find(ticket => ticket.id === "TY202609020011"),
+      id: "TY202609160001", region: regions.DEV, regionCode: "DEV",
+      submittedAt: "2026-09-16 09:42:09", processingStartedAt: "2026-09-16 09:42:10", completedAt: "2026-09-16 09:43:21",
+      replacedByWorkOrderId: "TY202609160003"
+    };
+    tickets.unshift(pendingReviewSnapshot, failedReviewSnapshot, closedReviewSnapshot);
+
     const statusMeta = {
       PENDING: { label: "待处理", cls: "pending" },
       PROCESSING: { label: "处理中", cls: "processing" },
@@ -1056,7 +1074,7 @@
         { target: "headerTarget", title: "页面标题与面包屑", location: "关联位置：页面顶栏", body: ["<strong>路径与权限：</strong>运营管理 > 工单管理。ERP 统一登录角色授予页面读写权限；页面和接口同时校验，未授权拒绝访问。原型 ?permission=denied 可验证拒绝态；生产权限由服务端校验。", "<strong>现状还原：</strong>沿用 54px 顶栏、模块标题、12px 面包屑和历史标签栏。"] },
         { target: "regionTabsTarget", title: "数据中心分区", location: "关联位置：工单列表 > 数据中心页签", body: ["<strong>现状事实：</strong>沿用 IoT Admin 固定五分区：DEV 测试数据、NA 北美、AP 亚太、EU 欧洲、CN 中国数据中心；不提供“全部”。", "<strong>数据边界：</strong>工单创建时固化 region，列表、详情、重试和驳回都在当前 region 内查询与鉴权，禁止跨区检索或迁移。", "<strong>交互：</strong>默认测试数据；切换页签保留筛选条件、回到第 1 页并关闭已打开详情，当前列表只展示所选分区工单。"] },
         { target: "filterTarget", title: "通用工单筛选", location: "关联位置：列表顶部筛选区", body: ["<strong>字段：</strong>工单编号、工单类型、设备 SN、设备型号、工单状态、提交时间。", "<strong>本期类型：</strong>工单类型下拉仅有“解绑工单”，保留类型维度是为了后续扩展。", "<strong>交互：</strong>查询后回到第 1 页；重置清空全部条件并重新加载。"] },
-        { target: "statusHeaderTarget", title: "列表状态收敛", location: "关联位置：主表格 > 工单状态", body: ["<strong>单一标签：</strong>每条工单只展示待处理、处理中、已完成、已驳回、处理失败或已关闭中的一个公共状态。", "<strong>筛选：</strong>增加已关闭；处理失败只返回仍可人工处置的失败工单。", "<strong>边界：</strong>SN 校验、涂鸦调用、当前阶段和通知状态不进入该单元格，也不新增列表列或筛选项。"] },
+        { target: "statusHeaderTarget", title: "列表状态收敛", location: "关联位置：主表格 > 工单状态", body: ["<strong>单一标签：</strong>每条工单只展示待处理、处理中、已完成、已驳回、处理失败或已关闭中的一个公共状态。", "<strong>评审快照：</strong>默认“测试数据”页签同时提供六种公共状态的工单样例，供产品、设计、研发和测试逐项核对；快照不新增状态，也不改变状态流转。", "<strong>筛选：</strong>增加已关闭；处理失败只返回仍可人工处置的失败工单。", "<strong>边界：</strong>SN 校验、涂鸦调用、当前阶段和通知状态不进入该单元格，也不新增列表列或筛选项。"] },
         { target: "operationHeaderTarget", title: "统一查看入口", location: "关联位置：操作列 > 查看", body: ["<strong>交互：</strong>打开 720px 右侧详情抽屉，不跳离列表页。", "<strong>操作边界：</strong>列表始终只有查看；人工操作仅在可操作的处理失败详情 Footer 展示。"] },
         { target: "paginationTarget", title: "分页与空态", location: "关联位置：表格底部", body: ["<strong>现状还原：</strong>分页右对齐，默认 10 条/页，保留筛选条件。", "<strong>空态：</strong>无匹配结果时隐藏数据行并展示明确空态，不改变筛选值。"] }
       ],
