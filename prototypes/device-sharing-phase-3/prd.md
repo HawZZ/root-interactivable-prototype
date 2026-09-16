@@ -3,7 +3,7 @@
 | 属性 | 内容 |
 | --- | --- |
 | 状态 | 需求已收敛；自研/Tuya 未注册链路进入评审，其待注册撤销能力待技术确认 |
-| 更新日期 | 2026-09-15 |
+| 更新日期 | 2026-09-16 |
 | 原始 PRD | [飞书原始 PRD Rev.3356](https://momcozy-in.feishu.cn/wiki/Ao0BwgRIPi2r9IkVbUycOpDUnbc) |
 | 二期边界 | 已注册用户分享；Meari 接受/拒绝沿用二期，不在三期重做 |
 | 交互原型 | [三期未注册用户共享原型与页面规格](https://hawzz.github.io/root-interactivable-prototype/prototypes/device-sharing-phase-3/) |
