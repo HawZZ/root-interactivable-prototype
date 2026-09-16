@@ -95,7 +95,7 @@
     };
   }
   function routeLookup(result) {
-    if (result.error || result.authorized !== true || result.regionVerified === false) return { action: result.transient ? "RETRY" : "FAIL", errorCode: result.transient ? null : "WORK_ORDER_PROCESSING_FAILED" };
+    if (result.error || result.authorized !== true || result.regionVerified === false) return { action: "FAIL", errorCode: "WORK_ORDER_PROCESSING_FAILED" };
     if (result.confirmedAbsent === true) return { action: "REJECT", errorCode: "UNBIND_DEVICE_NOT_FOUND" };
     if (!result.deviceId) return { action: "FAIL", errorCode: "WORK_ORDER_PROCESSING_FAILED" };
     if (result.bound === false) return { action: "COMPLETE", errorCode: "NONE" };
@@ -127,7 +127,7 @@
   function query(ticket, userId) {
     if (userId !== ticket.user) throw new Error("FORBIDDEN");
     const code = resultCode(ticket);
-    const result = { workOrderId: ticket.id, isTerminal: code !== null, resultVersion: ticket.resultVersion || 1 };
+    const result = { workOrderId: ticket.id, isTerminal: code !== null };
     if (code !== null) Object.assign(result, { success: code === "NONE", errorCode: code });
     if (code === "WORK_ORDER_REJECTED") result.rejectionReason = ticket.rejectReason;
     if (ticket.replacedByWorkOrderId) result.replacedByWorkOrderId = ticket.replacedByWorkOrderId;
@@ -138,17 +138,13 @@
     const result = query(ticket, ticket.user);
     return result.isTerminal ? result : null;
   }
-  function acceptResult(previous, incoming) {
-    if (previous && previous.workOrderId !== incoming.workOrderId) throw new Error("WORK_ORDER_MISMATCH");
-    return previous && previous.resultVersion >= incoming.resultVersion ? previous : incoming;
-  }
   function canHandle(ticket, authorized, requestRegion) {
     const stateAllows = authorized && ticket.status === "FAILED" && !ticket.replacedByWorkOrderId;
     const effectiveRegion = requestRegion || ticket.regionCode;
     const regionAllows = effectiveRegion ? canAccessRegion(ticket, effectiveRegion, true) : true;
     return stateAllows && regionAllows;
   }
-  const api = { errors, regions, buildCandidates, selectInputCandidate, normalizeRegion, assignRegion, listByRegion, canAccessRegion, validateSn, routeLookup, selectTuyaCandidate, resultCode, query, notification, acceptResult, canHandle };
+  const api = { errors, regions, buildCandidates, selectInputCandidate, normalizeRegion, assignRegion, listByRegion, canAccessRegion, validateSn, routeLookup, selectTuyaCandidate, resultCode, query, notification, canHandle };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.WorkOrderWorkflow = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
