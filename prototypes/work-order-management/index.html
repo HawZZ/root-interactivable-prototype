@@ -508,11 +508,17 @@
     .alert.success { color: #4d7d37; border-color: #b9dfa8; background: #f0f9eb; }
 
     .timeline { margin: 0; padding: 0; list-style: none; }
-    .timeline-item { position: relative; min-height: 54px; padding-left: 22px; }
+    .timeline-item { position: relative; min-height: 74px; padding: 0 0 14px 22px; }
     .timeline-item::before { content: ""; position: absolute; top: 6px; left: 5px; width: 7px; height: 7px; border: 2px solid var(--primary); border-radius: 50%; background: #fff; }
     .timeline-item::after { content: ""; position: absolute; top: 17px; bottom: -4px; left: 9px; width: 1px; background: var(--light-border); }
     .timeline-item:last-child::after { display: none; }
-    .timeline-title { color: var(--regular); font-size: 13px; }
+    .timeline-title { color: var(--regular); font-size: 13px; font-weight: 600; }
+    .timeline-result { margin-left: 6px; font-weight: 500; }
+    .timeline-result.success { color: #4d7d37; }
+    .timeline-result.failed { color: #b84c4c; }
+    .timeline-result.skipped { color: #8a6d3b; }
+    .timeline-result.started { color: var(--primary); }
+    .timeline-summary { margin-top: 4px; color: var(--regular); font-size: 12px; line-height: 1.55; }
     .timeline-meta { margin-top: 4px; color: var(--secondary); font-size: 12px; }
 
     .progress-events { overflow: hidden; border: 1px solid var(--light-border); border-radius: 4px; }
@@ -1089,7 +1095,7 @@
         { target: "evidenceTarget", title: "设备照片", location: "关联位置：详情抽屉 > 设备照片", body: ["<strong>上传边界：</strong>文件数量、格式、大小等限制全部沿用 APP 上传规则，平台不新增规则。", "<strong>存储：</strong>平台接收 APP 已上传文件并持久化保存，保留周期与工单生命周期一致；访问使用权限校验和短期签名地址。", "<strong>原型备注：</strong>当前图片为脱敏演示素材。"] },
         { target: "mappingTarget", title: "公共设备信息", location: "关联位置：详情抽屉 > 设备信息", body: ["<strong>展示：</strong>仅展示设备型号、所属平台、通讯方式、绑定类型、设备类型和数据中心。", "<strong>边界：</strong>三个 SN 统一在“SN 校验”展示；涂鸦设备 ID、设备查询和绑定状态统一在“涂鸦调用记录”展示，避免模块间重复。"] },
         { target: "recognitionTarget", title: "三字段 SN 校验", location: "关联位置：详情抽屉 > SN 校验", body: ["<strong>输入：</strong>APP 携带 SN（deviceSn）、手动输入 SN（manualSn）和 APP 识别 SN（recognizedSn）。", "<strong>优先级：</strong>manualSn 有值时优先使用；没有 manualSn 时才使用 recognizedSn，但页面不额外展示“候选 SN/命中来源”。", "<strong>匹配过程：</strong>存在 deviceSn 时展示“匹配校验”及单一匹配结果；匹配成功才进入涂鸦处理，不匹配自动驳回。", "<strong>非匹配过程：</strong>缺少 deviceSn 时展示“无需匹配/不适用”，直接进入涂鸦处理；云端结果查看下一模块。"] },
-        { target: "executionTarget", title: "自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>自动分支：</strong>校验通过后只用选定 SN 查询涂鸦；存在且绑定则解绑，有 APP SN 且已未绑定则直接完成。选定 SN 不匹配时自动驳回。", "<strong>调用结果：</strong>技术已确认涂鸦接口调用不做错误分流；后置查询确认已解绑则完成，未能确认解绑则统一进入处理失败。任何失败均不回退未选用 SN。", "<strong>审计：</strong>字段接收、SN 校验、设备查询、接口调用和终态结果均记录，APP 仅接收终态。"] },
+        { target: "executionTarget", title: "模板化自动处理记录", location: "关联位置：详情抽屉 > 自动处理记录", body: ["<strong>固定格式：</strong>每条记录统一展示“步骤 · 结果”、标准结论，以及“时间 · 执行方 · 第 N 次处理 · 记录编号”；不展示后端自由文本。", "<strong>调用门禁：</strong>已选定 SN、有 APP SN 时匹配通过、设备存在、绑定状态为已绑定、取得唯一处理权五项全部成立后，才记录并发起涂鸦解绑请求。", "<strong>失败/跳过：</strong>SN 不匹配、设备不存在、未绑定或查询异常时，失败步骤和后续已跳过步骤分别记录；不得通过缺少记录表达。", "<strong>数据边界：</strong>原始 HTTP、success/result/code/msg/tid 只在“涂鸦调用记录”展示；APP 仍只接收终态。"] },
         { target: "tuyaAuditTarget", title: "涂鸦调用审计", location: "关联位置：详情抽屉 > 涂鸦调用记录", body: ["<strong>查询记录：</strong>展示请求 SN、设备查询结果、涂鸦设备 ID 和绑定状态；匹配不通过时明确为未查询。", "<strong>接口调用结果：</strong>翻译涂鸦响应字段 success，表示本次接口调用是否成功。", "<strong>解绑返回结果：</strong>翻译响应字段 result，表示解绑接口返回的业务布尔值；不等于最终解绑真值。", "<strong>最终判断：</strong>无论两个字段为何值，是否已解绑仍以涂鸦绑定状态查询结果为准；原始字段名和值保留供技术审计。"] },
         { target: "notificationTarget", title: "APP 终态通知", location: "关联位置：详情抽屉 > APP 终态通知", body: ["<strong>返回：</strong>APP 只接收终态 workOrderId、success、errorCode；精简查询未结束返回 isTerminal=false。无需结果版本，通知和主动查询始终读取工单当前最新结果。", "<strong>触发：</strong>已完成、已驳回或处理失败触发；最近通知时间只记录投递成功，通知失败不改变业务结果。", "<strong>关闭边界：</strong>旧工单转为已关闭时保留原通知记录，不重复发送终态结果；替代关系由新工单创建结果和主动查询告知。"] },
         { target: "drawerFooterTarget", title: "失败态人工处置", location: "关联位置：详情抽屉 > Footer", body: ["<strong>正常状态：</strong>只展示自动处理说明，不显示人工按钮。", "<strong>处理失败：</strong>仅仍可处置的工单展示驳回和重试；重试前查询绑定状态，驳回原因对用户可见。", "<strong>已关闭：</strong>被新工单替代后保存关闭原因和关联 ID，旧工单只读且不展示操作按钮。"] }
@@ -1175,20 +1181,145 @@
       return `<span class="muted">--</span>`;
     }
 
+    const processingRecordTemplates = Object.freeze({
+      MATERIALS_SAVED: ["工单受理", "成功", "APP 字段和材料已保存。"],
+      VALIDATION_STARTED: ["SN 校验", "处理中", "已按优先级选定 SN，正在执行匹配校验。"],
+      SN_MATCHED: ["SN 校验", "通过", "选定 SN 与 APP 携带 SN 一致。"],
+      SN_MISMATCH: ["SN 校验", "未通过", "选定 SN 与 APP 携带 SN 不一致。"],
+      NO_APP_SN: ["SN 校验", "已跳过", "未携带 APP SN，无需执行匹配。"],
+      DEVICE_QUERY_STARTED: ["涂鸦设备查询", "处理中", "正在使用选定 SN 查询涂鸦设备。"],
+      DEVICE_FOUND: ["涂鸦设备查询", "成功", "已找到选定 SN 对应的设备。"],
+      DEVICE_NOT_FOUND: ["涂鸦设备查询", "无结果", "未找到选定 SN 对应的设备。"],
+      DEVICE_QUERY_FAILED: ["涂鸦设备查询", "失败", "设备查询未完成，不能判定设备不存在。"],
+      DEVICE_QUERY_SKIPPED_SN: ["涂鸦设备查询", "已跳过", "SN 校验未通过，未查询涂鸦设备。"],
+      BINDING_BOUND: ["账号绑定查询", "已绑定", "设备存在账号绑定关系，满足解绑调用条件。"],
+      BINDING_UNBOUND: ["账号绑定查询", "未绑定", "设备当前不存在账号绑定关系。"],
+      BINDING_QUERY_FAILED: ["账号绑定查询", "失败", "绑定状态查询未完成。"],
+      BINDING_QUERY_SKIPPED_SN: ["账号绑定查询", "已跳过", "SN 校验未通过，未查询账号绑定状态。"],
+      BINDING_QUERY_SKIPPED_DEVICE: ["账号绑定查询", "已跳过", "未找到设备，未查询账号绑定状态。"],
+      BINDING_QUERY_SKIPPED_ERROR: ["账号绑定查询", "已跳过", "设备查询失败，未继续查询账号绑定状态。"],
+      UNBIND_REQUESTED: ["涂鸦解绑调用", "已发起", "调用门禁全部通过，平台已提交涂鸦解绑请求。"],
+      UNBIND_SKIPPED_SN: ["涂鸦解绑调用", "已跳过", "SN 校验未通过，未调用解绑接口。"],
+      UNBIND_SKIPPED_DEVICE: ["涂鸦解绑调用", "已跳过", "未找到设备，未调用解绑接口。"],
+      UNBIND_SKIPPED_UNBOUND: ["涂鸦解绑调用", "已跳过", "设备未绑定账号，无需调用解绑接口。"],
+      UNBIND_SKIPPED_QUERY_ERROR: ["涂鸦解绑调用", "已跳过", "上游查询未完成，未调用解绑接口。"],
+      UNBIND_API_RETURNED: ["涂鸦解绑响应", "已返回", "解绑接口已返回；原始响应见“涂鸦调用记录”。"],
+      UNBIND_API_FAILED: ["涂鸦解绑响应", "失败", "解绑接口失败或超时；原始响应见“涂鸦调用记录”。"],
+      UNBOUND_CONFIRMED: ["解绑结果确认", "成功", "涂鸦绑定查询确认设备已解绑。"],
+      STILL_BOUND: ["解绑结果确认", "失败", "后置查询显示设备仍处于绑定状态。"],
+      CONFIRMATION_FAILED: ["解绑结果确认", "失败", "后置绑定查询未完成，无法确认设备已解绑。"],
+      NONE: ["工单终态", "已完成", "工单已完成，APP 业务码为 NONE。"],
+      UNBIND_SN_MISMATCH: ["工单终态", "已驳回", "工单已驳回，APP 业务码为 UNBIND_SN_MISMATCH。"],
+      UNBIND_DEVICE_NOT_FOUND: ["工单终态", "已驳回", "工单已驳回，APP 业务码为 UNBIND_DEVICE_NOT_FOUND。"],
+      UNBIND_NOT_ELIGIBLE: ["工单终态", "已驳回", "工单已驳回，APP 业务码为 UNBIND_NOT_ELIGIBLE。"],
+      WORK_ORDER_PROCESSING_FAILED: ["工单终态", "处理失败", "自动处理已停止，APP 业务码为 WORK_ORDER_PROCESSING_FAILED。"],
+      WORK_ORDER_REJECTED: ["工单终态", "已驳回", "工单已人工驳回，APP 业务码为 WORK_ORDER_REJECTED。"],
+      RETRY_STARTED: ["人工重试", "已开始", "授权人员已启动新一次处理。"],
+      MANUAL_REJECTED: ["人工驳回", "已提交", "授权人员已提交驳回；用户可见原因见终态结果。"],
+      WORK_ORDER_REPLACED: ["工单关闭", "已关闭", "工单已被新工单替代，原处理记录继续保留。"]
+    });
+
+    function recordTime(ticket, legacyStage, fallback) {
+      const source = ticket.events.find(event => event.stage === legacyStage);
+      if (source) return `${source.date || ticket.submittedAt.slice(0, 10)} ${source.time}`;
+      return fallback && fallback !== "--" ? fallback : ticket.submittedAt;
+    }
+
+    function buildProcessingRecords(ticket) {
+      const records = [];
+      const add = (eventType, eventStatus, resultCode, occurredAt, attemptNo = 1, actorType = "SYSTEM") => records.push({
+        sequenceNo: records.length + 1, eventType, eventStatus, resultCode, occurredAt, attemptNo, actorType
+      });
+      const terminalTime = recordTime(ticket, "返回结果", ticket.completedAt);
+      const validationTime = recordTime(ticket, "SN 校验", ticket.processingStartedAt);
+      const queryTime = recordTime(ticket, "设备查询", validationTime);
+      const callTime = recordTime(ticket, "调用接口", queryTime);
+      const hasDeviceSn = Boolean(ticket.fullSn);
+
+      add("WORK_ORDER_ACCEPTED", "SUCCEEDED", "MATERIALS_SAVED", recordTime(ticket, "提交", ticket.submittedAt));
+      if (ticket.status === "PENDING" && ticket.matchResult === "PENDING") return records;
+
+      if (ticket.matchResult === "PENDING") {
+        add("SN_VALIDATION_COMPLETED", "STARTED", "VALIDATION_STARTED", validationTime);
+        return records;
+      }
+      if (ticket.matchResult === "MATCHED") add("SN_VALIDATION_COMPLETED", "SUCCEEDED", "SN_MATCHED", validationTime);
+      else if (ticket.matchResult === "MISMATCHED") add("SN_VALIDATION_COMPLETED", "FAILED", "SN_MISMATCH", validationTime);
+      else add("SN_VALIDATION_COMPLETED", "SKIPPED", "NO_APP_SN", validationTime);
+
+      if (ticket.matchResult === "MISMATCHED") {
+        add("TUYA_DEVICE_QUERY_COMPLETED", "SKIPPED", "DEVICE_QUERY_SKIPPED_SN", queryTime);
+        add("TUYA_BINDING_QUERY_COMPLETED", "SKIPPED", "BINDING_QUERY_SKIPPED_SN", queryTime);
+        add("TUYA_UNBIND_REQUESTED", "SKIPPED", "UNBIND_SKIPPED_SN", callTime);
+        if (ticket.status === "REJECTED") add("WORK_ORDER_TERMINATED", "SUCCEEDED", "UNBIND_SN_MISMATCH", terminalTime);
+        return records;
+      }
+
+      if (["VALIDATING", "MATCHING"].includes(ticket.stage)) {
+        add("TUYA_DEVICE_QUERY_COMPLETED", "STARTED", "DEVICE_QUERY_STARTED", queryTime);
+        return records;
+      }
+
+      const deviceNotFound = ticket.stage === "REJECTED_NOT_FOUND" || (ticket.lookupSummary || "").includes("查不到设备");
+      const queryFailed = ticket.stage === "FAILED_TECHNICAL" && ticket.executionStatus === "NOT_STARTED" || (ticket.lookupSummary || "").includes("查询异常");
+      if (deviceNotFound) {
+        add("TUYA_DEVICE_QUERY_COMPLETED", "SUCCEEDED", "DEVICE_NOT_FOUND", queryTime);
+        add("TUYA_BINDING_QUERY_COMPLETED", "SKIPPED", "BINDING_QUERY_SKIPPED_DEVICE", queryTime);
+        add("TUYA_UNBIND_REQUESTED", "SKIPPED", "UNBIND_SKIPPED_DEVICE", callTime);
+        if (ticket.status === "REJECTED") add("WORK_ORDER_TERMINATED", "SUCCEEDED", "UNBIND_DEVICE_NOT_FOUND", terminalTime);
+        return records;
+      }
+      if (queryFailed) {
+        add("TUYA_DEVICE_QUERY_COMPLETED", "FAILED", "DEVICE_QUERY_FAILED", queryTime);
+        add("TUYA_BINDING_QUERY_COMPLETED", "SKIPPED", "BINDING_QUERY_SKIPPED_ERROR", queryTime);
+        add("TUYA_UNBIND_REQUESTED", "SKIPPED", "UNBIND_SKIPPED_QUERY_ERROR", callTime);
+        add("WORK_ORDER_TERMINATED", "SUCCEEDED", "WORK_ORDER_PROCESSING_FAILED", terminalTime);
+        return records;
+      }
+
+      add("TUYA_DEVICE_QUERY_COMPLETED", "SUCCEEDED", "DEVICE_FOUND", queryTime);
+      const initiallyUnbound = ticket.stage === "REJECTED_INELIGIBLE" || (ticket.status === "COMPLETED" && ticket.executionStatus === "NOT_STARTED");
+      if (initiallyUnbound) {
+        add("TUYA_BINDING_QUERY_COMPLETED", "SUCCEEDED", "BINDING_UNBOUND", queryTime);
+        add("TUYA_UNBIND_REQUESTED", "SKIPPED", "UNBIND_SKIPPED_UNBOUND", callTime);
+        add("WORK_ORDER_TERMINATED", "SUCCEEDED", hasDeviceSn ? "NONE" : "UNBIND_NOT_ELIGIBLE", terminalTime);
+        return records;
+      }
+
+      add("TUYA_BINDING_QUERY_COMPLETED", "SUCCEEDED", "BINDING_BOUND", queryTime);
+      add("TUYA_UNBIND_REQUESTED", "STARTED", "UNBIND_REQUESTED", callTime);
+      if (ticket.status === "PROCESSING") return records;
+
+      if (ticket.status === "COMPLETED") {
+        add("TUYA_UNBIND_RESPONDED", "SUCCEEDED", "UNBIND_API_RETURNED", callTime);
+        add("TUYA_BINDING_CONFIRMATION_COMPLETED", "SUCCEEDED", "UNBOUND_CONFIRMED", terminalTime);
+        add("WORK_ORDER_TERMINATED", "SUCCEEDED", "NONE", terminalTime);
+        return records;
+      }
+
+      add("TUYA_UNBIND_RESPONDED", "FAILED", "UNBIND_API_FAILED", callTime);
+      add("TUYA_BINDING_CONFIRMATION_COMPLETED", "FAILED", ticket.binding === "仍绑定" ? "STILL_BOUND" : "CONFIRMATION_FAILED", terminalTime);
+      add("WORK_ORDER_TERMINATED", "SUCCEEDED", "WORK_ORDER_PROCESSING_FAILED", terminalTime);
+      if (ticket.status === "CLOSED") add("WORK_ORDER_REPLACED", "SUCCEEDED", "WORK_ORDER_REPLACED", ticket.completedAt);
+      return records;
+    }
+
+    function ensureProcessingRecords(ticket) {
+      if (!ticket.processingRecords) ticket.processingRecords = buildProcessingRecords(ticket);
+      return ticket.processingRecords;
+    }
+
+    function appendProcessingRecord(ticket, eventType, eventStatus, resultCode, occurredAt, attemptNo, actorType = "SYSTEM") {
+      const records = ensureProcessingRecords(ticket);
+      records.push({ sequenceNo: records.length + 1, eventType, eventStatus, resultCode, occurredAt, attemptNo, actorType });
+    }
+
     function timelineFor(ticket) {
-      const actionTitle = {
-        "提交": "APP 字段和材料已保存",
-        "SN 校验": ticket.matchResult === "MATCHED" ? "按优先级选定的 SN 与设备 SN 匹配" : ticket.matchResult === "MISMATCHED" ? "按优先级选定的 SN 与设备 SN 不匹配" : ticket.matchResult === "SKIPPED" ? "未携带设备 SN，跳过字符串比对" : "正在执行候选 SN 校验",
-        "设备查询": ticket.lookupSummary || "平台查询涂鸦设备及账号绑定状态",
-        "调用接口": ticket.executionStatus === "NOT_STARTED" ? "未发起设备解绑，调用接口已跳过" : "平台自动调用涂鸦解绑 API"
-      };
-      return ticket.events.map(event => {
-        let title = actionTitle[event.stage];
-        if (!title || ticket.matchResult === "SKIPPED") title = event.text;
-        if (event.stage === "返回结果") {
-          title = event.text.includes("解绑成功") ? "涂鸦绑定查询确认已解绑，工单完成" : event.text.includes("处理失败") ? "未能确认解绑，工单进入处理失败" : `工单已驳回：${ticket.rejectReason || event.text}`;
-        }
-        return { title, meta: `${event.date || ticket.submittedAt.slice(0, 10)} ${event.time} · 内部处理记录 #${event.seq} 已生成` };
+      return ensureProcessingRecords(ticket).map(record => {
+        const [step, result, summary] = processingRecordTemplates[record.resultCode] || [record.eventType, "已记录", "已生成结构化处理记录。"];
+        const resultClass = record.eventStatus === "FAILED" ? "failed" : record.eventStatus === "SKIPPED" ? "skipped" : record.eventStatus === "STARTED" ? "started" : "success";
+        const actor = record.actorType === "OPERATOR" ? "运营人员" : "系统自动处理";
+        return { step, result, resultClass, summary, meta: `${record.occurredAt} · ${actor} · 第 ${record.attemptNo} 次处理 · 记录 #${String(record.sequenceNo).padStart(2, "0")}` };
       });
     }
 
@@ -1242,8 +1373,9 @@
       } else {
         $("#failureAlert").innerHTML = "";
       }
-      $("#executionSummary").textContent = `已生成 ${ticket.events.length} 条阶段事件`;
-      $("#timeline").innerHTML = timelineFor(ticket).map(item => `<li class="timeline-item"><div class="timeline-title">${escapeHtml(item.title)}</div><div class="timeline-meta">${escapeHtml(item.meta)}</div></li>`).join("");
+      const processingRecords = timelineFor(ticket);
+      $("#executionSummary").textContent = `共 ${processingRecords.length} 条标准记录`;
+      $("#timeline").innerHTML = processingRecords.map(item => `<li class="timeline-item"><div class="timeline-title">${escapeHtml(item.step)} · <span class="timeline-result ${item.resultClass}">${escapeHtml(item.result)}</span></div><div class="timeline-summary">${escapeHtml(item.summary)}</div><div class="timeline-meta">${escapeHtml(item.meta)}</div></li>`).join("");
 
       $("#tuyaAuditInfo").innerHTML = [
         descriptionItem("请求 SN", `<span class="mono">${escapeHtml(ticket.selectedSn || ticket.manualSn || ticket.recognizedSn || "--")}</span>`),
@@ -1430,6 +1562,12 @@
       button.classList.add("loading");
       button.innerHTML = '<span class="spin"></span> 查询绑定状态';
       const retryTicket = selectedTicket;
+      const retryStartedAt = currentTimestamp();
+      const retryOccurredAt = `${retryStartedAt.date} ${retryStartedAt.time}`;
+      const retryAttemptNo = Math.max(1, ...ensureProcessingRecords(retryTicket).map(record => record.attemptNo)) + 1;
+      appendProcessingRecord(retryTicket, "MANUAL_RETRY_STARTED", "STARTED", "RETRY_STARTED", retryOccurredAt, retryAttemptNo, "OPERATOR");
+      appendProcessingRecord(retryTicket, "TUYA_BINDING_QUERY_COMPLETED", "SUCCEEDED", "BINDING_BOUND", retryOccurredAt, retryAttemptNo);
+      appendProcessingRecord(retryTicket, "TUYA_UNBIND_REQUESTED", "STARTED", "UNBIND_REQUESTED", retryOccurredAt, retryAttemptNo);
       retryTicket.status = "PROCESSING";
       retryTicket.stage = "UNBINDING";
       retryTicket.notification = "PENDING";
@@ -1449,9 +1587,10 @@
         retryTicket.tuyaCode = "--";
         retryTicket.tuyaMessage = "--";
         retryTicket.tuyaTid = "e4a1****c930";
-        retryTicket.attemptCount = String((Number.parseInt(retryTicket.attemptCount, 10) || 0) + 1);
-        retryTicket.events.push({ seq: retryTicket.events.length + 1, stage: "调用接口", text: "正在解除设备绑定", date: stamp.date, time: stamp.time });
-        retryTicket.events.push({ seq: retryTicket.events.length + 1, stage: "返回结果", text: "设备解绑成功", date: stamp.date, time: stamp.time });
+        retryTicket.attemptCount = String(retryAttemptNo);
+        appendProcessingRecord(retryTicket, "TUYA_UNBIND_RESPONDED", "SUCCEEDED", "UNBIND_API_RETURNED", `${stamp.date} ${stamp.time}`, retryAttemptNo);
+        appendProcessingRecord(retryTicket, "TUYA_BINDING_CONFIRMATION_COMPLETED", "SUCCEEDED", "UNBOUND_CONFIRMED", `${stamp.date} ${stamp.time}`, retryAttemptNo);
+        appendProcessingRecord(retryTicket, "WORK_ORDER_TERMINATED", "SUCCEEDED", "NONE", `${stamp.date} ${stamp.time}`, retryAttemptNo);
         button.disabled = false;
         button.classList.remove("loading");
         button.textContent = "确认重试";
@@ -1483,7 +1622,9 @@
       selectedTicket.completedAt = `${stamp.date} ${stamp.time}`;
       selectedTicket.notification = "SENT";
       selectedTicket.lastNotifiedAt = `${stamp.date} ${stamp.time}`;
-      selectedTicket.events.push({ seq: selectedTicket.events.length + 1, stage: "返回结果", text: `申请未通过：${reason}`, date: stamp.date, time: stamp.time });
+      const rejectAttemptNo = Math.max(1, ...ensureProcessingRecords(selectedTicket).map(record => record.attemptNo));
+      appendProcessingRecord(selectedTicket, "MANUAL_REJECTED", "SUCCEEDED", "MANUAL_REJECTED", `${stamp.date} ${stamp.time}`, rejectAttemptNo, "OPERATOR");
+      appendProcessingRecord(selectedTicket, "WORK_ORDER_TERMINATED", "SUCCEEDED", "WORK_ORDER_REJECTED", `${stamp.date} ${stamp.time}`, rejectAttemptNo, "OPERATOR");
       closeModal();
       renderDrawer();
       renderTable();
