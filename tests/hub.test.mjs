@@ -41,7 +41,7 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
 
     await page.locator("#resetFilters").click();
     await page.locator('[data-product-line="IoT Admin"]').click();
-    assert.equal(await page.locator(".prototype-card").count(), 18);
+    assert.equal(await page.locator(".prototype-card").count(), 19);
     assert.match(page.url(), /productLine=IoT\+Admin/);
     assert.equal(await page.locator("#productLines button").count(), 3);
 

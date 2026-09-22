@@ -77,7 +77,7 @@ test("preserves every route present at the September 8, 2026 migration baseline"
   assert.equal(semanticConfig.latestId, "voice-semantic-profile-workbench");
   assert.equal(catalog.entries.find((entry) => entry.id === "device-sharing").surface, "app");
   const webEntries = catalog.entries.filter((entry) => entry.surface === "web");
-  assert.equal(webEntries.length, 23);
+  assert.equal(webEntries.length, 24);
   assert.ok(webEntries.every((entry) => entry.productLine === "IoT Admin"));
   assert.deepEqual(
     [...new Set(webEntries.map((entry) => entry.businessArea))].sort(),
