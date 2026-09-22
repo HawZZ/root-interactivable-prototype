@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>配网引导富文本输入 · IoT Admin</title>
+<title>配网与错误引导富文本配置 · IoT Admin</title>
 <style>
 /* ===== 设计系统 ===== */
 :root {
@@ -352,6 +352,86 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 /* ===== 空状态 ===== */
 .empty-state { padding: 32px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
 
+/* ===== 高级配置 / 错误引导 ===== */
+.advanced-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.advanced-entry { min-height: 132px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; }
+.advanced-entry:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(67,114,255,.09); }
+.advanced-entry-icon { width: 34px; height: 34px; border-radius: var(--radius); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.advanced-entry-title { font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; }
+.advanced-entry-desc { margin-top: 6px; color: var(--text-tertiary); font-size: 12px; line-height: 1.55; }
+.advanced-entry-meta { margin-top: auto; padding-top: 10px; color: var(--primary); font-size: 12px; }
+.page-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.page-back { width: 30px; height: 30px; padding: 0; justify-content: center; }
+.page-title { font-size: 16px; font-weight: 600; }
+.page-subtitle { margin-top: 2px; color: var(--text-tertiary); font-size: 12px; }
+.error-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border-light); }
+.error-toolbar .input { width: 220px; }
+.select { height: 32px; padding: 0 28px 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; }
+.select:focus { border-color: var(--primary); }
+.toolbar-spacer { flex: 1; }
+.bulk-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fafafa; border-bottom: 1px solid var(--border-light); }
+.bulk-hint { color: var(--text-tertiary); font-size: 12px; margin-right: auto; }
+.data-table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; min-width: 920px; }
+.data-table th { padding: 10px 12px; background: #fafafa; color: var(--text-tertiary); font-size: 12px; font-weight: 500; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.data-table td { padding: 12px; border-bottom: 1px solid var(--border-light); font-size: 13px; vertical-align: middle; }
+.data-table tr:hover td { background: #fcfcfc; }
+.table-code { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 600; color: var(--text-primary); }
+.table-copy { max-width: 290px; color: var(--text-secondary); line-height: 1.5; }
+.table-copy .rich-text-preview { max-height: 46px; overflow: hidden; }
+.media-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 150px; padding: 3px 7px; background: #f5f7fa; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 11px; }
+.media-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-switch { display: inline-flex; align-items: center; gap: 7px; }
+.status-switch .toggle { width: 32px; height: 18px; }
+.status-switch .toggle-knob { width: 14px; height: 14px; }
+.status-switch .toggle.on .toggle-knob { left: 16px; }
+.table-actions { display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+.table-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; color: var(--text-tertiary); font-size: 12px; }
+.danger-link { color: var(--error); }
+.danger-link:hover { color: #cf1322; }
+
+.modal-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { width: 520px; max-width: 100%; background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden; }
+.modal-header { height: 52px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); font-weight: 600; }
+.modal-body { padding: 18px; color: var(--text-secondary); font-size: 13px; line-height: 1.65; }
+.modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+.choice-list { display: grid; gap: 10px; margin-top: 12px; }
+.choice-item { display: flex; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+.choice-item:hover, .choice-item.selected { border-color: var(--primary); background: var(--primary-light); }
+.choice-title { font-weight: 600; color: var(--text-primary); }
+.choice-desc { margin-top: 3px; color: var(--text-tertiary); font-size: 12px; }
+
+.language-drawer { width: 1080px; }
+.language-layout { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.language-main { overflow-y: auto; padding: 18px; }
+.kv-locale-panel { border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px; background: #fafafa; margin-bottom: 14px; }
+.kv-locale-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.locale-toggle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; margin-top: 10px; }
+.locale-toggle-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 8px; background: #fff; color: var(--text-secondary); font-size: 12px; }
+.locale-toggle-chip.disabled { color: var(--text-tertiary); background: #f7f8fa; }
+.language-kv-wrap { overflow: auto; border: 1px solid var(--border-light); border-radius: var(--radius); background: #fff; max-height: calc(100vh - 280px); }
+.language-kv-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12px; }
+.language-kv-table th, .language-kv-table td { padding: 10px; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); text-align: left; vertical-align: top; }
+.language-kv-table th { position: sticky; top: 0; z-index: 1; background: #fafafa; color: var(--text-primary); }
+.language-kv-table th:first-child, .language-kv-table td:first-child { position: sticky; left: 0; z-index: 2; width: 180px; min-width: 180px; background: #fff; }
+.language-kv-table th:first-child { z-index: 3; background: #fafafa; }
+.language-kv-cell { min-width: 230px; max-width: 280px; }
+.language-kv-cell.error { background: #fff2f0; box-shadow: inset 0 0 0 1px var(--error); }
+.translation-preview { max-height: 72px; overflow: hidden; color: var(--text-secondary); line-height: 1.55; }
+.translation-preview.empty { color: var(--text-tertiary); font-style: italic; }
+.translation-cell-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; color: var(--text-tertiary); }
+.translation-editor-drawer { width: 720px; max-width: 100vw; z-index: 102; }
+.media-upload-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.media-type-badge { display: inline-flex; align-items: center; min-width: 36px; justify-content: center; padding: 2px 6px; border-radius: 3px; background: #f0f5ff; color: var(--primary); font-size: 11px; }
+.translation-card { border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; }
+.translation-card-head { padding: 10px 12px; background: #fafafa; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+.translation-card-body { padding: 12px; }
+.source-box { padding: 9px 10px; border: 1px solid var(--border-light); border-radius: var(--radius); background: #fafafa; color: var(--text-secondary); margin-bottom: 10px; }
+.media-choice { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+.media-choice label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.language-disabled { padding: 48px 20px; text-align: center; color: var(--text-tertiary); }
+
 /* ===== 底部导航 ===== */
 .step-footer { background: var(--bg-white); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; flex-shrink: 0; }
 
@@ -455,6 +535,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
   .form-label, .form-label[style] { width: auto !important; padding-top: 0; text-align: left; }
   .rich-text-toolbar .source-toggle { margin-left: 0; }
   .rich-text-scope { max-width: 240px; }
+  .sidebar { display: none; }
+  .content-area { padding: 12px; }
+  .product-header { padding-left: 14px; padding-right: 14px; }
+  .product-meta { gap: 6px 12px; }
+  .step-nav { overflow-x: auto; }
+  .two-col { display: block; }
+  .col-annotation { width: 100%; margin-top: 14px; }
+  .annotation-panel { position: static; }
+  .annotation-content { max-height: 360px; }
+  .advanced-grid { grid-template-columns: 1fr; }
+  .error-toolbar .input { width: 100%; }
+  .toolbar-spacer { display: none; }
+  .error-toolbar .btn { flex: 1; justify-content: center; }
+  .bulk-bar { flex-wrap: wrap; }
+  .bulk-hint { width: 100%; }
+  .language-drawer { width: 100vw; }
+  .locale-toggle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .language-kv-wrap { max-height: calc(100vh - 300px); }
 }
 </style>
 </head>
@@ -550,8 +648,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
         <div class="step-nav-item">功能设计</div>
         <div class="step-nav-item">扩展程序</div>
         <div class="step-nav-item">设备调试</div>
-        <div class="step-nav-item active">配网引导</div>
-        <div class="step-nav-item">高级配置</div>
+        <div class="step-nav-item active" id="navProvisioning" onclick="switchModule('provisioning')">配网引导</div>
+        <div class="step-nav-item" id="navAdvanced" onclick="switchModule('advanced')">高级配置</div>
       </nav>
     </div>
 
@@ -561,7 +659,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 
         <!-- 左侧产品页 -->
         <div class="col-main">
-          <div class="card">
+          <div class="card" id="provisioningModule">
             <div class="card-body" style="padding-bottom: 0;">
 
               <!-- 产品类型切换（原型控制，放在主区域顶部但视觉上弱化） -->
@@ -730,6 +828,102 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
               <button class="btn btn-primary">下一步</button>
             </div>
           </div>
+
+          <!-- 高级配置入口页 -->
+          <div class="card hidden" id="advancedModule">
+            <div class="card-header">
+              <div>
+                <div class="card-title">高级配置</div>
+                <div class="page-subtitle">配置产品的高级能力与用户引导</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="advanced-grid">
+                <div class="advanced-entry">
+                  <div class="advanced-entry-icon">?</div>
+                  <div class="advanced-entry-title">新手指导</div>
+                  <div class="advanced-entry-desc">配置首次使用时的功能说明与操作引导。</div>
+                  <div class="advanced-entry-meta">进入配置</div>
+                </div>
+                <div class="advanced-entry">
+                  <div class="advanced-entry-icon">⏱</div>
+                  <div class="advanced-entry-title">云倒计时</div>
+                  <div class="advanced-entry-desc">配置设备云端倒计时能力及可用范围。</div>
+                  <div class="advanced-entry-meta">进入配置</div>
+                </div>
+                <div class="advanced-entry" onclick="openErrorGuide()">
+                  <div class="advanced-entry-icon">!</div>
+                  <div class="advanced-entry-title">错误引导配置<span class="anchor-badge" title="批注 15：高级配置新增入口">15</span></div>
+                  <div class="advanced-entry-desc">按错误码维护富文本引导、媒体、多语言与启停状态。</div>
+                  <div class="advanced-entry-meta">已配置 <span id="advancedErrorCount">3</span> 项 · 进入配置</div>
+                </div>
+                <div class="advanced-entry">
+                  <div class="advanced-entry-icon">⌁</div>
+                  <div class="advanced-entry-title">场景联动设置</div>
+                  <div class="advanced-entry-desc">管理产品在自动化与联动场景中的能力。</div>
+                  <div class="advanced-entry-meta">进入配置</div>
+                </div>
+                <div class="advanced-entry">
+                  <div class="advanced-entry-icon">▣</div>
+                  <div class="advanced-entry-title">耗材管理</div>
+                  <div class="advanced-entry-desc">配置耗材寿命、提醒和重置规则。</div>
+                  <div class="advanced-entry-meta">进入配置</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 错误引导配置子页面 -->
+          <div class="hidden" id="errorGuideModule">
+            <div class="page-heading">
+              <button class="btn btn-default page-back" onclick="backToAdvanced()" title="返回高级配置">←</button>
+              <div>
+                <div class="page-title">错误引导配置<span class="anchor-badge" title="批注 16：错误引导列表">16</span></div>
+                <div class="page-subtitle">英语为结构与默认内容源；其他语言在整体多语言配置中维护</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="error-toolbar">
+                <input class="input" id="errorSearch" type="search" placeholder="搜索错误码" oninput="applyErrorFilters()">
+                <select class="select" id="errorStatusFilter" onchange="applyErrorFilters()">
+                  <option value="all">全部状态</option>
+                  <option value="enabled">启用</option>
+                  <option value="disabled">禁用</option>
+                </select>
+                <button class="btn btn-default" onclick="resetErrorFilters()">重置</button>
+                <span class="toolbar-spacer"></span>
+                <button class="btn btn-default" onclick="openTransferModal('import')">导入<span class="anchor-badge" title="批注 21：导入导出">21</span></button>
+                <button class="btn btn-default" onclick="openTransferModal('export')">导出</button>
+                <button class="btn btn-default" onclick="openLanguageDrawer()">多语言配置<span class="anchor-badge" title="批注 20：整体多语言">20</span></button>
+                <button class="btn btn-primary" onclick="openErrorDrawer()">新增错误引导<span class="anchor-badge" title="批注 17：新增/编辑">17</span></button>
+              </div>
+              <div class="bulk-bar">
+                <span class="bulk-hint">“全部”按当前筛选结果执行，正式范围待评审确认。</span>
+                <button class="btn btn-default btn-sm" onclick="confirmBulkStatus(true)">全部启用</button>
+                <button class="btn btn-default btn-sm" onclick="confirmBulkStatus(false)">全部禁用<span class="anchor-badge" title="批注 19：单项与全量启停">19</span></button>
+              </div>
+              <div class="data-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>错误码</th>
+                      <th>英语引导文案</th>
+                      <th>媒体</th>
+                      <th>状态</th>
+                      <th>更新时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="errorGuideTableBody"></tbody>
+                </table>
+              </div>
+              <div class="empty-state hidden" id="errorGuideEmpty">没有符合当前条件的错误引导</div>
+              <div class="table-footer">
+                <span id="errorGuideCount">共 0 项</span>
+                <span>每页 20 条</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 右侧批注面板 -->
@@ -737,12 +931,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
           <div class="annotation-panel">
             <div class="annotation-header">
               <div class="annotation-header-title">原型批注</div>
-              <div class="annotation-header-sub">配网引导输入框支持富文本输入 · 独立需求 v1.0</div>
+              <div class="annotation-header-sub">配网与错误引导富文本配置 · 独立需求 v1.1</div>
             </div>
             <div class="annotation-control">
               <div class="annotation-rule" style="margin-bottom:12px;">
                 <strong>项目边界</strong><br>
-                本原型复用已冻结的配网引导 v1.2 页面作为宿主。批注 1-13 是基线上下文，不计入本项目新增范围；本项目新增范围为批注 14 及其富文本编辑、清洗、计数、预览和兼容行为。
+                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0 基线；批注 15 起是已发布的 v1.1 范围扩展。原型发布不代表线上 IoT Admin 已具备该能力。
               </div>
               <div class="control-label">当前状态</div>
               <div class="control-btns" id="annotationFilter">
@@ -751,6 +945,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                 <button class="control-btn" onclick="filterAnnotation('view')">查看态</button>
                 <button class="control-btn" onclick="filterAnnotation('edit')">编辑态</button>
                 <button class="control-btn" onclick="filterAnnotation('validate')">校验</button>
+                <button class="control-btn" onclick="filterAnnotation('error')">错误引导</button>
+                <button class="control-btn" onclick="filterAnnotation('language')">多语言</button>
               </div>
             </div>
             <div class="annotation-content" id="annotationContent">
@@ -766,7 +962,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 </div><!-- /layout -->
 
 <!-- ===== 抽屉 Overlay ===== -->
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeAllDrawers()"></div>
 
 <!-- ===== 目标入口编辑抽屉 ===== -->
 <div class="drawer" id="editDrawer">
@@ -855,6 +1051,64 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
   </div>
 </div>
 
+<!-- ===== 错误引导新增/编辑抽屉 ===== -->
+<div class="drawer" id="errorGuideDrawer" style="width:720px;max-width:100vw;">
+  <div class="drawer-header">
+    <div class="drawer-title" id="errorGuideDrawerTitle">新增错误引导</div>
+    <button class="drawer-close" onclick="closeErrorDrawer()" title="关闭">✕</button>
+  </div>
+  <div class="drawer-body" id="errorGuideDrawerBody"></div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeErrorDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="saveErrorGuide()">保存</button>
+  </div>
+</div>
+
+<!-- ===== 整体多语言抽屉 ===== -->
+<div class="drawer language-drawer" id="languageDrawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title">错误引导多语言配置</div>
+      <div class="page-subtitle">英语固定为源内容；启用语言需补齐全部错误码译文</div>
+    </div>
+    <button class="drawer-close" onclick="closeLanguageDrawer()" title="关闭">✕</button>
+  </div>
+  <div class="drawer-body" style="padding:0;overflow:hidden;">
+    <div class="language-layout">
+      <main class="language-main" id="languageMain"></main>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeLanguageDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="saveLanguageConfig()">保存多语言配置</button>
+  </div>
+</div>
+
+<!-- ===== 译文富文本编辑抽屉：复用现有 Drawer ===== -->
+<div class="drawer translation-editor-drawer" id="translationEditorDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="translationEditorTitle">编辑译文</div>
+    <button class="drawer-close" onclick="closeTranslationEditor()" title="关闭">✕</button>
+  </div>
+  <div class="drawer-body" id="translationEditorBody"></div>
+  <div class="drawer-footer">
+    <button class="btn btn-default" onclick="closeTranslationEditor()">取消</button>
+    <button class="btn btn-primary" onclick="saveTranslationEditor()">保存译文</button>
+  </div>
+</div>
+
+<!-- ===== 确认 / 导入导出弹窗 ===== -->
+<div class="modal-overlay" id="actionModal" onclick="closeActionModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span id="actionModalTitle">确认操作</span>
+      <button class="drawer-close" onclick="closeActionModal()" title="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="actionModalBody"></div>
+    <div class="modal-footer" id="actionModalFooter"></div>
+  </div>
+</div>
+
 <!-- Toast 容器 -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -920,7 +1174,71 @@ const state = {
   },
   // 编辑中的草稿
   draft: null,
-  drawerType: null // 'target' | 'nonTarget' | 'bleNew' | 'bleScanEdit'
+  drawerType: null, // 'target' | 'nonTarget' | 'bleNew' | 'bleScanEdit'
+  module: 'provisioning',
+  errorSearch: '',
+  errorStatusFilter: 'all',
+  editingErrorId: null,
+  errorDraft: null,
+  localePanelOpen: false,
+  languageDraft: null,
+  translationEditorDraft: null,
+  languages: [
+    { code: 'en', name: '英语', enabled: true, locked: true },
+    { code: 'fr', name: '法语', enabled: false },
+    { code: 'de', name: '德语', enabled: true },
+    { code: 'es', name: '西班牙语', enabled: false },
+    { code: 'it', name: '意大利语', enabled: false },
+    { code: 'ar', name: '阿拉伯语', enabled: false },
+    { code: 'pt', name: '葡萄牙语', enabled: false },
+    { code: 'zh-Hans', name: '中文', enabled: true },
+    { code: 'zh-Hant', name: '繁体中文', enabled: false },
+    { code: 'vi', name: '越南语', enabled: false },
+    { code: 'id', name: '印尼语', enabled: false },
+    { code: 'th', name: '泰语', enabled: false },
+    { code: 'ms', name: '马来语', enabled: false },
+    { code: 'ja', name: '日语', enabled: false },
+    { code: 'ru', name: '俄语', enabled: false },
+    { code: 'fil', name: '菲律宾语', enabled: false }
+  ],
+  errorGuides: [
+    {
+      id: 1,
+      code: '10009027',
+      content: '<p><strong>Firmware update is unavailable.</strong></p><p>Use a virtual version when publishing multi-channel MCU firmware.</p>',
+      media: 'mcu-channel-guide.mp4',
+      enabled: true,
+      updatedAt: '2026-09-22 14:32',
+      translations: {
+        'zh-Hans': { content: '<p><strong>暂时无法升级固件。</strong></p><p>多通道 MCU 固件请通过虚拟版本发布。</p>', mediaMode: 'inherit', media: '' },
+        de: { content: '<p>Firmware-Update nicht verfügbar. Verwenden Sie eine virtuelle Version.</p>', mediaMode: 'inherit', media: '' }
+      }
+    },
+    {
+      id: 2,
+      code: 'NETWORK_TIMEOUT',
+      content: '<p><span data-rich-icon="warn">!</span>Connection timed out.</p><ol><li>Check the Wi-Fi signal.</li><li>Move the device closer to the router.</li></ol>',
+      media: 'network-check.png',
+      enabled: true,
+      updatedAt: '2026-09-21 18:05',
+      translations: {
+        'zh-Hans': { content: '<p>连接超时，请检查 Wi-Fi 信号并将设备靠近路由器。</p>', mediaMode: 'replace', media: 'network-check-zh.png' },
+        de: { content: '', mediaMode: 'inherit', media: '' }
+      }
+    },
+    {
+      id: 3,
+      code: 'DEVICE_OFFLINE',
+      content: '<p>The device is offline. Power it on and try again.</p>',
+      media: '',
+      enabled: false,
+      updatedAt: '2026-09-20 09:46',
+      translations: {
+        'zh-Hans': { content: '<p>设备已离线，请开机后重试。</p>', mediaMode: 'inherit', media: '' },
+        de: { content: '<p>Das Gerät ist offline. Schalten Sie es ein und versuchen Sie es erneut.</p>', mediaMode: 'inherit', media: '' }
+      }
+    }
+  ]
 };
 
 // ===== 批注数据 =====
@@ -1022,6 +1340,62 @@ const annotations = [
     trigger: '打开任一配网引导编辑抽屉并编辑多行正文类字段',
     response: '展示加粗、换行、无序/有序列表、高亮块、预设 icon 与 WYSIWYG / HTML 源码切换；粘贴和源码切回时执行白名单过滤，查看态与 App 预览渲染过滤后的 HTML。',
     rule: '保存受限 HTML；配网文案按纯文本 500 字、子步骤正文按纯文本 200 字计数，标签和属性不计入。兼容历史纯文本。颜色、表格、内嵌图片、对齐、自定义 icon 和链接不在范围内。'
+  },
+  {
+    id: 15, title: 'v1.1：高级配置新增入口', tag: 'v1.1', group: 'error',
+    location: '产品详情 > 高级配置',
+    trigger: '点击顶部“高级配置”',
+    response: '在既有高级配置卡片中新增“错误引导配置”，点击进入独立管理子页面。',
+    rule: '沿用高级配置卡片进入子页面的页面模式；真实 subStep 路由名尚未确认，原型不把假设路由写成接口事实。'
+  },
+  {
+    id: 16, title: '错误引导列表与查询', tag: 'v1.1', group: 'error',
+    location: '错误引导配置列表',
+    trigger: '进入子页面或修改搜索/状态筛选',
+    response: '展示错误码、英语富文本摘要、媒体、状态、更新时间和操作；支持无结果状态。',
+    rule: '禁用记录继续可查可编辑，只是不向 App 输出。语言启用/隐藏与翻译完成度统一在“多语言配置”内管理，不在列表重复展示。'
+  },
+  {
+    id: 17, title: '英语源新增与编辑', tag: 'CRUD', group: 'error',
+    location: '新增/编辑错误引导抽屉',
+    trigger: '点击新增或编辑',
+    response: '配置错误码、英语富文本、最多一个图片或视频和启用状态；保存后更新列表。',
+    rule: '媒体支持图片或视频；每语言每项最多一个。扩展名、大小、视频时长和必填性待确认。'
+  },
+  {
+    id: 18, title: '错误码唯一与删除影响', tag: '校验', group: 'validate',
+    location: '英语源抽屉 / 删除确认框',
+    trigger: '保存重复错误码，或删除记录',
+    response: '重复错误码阻止保存并定位；删除前明确将同步删除全部语言译文和媒体引用。',
+    rule: '错误码默认在产品内唯一并按字符串处理；是否仅允许数字、最大长度和大小写规则待确认。'
+  },
+  {
+    id: 19, title: '单项与全量启停', tag: '状态', group: 'error',
+    location: '错误引导列表',
+    trigger: '切换行状态，或点击全部启用/全部禁用',
+    response: '单项即时更新；全量操作二次确认并展示影响数量。',
+    rule: '原型中的“全部”作用于当前筛选结果；最终是否应作用于产品全部记录待评审确认。'
+  },
+  {
+    id: 20, title: '整体多语言配置', tag: '多语言', group: 'language',
+    location: '错误引导 > 多语言配置',
+    trigger: '启用语言并维护译文',
+    response: '复用设备助手的可折叠语言列管理和多语言 KV 表；英语固定只读，非英语列可启停，并按错误码编辑富文本与媒体。',
+    rule: '16 种语言及编码与设备助手一致；启用语言缺少任一译文时阻止保存，禁用语言不参与校验。媒体可沿用英语或上传一个图片/视频替换。'
+  },
+  {
+    id: 21, title: '翻译与完整包导入导出', tag: '导入导出', group: 'language',
+    location: '错误引导列表工具栏',
+    trigger: '点击导入或导出',
+    response: 'CSV/XLSX 用于非英语文本；JSON 用于结构、文本、多语言、媒体引用和元数据的完整包。',
+    rule: 'CSV/XLSX 不覆盖英语且不包含媒体；JSON 不包含媒体二进制。JSON 导入校验失败时整体回滚。'
+  },
+  {
+    id: 22, title: 'v1.1 项目与发布边界', tag: '范围', group: 'error',
+    location: '整个原型',
+    trigger: '评审本次范围扩展',
+    response: 'v1.0 作为历史基线保留；v1.1 已发布 PRD，并更新本项目既有原型路径。',
+    rule: '本次发布不修改原冻结项目、Wiki 或线上 IoT Admin 数据。'
   }
 ];
 
@@ -1047,6 +1421,530 @@ function isTargetEntry() {
   if (state.product === 'wifi') return state.wifiEntry === 'qr';
   if (state.product === 'ble') return state.bleEntry === 'bt' && state.bleMode === 'old';
   return false;
+}
+
+// ===== 页面模块切换 =====
+function switchModule(module) {
+  state.module = module;
+  document.getElementById('provisioningModule').classList.toggle('hidden', module !== 'provisioning');
+  document.getElementById('advancedModule').classList.toggle('hidden', module !== 'advanced');
+  document.getElementById('errorGuideModule').classList.add('hidden');
+  document.getElementById('navProvisioning').classList.toggle('active', module === 'provisioning');
+  document.getElementById('navAdvanced').classList.toggle('active', module !== 'provisioning');
+  if (module === 'advanced') {
+    document.getElementById('advancedErrorCount').textContent = state.errorGuides.length;
+    currentAnnotationFilter = 'error';
+  } else {
+    currentAnnotationFilter = 'all';
+  }
+  syncAnnotationFilterButtons();
+  renderAnnotations();
+}
+
+function openErrorGuide() {
+  state.module = 'error';
+  document.getElementById('provisioningModule').classList.add('hidden');
+  document.getElementById('advancedModule').classList.add('hidden');
+  document.getElementById('errorGuideModule').classList.remove('hidden');
+  document.getElementById('navProvisioning').classList.remove('active');
+  document.getElementById('navAdvanced').classList.add('active');
+  currentAnnotationFilter = 'error';
+  syncAnnotationFilterButtons();
+  renderAnnotations();
+  renderErrorGuideTable();
+}
+
+function backToAdvanced() {
+  switchModule('advanced');
+}
+
+// ===== 错误引导列表 =====
+function getFilteredErrorGuides() {
+  const keyword = state.errorSearch.trim().toLowerCase();
+  return state.errorGuides.filter(item => {
+    const matchesCode = !keyword || item.code.toLowerCase().includes(keyword);
+    const matchesStatus = state.errorStatusFilter === 'all'
+      || (state.errorStatusFilter === 'enabled' && item.enabled)
+      || (state.errorStatusFilter === 'disabled' && !item.enabled);
+    return matchesCode && matchesStatus;
+  });
+}
+
+function applyErrorFilters() {
+  state.errorSearch = document.getElementById('errorSearch')?.value || '';
+  state.errorStatusFilter = document.getElementById('errorStatusFilter')?.value || 'all';
+  renderErrorGuideTable();
+}
+
+function resetErrorFilters() {
+  state.errorSearch = '';
+  state.errorStatusFilter = 'all';
+  const search = document.getElementById('errorSearch');
+  const status = document.getElementById('errorStatusFilter');
+  if (search) search.value = '';
+  if (status) status.value = 'all';
+  renderErrorGuideTable();
+}
+
+function renderErrorGuideTable() {
+  const body = document.getElementById('errorGuideTableBody');
+  if (!body) return;
+  const rows = getFilteredErrorGuides();
+  const empty = document.getElementById('errorGuideEmpty');
+  const table = body.closest('table');
+  table?.classList.toggle('hidden', rows.length === 0);
+  empty?.classList.toggle('hidden', rows.length !== 0);
+  document.getElementById('errorGuideCount').textContent = `共 ${rows.length} 项`;
+  document.getElementById('advancedErrorCount').textContent = state.errorGuides.length;
+  body.innerHTML = rows.map(item => `<tr>
+      <td><span class="table-code">${escHtml(item.code)}</span></td>
+      <td><div class="table-copy">${richTextPreviewHtml(item.content)}</div></td>
+      <td>${item.media ? `<span class="media-chip">▣ <span>${escHtml(item.media)}</span></span>` : '<span class="text-muted">--</span>'}</td>
+      <td>
+        <span class="status-switch">
+          <button class="toggle ${item.enabled ? 'on' : ''}" onclick="toggleErrorGuideStatus(${item.id})" title="${item.enabled ? '禁用' : '启用'}"><span class="toggle-knob"></span></button>
+          <span>${item.enabled ? '启用' : '禁用'}</span>
+        </span>
+      </td>
+      <td class="text-muted">${escHtml(item.updatedAt)}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-link" onclick="openErrorDrawer(${item.id})">编辑</button>
+        <button class="btn btn-link danger-link" onclick="confirmDeleteErrorGuide(${item.id})">删除</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function toggleErrorGuideStatus(id) {
+  const item = state.errorGuides.find(row => row.id === id);
+  if (!item) return;
+  item.enabled = !item.enabled;
+  item.updatedAt = '2026-09-22 16:20';
+  renderErrorGuideTable();
+  showToast(item.enabled ? '已启用该错误引导' : '已禁用该错误引导', 'success');
+}
+
+function confirmBulkStatus(enabled) {
+  const rows = getFilteredErrorGuides();
+  if (!rows.length) {
+    showToast('当前筛选结果没有可操作项', 'error');
+    return;
+  }
+  openActionModal({
+    title: enabled ? '确认全部启用' : '确认全部禁用',
+    body: `<p>将对当前筛选结果中的 <strong>${rows.length}</strong> 项执行${enabled ? '启用' : '禁用'}。</p><p class="text-muted" style="margin-top:8px;">原型假设：“全部”作用于当前筛选结果，正式范围待评审确认。</p>`,
+    confirmText: enabled ? '全部启用' : '全部禁用',
+    danger: !enabled,
+    action: () => {
+      const ids = new Set(rows.map(row => row.id));
+      state.errorGuides.forEach(item => {
+        if (ids.has(item.id)) {
+          item.enabled = enabled;
+          item.updatedAt = '2026-09-22 16:20';
+        }
+      });
+      renderErrorGuideTable();
+      showToast(`已${enabled ? '启用' : '禁用'} ${rows.length} 项`, 'success');
+    }
+  });
+}
+
+// ===== 错误引导英语源抽屉 =====
+function openErrorDrawer(id = null) {
+  const existing = id ? state.errorGuides.find(item => item.id === id) : null;
+  state.editingErrorId = existing?.id || null;
+  state.errorDraft = existing
+    ? JSON.parse(JSON.stringify(existing))
+    : { id: null, code: '', content: '', media: '', enabled: true, updatedAt: '', translations: {} };
+  document.getElementById('errorGuideDrawerTitle').textContent = existing ? '编辑错误引导' : '新增错误引导';
+  renderErrorDrawer();
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('errorGuideDrawer').classList.add('open');
+  highlightAnnotation(17);
+}
+
+function renderErrorDrawer() {
+  const body = document.getElementById('errorGuideDrawerBody');
+  const draft = state.errorDraft;
+  if (!body || !draft) return;
+  body.innerHTML = `
+    <div class="annotation-rule" style="margin-bottom:18px;"><strong>英语源配置</strong><br>错误码和状态为共享结构；英语文案是默认回退内容。媒体支持图片或视频，每项最多上传 1 个。</div>
+    <div class="form-row">
+      <div class="form-label required">错误码<span class="anchor-badge" title="批注 18：产品内唯一">18</span></div>
+      <div class="form-control">
+        <input class="input" id="errorCodeInput" value="${escHtml(draft.code)}" placeholder="例如 NETWORK_TIMEOUT" oninput="state.errorDraft.code=this.value">
+        <div class="form-hint">按字符串处理；允许字符、长度和大小写规则待接口确认。</div>
+        <div class="error-msg" id="err_errorCode"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label required">英语文案</div>
+      <div class="form-control">
+        ${renderRichTextField({ id: 'errorEnglishContent', value: draft.content, placeholder: 'Enter error guidance in English', limit: 1000 })}
+        <div class="form-hint">1000 字为原型占位上限，最终限制待确认。</div>
+        <div class="error-msg" id="err_errorContent"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">英语媒体</div>
+      <div class="form-control">
+        ${draft.media
+          ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.media) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.media)}</div><div class="upload-file-size"><span class="media-type-badge">${getMediaType(draft.media)}</span> · 已占用 1 / 1，扩展名、大小和视频时长限制待确认</div></div><button class="btn btn-link btn-sm" onclick="mockUploadErrorMedia('${getMediaType(draft.media) === '视频' ? 'video' : 'image'}')">替换</button><button class="upload-file-remove" onclick="removeErrorMedia()">✕</button></div>`
+          : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传图片或视频</div><div class="upload-placeholder-hint">最多 1 个；扩展名、大小和视频时长限制待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('video')">上传视频</button></div></div></div>`}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">状态</div>
+      <div class="form-control">
+        <div class="toggle-wrap"><button class="toggle ${draft.enabled ? 'on' : ''}" onclick="toggleErrorDraftStatus()"><span class="toggle-knob"></span></button><span class="toggle-label">${draft.enabled ? '启用' : '禁用'}</span></div>
+        <div class="form-hint">禁用后保留后台数据，但不向 App 输出。</div>
+      </div>
+    </div>`;
+  bindRichTextEditors(body);
+  bindRichTextField(body, 'errorEnglishContent', value => { state.errorDraft.content = value; });
+}
+
+function getMediaType(filename) {
+  return /\.(mp4|mov|webm|avi|mkv)$/i.test(filename || '') ? '视频' : '图片';
+}
+
+function mockUploadErrorMedia(type = 'image') {
+  state.errorDraft.media = type === 'video' ? 'error-guidance-video.mp4' : 'error-guidance-image.png';
+  renderErrorDrawer();
+}
+
+function removeErrorMedia() {
+  state.errorDraft.media = '';
+  renderErrorDrawer();
+}
+
+function toggleErrorDraftStatus() {
+  state.errorDraft.enabled = !state.errorDraft.enabled;
+  renderErrorDrawer();
+}
+
+function saveErrorGuide() {
+  const draft = state.errorDraft;
+  if (!draft) return;
+  document.getElementById('err_errorCode')?.classList.remove('show');
+  document.getElementById('err_errorContent')?.classList.remove('show');
+  document.getElementById('errorCodeInput')?.classList.remove('error');
+  document.getElementById('errorEnglishContent')?.classList.remove('error');
+  const code = draft.code.trim();
+  const duplicate = state.errorGuides.some(item => item.code.toLowerCase() === code.toLowerCase() && item.id !== state.editingErrorId);
+  if (!code || duplicate) {
+    const error = document.getElementById('err_errorCode');
+    if (error) {
+      error.textContent = duplicate ? '该错误码已存在，请使用唯一错误码' : '请输入错误码';
+      error.classList.add('show');
+    }
+    document.getElementById('errorCodeInput')?.classList.add('error');
+    highlightAnnotation(18);
+    return;
+  }
+  const contentLength = richTextPlainLength(draft.content);
+  if (!contentLength || contentLength > 1000) {
+    const error = document.getElementById('err_errorContent');
+    if (error) {
+      error.textContent = contentLength > 1000 ? '英语文案不可超过 1000 字（原型上限）' : '请输入英语文案';
+      error.classList.add('show');
+    }
+    document.getElementById('errorEnglishContent')?.classList.add('error');
+    return;
+  }
+  draft.code = code;
+  draft.content = normalizeRichTextValue(draft.content);
+  draft.updatedAt = '2026-09-22 16:20';
+  if (state.editingErrorId) {
+    const index = state.errorGuides.findIndex(item => item.id === state.editingErrorId);
+    state.errorGuides[index] = JSON.parse(JSON.stringify(draft));
+  } else {
+    draft.id = Math.max(0, ...state.errorGuides.map(item => item.id)) + 1;
+    state.errorGuides.unshift(JSON.parse(JSON.stringify(draft)));
+  }
+  closeErrorDrawer();
+  renderErrorGuideTable();
+  showToast('错误引导已保存', 'success');
+}
+
+function closeErrorDrawer() {
+  document.getElementById('errorGuideDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  state.errorDraft = null;
+  state.editingErrorId = null;
+}
+
+function confirmDeleteErrorGuide(id) {
+  const item = state.errorGuides.find(row => row.id === id);
+  if (!item) return;
+  openActionModal({
+    title: '删除错误引导',
+    body: `<p>确认删除错误码 <strong>${escHtml(item.code)}</strong>？</p><p style="margin-top:8px;color:var(--error);">该操作会同时删除全部语言译文和媒体引用，且不可撤销。</p>`,
+    confirmText: '删除',
+    danger: true,
+    action: () => {
+      state.errorGuides = state.errorGuides.filter(row => row.id !== id);
+      renderErrorGuideTable();
+      showToast('已删除错误引导', 'success');
+    }
+  });
+}
+
+// ===== 整体多语言配置 =====
+function openLanguageDrawer() {
+  state.languageDraft = {
+    languages: JSON.parse(JSON.stringify(state.languages)),
+    guides: JSON.parse(JSON.stringify(state.errorGuides))
+  };
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('languageDrawer').classList.add('open');
+  renderLanguageDrawer();
+  highlightAnnotation(20);
+}
+
+function renderLanguageDrawer() {
+  renderLanguageMain();
+}
+
+function getLanguageCompletion(code) {
+  if (!state.languageDraft) return 0;
+  if (code === 'en') return state.languageDraft.guides.length;
+  return state.languageDraft.guides.filter(item => richTextPlainLength(item.translations?.[code]?.content || '') > 0).length;
+}
+
+function toggleLanguageEnabled(code, enabled) {
+  const language = state.languageDraft?.languages.find(lang => lang.code === code);
+  if (!language || language.locked) return;
+  language.enabled = Boolean(enabled);
+  renderLanguageDrawer();
+}
+
+function toggleLocalePanel() {
+  state.localePanelOpen = !state.localePanelOpen;
+  renderLanguageDrawer();
+}
+
+function renderLanguageMain() {
+  const main = document.getElementById('languageMain');
+  if (!main || !state.languageDraft) return;
+  const enabledLanguages = state.languageDraft.languages.filter(lang => lang.enabled);
+  const enabledNames = enabledLanguages.map(lang => lang.name).join('、');
+  state.languageDraft.guides.forEach(item => {
+    if (!item.translations) item.translations = {};
+    enabledLanguages.filter(lang => lang.code !== 'en').forEach(lang => {
+      if (!item.translations[lang.code]) item.translations[lang.code] = { content: '', mediaMode: 'inherit', media: '' };
+    });
+  });
+  main.innerHTML = `
+    <div class="kv-locale-panel">
+      <div class="kv-locale-toolbar">
+        <div><strong>语言列管理</strong><div class="form-hint">复用设备助手交互。启用语言后，保存前需补齐该语言全部错误码译文。</div></div>
+        <button class="btn btn-link" onclick="toggleLocalePanel()">${state.localePanelOpen ? '收起语言' : '展开语言'}</button>
+      </div>
+      ${state.localePanelOpen
+        ? `<div class="locale-toggle-grid">${state.languageDraft.languages.map(lang => `<label class="locale-toggle-chip ${lang.enabled ? '' : 'disabled'}"><input type="checkbox" ${lang.enabled ? 'checked' : ''} ${lang.locked ? 'disabled' : ''} onchange="toggleLanguageEnabled('${lang.code}',this.checked)">${escHtml(lang.name)}${lang.code === 'en' ? '（默认）' : ''}</label>`).join('')}</div>`
+        : `<div class="form-hint" style="margin-top:8px;">已启用 ${enabledLanguages.length} / ${state.languageDraft.languages.length}：${escHtml(enabledNames)}</div>`}
+    </div>
+    <div class="annotation-rule" style="margin-bottom:14px;"><strong>多语言 KV 表</strong><br>英语列只读；其他启用语言按错误码维护富文本译文和单个图片/视频。表格横向滚动与语言列启停复用设备助手能力。</div>
+    <div class="language-kv-wrap">
+      <table class="language-kv-table">
+        <thead><tr><th>错误码</th>${enabledLanguages.map(lang => `<th>${escHtml(lang.name)}${lang.code === 'en' ? '<div class="form-hint">源内容 · 只读</div>' : `<div class="form-hint">${getLanguageCompletion(lang.code)} / ${state.languageDraft.guides.length} 项完成</div>`}</th>`).join('')}</tr></thead>
+        <tbody>${state.languageDraft.guides.map(item => `<tr><td><span class="table-code">${escHtml(item.code)}</span><div class="form-hint">${item.enabled ? '启用' : '禁用'}</div></td>${enabledLanguages.map(lang => lang.code === 'en'
+          ? `<td class="language-kv-cell"><div class="translation-preview">${normalizeRichTextValue(item.content)}</div><div class="translation-cell-meta">媒体：${item.media ? `<span class="media-type-badge">${getMediaType(item.media)}</span>${escHtml(item.media)}` : '未配置'}</div></td>`
+          : renderTranslationKvCell(item, lang)).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderTranslationKvCell(item, language) {
+  const translation = item.translations[language.code];
+  const completed = richTextPlainLength(translation.content) > 0;
+  const mediaLabel = translation.mediaMode === 'replace'
+    ? (translation.media ? `${getMediaType(translation.media)} · ${translation.media}` : '替换媒体未上传')
+    : `沿用英语${item.media ? ` · ${item.media}` : ' · 英语未配置'}`;
+  return `<td class="language-kv-cell" id="translationCell_${language.code}_${item.id}">
+    <div class="translation-preview ${completed ? '' : 'empty'}">${completed ? normalizeRichTextValue(translation.content) : '待填写富文本译文'}</div>
+    <div class="translation-cell-meta"><span>${escHtml(mediaLabel)}</span></div>
+    <button class="btn btn-link btn-sm" style="margin-top:8px;" onclick="openTranslationEditor(${item.id},'${language.code}')">编辑富文本与媒体</button>
+  </td>`;
+}
+
+function openTranslationEditor(itemId, code) {
+  const item = state.languageDraft?.guides.find(row => row.id === itemId);
+  const language = state.languageDraft?.languages.find(lang => lang.code === code);
+  if (!item || !language) return;
+  state.translationEditorDraft = {
+    itemId,
+    code,
+    languageName: language.name,
+    sourceContent: item.content,
+    sourceMedia: item.media,
+    value: JSON.parse(JSON.stringify(item.translations?.[code] || { content: '', mediaMode: 'inherit', media: '' }))
+  };
+  renderTranslationEditor();
+  document.getElementById('translationEditorDrawer').classList.add('open');
+}
+
+function renderTranslationEditor() {
+  const draft = state.translationEditorDraft;
+  const body = document.getElementById('translationEditorBody');
+  if (!draft || !body) return;
+  document.getElementById('translationEditorTitle').textContent = `编辑${draft.languageName}译文`;
+  body.innerHTML = `<div class="source-box"><strong>英语源</strong><div class="rich-text-preview" style="margin-top:8px;">${normalizeRichTextValue(draft.sourceContent)}</div><div class="form-hint">英语媒体：${draft.sourceMedia ? escHtml(draft.sourceMedia) : '未配置'}</div></div>
+    <div style="margin-top:14px;">${renderRichTextField({ id: 'translationEditorContent', value: draft.value.content, placeholder: `请输入${draft.languageName}译文`, limit: 1000, compact: true })}<div class="error-msg" id="err_translationEditorContent">请输入译文</div></div>
+    <div class="media-choice" style="margin-top:14px;"><span>媒体：</span><label><input type="radio" name="translationEditorMedia" ${draft.value.mediaMode !== 'replace' ? 'checked' : ''} onchange="setTranslationEditorMediaMode('inherit')">沿用英语</label><label><input type="radio" name="translationEditorMedia" ${draft.value.mediaMode === 'replace' ? 'checked' : ''} onchange="setTranslationEditorMediaMode('replace')">上传替换</label></div>
+    ${draft.value.mediaMode === 'replace' ? (draft.value.media
+      ? `<div class="translation-cell-meta"><span class="media-type-badge">${getMediaType(draft.value.media)}</span><span>${escHtml(draft.value.media)}</span><span class="text-muted">已占用 1 / 1</span><button class="btn btn-link btn-sm" onclick="mockUploadEditorMedia('${getMediaType(draft.value.media) === '视频' ? 'video' : 'image'}')">替换</button><button class="btn btn-link btn-sm danger-link" onclick="removeEditorMedia()">删除</button></div>`
+      : `<div class="media-upload-actions" style="justify-content:flex-start;"><button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia('video')">上传视频</button><span class="form-hint">最多 1 个</span></div>`) : ''}`;
+  bindRichTextEditors(body);
+  bindRichTextField(body, 'translationEditorContent', value => { state.translationEditorDraft.value.content = value; });
+}
+
+function setTranslationEditorMediaMode(mode) {
+  const draft = state.translationEditorDraft;
+  if (!draft) return;
+  draft.value.mediaMode = mode;
+  if (mode === 'inherit') draft.value.media = '';
+  renderTranslationEditor();
+}
+
+function mockUploadEditorMedia(type) {
+  const draft = state.translationEditorDraft;
+  const item = state.languageDraft?.guides.find(row => row.id === draft?.itemId);
+  if (!draft || !item) return;
+  draft.value.mediaMode = 'replace';
+  draft.value.media = type === 'video' ? `${draft.code}-${item.code}-video.mp4` : `${draft.code}-${item.code}-image.png`;
+  renderTranslationEditor();
+}
+
+function removeEditorMedia() {
+  if (!state.translationEditorDraft) return;
+  state.translationEditorDraft.value.media = '';
+  renderTranslationEditor();
+}
+
+function saveTranslationEditor() {
+  const draft = state.translationEditorDraft;
+  if (!draft) return;
+  const length = richTextPlainLength(draft.value.content);
+  if (!length || length > 1000) {
+    document.getElementById('err_translationEditorContent')?.classList.add('show');
+    document.getElementById('translationEditorContent')?.classList.add('error');
+    return;
+  }
+  const item = state.languageDraft?.guides.find(row => row.id === draft.itemId);
+  if (!item) return;
+  item.translations[draft.code] = JSON.parse(JSON.stringify(draft.value));
+  closeTranslationEditor();
+  renderLanguageDrawer();
+  showToast(`${draft.languageName}译文已更新`, 'success');
+}
+
+function closeTranslationEditor() {
+  document.getElementById('translationEditorDrawer').classList.remove('open');
+  state.translationEditorDraft = null;
+}
+
+function saveLanguageConfig() {
+  if (!state.languageDraft) return;
+  for (const language of state.languageDraft.languages.filter(lang => lang.enabled && lang.code !== 'en')) {
+    const missing = state.languageDraft.guides.find(item => richTextPlainLength(item.translations?.[language.code]?.content || '') === 0);
+    if (missing) {
+      renderLanguageDrawer();
+      const cell = document.getElementById(`translationCell_${language.code}_${missing.id}`);
+      cell?.classList.add('error');
+      cell?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      showToast(`${language.name}存在未完成译文`, 'error');
+      openTranslationEditor(missing.id, language.code);
+      setTimeout(() => document.getElementById('err_translationEditorContent')?.classList.add('show'), 0);
+      return;
+    }
+  }
+  state.languages = JSON.parse(JSON.stringify(state.languageDraft.languages));
+  const translationMap = new Map(state.languageDraft.guides.map(item => [item.id, item.translations]));
+  state.errorGuides.forEach(item => { item.translations = JSON.parse(JSON.stringify(translationMap.get(item.id) || {})); });
+  closeLanguageDrawer();
+  renderErrorGuideTable();
+  showToast('多语言配置已保存', 'success');
+}
+
+function closeLanguageDrawer() {
+  closeTranslationEditor();
+  document.getElementById('languageDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  state.languageDraft = null;
+}
+
+// ===== 确认弹窗与导入导出 =====
+let pendingModalAction = null;
+
+function openActionModal({ title, body, confirmText = '确认', danger = false, action = null }) {
+  pendingModalAction = action;
+  document.getElementById('actionModalTitle').textContent = title;
+  document.getElementById('actionModalBody').innerHTML = body;
+  document.getElementById('actionModalFooter').innerHTML = `<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" onclick="runModalAction()">${escHtml(confirmText)}</button>`;
+  document.getElementById('actionModal').classList.add('open');
+}
+
+function runModalAction() {
+  const action = pendingModalAction;
+  closeActionModal();
+  if (typeof action === 'function') action();
+}
+
+function closeActionModal(event) {
+  if (event && event.target !== document.getElementById('actionModal')) return;
+  document.getElementById('actionModal').classList.remove('open');
+  pendingModalAction = null;
+}
+
+function selectTransferChoice(type, element) {
+  state.transferChoice = type;
+  document.querySelectorAll('#actionModalBody .choice-item').forEach(item => item.classList.remove('selected'));
+  element?.classList.add('selected');
+  const file = document.getElementById('transferFileWrap');
+  if (file) file.classList.toggle('hidden', !String(state.transferMode).includes('import'));
+}
+
+function openTransferModal(mode) {
+  state.transferMode = mode;
+  state.transferChoice = 'translation';
+  const isImport = mode === 'import';
+  document.getElementById('actionModalTitle').textContent = isImport ? '导入错误引导配置' : '导出错误引导配置';
+  document.getElementById('actionModalBody').innerHTML = `
+    <div>选择${isImport ? '导入' : '导出'}类型：</div>
+    <div class="choice-list">
+      <div class="choice-item selected" onclick="selectTransferChoice('translation',this)"><div><div class="choice-title">CSV / XLSX 翻译文件</div><div class="choice-desc">仅非英语文本；英语不可覆盖；不包含媒体文件或引用。</div></div></div>
+      <div class="choice-item" onclick="selectTransferChoice('json',this)"><div><div class="choice-title">JSON 完整配置包</div><div class="choice-desc">包含结构、顺序、文本、多语言、媒体引用和元数据，不含媒体二进制。${isImport ? '导入将整体覆盖当前配置。' : ''}</div></div></div>
+    </div>
+    ${isImport ? '<div id="transferFileWrap" style="margin-top:14px;"><label class="form-hint" for="transferFile">选择文件后执行预检查</label><input class="input" style="padding-top:5px;" type="file" id="transferFile" accept=".csv,.xlsx,.json"></div>' : ''}
+    <div class="annotation-rule" style="margin-top:14px;">JSON 版本不兼容、错误码重复或媒体引用非法时整体失败，当前配置保持不变。</div>`;
+  document.getElementById('actionModalFooter').innerHTML = `<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn btn-primary" onclick="executeTransfer()">${isImport ? '预检查并导入' : '生成导出文件'}</button>`;
+  document.getElementById('actionModal').classList.add('open');
+  highlightAnnotation(21);
+}
+
+function executeTransfer() {
+  if (state.transferMode === 'import') {
+    const file = document.getElementById('transferFile');
+    if (!file?.files?.length) {
+      showToast('请先选择导入文件', 'error');
+      return;
+    }
+    closeActionModal();
+    showToast(state.transferChoice === 'json' ? '完整包预检查通过，已模拟原子导入' : '翻译文件校验通过，已模拟导入', 'success');
+  } else {
+    closeActionModal();
+    showToast(state.transferChoice === 'json' ? '已生成 JSON 完整配置包' : '已生成多语言翻译文件', 'success');
+  }
+}
+
+function closeAllDrawers() {
+  closeTranslationEditor();
+  closeDrawer();
+  document.getElementById('errorGuideDrawer').classList.remove('open');
+  document.getElementById('languageDrawer').classList.remove('open');
+  state.errorDraft = null;
+  state.languageDraft = null;
 }
 
 // ===== 切换产品类型 =====
@@ -2073,13 +2971,23 @@ function renderAnnotations() {
 
 function filterAnnotation(group) {
   currentAnnotationFilter = group;
-  document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.control-btn').forEach(btn => {
-    if (btn.textContent.trim().toLowerCase().includes(group) || (group === 'all' && btn.textContent.trim() === '全部')) {
-      btn.classList.add('active');
-    }
-  });
+  syncAnnotationFilterButtons();
   renderAnnotations();
+}
+
+function syncAnnotationFilterButtons() {
+  const labels = {
+    all: '全部',
+    entry: '入口范围',
+    view: '查看态',
+    edit: '编辑态',
+    validate: '校验',
+    error: '错误引导',
+    language: '多语言'
+  };
+  document.querySelectorAll('#annotationFilter .control-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === labels[currentAnnotationFilter]);
+  });
 }
 
 function highlightAnnotation(id) {
