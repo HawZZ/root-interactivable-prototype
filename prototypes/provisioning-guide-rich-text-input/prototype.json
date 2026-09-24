@@ -2,7 +2,7 @@
   "id": "provisioning-guide-rich-text-input",
   "path": "/prototypes/provisioning-guide-rich-text-input/",
   "title": "配网引导输入框支持富文本输入",
-  "summary": "独立需求 v1.1 已发布原型：高级配置新增错误引导 CRUD、英语富文本、单个图片/视频，并复用设备助手 16 语言列管理与多语言 KV 表。",
+  "summary": "独立需求 v1.2：多步骤无固定数量上限，子步骤支持单个图片或视频，并保留富文本与错误引导配置能力。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -10,14 +10,16 @@
     "web"
   ],
   "seriesId": "provisioning-guide-rich-text-input",
-  "version": "v1.1",
+  "version": "v1.2",
   "status": "active",
   "tags": [
     "配网引导",
     "富文本",
     "白名单清洗",
     "错误引导",
-    "多语言"
+    "多语言",
+    "子步骤媒体",
+    "无固定步骤上限"
   ],
   "updatedAt": "2026-09-22T07:05:43Z",
   "lastPublisher": "HawZZ",
