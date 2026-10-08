@@ -140,6 +140,9 @@ button.sidebar-sub-item.active { color: #fff; background: #4372ff; }
 .form-label { width: 92px; flex-shrink: 0; text-align: right; font-size: 13px; color: var(--text-secondary); padding-top: 8px; line-height: 1.4; }
 .form-label.required::before { content: "*"; color: var(--error); margin-right: 3px; }
 .form-control { flex: 1; min-width: 0; }
+.form-static { min-height: 32px; display: flex; align-items: center; color: var(--text-secondary); font-size: 13px; overflow-wrap: anywhere; }
+.form-section { margin: 22px 0 16px; padding: 0 0 10px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+.form-section small { display: block; margin-top: 4px; color: var(--text-tertiary); font-size: 11px; font-weight: 400; }
 .form-hint { margin-top: 5px; font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
 .error-msg { display: none; margin-top: 5px; color: var(--error); font-size: 12px; }
 .error-msg.show { display: block; }
@@ -333,16 +336,7 @@ button.sidebar-sub-item.active { color: #fff; background: #4372ff; }
     <button class="drawer-close" type="button" onclick="closeDrawer('keyDrawer')" title="关闭">✕</button>
   </div>
   <div class="drawer-body" id="keyDrawerBody"></div>
-  <div class="drawer-footer"><button class="btn" type="button" onclick="closeDrawer('keyDrawer')">取消</button><button class="btn btn-primary" type="button" onclick="saveKey()">保存</button></div>
-</div>
-
-<div class="drawer drawer-wide" id="localeDrawer" role="dialog" aria-modal="true" aria-labelledby="localeDrawerTitle">
-  <div class="drawer-header">
-    <div><div class="drawer-title" id="localeDrawerTitle">单 Key 多语言配置</div><div class="drawer-subtitle" id="localeDrawerSubtitle">按 Key 类型维护各语言资源</div></div>
-    <button class="drawer-close" type="button" onclick="closeDrawer('localeDrawer')" title="关闭">✕</button>
-  </div>
-  <div class="drawer-body" id="localeDrawerBody"></div>
-  <div class="drawer-footer"><button class="btn" type="button" onclick="closeDrawer('localeDrawer')">取消</button><button class="btn btn-primary" type="button" onclick="saveLocaleConfig()">保存多语言配置</button></div>
+  <div class="drawer-footer"><button class="btn" type="button" onclick="closeDrawer('keyDrawer')">取消</button><button class="btn btn-primary" type="button" onclick="saveKey()">确定</button></div>
 </div>
 
 <div class="drawer" id="languageDrawer" role="dialog" aria-modal="true" aria-labelledby="languageDrawerTitle">
@@ -385,15 +379,13 @@ const state = {
     { code: 'fil', name: '菲律宾语', enabled: false }
   ],
   keys: [
-    { id: 1, module: '配网', type: 'text', key: 'provisioning.reset.button.hold', sourceText: '<p>Press and hold the <strong>reset button</strong> for 5 seconds.</p><ul><li>Wait until the light flashes.</li><li>Release the button.</li></ul>', translations: { zh: { text: '<p>长按<strong>重置键</strong> 5 秒。</p>', media: '' }, 'zh-tw': { text: '<p>長按<strong>重置鍵</strong> 5 秒。</p>', media: '' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 14:20' },
-    { id: 2, module: '配网', type: 'media', key: 'provisioning.reset.button.demo', sourceText: '', sourceMedia: 'provisioning-reset-demo.mp4', translations: { zh: { text: '', media: 'provisioning-reset-demo-zh.mp4' }, 'zh-tw': { text: '', media: 'provisioning-reset-demo-zh-tw.mp4' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 14:18' },
-    { id: 3, module: '功能点', type: 'text', key: 'device.mode.sleep.desc', sourceText: '<p>Sleep mode reduces noise and power use.</p>', translations: { zh: { text: '<p>睡眠模式可降低噪音与功耗。</p>', media: '' }, 'zh-tw': { text: '', media: '' }, de: { text: '<p>Schlafmodus reduziert Lärm und Stromverbrauch.</p>', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 11:32' },
-    { id: 4, module: '通知', type: 'media', key: 'notification.low.battery.icon', sourceText: '', sourceMedia: 'low-battery.png', translations: { zh: { text: '', media: 'low-battery-zh.png' }, 'zh-tw': { text: '', media: '' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 10:05' }
+    { id: 1, module: '配网', description: '重置按键操作说明', type: 'text', key: 'provisioning.reset.button.hold', sourceText: '<p>Press and hold the <strong>reset button</strong> for 5 seconds.</p><ul><li>Wait until the light flashes.</li><li>Release the button.</li></ul>', translations: { zh: { text: '<p>长按<strong>重置键</strong> 5 秒。</p>', media: '' }, 'zh-tw': { text: '<p>長按<strong>重置鍵</strong> 5 秒。</p>', media: '' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 14:20' },
+    { id: 2, module: '配网', description: '重置按键操作视频', type: 'media', key: 'provisioning.reset.button.demo', sourceText: '', sourceMedia: 'provisioning-reset-demo.mp4', translations: { zh: { text: '', media: 'provisioning-reset-demo-zh.mp4' }, 'zh-tw': { text: '', media: 'provisioning-reset-demo-zh-tw.mp4' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 14:18' },
+    { id: 3, module: '功能点', description: '睡眠模式说明', type: 'text', key: 'device.mode.sleep.desc', sourceText: '<p>Sleep mode reduces noise and power use.</p>', translations: { zh: { text: '<p>睡眠模式可降低噪音与功耗。</p>', media: '' }, 'zh-tw': { text: '', media: '' }, de: { text: '<p>Schlafmodus reduziert Lärm und Stromverbrauch.</p>', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 11:32' },
+    { id: 4, module: '通知', description: '低电量通知图标', type: 'media', key: 'notification.low.battery.icon', sourceText: '', sourceMedia: 'low-battery.png', translations: { zh: { text: '', media: 'low-battery-zh.png' }, 'zh-tw': { text: '', media: '' }, de: { text: '', media: '' }, fr: { text: '', media: '' } }, updatedAt: '2026-10-08 10:05' }
   ],
   keyDraft: null,
   editingKeyId: null,
-  localeDraft: null,
-  editingLocaleId: null,
   languageDraft: null,
   modalAction: null
 };
@@ -401,7 +393,7 @@ const state = {
 const annotations = [
   { id: 1, title: '页面入口', tag: '页面', group: 'page', text: '入口为配置中心 > 后台多语言 > 智能产品，沿用现有页签与查询、导入、导出能力。', rule: '不新建另一个配置页面，不在产品详情增加入口。' },
   { id: 2, title: '模块新增', tag: '页面', group: 'page', text: '智能产品模块枚举新增“配网”。列表筛选、手动新增与导入模板使用同一模块值。', rule: '“配网”仅用于词条归档，不恢复已取消的配网引导改造。' },
-  { id: 3, title: '语言列管理', tag: '多语言', group: 'language', text: '固定 16 语言，英语为源语言且固定启用；其他语言复用现有语言列启停能力。', rule: '列表语言完成度基于当前启用语言计算；未启用语言不参与维护。' },
+  { id: 3, title: '统一编辑抽屉', tag: '多语言', group: 'language', text: '列表每行仅保留“编辑”。同一抽屉按现状纵向展示源内容及已启用语言值，文本与媒体分别使用对应控件。', rule: '已创建 Key 的 Key、模块、文案说明和资源类型只读；英语源和语言值可在此修改。语言列启停由页面语言列管理统一控制。' },
   { id: 4, title: '手动新增 Key', tag: '单 Key', group: 'key', text: '在智能产品工具栏新增“新增 Key”，用于少量词条维护，不再必须准备导入文件。', rule: '保存失败时保留输入并定位错误；成功后立即更新列表。' },
   { id: 5, title: '资源类型互斥', tag: '单 Key', group: 'key', text: 'Key 创建时选择文本或媒体，二者互斥。创建后类型锁定，避免清空另一类资源。', rule: '同一 Key 不能同时存在文本内容和媒体文件。' },
   { id: 6, title: '受限富文本', tag: '单 Key', group: 'key', text: '文本 Key 的英语源和各语言译文均使用受限富文本编辑器。', rule: '支持段落、换行、加粗、列表、高亮与预设提示/完成/注意 icon；手动、导入、保存、渲染共用白名单。' },
@@ -466,7 +458,7 @@ function renderTable() {
     <td>${item.type === 'media' ? `<span class="media-chip"><span class="media-type-badge">${getMediaType(item.sourceMedia)}</span><span>${escHtml(item.sourceMedia)}</span></span>` : `<div class="text-cell" title="${escHtml(stripTags(item.sourceText))}">${escHtml(stripTags(item.sourceText))}</div>`}</td>
     <td>${keyCompletion(item)}</td>
     <td style="color:var(--text-tertiary)">${escHtml(item.updatedAt)}</td>
-    <td><div class="table-actions"><button class="btn-link" type="button" onclick="openLocaleDrawer(${item.id})">多语言</button><button class="btn-link" type="button" onclick="openKeyDrawer(${item.id})">编辑</button></div></td>
+    <td><div class="table-actions"><button class="btn-link" type="button" onclick="openKeyDrawer(${item.id})">编辑</button></div></td>
   </tr>`).join('');
   empty.classList.toggle('hidden', rows.length > 0);
   document.querySelector('#tableBody').closest('table').classList.toggle('hidden', rows.length === 0);
@@ -500,8 +492,8 @@ function closeDrawer(id) {
 function openKeyDrawer(id = null) {
   const existing = id ? state.keys.find(item => item.id === id) : null;
   state.editingKeyId = existing?.id || null;
-  state.keyDraft = existing ? JSON.parse(JSON.stringify(existing)) : { id: null, module: '配网', type: 'text', key: '', sourceText: '', sourceMedia: '', translations: {}, updatedAt: '' };
-  document.getElementById('keyDrawerTitle').textContent = existing ? '编辑智能产品 Key' : '新增智能产品 Key';
+  state.keyDraft = existing ? JSON.parse(JSON.stringify(existing)) : { id: null, module: '配网', description: '', type: 'text', key: '', sourceText: '', sourceMedia: '', translations: {}, updatedAt: '' };
+  document.getElementById('keyDrawerTitle').textContent = existing ? '编辑多语言' : '新增智能产品 Key';
   renderKeyDrawer();
   openDrawer('keyDrawer');
 }
@@ -509,8 +501,12 @@ function openKeyDrawer(id = null) {
 function renderKeyDrawer() {
   const draft = state.keyDraft;
   const body = document.getElementById('keyDrawerBody');
-  const sourceField = draft.type === 'media' ? renderMediaControl({ value: draft.sourceMedia, onUpload: type => mockSourceMedia(type), onRemove: () => removeSourceMedia(), context: 'source' }) : renderRichField('keySourceText', draft.sourceText, 'Enter English source content', 'keySourceText');
-  body.innerHTML = `
+  const editing = Boolean(state.editingKeyId);
+  body.innerHTML = editing ? `
+    <div class="form-row"><div class="form-label">Key</div><div class="form-control form-static">${escHtml(draft.key)}</div></div>
+    <div class="form-row"><div class="form-label">模块</div><div class="form-control form-static">${escHtml(draft.module)}</div></div>
+    <div class="form-row"><div class="form-label">文案说明</div><div class="form-control form-static">${escHtml(draft.description || '--')}</div></div>
+    <div class="form-row"><div class="form-label">资源类型</div><div class="form-control form-static">${draft.type === 'media' ? '媒体' : '文本'}</div></div>` : `
     <div class="form-row">
       <div class="form-label required">模块</div>
       <div class="form-control">
@@ -529,20 +525,45 @@ function renderKeyDrawer() {
       </div>
     </div>
     <div class="form-row">
+      <div class="form-label">文案说明</div>
+      <div class="form-control"><input class="input" id="keyDescription" style="width:100%" value="${escHtml(draft.description)}" placeholder="填写词条用途" oninput="state.keyDraft.description=this.value"></div>
+    </div>
+    <div class="form-row">
       <div class="form-label required">资源类型</div>
       <div class="form-control">
         <div class="segmented" role="radiogroup" aria-label="资源类型">
-          <button class="segment ${draft.type === 'text' ? 'active' : ''}" type="button" ${state.editingKeyId ? 'disabled' : ''} onclick="setKeyType('text')">文本</button>
-          <button class="segment ${draft.type === 'media' ? 'active' : ''}" type="button" ${state.editingKeyId ? 'disabled' : ''} onclick="setKeyType('media')">媒体</button>
+          <button class="segment ${draft.type === 'text' ? 'active' : ''}" type="button" onclick="setKeyType('text')">文本</button>
+          <button class="segment ${draft.type === 'media' ? 'active' : ''}" type="button" onclick="setKeyType('media')">媒体</button>
         </div>
         <div class="form-hint">一个 Key 只承载一种资源；创建后类型锁定。</div>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-label required">${draft.type === 'media' ? '英语源媒体' : '英语源文本'}</div>
-      <div class="form-control">${sourceField}<div class="error-msg" id="err_source"></div></div>
     </div>`;
-  bindRichField('keySourceText', value => { state.keyDraft.sourceText = value; });
+  body.innerHTML += `<div class="form-section">多语言内容<small>英语为源语言；各语言在同一抽屉内维护。</small></div><div id="keyLanguages"></div>`;
+  renderKeyLanguages();
+}
+
+function renderKeyLanguages() {
+  const draft = state.keyDraft;
+  const languages = enabledLanguages();
+  const currentKind = keyMediaKind(draft);
+  document.getElementById('keyLanguages').innerHTML = languages.map(language => {
+    const source = language.code === 'en';
+    if (!source && !draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
+    const value = source ? (draft.type === 'media' ? draft.sourceMedia : draft.sourceText) : (draft.type === 'media' ? draft.translations[language.code].media : draft.translations[language.code].text);
+    const field = draft.type === 'text'
+      ? renderRichField(source ? 'keySourceText' : `locale_${language.code}`, value || '', source ? 'Enter English source content' : `Enter ${language.name} translation`, source ? 'keySourceText' : `locale_${language.code}`)
+      : source
+        ? `${renderMediaControl({ value, onUpload: 'mockSourceMedia', onRemove: 'removeSourceMedia', context: 'source' })}<div class="form-hint"><button class="btn-link" type="button" onclick="confirmMediaSync()">同步到所有语言</button></div>`
+        : `<div class="language-value">${value ? `<span class="media-type-badge">${getMediaType(value)}</span> ${escHtml(value)}` : '未配置媒体'}</div><div class="language-actions">${currentKind ? `<button class="btn btn-sm" type="button" onclick="mockLocaleMedia('${language.code}','${currentKind}')">${value ? '替换' : '上传'}${currentKind === 'video' ? '视频' : '图片'}</button>` : ''}${value ? `<button class="btn-link" type="button" onclick="removeLocaleMedia('${language.code}')">删除</button>` : ''}</div>`;
+    return `<div class="form-row"><div class="form-label ${source ? 'required' : ''}">${escHtml(language.name)}${source ? '（源）' : ''}</div><div class="form-control">${field}${source ? '<div class="error-msg" id="err_source"></div>' : ''}</div></div>`;
+  }).join('');
+  if (draft.type === 'text') languages.forEach(language => {
+    const source = language.code === 'en';
+    bindRichField(source ? 'keySourceText' : `locale_${language.code}`, value => {
+      if (source) draft.sourceText = value;
+      else draft.translations[language.code].text = value;
+    });
+  });
 }
 
 function setKeyType(type) {
@@ -550,6 +571,7 @@ function setKeyType(type) {
   state.keyDraft.type = type;
   state.keyDraft.sourceText = '';
   state.keyDraft.sourceMedia = '';
+  state.keyDraft.translations = {};
   renderKeyDrawer();
 }
 
@@ -560,8 +582,8 @@ function saveKey() {
   document.getElementById('err_source')?.classList.remove('show');
   document.getElementById('keyInput')?.classList.remove('error');
   document.querySelector('#keySourceText .rich-editor')?.classList.remove('error');
-  const duplicate = state.keys.some(item => item.id !== state.editingKeyId && item.module === draft.module && item.key.toLowerCase() === key.toLowerCase());
-  if (!key || duplicate) {
+  const duplicate = !state.editingKeyId && state.keys.some(item => item.module === draft.module && item.key.toLowerCase() === key.toLowerCase());
+  if (!state.editingKeyId && (!key || duplicate)) {
     const error = document.getElementById('err_key');
     if (error) { error.textContent = duplicate ? '该模块下已存在相同 Key' : '请输入 Key'; error.classList.add('show'); }
     document.getElementById('keyInput')?.classList.add('error');
@@ -584,10 +606,23 @@ function saveKey() {
     highlightAnnotation(9);
     return;
   }
+  if (draft.type === 'text') {
+    for (const language of enabledLanguages().filter(item => item.code !== 'en')) {
+      const value = draft.translations[language.code]?.text || '';
+      if (plainLength(value) > 1000) {
+        showToast(`${language.name}译文不可超过 1000 个纯文本字符`, 'error');
+        document.getElementById(`locale_${language.code}`)?.scrollIntoView({ block: 'center' });
+        return;
+      }
+      draft.translations[language.code].text = normalizeRichText(value);
+    }
+  }
   draft.key = key;
   draft.updatedAt = '2026-10-08 16:30';
   if (state.editingKeyId) {
     const index = state.keys.findIndex(item => item.id === state.editingKeyId);
+    const existing = state.keys[index];
+    Object.assign(draft, { key: existing.key, module: existing.module, description: existing.description, type: existing.type });
     state.keys[index] = JSON.parse(JSON.stringify(draft));
   } else {
     draft.id = Math.max(0, ...state.keys.map(item => item.id)) + 1;
@@ -595,7 +630,7 @@ function saveKey() {
   }
   closeDrawer('keyDrawer');
   renderTable();
-  showToast('智能产品 Key 已保存并立即生效');
+  showToast(state.editingKeyId ? '多语言内容已更新并立即生效' : '智能产品 Key 已保存并立即生效');
 }
 
 function renderRichField(id, value, placeholder, onChangeId) {
@@ -730,7 +765,7 @@ function normalizeRichText(value) {
 function renderMediaControl({ value, onUpload, onRemove, context }) {
   if (!value) {
     return `<div class="upload-area">
-      <div class="upload-title">上传英语源媒体</div>
+      <div class="upload-title">上传${context === 'source' ? '英语源' : ''}媒体</div>
       <div class="upload-hint">图片 jpg/png/json ≤ 5M；视频 mp4 ≤ 20M；每个 Key 每语言最多 1 个。</div>
       <div class="upload-actions"><button class="btn btn-sm" type="button" onclick="${onUpload}('image')">上传图片</button><button class="btn btn-sm" type="button" onclick="${onUpload}('video')">上传视频</button></div>
     </div>`;
@@ -747,51 +782,15 @@ function renderMediaControl({ value, onUpload, onRemove, context }) {
 }
 
 function mockSourceMedia(type) {
+  const current = keyMediaKind(state.keyDraft);
+  if (current && current !== type) { showToast('同一 Key 在全部语言间必须保持同一媒体类型', 'error'); return; }
   state.keyDraft.sourceMedia = type === 'video' ? 'provisioning-guide.mp4' : 'provisioning-guide.png';
-  renderKeyDrawer();
+  renderKeyLanguages();
 }
 
 function removeSourceMedia() {
   state.keyDraft.sourceMedia = '';
-  renderKeyDrawer();
-}
-
-function openLocaleDrawer(id) {
-  const existing = state.keys.find(item => item.id === id);
-  state.editingLocaleId = id;
-  state.localeDraft = JSON.parse(JSON.stringify(existing));
-  document.getElementById('localeDrawerTitle').textContent = `多语言配置 · ${existing.key}`;
-  document.getElementById('localeDrawerSubtitle').textContent = `${existing.module} · ${existing.type === 'media' ? '媒体 Key' : '文本 Key'} · 英语固定为源语言`;
-  renderLocaleDrawer();
-  openDrawer('localeDrawer');
-}
-
-function renderLocaleDrawer() {
-  const draft = state.localeDraft;
-  const body = document.getElementById('localeDrawerBody');
-  const languages = enabledLanguages();
-  body.innerHTML = `<div class="scope-note" style="margin-bottom:14px;">当前展示 ${languages.length} 个已启用语言。${draft.type === 'media' ? '媒体 Key 的各语言文件独立，同一 Key 媒体类型必须一致。' : '文本 Key 仅维护受限富文本译文，不展示媒体控件。'}</div>
-  <div class="language-list">${languages.map(language => {
-    const source = language.code === 'en';
-    if (draft.type === 'text') {
-      const value = source ? draft.sourceText : (draft.translations[language.code]?.text || '');
-      return `<div class="language-row text-key ${source ? 'source' : ''}">
-        <div class="language-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源文本' : '独立维护受限富文本译文'}</small></div>
-        <div>${source ? `<div class="rich-preview rich-content">${value}</div>` : renderRichField(`locale_${language.code}`, value, `Enter ${language.name} translation`, `locale_${language.code}`)}</div>
-      </div>`;
-    }
-    if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
-    const media = source ? draft.sourceMedia : draft.translations[language.code].media;
-    const currentKind = draft.sourceMedia ? getMediaKind(draft.sourceMedia) : Object.values(draft.translations).find(item => item?.media)?.media ? getMediaKind(Object.values(draft.translations).find(item => item?.media).media) : '';
-    return `<div class="language-row media-key ${source ? 'source' : ''}">
-      <div class="language-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源媒体' : '独立维护单个媒体文件'}</small></div>
-      <div class="language-value">${media ? `<span class="media-type-badge">${getMediaType(media)}</span> ${escHtml(media)}` : '<span style="color:var(--text-tertiary)">未配置媒体</span>'}</div>
-      <div class="language-actions">
-        ${source ? `<button class="btn btn-primary btn-sm" type="button" onclick="confirmMediaSync()">同步到所有语言</button>` : `${currentKind ? `<button class="btn btn-sm" type="button" onclick="mockLocaleMedia('${language.code}','${currentKind}')">替换${currentKind === 'video' ? '视频' : '图片'}</button>` : `<button class="btn btn-sm" type="button" onclick="mockLocaleMedia('${language.code}','image')">上传图片</button><button class="btn btn-sm" type="button" onclick="mockLocaleMedia('${language.code}','video')">上传视频</button>`}${media ? `<button class="btn-link" type="button" onclick="removeLocaleMedia('${language.code}')">删除</button>` : ''}`}
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-  languages.filter(language => language.code !== 'en').forEach(language => bindRichField(`locale_${language.code}`, value => { draft.translations[language.code].text = value; }));
+  renderKeyLanguages();
 }
 
 function keyMediaKind(item) {
@@ -800,35 +799,22 @@ function keyMediaKind(item) {
   return existing?.media ? getMediaKind(existing.media) : '';
 }
 
-function mockLocaleSourceMedia(type) {
-  const draft = state.localeDraft;
-  const current = keyMediaKind(draft);
-  if (current && current !== type) { showToast('同一 Key 在全部语言间必须保持同一媒体类型', 'error'); return; }
-  draft.sourceMedia = type === 'video' ? 'provisioning-guide.mp4' : 'provisioning-guide.png';
-  renderLocaleDrawer();
-}
-
-function removeLocaleSourceMedia() {
-  state.localeDraft.sourceMedia = '';
-  renderLocaleDrawer();
-}
-
 function mockLocaleMedia(code, type) {
-  const draft = state.localeDraft;
+  const draft = state.keyDraft;
   const current = keyMediaKind(draft);
   if (current && current !== type) { showToast('同一 Key 在全部语言间必须保持同一媒体类型', 'error'); return; }
   if (!draft.translations[code]) draft.translations[code] = { text: '', media: '' };
   draft.translations[code].media = type === 'video' ? `provisioning-guide-${code}.mp4` : `provisioning-guide-${code}.png`;
-  renderLocaleDrawer();
+  renderKeyLanguages();
 }
 
 function removeLocaleMedia(code) {
-  state.localeDraft.translations[code].media = '';
-  renderLocaleDrawer();
+  state.keyDraft.translations[code].media = '';
+  renderKeyLanguages();
 }
 
 function confirmMediaSync() {
-  const draft = state.localeDraft;
+  const draft = state.keyDraft;
   const targets = enabledLanguages().filter(language => language.code !== 'en');
   if (!draft.sourceMedia) { showToast('请先上传英语源媒体', 'error'); return; }
   const overwritten = targets.filter(language => draft.translations[language.code]?.media).length;
@@ -841,26 +827,10 @@ function confirmMediaSync() {
         if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
         draft.translations[language.code].media = draft.sourceMedia;
       });
-      renderLocaleDrawer();
+      renderKeyLanguages();
       showToast(`已同步英语媒体到 ${targets.length} 个语言`);
     }
   });
-}
-
-function saveLocaleConfig() {
-  const draft = state.localeDraft;
-  if (draft.type === 'text') {
-    for (const language of enabledLanguages().filter(item => item.code !== 'en')) {
-      const length = plainLength(draft.translations[language.code]?.text || '');
-      if (length > 1000) { showToast(`${language.name}译文不可超过 1000 个纯文本字符`, 'error'); return; }
-    }
-  }
-  const index = state.keys.findIndex(item => item.id === state.editingLocaleId);
-  draft.updatedAt = '2026-10-08 16:35';
-  state.keys[index] = JSON.parse(JSON.stringify(draft));
-  closeDrawer('localeDrawer');
-  renderTable();
-  showToast('单 Key 多语言配置已保存并立即生效');
 }
 
 function openLanguageColumns() {
