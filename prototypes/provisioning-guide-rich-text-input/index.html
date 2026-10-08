@@ -205,7 +205,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 980px; background: #fff; z-index: 101; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
 .drawer.open { transform: translateX(0); }
 .drawer-header { height: 56px; padding: 0 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.drawer-header > div { min-width: 0; }
 .drawer-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+#backendLocaleDrawer .drawer-header { height: auto; min-height: 56px; padding-top: 10px; padding-bottom: 10px; gap: 8px; }
+#backendLocaleDrawer .drawer-title { overflow-wrap: anywhere; line-height: 20px; }
 .drawer-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius); color: var(--text-tertiary); transition: var(--transition); border: none; background: none; }
 .drawer-close:hover { background: var(--bg-page); color: var(--text-primary); }
 .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
@@ -450,8 +453,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .i18n-toolbar .input { width: 220px; }
 .i18n-toolbar .select { width: 150px; }
 .text-cell { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#backendMultilingualModule .data-table th:nth-child(2), #backendMultilingualModule .data-table td:nth-child(2) { min-width: 52px; white-space: nowrap; }
 .language-media-list { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
 .language-media-row { display: grid; grid-template-columns: 150px minmax(180px, 1fr) minmax(220px, 1fr) 150px; gap: 12px; align-items: center; min-height: 58px; padding: 10px 12px; border-bottom: 1px solid var(--border-light); }
+.language-media-row.text-key { grid-template-columns: 150px minmax(0, 1fr); align-items: start; }
+.language-media-row.text-key .rich-text-field { width: 100%; }
+.language-media-row.media-key { grid-template-columns: 150px minmax(0, 1fr) 260px; }
 .language-media-row:last-child { border-bottom: 0; }
 .language-media-row.source { background: #f7f9ff; }
 .language-media-name { font-weight: 500; }
@@ -584,7 +591,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
   .language-drawer { width: 100vw; }
   .locale-toggle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .language-kv-wrap { max-height: calc(100vh - 300px); }
-  .language-media-row { grid-template-columns: 1fr; gap: 6px; }
+  .language-media-row, .language-media-row.text-key, .language-media-row.media-key { grid-template-columns: 1fr; gap: 6px; }
   .language-media-actions { justify-content: flex-start; }
 }
 </style>
@@ -992,17 +999,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
             <div class="card">
               <div class="card-body" style="padding-bottom:0;">
                 <div class="config-tabs"><div class="config-tab">产品模板</div><div class="config-tab active">智能产品</div><div class="config-tab">App 通用</div></div>
-                <div class="scope-note">当前页为单一产品上下文：test-leo2-neo-Neo。导入新增仅处理文本；媒体只通过“手动新增 Key”或单 Key 多语言编辑维护。</div>
+                <div class="scope-note">当前页为单一产品上下文：test-leo2-neo-Neo。每个 Key 仅承载文本或媒体一种资源；导入新增仅支持文本 Key。</div>
               </div>
               <div class="i18n-toolbar">
                 <select class="select" id="backendModuleFilter" onchange="renderBackendI18nTable()"><option value="all">全部模块</option><option value="配网">配网</option><option value="功能点">功能点</option><option value="错误引导">错误引导</option></select>
-                <input class="input" id="backendKeySearch" type="search" placeholder="搜索 Key 或英语文本" oninput="renderBackendI18nTable()">
+                <input class="input" id="backendKeySearch" type="search" placeholder="搜索 Key 或英语源内容" oninput="renderBackendI18nTable()">
                 <button class="btn btn-default" onclick="resetBackendI18nFilters()">重置</button><span class="toolbar-spacer"></span>
                 <button class="btn btn-default" onclick="openBackendImport()">导入新增<span class="anchor-badge" title="批注 27：导入仅支持文本">27</span></button>
                 <button class="btn btn-default" onclick="showToast('已生成智能产品文本导出文件','success')">导出</button>
                 <button class="btn btn-primary" onclick="openBackendKeyDrawer()">新增 Key<span class="anchor-badge" title="批注 26：手动单 Key 新增">26</span></button>
               </div>
-              <div class="data-table-wrap"><table class="data-table"><thead><tr><th>模块</th><th>Key</th><th>英语（源）</th><th>英语媒体</th><th>语言完成度</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="backendI18nTableBody"></tbody></table></div>
+              <div class="data-table-wrap"><table class="data-table"><thead><tr><th>模块</th><th>类型</th><th>Key</th><th>英语（源）</th><th>语言完成度</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="backendI18nTableBody"></tbody></table></div>
               <div class="empty-state hidden" id="backendI18nEmpty">没有符合当前条件的词条</div>
               <div class="table-footer"><span id="backendI18nCount">共 0 项</span><span>每页 20 条</span></div>
             </div>
@@ -1014,12 +1021,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
           <div class="annotation-panel">
             <div class="annotation-header">
               <div class="annotation-header-title">原型批注</div>
-              <div class="annotation-header-sub">配网、错误引导与后台多语言 · 独立需求 v1.3 已发布</div>
+              <div class="annotation-header-sub">配网、错误引导与后台多语言 · v1.3-R1 本地评审修订</div>
             </div>
             <div class="annotation-control">
               <div class="annotation-rule" style="margin-bottom:12px;">
                 <strong>项目边界</strong><br>
-                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0；批注 15-22 是 v1.1；批注 23-24 是 v1.2；批注 25-29 是已发布 v1.3 范围扩展。侧栏复用 IoT Admin 现有菜单层级，仅相关页面在本原型中可操作。
+                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0；批注 15-22 是 v1.1；批注 23-24 是 v1.2；批注 25-29 是 v1.3 范围扩展；批注 30-31 是本地评审修订。线上 PRD 与原型仍为 v1.3。
               </div>
               <div class="control-label">当前状态</div>
               <div class="control-btns" id="annotationFilter">
@@ -1183,14 +1190,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 
 <!-- ===== 智能产品手动单 Key 新增/编辑 ===== -->
 <div class="drawer" id="backendKeyDrawer" style="width:720px;max-width:100vw;">
-  <div class="drawer-header"><div><div class="drawer-title" id="backendKeyDrawerTitle">新增智能产品 Key</div><div class="page-subtitle">手动新增支持文本与可选媒体；英语为源语言</div></div><button class="drawer-close" onclick="closeBackendKeyDrawer()" title="关闭">✕</button></div>
+  <div class="drawer-header"><div><div class="drawer-title" id="backendKeyDrawerTitle">新增智能产品 Key</div><div class="page-subtitle">一个 Key 只配置一种资源；英语为源语言</div></div><button class="drawer-close" onclick="closeBackendKeyDrawer()" title="关闭">✕</button></div>
   <div class="drawer-body" id="backendKeyDrawerBody"></div>
   <div class="drawer-footer"><button class="btn btn-default" onclick="closeBackendKeyDrawer()">取消</button><button class="btn btn-primary" onclick="saveBackendKey()">保存</button></div>
 </div>
 
 <!-- ===== 单 Key 多语言文本与媒体 ===== -->
 <div class="drawer language-drawer" id="backendLocaleDrawer">
-  <div class="drawer-header"><div><div class="drawer-title" id="backendLocaleDrawerTitle">单 Key 多语言配置</div><div class="page-subtitle">英语媒体可一次性覆盖到其他启用语言；各语言之后仍可独立替换</div></div><button class="drawer-close" onclick="closeBackendLocaleDrawer()" title="关闭">✕</button></div>
+  <div class="drawer-header"><div><div class="drawer-title" id="backendLocaleDrawerTitle">单 Key 多语言配置</div><div class="page-subtitle" id="backendLocaleDrawerSubtitle">按 Key 类型维护各语言资源</div></div><button class="drawer-close" onclick="closeBackendLocaleDrawer()" title="关闭">✕</button></div>
   <div class="drawer-body" id="backendLocaleDrawerBody"></div>
   <div class="drawer-footer"><button class="btn btn-default" onclick="closeBackendLocaleDrawer()">取消</button><button class="btn btn-primary" onclick="saveBackendLocaleConfig()">保存多语言配置</button></div>
 </div>
@@ -1342,8 +1349,9 @@ const state = {
     }
   ],
   backendI18nKeys: [
-    { id: 1, module: '配网', key: 'provisioning.reset.button.hold', sourceText: 'Press and hold the reset button for 5 seconds.', sourceMedia: 'reset-button-guide.mp4', updatedAt: '2026-09-24 10:18', translations: { de: { text: 'Halten Sie die Reset-Taste 5 Sekunden lang gedrückt.', media: 'reset-button-guide.mp4' }, 'zh-Hans': { text: '长按复位键 5 秒。', media: 'reset-button-zh.png' } } },
-    { id: 2, module: '功能点', key: 'device.power.status', sourceText: 'Power status', sourceMedia: '', updatedAt: '2026-09-22 16:40', translations: { de: { text: 'Energiestatus', media: '' }, 'zh-Hans': { text: '电源状态', media: '' } } }
+    { id: 1, module: '配网', type: 'text', key: 'provisioning.reset.button.hold', sourceText: '<p>Press and hold the <strong>reset button</strong> for 5 seconds.</p>', sourceMedia: '', updatedAt: '2026-09-24 10:18', translations: { de: { text: '<p>Halten Sie die Reset-Taste <strong>5 Sekunden</strong> lang gedrückt.</p>', media: '' }, 'zh-Hans': { text: '<p>长按复位键 <strong>5 秒</strong>。</p>', media: '' } } },
+    { id: 2, module: '配网', type: 'media', key: 'provisioning.reset.button.demo', sourceText: '', sourceMedia: 'reset-button-guide.mp4', updatedAt: '2026-09-24 10:18', translations: { de: { text: '', media: 'reset-button-guide.mp4' }, 'zh-Hans': { text: '', media: 'reset-button-zh.png' } } },
+    { id: 3, module: '功能点', type: 'text', key: 'device.power.status', sourceText: '<p>Power status</p>', sourceMedia: '', updatedAt: '2026-09-22 16:40', translations: { de: { text: '<p>Energiestatus</p>', media: '' }, 'zh-Hans': { text: '<p>电源状态</p>', media: '' } } }
   ]
 };
 
@@ -1528,15 +1536,15 @@ const annotations = [
     id: 26, title: 'v1.3：手动单 Key 新增', tag: 'v1.3', group: 'backend',
     location: '智能产品工具栏 > 新增 Key',
     trigger: '点击“新增 Key”',
-    response: '右侧 Drawer 配置模块、Key、英语源文本和可选英语媒体；保存后追加到当前产品词条列表。',
-    rule: '模块新增“配网”。Key 在当前产品与模块内唯一；英语源文本必填。媒体仅手动新增/编辑可配置，原型按每语言单文件复用现有媒体控件，最终规格待确认。'
+    response: '右侧 Drawer 配置模块、Key、资源类型和对应的英语源内容；保存后追加到当前产品词条列表。',
+    rule: '模块新增“配网”。Key 在当前产品与模块内唯一；文本 Key 的英语富文本必填，媒体 Key 的英语单媒体必填。两类资源不得共存。'
   },
   {
     id: 27, title: 'v1.3：导入新增仅文本', tag: 'v1.3', group: 'backend',
     location: '智能产品工具栏 > 导入新增',
     trigger: '选择 CSV/XLSX 并执行导入预检查',
-    response: '仅创建或写入模块、Key、英语源文本与各语言文本；文件中出现媒体列或媒体引用时整批阻止。',
-    rule: '导入不能新增、替换或删除任何语言媒体。媒体必须进入对应单 Key 后手动维护。'
+    response: '仅创建文本 Key，写入模块、Key、英语源富文本与各语言富文本；文件中出现媒体列或媒体引用时整批阻止。',
+    rule: '文本单元格按受限富文本白名单清洗。导入不能创建媒体 Key，也不能新增、替换或删除任何语言媒体。'
   },
   {
     id: 28, title: 'v1.3：英语媒体一键同步', tag: 'v1.3', group: 'backend',
@@ -1550,7 +1558,21 @@ const annotations = [
     location: '单 Key 多语言配置 > 非英语语言行',
     trigger: '在目标语言行上传、替换或删除媒体',
     response: '仅更新当前语言媒体，不影响英语源或其他语言；被英语同步覆盖后仍可再次独立替换。',
-    rule: '文本与媒体均按语言保存。原型复用图片/视频单文件控件；媒体类型、大小、时长与是否允许其他文件类型待技术方案确认。'
+    rule: '仅媒体 Key 可上传分语言媒体；文本 Key 只维护富文本译文。图片/视频类型、大小和时长待技术方案确认。'
+  },
+  {
+    id: 30, title: '评审修订：文本 Key 支持富文本', tag: '评审', group: 'backend',
+    location: '新增/编辑文本 Key > 英语文本；单 Key 多语言配置 > 译文',
+    trigger: '选择文本类型并编辑英语源或非英语译文',
+    response: '复用既有受限富文本编辑器，支持加粗、列表、高亮、预设 icon 和 HTML 源码切换。',
+    rule: '保存前执行同一白名单清洗；按清洗后纯文本校验非空。1000 字上限仅为原型占位，正式限制待确认。'
+  },
+  {
+    id: 31, title: '评审修订：单 Key 资源类型互斥', tag: '评审', group: 'backend',
+    location: '新增智能产品 Key > 资源类型',
+    trigger: '选择文本或媒体类型',
+    response: '仅展示对应的英语源字段；文本 Key 不出现媒体控件，媒体 Key 不出现文本编辑器。列表和多语言配置按同一类型展示。',
+    rule: '一个 Key 只能对应一种资源。导入仅创建文本 Key；媒体 Key 必须手动新增。类型创建后不可修改，避免清空已有多语言资源。'
   }
 ];
 
@@ -1901,7 +1923,11 @@ function enabledBackendLocales() {
 
 function backendKeyCompletion(item) {
   const enabled = enabledBackendLocales();
-  return enabled.filter(language => language.code === 'en' || (item.translations?.[language.code]?.text || '').trim()).length;
+  return enabled.filter(language => {
+    const value = language.code === 'en' ? item : item.translations?.[language.code];
+    return item.type === 'media' ? Boolean(value?.[language.code === 'en' ? 'sourceMedia' : 'media'])
+      : richTextPlainLength(normalizeRichTextValue(value?.[language.code === 'en' ? 'sourceText' : 'text'] || '')) > 0;
+  }).length;
 }
 
 function renderBackendI18nTable() {
@@ -1910,7 +1936,7 @@ function renderBackendI18nTable() {
   const moduleValue = document.getElementById('backendModuleFilter')?.value || 'all';
   const keyword = (document.getElementById('backendKeySearch')?.value || '').trim().toLowerCase();
   const rows = state.backendI18nKeys.filter(item => (moduleValue === 'all' || item.module === moduleValue)
-    && (!keyword || item.key.toLowerCase().includes(keyword) || item.sourceText.toLowerCase().includes(keyword)));
+    && (!keyword || item.key.toLowerCase().includes(keyword) || stripHtmlTags(item.sourceText).toLowerCase().includes(keyword) || item.sourceMedia.toLowerCase().includes(keyword)));
   const empty = document.getElementById('backendI18nEmpty');
   body.closest('table')?.classList.toggle('hidden', rows.length === 0);
   empty?.classList.toggle('hidden', rows.length !== 0);
@@ -1918,9 +1944,9 @@ function renderBackendI18nTable() {
   const enabledCount = enabledBackendLocales().length;
   body.innerHTML = rows.map(item => `<tr>
     <td><span class="status-badge status-enabled">${escHtml(item.module)}</span></td>
+    <td>${item.type === 'media' ? '媒体' : '文本'}</td>
     <td><span class="table-code">${escHtml(item.key)}</span></td>
-    <td><div class="text-cell" title="${escHtml(item.sourceText)}">${escHtml(item.sourceText)}</div></td>
-    <td>${item.sourceMedia ? `<span class="media-chip"><span class="media-type-badge">${getMediaType(item.sourceMedia)}</span><span>${escHtml(item.sourceMedia)}</span></span>` : '<span class="text-muted">--</span>'}</td>
+    <td>${item.type === 'media' ? `<span class="media-chip"><span class="media-type-badge">${getMediaType(item.sourceMedia)}</span><span>${escHtml(item.sourceMedia)}</span></span>` : `<div class="text-cell" title="${escHtml(stripHtmlTags(item.sourceText))}">${escHtml(stripHtmlTags(item.sourceText))}</div>`}</td>
     <td>${backendKeyCompletion(item)} / ${enabledCount}</td>
     <td class="text-muted">${escHtml(item.updatedAt)}</td>
     <td><div class="table-actions"><button class="btn btn-link" onclick="openBackendLocaleDrawer(${item.id})">多语言</button><button class="btn btn-link" onclick="openBackendKeyDrawer(${item.id})">编辑</button></div></td>
@@ -1938,7 +1964,7 @@ function resetBackendI18nFilters() {
 function openBackendKeyDrawer(id = null) {
   const existing = id ? state.backendI18nKeys.find(item => item.id === id) : null;
   state.editingBackendKeyId = existing?.id || null;
-  state.backendKeyDraft = existing ? JSON.parse(JSON.stringify(existing)) : { id: null, module: '配网', key: '', sourceText: '', sourceMedia: '', translations: {}, updatedAt: '' };
+  state.backendKeyDraft = existing ? JSON.parse(JSON.stringify(existing)) : { id: null, module: '配网', type: 'text', key: '', sourceText: '', sourceMedia: '', translations: {}, updatedAt: '' };
   document.getElementById('backendKeyDrawerTitle').textContent = existing ? '编辑智能产品 Key' : '新增智能产品 Key';
   renderBackendKeyDrawer();
   document.getElementById('drawerOverlay').classList.add('open');
@@ -1950,17 +1976,33 @@ function renderBackendKeyDrawer() {
   const body = document.getElementById('backendKeyDrawerBody');
   const draft = state.backendKeyDraft;
   if (!body || !draft) return;
-  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:16px;"><strong>单 Key 新增</strong><br>文本与媒体在同一 Key 下维护。媒体为可选项，且不会进入批量导入文件。</div>
+  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:16px;"><strong>资源类型互斥</strong><br>一个 Key 只保存文本或媒体。文本 Key 使用富文本；媒体 Key 上传一个图片或视频。创建后类型不可修改。</div>
     <div class="form-row"><div class="form-label required">模块</div><div class="form-control"><select class="select" id="backendKeyModule" onchange="state.backendKeyDraft.module=this.value"><option ${draft.module === '配网' ? 'selected' : ''}>配网</option><option ${draft.module === '功能点' ? 'selected' : ''}>功能点</option><option ${draft.module === '错误引导' ? 'selected' : ''}>错误引导</option></select><div class="form-hint">本期在智能产品模块枚举中新增“配网”。</div></div></div>
     <div class="form-row"><div class="form-label required">Key</div><div class="form-control"><input class="input" id="backendKeyInput" value="${escHtml(draft.key)}" placeholder="例如 provisioning.reset.button.hold" oninput="state.backendKeyDraft.key=this.value"><div class="form-hint">当前产品 + 模块内唯一；保存后建议保持稳定。</div><div class="error-msg" id="err_backendKey"></div></div></div>
-    <div class="form-row"><div class="form-label required">英语文本</div><div class="form-control"><textarea class="textarea" id="backendSourceText" rows="4" placeholder="Enter source text in English" oninput="state.backendKeyDraft.sourceText=this.value">${escHtml(draft.sourceText)}</textarea><div class="error-msg" id="err_backendSourceText"></div></div></div>
-    <div class="form-row"><div class="form-label">英语媒体<span class="anchor-badge" title="批注 28：源媒体同步">28</span></div><div class="form-control">${draft.sourceMedia
-      ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.sourceMedia) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.sourceMedia)}</div><div class="upload-file-size">可选 · 当前占用 1 个媒体位</div></div><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('image')">替换图片</button><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('video')">替换视频</button><button class="upload-file-remove" onclick="removeBackendSourceMedia()">✕</button></div>`
-      : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">可选上传媒体</div><div class="upload-placeholder-hint">复用现有图片/视频控件；类型、大小、时长待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('video')">上传视频</button></div></div></div>`}</div></div>`;
+    <div class="form-row"><div class="form-label required">资源类型<span class="anchor-badge" title="批注 31：资源类型互斥">31</span></div><div class="form-control"><div class="sub-entry" role="group" aria-label="Key 资源类型"><button type="button" class="sub-entry-btn ${draft.type === 'text' ? 'active' : ''}" onclick="setBackendKeyType('text')" ${state.editingBackendKeyId ? 'disabled' : ''}>文本</button><button type="button" class="sub-entry-btn ${draft.type === 'media' ? 'active' : ''}" onclick="setBackendKeyType('media')" ${state.editingBackendKeyId ? 'disabled' : ''}>媒体</button></div><div class="form-hint">${state.editingBackendKeyId ? '已有 Key 的资源类型不可修改。' : '请选择一种资源，不能同时配置文本与媒体。'}</div></div></div>
+    ${draft.type === 'text'
+      ? `<div class="form-row"><div class="form-label required">英语文本<span class="anchor-badge" title="批注 30：文本 Key 富文本">30</span></div><div class="form-control">${renderRichTextField({ id: 'backendSourceText', value: draft.sourceText, placeholder: 'Enter source text in English', limit: 1000 })}<div class="error-msg" id="err_backendSourceText"></div></div></div>`
+      : `<div class="form-row"><div class="form-label required">英语媒体<span class="anchor-badge" title="批注 28：源媒体同步">28</span></div><div class="form-control">${draft.sourceMedia
+        ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.sourceMedia) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.sourceMedia)}</div><div class="upload-file-size">当前占用 1 / 1</div></div><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('image')">替换图片</button><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('video')">替换视频</button><button class="upload-file-remove" onclick="removeBackendSourceMedia()">✕</button></div>`
+        : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传英语源媒体</div><div class="upload-placeholder-hint">图片或视频，最多 1 个；类型、大小、时长待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('video')">上传视频</button></div></div></div>`}<div class="error-msg" id="err_backendSourceMedia"></div></div></div>`}`;
+  if (draft.type === 'text') {
+    bindRichTextEditors(body);
+    bindRichTextField(body, 'backendSourceText', value => { state.backendKeyDraft.sourceText = value; });
+  }
+}
+
+function setBackendKeyType(type) {
+  const draft = state.backendKeyDraft;
+  if (!draft || state.editingBackendKeyId || !['text', 'media'].includes(type) || draft.type === type) return;
+  draft.type = type;
+  draft.sourceText = '';
+  draft.sourceMedia = '';
+  draft.translations = {};
+  renderBackendKeyDrawer();
 }
 
 function mockBackendSourceMedia(type) {
-  if (!state.backendKeyDraft) return;
+  if (!state.backendKeyDraft || state.backendKeyDraft.type !== 'media') return;
   state.backendKeyDraft.sourceMedia = type === 'video' ? 'provisioning-guide.mp4' : 'provisioning-guide.png';
   renderBackendKeyDrawer();
 }
@@ -1975,22 +2017,34 @@ function saveBackendKey() {
   const draft = state.backendKeyDraft;
   if (!draft) return;
   const key = draft.key.trim();
-  const sourceText = draft.sourceText.trim();
+  const sourceText = normalizeRichTextValue(draft.sourceText);
   const duplicate = state.backendI18nKeys.some(item => item.id !== state.editingBackendKeyId && item.module === draft.module && item.key.toLowerCase() === key.toLowerCase());
   document.getElementById('err_backendKey')?.classList.remove('show');
   document.getElementById('err_backendSourceText')?.classList.remove('show');
+  document.getElementById('err_backendSourceMedia')?.classList.remove('show');
   if (!key || duplicate) {
     const error = document.getElementById('err_backendKey');
     if (error) { error.textContent = duplicate ? '当前产品与模块下已存在该 Key' : '请输入 Key'; error.classList.add('show'); }
     return;
   }
-  if (!sourceText) {
+  if (draft.type === 'text' && !richTextPlainLength(sourceText)) {
     const error = document.getElementById('err_backendSourceText');
     if (error) { error.textContent = '请输入英语源文本'; error.classList.add('show'); }
     return;
   }
+  if (draft.type === 'text' && richTextPlainLength(sourceText) > 1000) {
+    const error = document.getElementById('err_backendSourceText');
+    if (error) { error.textContent = '英语源文本不能超过 1000 字'; error.classList.add('show'); }
+    return;
+  }
+  if (draft.type === 'media' && !draft.sourceMedia) {
+    const error = document.getElementById('err_backendSourceMedia');
+    if (error) { error.textContent = '请上传英语源媒体'; error.classList.add('show'); }
+    return;
+  }
   draft.key = key;
-  draft.sourceText = sourceText;
+  draft.sourceText = draft.type === 'text' ? sourceText : '';
+  draft.sourceMedia = draft.type === 'media' ? draft.sourceMedia : '';
   draft.updatedAt = '2026-09-24 11:30';
   if (state.editingBackendKeyId) {
     const index = state.backendI18nKeys.findIndex(item => item.id === state.editingBackendKeyId);
@@ -2026,42 +2080,53 @@ function renderBackendLocaleDrawer() {
   const body = document.getElementById('backendLocaleDrawerBody');
   const draft = state.backendLocaleDraft;
   if (!body || !draft) return;
+  const isMedia = draft.type === 'media';
+  document.getElementById('backendLocaleDrawerSubtitle').textContent = isMedia
+    ? '媒体 Key：英语媒体可一次性同步；各语言可独立替换'
+    : '文本 Key：各语言分别维护受限富文本';
   if (!draft.translations) draft.translations = {};
   const languages = enabledBackendLocales();
   languages.filter(language => language.code !== 'en').forEach(language => {
     if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
   });
-  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:14px;"><strong>复用 16 语言列管理结果</strong><br>当前展示 ${languages.length} 个已启用语言。英语是源语言；同步会覆盖其他已启用语言的现有媒体，但不会形成自动联动。</div>
+  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:14px;"><strong>复用 16 语言列管理结果</strong><br>当前展示 ${languages.length} 个已启用语言。${isMedia ? '媒体 Key 只维护图片或视频；英语同步会覆盖其他已启用语言的媒体，不形成自动联动。' : '文本 Key 只维护富文本；英语为只读源内容。'}</div>
     <div class="language-media-list">${languages.map(language => {
       const source = language.code === 'en';
       const row = source ? { text: draft.sourceText, media: draft.sourceMedia } : draft.translations[language.code];
-      return `<div class="language-media-row ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源文本' : '可独立维护文本与媒体'}</small></div><div>${source ? `<div class="source-box" style="margin:0;">${escHtml(row.text)}</div>` : `<input class="input" value="${escHtml(row.text)}" placeholder="请输入${escHtml(language.name)}文本" oninput="updateBackendLocaleText('${language.code}',this.value)">`}</div><div class="language-media-file">${row.media ? `<span class="media-type-badge">${getMediaType(row.media)}</span> ${escHtml(row.media)}` : '<span class="text-muted">未配置媒体</span>'}</div><div class="language-media-actions">${source
+      if (!isMedia) return `<div class="language-media-row text-key ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源文本' : '独立维护富文本译文'}</small></div><div>${source ? `<div class="source-box rich-text-preview" style="margin:0;">${normalizeRichTextValue(row.text)}</div>` : renderRichTextField({ id: `backendLocaleText_${language.code}`, value: row.text, placeholder: `请输入${language.name}译文`, limit: 1000, compact: true })}</div></div>`;
+      return `<div class="language-media-row media-key ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源媒体' : '独立维护单个媒体'}</small></div><div class="language-media-file">${row.media ? `<span class="media-type-badge">${getMediaType(row.media)}</span> ${escHtml(row.media)}` : '<span class="text-muted">未配置媒体</span>'}</div><div class="language-media-actions">${source
         ? `<button class="btn btn-default btn-sm" onclick="confirmBackendMediaSync()" ${row.media ? '' : 'disabled'}>同步到所有语言<span class="anchor-badge" title="批注 28：一次性覆盖同步">28</span></button>`
         : `<button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','image')">图片</button><button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','video')">视频</button>${row.media ? `<button class="btn btn-link btn-sm" onclick="removeBackendLocaleMedia('${language.code}')">删除</button>` : ''}<span class="anchor-badge" title="批注 29：分语言独立上传">29</span>`}</div></div>`;
     }).join('')}</div>`;
+  if (!isMedia) {
+    bindRichTextEditors(body);
+    languages.filter(language => language.code !== 'en').forEach(language => {
+      bindRichTextField(body, `backendLocaleText_${language.code}`, value => updateBackendLocaleText(language.code, value));
+    });
+  }
 }
 
 function updateBackendLocaleText(code, value) {
-  if (!state.backendLocaleDraft?.translations?.[code]) return;
-  state.backendLocaleDraft.translations[code].text = value;
+  if (state.backendLocaleDraft?.type !== 'text' || !state.backendLocaleDraft.translations?.[code]) return;
+  state.backendLocaleDraft.translations[code].text = normalizeRichTextValue(value);
 }
 
 function mockBackendLocaleMedia(code, type) {
-  if (!state.backendLocaleDraft?.translations?.[code]) return;
+  if (state.backendLocaleDraft?.type !== 'media' || !state.backendLocaleDraft.translations?.[code]) return;
   state.backendLocaleDraft.translations[code].media = type === 'video' ? `${code}-provisioning-guide.mp4` : `${code}-provisioning-guide.png`;
   renderBackendLocaleDrawer();
   showToast('仅更新当前语言媒体', 'success');
 }
 
 function removeBackendLocaleMedia(code) {
-  if (!state.backendLocaleDraft?.translations?.[code]) return;
+  if (state.backendLocaleDraft?.type !== 'media' || !state.backendLocaleDraft.translations?.[code]) return;
   state.backendLocaleDraft.translations[code].media = '';
   renderBackendLocaleDrawer();
 }
 
 function confirmBackendMediaSync() {
   const draft = state.backendLocaleDraft;
-  if (!draft?.sourceMedia) return;
+  if (draft?.type !== 'media' || !draft.sourceMedia) return;
   const targets = enabledBackendLocales().filter(language => language.code !== 'en');
   const overwritten = targets.filter(language => draft.translations?.[language.code]?.media).length;
   openActionModal({
@@ -2083,6 +2148,20 @@ function confirmBackendMediaSync() {
 function saveBackendLocaleConfig() {
   const draft = state.backendLocaleDraft;
   if (!draft) return;
+  if (draft.type === 'text') {
+    for (const language of enabledBackendLocales().filter(item => item.code !== 'en')) {
+      const translation = draft.translations?.[language.code];
+      if (!translation) continue;
+      translation.text = normalizeRichTextValue(translation.text);
+      translation.media = '';
+      if (richTextPlainLength(translation.text) > 1000) {
+        showToast(`${language.name}译文不能超过 1000 字`, 'error');
+        return;
+      }
+    }
+  } else {
+    Object.values(draft.translations || {}).forEach(translation => { translation.text = ''; });
+  }
   const index = state.backendI18nKeys.findIndex(item => item.id === draft.id);
   if (index >= 0) {
     draft.updatedAt = '2026-09-24 11:30';
@@ -2101,7 +2180,7 @@ function closeBackendLocaleDrawer() {
 
 function openBackendImport() {
   document.getElementById('actionModalTitle').textContent = '导入新增智能产品文本 Key';
-  document.getElementById('actionModalBody').innerHTML = `<div class="scope-note"><strong>仅支持文本</strong><br>文件可包含模块、Key、英语源文本和各语言文本；不接受媒体文件、媒体 URL 或媒体引用列。</div><div style="margin-top:14px;"><input class="input" style="padding-top:5px;" type="file" id="backendImportFile" accept=".csv,.xlsx"></div><div class="annotation-rule" style="margin-top:14px;">若检测到媒体列、重复 Key 或非法模块，整批预检查失败且不写入。</div>`;
+  document.getElementById('actionModalBody').innerHTML = `<div class="scope-note"><strong>仅创建文本 Key</strong><br>文件可包含模块、Key、英语源及各语言富文本；富文本以文本单元格承载并进行白名单清洗。不接受媒体文件、媒体 URL 或媒体引用列。</div><div style="margin-top:14px;"><input class="input" style="padding-top:5px;" type="file" id="backendImportFile" accept=".csv,.xlsx"></div><div class="annotation-rule" style="margin-top:14px;">若检测到媒体类型、媒体列、重复 Key 或非法模块，整批预检查失败且不写入。</div>`;
   document.getElementById('actionModalFooter').innerHTML = '<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn btn-primary" onclick="executeBackendImport()">预检查并导入</button>';
   document.getElementById('actionModal').classList.add('open');
   highlightAnnotation(27);
