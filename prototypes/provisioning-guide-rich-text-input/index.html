@@ -50,16 +50,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .sidebar-logo { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .sidebar-logo-text { color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
 .sidebar-logo-sub { color: rgba(255,255,255,0.45); font-size: 11px; margin-top: 2px; }
-.sidebar-menu { flex: 1; padding: 8px 0; }
+.sidebar-menu { flex: 1; padding: 8px 0; overflow-y: auto; min-height: 0; }
 .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: var(--sidebar-text); transition: var(--transition); font-size: 14px; }
 .sidebar-item:hover { color: var(--sidebar-active); background: rgba(255,255,255,0.06); }
 .sidebar-item.active { color: var(--sidebar-active); background: var(--sidebar-active-bg); }
+.sidebar-item.expanded { color: var(--sidebar-active); }
+.sidebar-chevron { margin-left: auto; font-size: 11px; transition: transform .2s ease; }
+.sidebar-item[aria-expanded="true"] .sidebar-chevron { transform: rotate(90deg); }
 .sidebar-item-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.75; }
 .sidebar-item.active .sidebar-item-icon { opacity: 1; }
 .sidebar-section { padding: 16px 20px 4px; color: rgba(255,255,255,0.3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; }
 .sidebar-sub-item { display: flex; align-items: center; gap: 10px; padding: 8px 20px 8px 32px; cursor: pointer; color: rgba(255,255,255,0.5); transition: var(--transition); font-size: 13px; }
-.sidebar-sub-item:hover { color: var(--sidebar-active); }
-.sidebar-sub-item.active { color: var(--sidebar-active); }
+.sidebar-sub-item:hover { color: var(--sidebar-active); background: rgba(255,255,255,0.06); }
+.sidebar-sub-item.active { color: var(--sidebar-active); background: var(--sidebar-active-bg); }
+.sidebar-sub-item:not(button) { cursor: default; }
+.sidebar-children[hidden] { display: none; }
+.sidebar button { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
+.sidebar button.sidebar-sub-item.active { background: var(--sidebar-active-bg); color: var(--sidebar-active); }
+.sidebar button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 
 /* ===== 主内容区 ===== */
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -424,6 +432,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .translation-editor-drawer { width: 720px; max-width: 100vw; z-index: 102; }
 .media-upload-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
 .media-type-badge { display: inline-flex; align-items: center; min-width: 36px; justify-content: center; padding: 2px 6px; border-radius: 3px; background: #f0f5ff; color: var(--primary); font-size: 11px; }
+.status-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 3px; font-size: 11px; }
+.status-enabled { color: #237804; background: #f6ffed; border: 1px solid #b7eb8f; }
 .translation-card { border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; }
 .translation-card-head { padding: 10px 12px; background: #fafafa; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
 .translation-card-body { padding: 12px; }
@@ -431,6 +441,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 .media-choice { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
 .media-choice label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
 .language-disabled { padding: 48px 20px; text-align: center; color: var(--text-tertiary); }
+.config-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.config-page-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+.config-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.config-tab { padding: 11px 2px; font-size: 13px; color: var(--text-secondary); border-bottom: 2px solid transparent; cursor: pointer; }
+.config-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+.i18n-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--border-light); }
+.i18n-toolbar .input { width: 220px; }
+.i18n-toolbar .select { width: 150px; }
+.text-cell { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.language-media-list { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.language-media-row { display: grid; grid-template-columns: 150px minmax(180px, 1fr) minmax(220px, 1fr) 150px; gap: 12px; align-items: center; min-height: 58px; padding: 10px 12px; border-bottom: 1px solid var(--border-light); }
+.language-media-row:last-child { border-bottom: 0; }
+.language-media-row.source { background: #f7f9ff; }
+.language-media-name { font-weight: 500; }
+.language-media-name small { display: block; color: var(--text-tertiary); font-weight: 400; margin-top: 2px; }
+.language-media-file { min-width: 0; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.language-media-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.scope-note { padding: 10px 12px; border: 1px solid #ffe7ba; background: #fffbe6; color: #8d5f00; border-radius: var(--radius); font-size: 12px; line-height: 1.6; }
 
 /* ===== 底部导航 ===== */
 .step-footer { background: var(--bg-white); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; flex-shrink: 0; }
@@ -556,6 +584,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
   .language-drawer { width: 100vw; }
   .locale-toggle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .language-kv-wrap { max-height: calc(100vh - 300px); }
+  .language-media-row { grid-template-columns: 1fr; gap: 6px; }
+  .language-media-actions { justify-content: flex-start; }
 }
 </style>
 </head>
@@ -565,7 +595,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 <div class="layout">
 
   <!-- 侧边栏 -->
-  <nav class="sidebar">
+  <nav class="sidebar" aria-label="IoT Admin 主菜单">
     <div class="sidebar-logo">
       <div class="sidebar-logo-text">IoT Admin</div>
       <div class="sidebar-logo-sub">智能物联网管理平台</div>
@@ -575,18 +605,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
         <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
         概览
       </div>
-      <div class="sidebar-item active">
+      <button type="button" class="sidebar-item expanded" id="smartProductNav" aria-expanded="true" aria-controls="smartProductMenu" onclick="toggleSidebarGroup('smartProduct')">
         <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm0 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9z"/></svg>
-        智能产品
+        智能产品<span class="sidebar-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="sidebar-children" id="smartProductMenu">
+        <button type="button" class="sidebar-sub-item active" id="productListNav" onclick="showProductWorkspace()">产品列表</button>
+        <div class="sidebar-sub-item">消息推送</div>
       </div>
-      <div class="sidebar-item">
+      <button type="button" class="sidebar-item" aria-expanded="false" aria-controls="deviceMenu" onclick="toggleSidebarGroup('device')">
         <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2"/></svg>
-        设备管理
+        设备管理<span class="sidebar-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="sidebar-children" id="deviceMenu" hidden>
+        <div class="sidebar-sub-item">设备列表</div><div class="sidebar-sub-item">固件管理</div><div class="sidebar-sub-item">OTA</div>
       </div>
-      <div class="sidebar-item">
-        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3z"/><circle cx="8" cy="8" r="2"/></svg>
-        数据分析
+      <button type="button" class="sidebar-item" aria-expanded="false" aria-controls="appMenu" onclick="toggleSidebarGroup('app')">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="1" width="8" height="14" rx="2"/></svg>
+        App<span class="sidebar-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="sidebar-children" id="appMenu" hidden>
+        <div class="sidebar-sub-item">App列表</div><div class="sidebar-sub-item">App升级</div><div class="sidebar-sub-item">扩展程序管理</div><div class="sidebar-sub-item">白名单管理</div><div class="sidebar-sub-item">白名单标签组管理</div><div class="sidebar-sub-item">日志文件</div>
       </div>
+      <button type="button" class="sidebar-item" id="configCenterNav" aria-expanded="false" aria-controls="configCenterMenu" onclick="toggleSidebarGroup('configCenter')">
+        <svg class="sidebar-item-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v2H4v2h3v2H4v2h3v2H2V2zm7 1h5v2H9V3zm0 4h5v2H9V7zm0 4h5v2H9v-2z"/></svg>
+        配置中心<span class="sidebar-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="sidebar-children" id="configCenterMenu" hidden>
+        <div class="sidebar-sub-item">物模型池</div><div class="sidebar-sub-item">产品模板</div><div class="sidebar-sub-item">产品分类</div>
+        <button type="button" class="sidebar-sub-item" id="multilingualNav" onclick="openBackendMultilingual()">多语言</button>
+        <div class="sidebar-sub-item">音源管理</div><div class="sidebar-sub-item">系统配置</div>
+      </div>
+      <button type="button" class="sidebar-item" aria-expanded="false" aria-controls="productionMenu" onclick="toggleSidebarGroup('production')">生产管理<span class="sidebar-chevron" aria-hidden="true">›</span></button>
+      <div class="sidebar-children" id="productionMenu" hidden><div class="sidebar-sub-item">生产凭证</div><div class="sidebar-sub-item">生产记录</div></div>
+      <button type="button" class="sidebar-item" aria-expanded="false" aria-controls="operationMenu" onclick="toggleSidebarGroup('operation')">运营管理<span class="sidebar-chevron" aria-hidden="true">›</span></button>
+      <div class="sidebar-children" id="operationMenu" hidden><div class="sidebar-sub-item">兑换码</div><div class="sidebar-sub-item">设备信息查询</div></div>
     </div>
   </nav>
 
@@ -595,7 +648,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
 
     <!-- Header -->
     <header class="header">
-      <div class="breadcrumb">
+      <div class="breadcrumb" id="mainBreadcrumb">
         <span>智能产品</span>
         <span class="breadcrumb-sep">/</span>
         <span>产品列表</span>
@@ -608,7 +661,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
     </header>
 
     <!-- 产品信息头 -->
-    <div class="product-header">
+    <div class="product-header" id="productHeader">
       <div class="product-info">
         <div class="product-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -927,6 +980,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
               </div>
             </div>
           </div>
+
+          <!-- 配置中心 > 后台多语言 > 智能产品 -->
+          <div class="hidden" id="backendMultilingualModule">
+            <div class="config-page-head">
+              <div>
+                <div class="config-page-title">后台多语言<span class="anchor-badge" title="批注 25：复用后台多语言现有页面">25</span></div>
+                <div class="page-subtitle">维护产品模板、智能产品和 App 通用词条</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body" style="padding-bottom:0;">
+                <div class="config-tabs"><div class="config-tab">产品模板</div><div class="config-tab active">智能产品</div><div class="config-tab">App 通用</div></div>
+                <div class="scope-note">当前页为单一产品上下文：test-leo2-neo-Neo。导入新增仅处理文本；媒体只通过“手动新增 Key”或单 Key 多语言编辑维护。</div>
+              </div>
+              <div class="i18n-toolbar">
+                <select class="select" id="backendModuleFilter" onchange="renderBackendI18nTable()"><option value="all">全部模块</option><option value="配网">配网</option><option value="功能点">功能点</option><option value="错误引导">错误引导</option></select>
+                <input class="input" id="backendKeySearch" type="search" placeholder="搜索 Key 或英语文本" oninput="renderBackendI18nTable()">
+                <button class="btn btn-default" onclick="resetBackendI18nFilters()">重置</button><span class="toolbar-spacer"></span>
+                <button class="btn btn-default" onclick="openBackendImport()">导入新增<span class="anchor-badge" title="批注 27：导入仅支持文本">27</span></button>
+                <button class="btn btn-default" onclick="showToast('已生成智能产品文本导出文件','success')">导出</button>
+                <button class="btn btn-primary" onclick="openBackendKeyDrawer()">新增 Key<span class="anchor-badge" title="批注 26：手动单 Key 新增">26</span></button>
+              </div>
+              <div class="data-table-wrap"><table class="data-table"><thead><tr><th>模块</th><th>Key</th><th>英语（源）</th><th>英语媒体</th><th>语言完成度</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="backendI18nTableBody"></tbody></table></div>
+              <div class="empty-state hidden" id="backendI18nEmpty">没有符合当前条件的词条</div>
+              <div class="table-footer"><span id="backendI18nCount">共 0 项</span><span>每页 20 条</span></div>
+            </div>
+          </div>
         </div>
 
         <!-- 右侧批注面板 -->
@@ -934,12 +1014,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
           <div class="annotation-panel">
             <div class="annotation-header">
               <div class="annotation-header-title">原型批注</div>
-              <div class="annotation-header-sub">配网与错误引导配置 · 独立需求 v1.2 已发布</div>
+              <div class="annotation-header-sub">配网、错误引导与后台多语言 · 独立需求 v1.3 已发布</div>
             </div>
             <div class="annotation-control">
               <div class="annotation-rule" style="margin-bottom:12px;">
                 <strong>项目边界</strong><br>
-                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0 基线；批注 15-22 是 v1.1；批注 23-24 是已发布 v1.2 范围扩展。原型发布不代表线上 IoT Admin 已具备该能力。
+                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0；批注 15-22 是 v1.1；批注 23-24 是 v1.2；批注 25-29 是已发布 v1.3 范围扩展。侧栏复用 IoT Admin 现有菜单层级，仅相关页面在本原型中可操作。
               </div>
               <div class="control-label">当前状态</div>
               <div class="control-btns" id="annotationFilter">
@@ -950,6 +1030,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                 <button class="control-btn" onclick="filterAnnotation('validate')">校验</button>
                 <button class="control-btn" onclick="filterAnnotation('error')">错误引导</button>
                 <button class="control-btn" onclick="filterAnnotation('language')">多语言</button>
+                <button class="control-btn" onclick="filterAnnotation('backend')">后台多语言</button>
               </div>
             </div>
             <div class="annotation-content" id="annotationContent">
@@ -1100,6 +1181,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
   </div>
 </div>
 
+<!-- ===== 智能产品手动单 Key 新增/编辑 ===== -->
+<div class="drawer" id="backendKeyDrawer" style="width:720px;max-width:100vw;">
+  <div class="drawer-header"><div><div class="drawer-title" id="backendKeyDrawerTitle">新增智能产品 Key</div><div class="page-subtitle">手动新增支持文本与可选媒体；英语为源语言</div></div><button class="drawer-close" onclick="closeBackendKeyDrawer()" title="关闭">✕</button></div>
+  <div class="drawer-body" id="backendKeyDrawerBody"></div>
+  <div class="drawer-footer"><button class="btn btn-default" onclick="closeBackendKeyDrawer()">取消</button><button class="btn btn-primary" onclick="saveBackendKey()">保存</button></div>
+</div>
+
+<!-- ===== 单 Key 多语言文本与媒体 ===== -->
+<div class="drawer language-drawer" id="backendLocaleDrawer">
+  <div class="drawer-header"><div><div class="drawer-title" id="backendLocaleDrawerTitle">单 Key 多语言配置</div><div class="page-subtitle">英语媒体可一次性覆盖到其他启用语言；各语言之后仍可独立替换</div></div><button class="drawer-close" onclick="closeBackendLocaleDrawer()" title="关闭">✕</button></div>
+  <div class="drawer-body" id="backendLocaleDrawerBody"></div>
+  <div class="drawer-footer"><button class="btn btn-default" onclick="closeBackendLocaleDrawer()">取消</button><button class="btn btn-primary" onclick="saveBackendLocaleConfig()">保存多语言配置</button></div>
+</div>
+
 <!-- ===== 确认 / 导入导出弹窗 ===== -->
 <div class="modal-overlay" id="actionModal" onclick="closeActionModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -1186,6 +1281,10 @@ const state = {
   localePanelOpen: false,
   languageDraft: null,
   translationEditorDraft: null,
+  workspace: 'product',
+  editingBackendKeyId: null,
+  backendKeyDraft: null,
+  backendLocaleDraft: null,
   languages: [
     { code: 'en', name: '英语', enabled: true, locked: true },
     { code: 'fr', name: '法语', enabled: false },
@@ -1241,6 +1340,10 @@ const state = {
         de: { content: '<p>Das Gerät ist offline. Schalten Sie es ein und versuchen Sie es erneut.</p>', mediaMode: 'inherit', media: '' }
       }
     }
+  ],
+  backendI18nKeys: [
+    { id: 1, module: '配网', key: 'provisioning.reset.button.hold', sourceText: 'Press and hold the reset button for 5 seconds.', sourceMedia: 'reset-button-guide.mp4', updatedAt: '2026-09-24 10:18', translations: { de: { text: 'Halten Sie die Reset-Taste 5 Sekunden lang gedrückt.', media: 'reset-button-guide.mp4' }, 'zh-Hans': { text: '长按复位键 5 秒。', media: 'reset-button-zh.png' } } },
+    { id: 2, module: '功能点', key: 'device.power.status', sourceText: 'Power status', sourceMedia: '', updatedAt: '2026-09-22 16:40', translations: { de: { text: 'Energiestatus', media: '' }, 'zh-Hans': { text: '电源状态', media: '' } } }
   ]
 };
 
@@ -1413,6 +1516,41 @@ const annotations = [
     trigger: '上传、替换或删除子步骤媒体',
     response: '可在图片和视频之间选择；已有文件时展示类型、文件名和 1 / 1 占用状态，并提供替换、删除。',
     rule: '每个子步骤最多 1 个媒体文件且仍为可选。子步骤数量 1-3、标题必填、正文必填规则不变。项目 v1.2 已发布至既有 PRD 与原型路径。'
+  },
+  {
+    id: 25, title: 'v1.3：复用后台多语言智能产品页', tag: 'v1.3', group: 'backend',
+    location: '配置中心 > 后台多语言 > 智能产品',
+    trigger: '从真实侧栏进入后台多语言，并切换至智能产品页签',
+    response: '沿用现有产品模板 / 智能产品 / App 通用页签、查询、重置、导入和导出结构，在智能产品页签增加手动新增 Key。',
+    rule: '不新增独立语言管理方式；语言集合、启用状态与列管理继续复用平台既有后台多语言能力。'
+  },
+  {
+    id: 26, title: 'v1.3：手动单 Key 新增', tag: 'v1.3', group: 'backend',
+    location: '智能产品工具栏 > 新增 Key',
+    trigger: '点击“新增 Key”',
+    response: '右侧 Drawer 配置模块、Key、英语源文本和可选英语媒体；保存后追加到当前产品词条列表。',
+    rule: '模块新增“配网”。Key 在当前产品与模块内唯一；英语源文本必填。媒体仅手动新增/编辑可配置，原型按每语言单文件复用现有媒体控件，最终规格待确认。'
+  },
+  {
+    id: 27, title: 'v1.3：导入新增仅文本', tag: 'v1.3', group: 'backend',
+    location: '智能产品工具栏 > 导入新增',
+    trigger: '选择 CSV/XLSX 并执行导入预检查',
+    response: '仅创建或写入模块、Key、英语源文本与各语言文本；文件中出现媒体列或媒体引用时整批阻止。',
+    rule: '导入不能新增、替换或删除任何语言媒体。媒体必须进入对应单 Key 后手动维护。'
+  },
+  {
+    id: 28, title: 'v1.3：英语媒体一键同步', tag: 'v1.3', group: 'backend',
+    location: '单 Key 多语言配置 > 英语（源）媒体',
+    trigger: '英语已有媒体，点击“同步到所有语言”并确认',
+    response: '将当前英语媒体一次性覆盖到其他全部已启用语言；确认框展示目标语言数和被覆盖的已有媒体数。',
+    rule: '同步是一次性复制，不建立自动联动。英语媒体之后变更不会自动更新其他语言；需再次手动同步。未启用语言不写入。'
+  },
+  {
+    id: 29, title: 'v1.3：分语言独立上传', tag: 'v1.3', group: 'backend',
+    location: '单 Key 多语言配置 > 非英语语言行',
+    trigger: '在目标语言行上传、替换或删除媒体',
+    response: '仅更新当前语言媒体，不影响英语源或其他语言；被英语同步覆盖后仍可再次独立替换。',
+    rule: '文本与媒体均按语言保存。原型复用图片/视频单文件控件；媒体类型、大小、时长与是否允许其他文件类型待技术方案确认。'
   }
 ];
 
@@ -1441,8 +1579,35 @@ function isTargetEntry() {
 }
 
 // ===== 页面模块切换 =====
+function toggleSidebarGroup(group) {
+  const menu = document.getElementById(group + 'Menu');
+  const trigger = document.querySelector('[aria-controls="' + menu.id + '"]');
+  menu.hidden = !menu.hidden;
+  trigger.setAttribute('aria-expanded', String(!menu.hidden));
+  trigger.classList.toggle('expanded', !menu.hidden);
+}
+
+function setSidebarWorkspace(workspace) {
+  const isProduct = workspace === 'product';
+  const productMenu = document.getElementById('smartProductMenu');
+  const configMenu = document.getElementById('configCenterMenu');
+  productMenu.hidden = !isProduct;
+  configMenu.hidden = isProduct;
+  document.getElementById('smartProductNav').setAttribute('aria-expanded', String(isProduct));
+  document.getElementById('configCenterNav').setAttribute('aria-expanded', String(!isProduct));
+  document.getElementById('smartProductNav').classList.toggle('expanded', isProduct);
+  document.getElementById('configCenterNav').classList.toggle('expanded', !isProduct);
+  document.getElementById('productListNav').classList.toggle('active', isProduct);
+  document.getElementById('multilingualNav').classList.toggle('active', !isProduct);
+}
+
 function switchModule(module) {
+  state.workspace = 'product';
   state.module = module;
+  document.getElementById('productHeader').classList.remove('hidden');
+  document.getElementById('backendMultilingualModule').classList.add('hidden');
+  setSidebarWorkspace('product');
+  document.getElementById('mainBreadcrumb').innerHTML = '<span>智能产品</span><span class="breadcrumb-sep">/</span><span>产品列表</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-cur">查看产品详情</span>';
   document.getElementById('provisioningModule').classList.toggle('hidden', module !== 'provisioning');
   document.getElementById('advancedModule').classList.toggle('hidden', module !== 'advanced');
   document.getElementById('errorGuideModule').classList.add('hidden');
@@ -1459,6 +1624,7 @@ function switchModule(module) {
 }
 
 function openErrorGuide() {
+  state.workspace = 'product';
   state.module = 'error';
   document.getElementById('provisioningModule').classList.add('hidden');
   document.getElementById('advancedModule').classList.add('hidden');
@@ -1473,6 +1639,28 @@ function openErrorGuide() {
 
 function backToAdvanced() {
   switchModule('advanced');
+}
+
+function showProductWorkspace() {
+  const target = ['provisioning', 'advanced', 'error'].includes(state.module) ? state.module : 'provisioning';
+  if (target === 'error') openErrorGuide();
+  else switchModule(target);
+}
+
+function openBackendMultilingual() {
+  state.workspace = 'backend';
+  state.module = 'backend';
+  document.getElementById('productHeader').classList.add('hidden');
+  document.getElementById('provisioningModule').classList.add('hidden');
+  document.getElementById('advancedModule').classList.add('hidden');
+  document.getElementById('errorGuideModule').classList.add('hidden');
+  document.getElementById('backendMultilingualModule').classList.remove('hidden');
+  setSidebarWorkspace('backend');
+  document.getElementById('mainBreadcrumb').innerHTML = '<span>配置中心</span><span class="breadcrumb-sep">/</span><span>后台多语言</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-cur">智能产品</span>';
+  currentAnnotationFilter = 'backend';
+  syncAnnotationFilterButtons();
+  renderAnnotations();
+  renderBackendI18nTable();
 }
 
 // ===== 错误引导列表 =====
@@ -1704,6 +1892,226 @@ function confirmDeleteErrorGuide(id) {
       showToast('已删除错误引导', 'success');
     }
   });
+}
+
+// ===== 后台多语言 > 智能产品 =====
+function enabledBackendLocales() {
+  return state.languages.filter(language => language.enabled);
+}
+
+function backendKeyCompletion(item) {
+  const enabled = enabledBackendLocales();
+  return enabled.filter(language => language.code === 'en' || (item.translations?.[language.code]?.text || '').trim()).length;
+}
+
+function renderBackendI18nTable() {
+  const body = document.getElementById('backendI18nTableBody');
+  if (!body) return;
+  const moduleValue = document.getElementById('backendModuleFilter')?.value || 'all';
+  const keyword = (document.getElementById('backendKeySearch')?.value || '').trim().toLowerCase();
+  const rows = state.backendI18nKeys.filter(item => (moduleValue === 'all' || item.module === moduleValue)
+    && (!keyword || item.key.toLowerCase().includes(keyword) || item.sourceText.toLowerCase().includes(keyword)));
+  const empty = document.getElementById('backendI18nEmpty');
+  body.closest('table')?.classList.toggle('hidden', rows.length === 0);
+  empty?.classList.toggle('hidden', rows.length !== 0);
+  document.getElementById('backendI18nCount').textContent = `共 ${rows.length} 项`;
+  const enabledCount = enabledBackendLocales().length;
+  body.innerHTML = rows.map(item => `<tr>
+    <td><span class="status-badge status-enabled">${escHtml(item.module)}</span></td>
+    <td><span class="table-code">${escHtml(item.key)}</span></td>
+    <td><div class="text-cell" title="${escHtml(item.sourceText)}">${escHtml(item.sourceText)}</div></td>
+    <td>${item.sourceMedia ? `<span class="media-chip"><span class="media-type-badge">${getMediaType(item.sourceMedia)}</span><span>${escHtml(item.sourceMedia)}</span></span>` : '<span class="text-muted">--</span>'}</td>
+    <td>${backendKeyCompletion(item)} / ${enabledCount}</td>
+    <td class="text-muted">${escHtml(item.updatedAt)}</td>
+    <td><div class="table-actions"><button class="btn btn-link" onclick="openBackendLocaleDrawer(${item.id})">多语言</button><button class="btn btn-link" onclick="openBackendKeyDrawer(${item.id})">编辑</button></div></td>
+  </tr>`).join('');
+}
+
+function resetBackendI18nFilters() {
+  const moduleFilter = document.getElementById('backendModuleFilter');
+  const keySearch = document.getElementById('backendKeySearch');
+  if (moduleFilter) moduleFilter.value = 'all';
+  if (keySearch) keySearch.value = '';
+  renderBackendI18nTable();
+}
+
+function openBackendKeyDrawer(id = null) {
+  const existing = id ? state.backendI18nKeys.find(item => item.id === id) : null;
+  state.editingBackendKeyId = existing?.id || null;
+  state.backendKeyDraft = existing ? JSON.parse(JSON.stringify(existing)) : { id: null, module: '配网', key: '', sourceText: '', sourceMedia: '', translations: {}, updatedAt: '' };
+  document.getElementById('backendKeyDrawerTitle').textContent = existing ? '编辑智能产品 Key' : '新增智能产品 Key';
+  renderBackendKeyDrawer();
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('backendKeyDrawer').classList.add('open');
+  highlightAnnotation(26);
+}
+
+function renderBackendKeyDrawer() {
+  const body = document.getElementById('backendKeyDrawerBody');
+  const draft = state.backendKeyDraft;
+  if (!body || !draft) return;
+  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:16px;"><strong>单 Key 新增</strong><br>文本与媒体在同一 Key 下维护。媒体为可选项，且不会进入批量导入文件。</div>
+    <div class="form-row"><div class="form-label required">模块</div><div class="form-control"><select class="select" id="backendKeyModule" onchange="state.backendKeyDraft.module=this.value"><option ${draft.module === '配网' ? 'selected' : ''}>配网</option><option ${draft.module === '功能点' ? 'selected' : ''}>功能点</option><option ${draft.module === '错误引导' ? 'selected' : ''}>错误引导</option></select><div class="form-hint">本期在智能产品模块枚举中新增“配网”。</div></div></div>
+    <div class="form-row"><div class="form-label required">Key</div><div class="form-control"><input class="input" id="backendKeyInput" value="${escHtml(draft.key)}" placeholder="例如 provisioning.reset.button.hold" oninput="state.backendKeyDraft.key=this.value"><div class="form-hint">当前产品 + 模块内唯一；保存后建议保持稳定。</div><div class="error-msg" id="err_backendKey"></div></div></div>
+    <div class="form-row"><div class="form-label required">英语文本</div><div class="form-control"><textarea class="textarea" id="backendSourceText" rows="4" placeholder="Enter source text in English" oninput="state.backendKeyDraft.sourceText=this.value">${escHtml(draft.sourceText)}</textarea><div class="error-msg" id="err_backendSourceText"></div></div></div>
+    <div class="form-row"><div class="form-label">英语媒体<span class="anchor-badge" title="批注 28：源媒体同步">28</span></div><div class="form-control">${draft.sourceMedia
+      ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.sourceMedia) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.sourceMedia)}</div><div class="upload-file-size">可选 · 当前占用 1 个媒体位</div></div><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('image')">替换图片</button><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('video')">替换视频</button><button class="upload-file-remove" onclick="removeBackendSourceMedia()">✕</button></div>`
+      : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">可选上传媒体</div><div class="upload-placeholder-hint">复用现有图片/视频控件；类型、大小、时长待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('video')">上传视频</button></div></div></div>`}</div></div>`;
+}
+
+function mockBackendSourceMedia(type) {
+  if (!state.backendKeyDraft) return;
+  state.backendKeyDraft.sourceMedia = type === 'video' ? 'provisioning-guide.mp4' : 'provisioning-guide.png';
+  renderBackendKeyDrawer();
+}
+
+function removeBackendSourceMedia() {
+  if (!state.backendKeyDraft) return;
+  state.backendKeyDraft.sourceMedia = '';
+  renderBackendKeyDrawer();
+}
+
+function saveBackendKey() {
+  const draft = state.backendKeyDraft;
+  if (!draft) return;
+  const key = draft.key.trim();
+  const sourceText = draft.sourceText.trim();
+  const duplicate = state.backendI18nKeys.some(item => item.id !== state.editingBackendKeyId && item.module === draft.module && item.key.toLowerCase() === key.toLowerCase());
+  document.getElementById('err_backendKey')?.classList.remove('show');
+  document.getElementById('err_backendSourceText')?.classList.remove('show');
+  if (!key || duplicate) {
+    const error = document.getElementById('err_backendKey');
+    if (error) { error.textContent = duplicate ? '当前产品与模块下已存在该 Key' : '请输入 Key'; error.classList.add('show'); }
+    return;
+  }
+  if (!sourceText) {
+    const error = document.getElementById('err_backendSourceText');
+    if (error) { error.textContent = '请输入英语源文本'; error.classList.add('show'); }
+    return;
+  }
+  draft.key = key;
+  draft.sourceText = sourceText;
+  draft.updatedAt = '2026-09-24 11:30';
+  if (state.editingBackendKeyId) {
+    const index = state.backendI18nKeys.findIndex(item => item.id === state.editingBackendKeyId);
+    state.backendI18nKeys[index] = JSON.parse(JSON.stringify(draft));
+  } else {
+    draft.id = Math.max(0, ...state.backendI18nKeys.map(item => item.id)) + 1;
+    state.backendI18nKeys.unshift(JSON.parse(JSON.stringify(draft)));
+  }
+  closeBackendKeyDrawer();
+  renderBackendI18nTable();
+  showToast('智能产品 Key 已保存', 'success');
+}
+
+function closeBackendKeyDrawer() {
+  document.getElementById('backendKeyDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  state.backendKeyDraft = null;
+  state.editingBackendKeyId = null;
+}
+
+function openBackendLocaleDrawer(id) {
+  const existing = state.backendI18nKeys.find(item => item.id === id);
+  if (!existing) return;
+  state.backendLocaleDraft = JSON.parse(JSON.stringify(existing));
+  document.getElementById('backendLocaleDrawerTitle').textContent = `多语言配置 · ${existing.key}`;
+  renderBackendLocaleDrawer();
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('backendLocaleDrawer').classList.add('open');
+  highlightAnnotation(28);
+}
+
+function renderBackendLocaleDrawer() {
+  const body = document.getElementById('backendLocaleDrawerBody');
+  const draft = state.backendLocaleDraft;
+  if (!body || !draft) return;
+  if (!draft.translations) draft.translations = {};
+  const languages = enabledBackendLocales();
+  languages.filter(language => language.code !== 'en').forEach(language => {
+    if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
+  });
+  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:14px;"><strong>复用 16 语言列管理结果</strong><br>当前展示 ${languages.length} 个已启用语言。英语是源语言；同步会覆盖其他已启用语言的现有媒体，但不会形成自动联动。</div>
+    <div class="language-media-list">${languages.map(language => {
+      const source = language.code === 'en';
+      const row = source ? { text: draft.sourceText, media: draft.sourceMedia } : draft.translations[language.code];
+      return `<div class="language-media-row ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源文本' : '可独立维护文本与媒体'}</small></div><div>${source ? `<div class="source-box" style="margin:0;">${escHtml(row.text)}</div>` : `<input class="input" value="${escHtml(row.text)}" placeholder="请输入${escHtml(language.name)}文本" oninput="updateBackendLocaleText('${language.code}',this.value)">`}</div><div class="language-media-file">${row.media ? `<span class="media-type-badge">${getMediaType(row.media)}</span> ${escHtml(row.media)}` : '<span class="text-muted">未配置媒体</span>'}</div><div class="language-media-actions">${source
+        ? `<button class="btn btn-default btn-sm" onclick="confirmBackendMediaSync()" ${row.media ? '' : 'disabled'}>同步到所有语言<span class="anchor-badge" title="批注 28：一次性覆盖同步">28</span></button>`
+        : `<button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','image')">图片</button><button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','video')">视频</button>${row.media ? `<button class="btn btn-link btn-sm" onclick="removeBackendLocaleMedia('${language.code}')">删除</button>` : ''}<span class="anchor-badge" title="批注 29：分语言独立上传">29</span>`}</div></div>`;
+    }).join('')}</div>`;
+}
+
+function updateBackendLocaleText(code, value) {
+  if (!state.backendLocaleDraft?.translations?.[code]) return;
+  state.backendLocaleDraft.translations[code].text = value;
+}
+
+function mockBackendLocaleMedia(code, type) {
+  if (!state.backendLocaleDraft?.translations?.[code]) return;
+  state.backendLocaleDraft.translations[code].media = type === 'video' ? `${code}-provisioning-guide.mp4` : `${code}-provisioning-guide.png`;
+  renderBackendLocaleDrawer();
+  showToast('仅更新当前语言媒体', 'success');
+}
+
+function removeBackendLocaleMedia(code) {
+  if (!state.backendLocaleDraft?.translations?.[code]) return;
+  state.backendLocaleDraft.translations[code].media = '';
+  renderBackendLocaleDrawer();
+}
+
+function confirmBackendMediaSync() {
+  const draft = state.backendLocaleDraft;
+  if (!draft?.sourceMedia) return;
+  const targets = enabledBackendLocales().filter(language => language.code !== 'en');
+  const overwritten = targets.filter(language => draft.translations?.[language.code]?.media).length;
+  openActionModal({
+    title: '同步英语媒体到所有语言',
+    body: `<p>将当前英语媒体同步到其他 <strong>${targets.length}</strong> 个已启用语言。</p><p style="margin-top:8px;color:var(--error);">其中 ${overwritten} 个语言已有媒体，将被覆盖。</p><p class="text-muted" style="margin-top:8px;">这是一次性复制；后续修改英语媒体不会自动联动。</p>`,
+    confirmText: '确认覆盖同步',
+    danger: overwritten > 0,
+    action: () => {
+      targets.forEach(language => {
+        if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
+        draft.translations[language.code].media = draft.sourceMedia;
+      });
+      renderBackendLocaleDrawer();
+      showToast(`英语媒体已覆盖到 ${targets.length} 个启用语言`, 'success');
+    }
+  });
+}
+
+function saveBackendLocaleConfig() {
+  const draft = state.backendLocaleDraft;
+  if (!draft) return;
+  const index = state.backendI18nKeys.findIndex(item => item.id === draft.id);
+  if (index >= 0) {
+    draft.updatedAt = '2026-09-24 11:30';
+    state.backendI18nKeys[index] = JSON.parse(JSON.stringify(draft));
+  }
+  closeBackendLocaleDrawer();
+  renderBackendI18nTable();
+  showToast('单 Key 多语言配置已保存', 'success');
+}
+
+function closeBackendLocaleDrawer() {
+  document.getElementById('backendLocaleDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  state.backendLocaleDraft = null;
+}
+
+function openBackendImport() {
+  document.getElementById('actionModalTitle').textContent = '导入新增智能产品文本 Key';
+  document.getElementById('actionModalBody').innerHTML = `<div class="scope-note"><strong>仅支持文本</strong><br>文件可包含模块、Key、英语源文本和各语言文本；不接受媒体文件、媒体 URL 或媒体引用列。</div><div style="margin-top:14px;"><input class="input" style="padding-top:5px;" type="file" id="backendImportFile" accept=".csv,.xlsx"></div><div class="annotation-rule" style="margin-top:14px;">若检测到媒体列、重复 Key 或非法模块，整批预检查失败且不写入。</div>`;
+  document.getElementById('actionModalFooter').innerHTML = '<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn btn-primary" onclick="executeBackendImport()">预检查并导入</button>';
+  document.getElementById('actionModal').classList.add('open');
+  highlightAnnotation(27);
+}
+
+function executeBackendImport() {
+  const file = document.getElementById('backendImportFile');
+  if (!file?.files?.length) { showToast('请先选择 CSV 或 XLSX 文件', 'error'); return; }
+  closeActionModal();
+  showToast('文本文件预检查通过，已模拟新增 3 个 Key；媒体未写入', 'success');
 }
 
 // ===== 整体多语言配置 =====
@@ -1960,8 +2368,13 @@ function closeAllDrawers() {
   closeDrawer();
   document.getElementById('errorGuideDrawer').classList.remove('open');
   document.getElementById('languageDrawer').classList.remove('open');
+  document.getElementById('backendKeyDrawer').classList.remove('open');
+  document.getElementById('backendLocaleDrawer').classList.remove('open');
   state.errorDraft = null;
   state.languageDraft = null;
+  state.backendKeyDraft = null;
+  state.backendLocaleDraft = null;
+  state.editingBackendKeyId = null;
 }
 
 // ===== 切换产品类型 =====
@@ -3040,7 +3453,8 @@ function syncAnnotationFilterButtons() {
     edit: '编辑态',
     validate: '校验',
     error: '错误引导',
-    language: '多语言'
+    language: '多语言',
+    backend: '后台多语言'
   };
   document.querySelectorAll('#annotationFilter .control-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent.trim() === labels[currentAnnotationFilter]);
