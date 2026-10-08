@@ -961,7 +961,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
                 <button class="btn btn-primary" onclick="openErrorDrawer()">新增错误引导<span class="anchor-badge" title="批注 17：新增/编辑">17</span></button>
               </div>
               <div class="bulk-bar">
-                <span class="bulk-hint">“全部”按当前筛选结果执行，正式范围待评审确认。</span>
+                <span class="bulk-hint">“全部”仅作用于当前搜索与状态筛选结果。</span>
                 <button class="btn btn-default btn-sm" onclick="confirmBulkStatus(true)">全部启用</button>
                 <button class="btn btn-default btn-sm" onclick="confirmBulkStatus(false)">全部禁用<span class="anchor-badge" title="批注 19：单项与全量启停">19</span></button>
               </div>
@@ -1021,12 +1021,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino 
           <div class="annotation-panel">
             <div class="annotation-header">
               <div class="annotation-header-title">原型批注</div>
-              <div class="annotation-header-sub">配网、错误引导与后台多语言 · v1.3-R1 本地评审修订</div>
+              <div class="annotation-header-sub">配网、错误引导与后台多语言 · 1.3-R2 评审决策</div>
             </div>
             <div class="annotation-control">
               <div class="annotation-rule" style="margin-bottom:12px;">
                 <strong>项目边界</strong><br>
-                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0；批注 15-22 是 v1.1；批注 23-24 是 v1.2；批注 25-29 是 v1.3 范围扩展；批注 30-31 是本地评审修订。线上 PRD 与原型仍为 v1.3。
+                批注 1-13 是冻结宿主上下文；批注 14 是 v1.0；批注 15-22 是 v1.1；批注 23-24 是 v1.2；批注 25-31 是 v1.3 与 1.3-R1；批注 32 是评审决策。
               </div>
               <div class="control-label">当前状态</div>
               <div class="control-btns" id="annotationFilter">
@@ -1350,7 +1350,7 @@ const state = {
   ],
   backendI18nKeys: [
     { id: 1, module: '配网', type: 'text', key: 'provisioning.reset.button.hold', sourceText: '<p>Press and hold the <strong>reset button</strong> for 5 seconds.</p>', sourceMedia: '', updatedAt: '2026-09-24 10:18', translations: { de: { text: '<p>Halten Sie die Reset-Taste <strong>5 Sekunden</strong> lang gedrückt.</p>', media: '' }, 'zh-Hans': { text: '<p>长按复位键 <strong>5 秒</strong>。</p>', media: '' } } },
-    { id: 2, module: '配网', type: 'media', key: 'provisioning.reset.button.demo', sourceText: '', sourceMedia: 'reset-button-guide.mp4', updatedAt: '2026-09-24 10:18', translations: { de: { text: '', media: 'reset-button-guide.mp4' }, 'zh-Hans': { text: '', media: 'reset-button-zh.png' } } },
+    { id: 2, module: '配网', type: 'media', key: 'provisioning.reset.button.demo', sourceText: '', sourceMedia: 'reset-button-guide.mp4', updatedAt: '2026-09-24 10:18', translations: { de: { text: '', media: 'reset-button-guide.mp4' }, 'zh-Hans': { text: '', media: 'reset-button-zh.mp4' } } },
     { id: 3, module: '功能点', type: 'text', key: 'device.power.status', sourceText: '<p>Power status</p>', sourceMedia: '', updatedAt: '2026-09-22 16:40', translations: { de: { text: '<p>Energiestatus</p>', media: '' }, 'zh-Hans': { text: '<p>电源状态</p>', media: '' } } }
   ]
 };
@@ -1473,22 +1473,22 @@ const annotations = [
     id: 17, title: '英语源新增与编辑', tag: 'CRUD', group: 'error',
     location: '新增/编辑错误引导抽屉',
     trigger: '点击新增或编辑',
-    response: '配置错误码、英语富文本、最多一个图片或视频和启用状态；保存后更新列表。',
-    rule: '媒体支持图片或视频；每语言每项最多一个。扩展名、大小、视频时长和必填性待确认。'
+    response: '配置错误码、英语富文本、可选的一个图片或视频和启用状态；保存后立即生效。',
+    rule: '图片支持 jpg/png/json 且不大于 5M；视频仅支持 mp4 且不大于 20M。每个语言最多一个文件，同一错误码在全部语言间媒体类型一致。'
   },
   {
-    id: 18, title: '错误码唯一与删除影响', tag: '校验', group: 'validate',
-    location: '英语源抽屉 / 删除确认框',
-    trigger: '保存重复错误码，或删除记录',
-    response: '重复错误码阻止保存并定位；删除前明确将同步删除全部语言译文和媒体引用。',
-    rule: '错误码默认在产品内唯一并按字符串处理；是否仅允许数字、最大长度和大小写规则待确认。'
+    id: 18, title: '错误码唯一与保存口径', tag: '校验', group: 'validate',
+    location: '英语源抽屉',
+    trigger: '保存空值、重复值、非法字符或超长错误码',
+    response: '重复或非法错误码阻止保存并定位；保存成功后立即生效。',
+    rule: '错误码必填、产品内唯一、最大 128 个字符，仅支持大小写字母、数字、下划线和短横线。页面不提供删除，仅预留研发侧删除接口。'
   },
   {
     id: 19, title: '单项与全量启停', tag: '状态', group: 'error',
     location: '错误引导列表',
     trigger: '切换行状态，或点击全部启用/全部禁用',
-    response: '单项即时更新；全量操作二次确认并展示影响数量。',
-    rule: '原型中的“全部”作用于当前筛选结果；最终是否应作用于产品全部记录待评审确认。'
+    response: '单项即时更新；全量操作二次确认并展示当前搜索与状态筛选结果的影响数量。',
+    rule: '全部启用/全部禁用仅作用于当前搜索与状态筛选结果，不隐含产品全部记录。'
   },
   {
     id: 20, title: '整体多语言配置', tag: '多语言', group: 'language',
@@ -1502,7 +1502,7 @@ const annotations = [
     location: '错误引导列表工具栏',
     trigger: '点击导入或导出',
     response: 'CSV/XLSX 用于非英语文本；JSON 用于结构、文本、多语言、媒体引用和元数据的完整包。',
-    rule: 'CSV/XLSX 不覆盖英语且不包含媒体；JSON 不包含媒体二进制。JSON 导入校验失败时整体回滚。'
+    rule: 'CSV/XLSX 不覆盖英语且不包含媒体；JSON 不包含媒体二进制。导入执行整批预检查，任一行校验失败则整批不写入。'
   },
   {
     id: 22, title: 'v1.1 项目与发布边界', tag: '范围', group: 'error',
@@ -1523,7 +1523,7 @@ const annotations = [
     location: '配网引导编辑抽屉 > 子步骤 > 媒体',
     trigger: '上传、替换或删除子步骤媒体',
     response: '可在图片和视频之间选择；已有文件时展示类型、文件名和 1 / 1 占用状态，并提供替换、删除。',
-    rule: '每个子步骤最多 1 个媒体文件且仍为可选。子步骤数量 1-3、标题必填、正文必填规则不变。项目 v1.2 已发布至既有 PRD 与原型路径。'
+    rule: '每个子步骤最多 1 个媒体文件且仍为可选。图片支持 jpg/png/json 且不大于 5M；视频仅支持 mp4 且不大于 20M。子步骤数量 1-3、标题必填、正文必填规则不变。'
   },
   {
     id: 25, title: 'v1.3：复用后台多语言智能产品页', tag: 'v1.3', group: 'backend',
@@ -1551,14 +1551,14 @@ const annotations = [
     location: '单 Key 多语言配置 > 英语（源）媒体',
     trigger: '英语已有媒体，点击“同步到所有语言”并确认',
     response: '将当前英语媒体一次性覆盖到其他全部已启用语言；确认框展示目标语言数和被覆盖的已有媒体数。',
-    rule: '同步是一次性复制，不建立自动联动。英语媒体之后变更不会自动更新其他语言；需再次手动同步。未启用语言不写入。'
+    rule: '同步是一次性复制，不建立自动联动；执行必须全量成功或全量失败，不允许部分成功。英语媒体之后变更不会自动更新其他语言，需再次手动同步；未启用语言不写入。'
   },
   {
     id: 29, title: 'v1.3：分语言独立上传', tag: 'v1.3', group: 'backend',
     location: '单 Key 多语言配置 > 非英语语言行',
     trigger: '在目标语言行上传、替换或删除媒体',
-    response: '仅更新当前语言媒体，不影响英语源或其他语言；被英语同步覆盖后仍可再次独立替换。',
-    rule: '仅媒体 Key 可上传分语言媒体；文本 Key 只维护富文本译文。图片/视频类型、大小和时长待技术方案确认。'
+    response: '仅更新当前语言媒体文件，不影响英语源或其他语言文件；被英语同步覆盖后仍可再次独立替换。',
+    rule: '仅媒体 Key 可上传分语言媒体；文本 Key 只维护富文本译文。图片支持 jpg/png/json 且不大于 5M；视频仅支持 mp4 且不大于 20M。分语言文件独立，但同一 Key 媒体类型一致。'
   },
   {
     id: 30, title: '评审修订：文本 Key 支持富文本', tag: '评审', group: 'backend',
@@ -1573,6 +1573,13 @@ const annotations = [
     trigger: '选择文本或媒体类型',
     response: '仅展示对应的英语源字段；文本 Key 不出现媒体控件，媒体 Key 不出现文本编辑器。列表和多语言配置按同一类型展示。',
     rule: '一个 Key 只能对应一种资源。导入仅创建文本 Key；媒体 Key 必须手动新增。类型创建后不可修改，避免清空已有多语言资源。'
+  },
+  {
+    id: 32, title: '1.3-R2 评审决策', tag: '评审', group: 'backend',
+    location: '错误引导与智能产品 Key 的媒体控件；导入与同步确认',
+    trigger: '上传、替换媒体，或执行批量导入/英语媒体同步',
+    response: '分语言媒体文件独立维护；同一 Key/错误码在全部语言间保持同一媒体类型。图片支持 jpg/png/json 且不大于 5M；视频仅支持 mp4 且不大于 20M。',
+    rule: '导入、英语媒体同步均不允许部分成功：预检查或执行失败时整批不写入。错误码仅允许大小写字母、数字、下划线和短横线，最大 128 个字符，产品内唯一。'
   }
 ];
 
@@ -1736,7 +1743,6 @@ function renderErrorGuideTable() {
       <td class="text-muted">${escHtml(item.updatedAt)}</td>
       <td><div class="table-actions">
         <button class="btn btn-link" onclick="openErrorDrawer(${item.id})">编辑</button>
-        <button class="btn btn-link danger-link" onclick="confirmDeleteErrorGuide(${item.id})">删除</button>
       </div></td>
     </tr>`).join('');
 }
@@ -1758,7 +1764,7 @@ function confirmBulkStatus(enabled) {
   }
   openActionModal({
     title: enabled ? '确认全部启用' : '确认全部禁用',
-    body: `<p>将对当前筛选结果中的 <strong>${rows.length}</strong> 项执行${enabled ? '启用' : '禁用'}。</p><p class="text-muted" style="margin-top:8px;">原型假设：“全部”作用于当前筛选结果，正式范围待评审确认。</p>`,
+    body: `<p>将对当前搜索与状态筛选结果中的 <strong>${rows.length}</strong> 项执行${enabled ? '启用' : '禁用'}，未命中筛选条件的项目保持原状态。</p>`,
     confirmText: enabled ? '全部启用' : '全部禁用',
     danger: !enabled,
     action: () => {
@@ -1794,12 +1800,12 @@ function renderErrorDrawer() {
   const draft = state.errorDraft;
   if (!body || !draft) return;
   body.innerHTML = `
-    <div class="annotation-rule" style="margin-bottom:18px;"><strong>英语源配置</strong><br>错误码和状态为共享结构；英语文案是默认回退内容。媒体支持图片或视频，每项最多上传 1 个。</div>
+    <div class="annotation-rule" style="margin-bottom:18px;"><strong>英语源配置</strong><br>错误码和状态为共享结构；英语文案是默认回退内容。媒体选填，每个语言最多 1 个；同一错误码在全部语言间保持同一媒体类型。</div>
     <div class="form-row">
       <div class="form-label required">错误码<span class="anchor-badge" title="批注 18：产品内唯一">18</span></div>
       <div class="form-control">
         <input class="input" id="errorCodeInput" value="${escHtml(draft.code)}" placeholder="例如 NETWORK_TIMEOUT" oninput="state.errorDraft.code=this.value">
-        <div class="form-hint">按字符串处理；允许字符、长度和大小写规则待接口确认。</div>
+        <div class="form-hint">产品内唯一；最大 128 个字符；仅支持大小写字母、数字、下划线和短横线。</div>
         <div class="error-msg" id="err_errorCode"></div>
       </div>
     </div>
@@ -1815,8 +1821,8 @@ function renderErrorDrawer() {
       <div class="form-label">英语媒体</div>
       <div class="form-control">
         ${draft.media
-          ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.media) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.media)}</div><div class="upload-file-size"><span class="media-type-badge">${getMediaType(draft.media)}</span> · 已占用 1 / 1，扩展名、大小和视频时长限制待确认</div></div><button class="btn btn-link btn-sm" onclick="mockUploadErrorMedia('${getMediaType(draft.media) === '视频' ? 'video' : 'image'}')">替换</button><button class="upload-file-remove" onclick="removeErrorMedia()">✕</button></div>`
-          : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传图片或视频</div><div class="upload-placeholder-hint">最多 1 个；扩展名、大小和视频时长限制待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('video')">上传视频</button></div></div></div>`}
+          ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.media) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.media)}</div><div class="upload-file-size"><span class="media-type-badge">${getMediaType(draft.media)}</span> · 已占用 1 / 1；仅可同类型替换</div></div><button class="btn btn-link btn-sm" onclick="mockUploadErrorMedia('${getMediaType(draft.media) === '视频' ? 'video' : 'image'}')">替换${getMediaType(draft.media)}</button><button class="upload-file-remove" onclick="removeErrorMedia()">✕</button></div>`
+          : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传图片或视频</div><div class="upload-placeholder-hint">可选，每个语言最多 1 个；图片 jpg/png/json ≤ 5M，视频 mp4 ≤ 20M</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadErrorMedia('video')">上传视频</button></div></div></div>`}
       </div>
     </div>
     <div class="form-row">
@@ -1831,10 +1837,25 @@ function renderErrorDrawer() {
 }
 
 function getMediaType(filename) {
-  return /\.(mp4|mov|webm|avi|mkv)$/i.test(filename || '') ? '视频' : '图片';
+  return /\.(mp4)$/i.test(filename || '') ? '视频' : '图片';
+}
+
+function getMediaKind(filename) {
+  return filename ? (/\.(mp4)$/i.test(filename) ? 'video' : 'image') : '';
+}
+
+function getErrorGuideMediaKind(item) {
+  if (item?.media) return getMediaKind(item.media);
+  const existing = Object.values(item?.translations || {}).find(value => value?.media);
+  return existing?.media ? getMediaKind(existing.media) : '';
 }
 
 function mockUploadErrorMedia(type = 'image') {
+  const current = getErrorGuideMediaKind(state.errorDraft);
+  if (current && current !== type) {
+    showToast('同一错误码在全部语言间必须保持同一媒体类型', 'error');
+    return;
+  }
   state.errorDraft.media = type === 'video' ? 'error-guidance-video.mp4' : 'error-guidance-image.png';
   renderErrorDrawer();
 }
@@ -1857,11 +1878,15 @@ function saveErrorGuide() {
   document.getElementById('errorCodeInput')?.classList.remove('error');
   document.getElementById('errorEnglishContent')?.classList.remove('error');
   const code = draft.code.trim();
-  const duplicate = state.errorGuides.some(item => item.code.toLowerCase() === code.toLowerCase() && item.id !== state.editingErrorId);
-  if (!code || duplicate) {
+  const duplicate = state.errorGuides.some(item => item.code === code && item.id !== state.editingErrorId);
+  const invalid = !/^[A-Za-z0-9_-]{1,128}$/.test(code);
+  if (!code || duplicate || invalid) {
     const error = document.getElementById('err_errorCode');
     if (error) {
-      error.textContent = duplicate ? '该错误码已存在，请使用唯一错误码' : '请输入错误码';
+      error.textContent = duplicate ? '该错误码已存在，请使用唯一错误码'
+        : !code ? '请输入错误码'
+        : code.length > 128 ? '错误码不可超过 128 个字符'
+        : '错误码仅支持大小写字母、数字、下划线和短横线';
       error.classList.add('show');
     }
     document.getElementById('errorCodeInput')?.classList.add('error');
@@ -1890,7 +1915,7 @@ function saveErrorGuide() {
   }
   closeErrorDrawer();
   renderErrorGuideTable();
-  showToast('错误引导已保存', 'success');
+  showToast('错误引导已保存并立即生效', 'success');
 }
 
 function closeErrorDrawer() {
@@ -1898,22 +1923,6 @@ function closeErrorDrawer() {
   document.getElementById('drawerOverlay').classList.remove('open');
   state.errorDraft = null;
   state.editingErrorId = null;
-}
-
-function confirmDeleteErrorGuide(id) {
-  const item = state.errorGuides.find(row => row.id === id);
-  if (!item) return;
-  openActionModal({
-    title: '删除错误引导',
-    body: `<p>确认删除错误码 <strong>${escHtml(item.code)}</strong>？</p><p style="margin-top:8px;color:var(--error);">该操作会同时删除全部语言译文和媒体引用，且不可撤销。</p>`,
-    confirmText: '删除',
-    danger: true,
-    action: () => {
-      state.errorGuides = state.errorGuides.filter(row => row.id !== id);
-      renderErrorGuideTable();
-      showToast('已删除错误引导', 'success');
-    }
-  });
 }
 
 // ===== 后台多语言 > 智能产品 =====
@@ -1976,15 +1985,18 @@ function renderBackendKeyDrawer() {
   const body = document.getElementById('backendKeyDrawerBody');
   const draft = state.backendKeyDraft;
   if (!body || !draft) return;
+  const mediaKind = getBackendKeyMediaKind(draft);
   body.innerHTML = `<div class="annotation-rule" style="margin-bottom:16px;"><strong>资源类型互斥</strong><br>一个 Key 只保存文本或媒体。文本 Key 使用富文本；媒体 Key 上传一个图片或视频。创建后类型不可修改。</div>
     <div class="form-row"><div class="form-label required">模块</div><div class="form-control"><select class="select" id="backendKeyModule" onchange="state.backendKeyDraft.module=this.value"><option ${draft.module === '配网' ? 'selected' : ''}>配网</option><option ${draft.module === '功能点' ? 'selected' : ''}>功能点</option><option ${draft.module === '错误引导' ? 'selected' : ''}>错误引导</option></select><div class="form-hint">本期在智能产品模块枚举中新增“配网”。</div></div></div>
-    <div class="form-row"><div class="form-label required">Key</div><div class="form-control"><input class="input" id="backendKeyInput" value="${escHtml(draft.key)}" placeholder="例如 provisioning.reset.button.hold" oninput="state.backendKeyDraft.key=this.value"><div class="form-hint">当前产品 + 模块内唯一；保存后建议保持稳定。</div><div class="error-msg" id="err_backendKey"></div></div></div>
+    <div class="form-row"><div class="form-label required">Key</div><div class="form-control"><input class="input" id="backendKeyInput" value="${escHtml(draft.key)}" placeholder="例如 provisioning.reset.button.hold" oninput="state.backendKeyDraft.key=this.value"><div class="form-hint">当前产品 + 模块内唯一；保存后建议保持稳定。大小写敏感性与最大长度由技术侧确认，确认后反馈到本提示。</div><div class="error-msg" id="err_backendKey"></div></div></div>
     <div class="form-row"><div class="form-label required">资源类型<span class="anchor-badge" title="批注 31：资源类型互斥">31</span></div><div class="form-control"><div class="sub-entry" role="group" aria-label="Key 资源类型"><button type="button" class="sub-entry-btn ${draft.type === 'text' ? 'active' : ''}" onclick="setBackendKeyType('text')" ${state.editingBackendKeyId ? 'disabled' : ''}>文本</button><button type="button" class="sub-entry-btn ${draft.type === 'media' ? 'active' : ''}" onclick="setBackendKeyType('media')" ${state.editingBackendKeyId ? 'disabled' : ''}>媒体</button></div><div class="form-hint">${state.editingBackendKeyId ? '已有 Key 的资源类型不可修改。' : '请选择一种资源，不能同时配置文本与媒体。'}</div></div></div>
     ${draft.type === 'text'
       ? `<div class="form-row"><div class="form-label required">英语文本<span class="anchor-badge" title="批注 30：文本 Key 富文本">30</span></div><div class="form-control">${renderRichTextField({ id: 'backendSourceText', value: draft.sourceText, placeholder: 'Enter source text in English', limit: 1000 })}<div class="error-msg" id="err_backendSourceText"></div></div></div>`
       : `<div class="form-row"><div class="form-label required">英语媒体<span class="anchor-badge" title="批注 28：源媒体同步">28</span></div><div class="form-control">${draft.sourceMedia
-        ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.sourceMedia) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.sourceMedia)}</div><div class="upload-file-size">当前占用 1 / 1</div></div><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('image')">替换图片</button><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('video')">替换视频</button><button class="upload-file-remove" onclick="removeBackendSourceMedia()">✕</button></div>`
-        : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传英语源媒体</div><div class="upload-placeholder-hint">图片或视频，最多 1 个；类型、大小、时长待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('video')">上传视频</button></div></div></div>`}<div class="error-msg" id="err_backendSourceMedia"></div></div></div>`}`;
+        ? `<div class="upload-area has-file"><div class="upload-file-preview">${getMediaType(draft.sourceMedia) === '视频' ? '▶' : '▣'}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(draft.sourceMedia)}</div><div class="upload-file-size">当前占用 1 / 1；仅可同类型替换</div></div><button class="btn btn-link btn-sm" onclick="mockBackendSourceMedia('${mediaKind}')">替换${mediaKind === 'video' ? '视频' : '图片'}</button><button class="upload-file-remove" onclick="removeBackendSourceMedia()">✕</button></div>`
+        : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传英语源媒体</div><div class="upload-placeholder-hint">最多 1 个；图片 jpg/png/json ≤ 5M，视频 mp4 ≤ 20M${mediaKind ? '；仅可同类型替换' : ''}</div><div class="media-upload-actions">${mediaKind
+          ? `<button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia('${mediaKind}')">上传${mediaKind === 'video' ? '视频' : '图片'}</button>`
+          : '<button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia(\'image\')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendSourceMedia(\'video\')">上传视频</button>'}</div></div></div>`}<div class="error-msg" id="err_backendSourceMedia"></div></div></div>`}`;
   if (draft.type === 'text') {
     bindRichTextEditors(body);
     bindRichTextField(body, 'backendSourceText', value => { state.backendKeyDraft.sourceText = value; });
@@ -2003,8 +2015,19 @@ function setBackendKeyType(type) {
 
 function mockBackendSourceMedia(type) {
   if (!state.backendKeyDraft || state.backendKeyDraft.type !== 'media') return;
+  const current = getBackendKeyMediaKind(state.backendKeyDraft);
+  if (current && current !== type) {
+    showToast('同一 Key 在全部语言间必须保持同一媒体类型', 'error');
+    return;
+  }
   state.backendKeyDraft.sourceMedia = type === 'video' ? 'provisioning-guide.mp4' : 'provisioning-guide.png';
   renderBackendKeyDrawer();
+}
+
+function getBackendKeyMediaKind(item) {
+  if (item?.sourceMedia) return getMediaKind(item.sourceMedia);
+  const existing = Object.values(item?.translations || {}).find(value => value?.media);
+  return existing?.media ? getMediaKind(existing.media) : '';
 }
 
 function removeBackendSourceMedia() {
@@ -2081,22 +2104,25 @@ function renderBackendLocaleDrawer() {
   const draft = state.backendLocaleDraft;
   if (!body || !draft) return;
   const isMedia = draft.type === 'media';
+  const mediaKind = getBackendKeyMediaKind(draft);
   document.getElementById('backendLocaleDrawerSubtitle').textContent = isMedia
-    ? '媒体 Key：英语媒体可一次性同步；各语言可独立替换'
+    ? '媒体 Key：英语媒体可一次性同步；各语言文件独立，类型保持一致'
     : '文本 Key：各语言分别维护受限富文本';
   if (!draft.translations) draft.translations = {};
   const languages = enabledBackendLocales();
   languages.filter(language => language.code !== 'en').forEach(language => {
     if (!draft.translations[language.code]) draft.translations[language.code] = { text: '', media: '' };
   });
-  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:14px;"><strong>复用 16 语言列管理结果</strong><br>当前展示 ${languages.length} 个已启用语言。${isMedia ? '媒体 Key 只维护图片或视频；英语同步会覆盖其他已启用语言的媒体，不形成自动联动。' : '文本 Key 只维护富文本；英语为只读源内容。'}</div>
+  body.innerHTML = `<div class="annotation-rule" style="margin-bottom:14px;"><strong>复用 16 语言列管理结果</strong><br>当前展示 ${languages.length} 个已启用语言。${isMedia ? '媒体 Key 只维护图片或视频；分语言文件独立，类型由 Key 固定。英语同步是一次性覆盖，且必须全量成功或全量失败。' : '文本 Key 只维护富文本；英语为只读源内容。'}</div>
     <div class="language-media-list">${languages.map(language => {
       const source = language.code === 'en';
       const row = source ? { text: draft.sourceText, media: draft.sourceMedia } : draft.translations[language.code];
       if (!isMedia) return `<div class="language-media-row text-key ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源文本' : '独立维护富文本译文'}</small></div><div>${source ? `<div class="source-box rich-text-preview" style="margin:0;">${normalizeRichTextValue(row.text)}</div>` : renderRichTextField({ id: `backendLocaleText_${language.code}`, value: row.text, placeholder: `请输入${language.name}译文`, limit: 1000, compact: true })}</div></div>`;
-      return `<div class="language-media-row media-key ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源媒体' : '独立维护单个媒体'}</small></div><div class="language-media-file">${row.media ? `<span class="media-type-badge">${getMediaType(row.media)}</span> ${escHtml(row.media)}` : '<span class="text-muted">未配置媒体</span>'}</div><div class="language-media-actions">${source
+      return `<div class="language-media-row media-key ${source ? 'source' : ''}"><div class="language-media-name">${escHtml(language.name)}${source ? '（源）' : ''}<small>${source ? '固定启用，只读源媒体' : '独立维护单个媒体文件'}</small></div><div class="language-media-file">${row.media ? `<span class="media-type-badge">${getMediaType(row.media)}</span> ${escHtml(row.media)}` : '<span class="text-muted">未配置媒体</span>'}</div><div class="language-media-actions">${source
         ? `<button class="btn btn-default btn-sm" onclick="confirmBackendMediaSync()" ${row.media ? '' : 'disabled'}>同步到所有语言<span class="anchor-badge" title="批注 28：一次性覆盖同步">28</span></button>`
-        : `<button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','image')">图片</button><button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','video')">视频</button>${row.media ? `<button class="btn btn-link btn-sm" onclick="removeBackendLocaleMedia('${language.code}')">删除</button>` : ''}<span class="anchor-badge" title="批注 29：分语言独立上传">29</span>`}</div></div>`;
+        : `${mediaKind
+          ? `<button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','${mediaKind}')">${mediaKind === 'video' ? '替换视频' : '替换图片'}</button>`
+          : `<button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockBackendLocaleMedia('${language.code}','video')">上传视频</button>`}${row.media ? `<button class="btn btn-link btn-sm" onclick="removeBackendLocaleMedia('${language.code}')">删除</button>` : ''}<span class="anchor-badge" title="批注 29：分语言文件独立，同 Key 类型一致">29</span>`}</div></div>`;
     }).join('')}</div>`;
   if (!isMedia) {
     bindRichTextEditors(body);
@@ -2113,9 +2139,14 @@ function updateBackendLocaleText(code, value) {
 
 function mockBackendLocaleMedia(code, type) {
   if (state.backendLocaleDraft?.type !== 'media' || !state.backendLocaleDraft.translations?.[code]) return;
+  const current = getBackendKeyMediaKind(state.backendLocaleDraft);
+  if (current && current !== type) {
+    showToast('同一 Key 在全部语言间必须保持同一媒体类型', 'error');
+    return;
+  }
   state.backendLocaleDraft.translations[code].media = type === 'video' ? `${code}-provisioning-guide.mp4` : `${code}-provisioning-guide.png`;
   renderBackendLocaleDrawer();
-  showToast('仅更新当前语言媒体', 'success');
+  showToast('仅更新当前语言媒体文件', 'success');
 }
 
 function removeBackendLocaleMedia(code) {
@@ -2131,7 +2162,7 @@ function confirmBackendMediaSync() {
   const overwritten = targets.filter(language => draft.translations?.[language.code]?.media).length;
   openActionModal({
     title: '同步英语媒体到所有语言',
-    body: `<p>将当前英语媒体同步到其他 <strong>${targets.length}</strong> 个已启用语言。</p><p style="margin-top:8px;color:var(--error);">其中 ${overwritten} 个语言已有媒体，将被覆盖。</p><p class="text-muted" style="margin-top:8px;">这是一次性复制；后续修改英语媒体不会自动联动。</p>`,
+    body: `<p>将当前英语媒体同步到其他 <strong>${targets.length}</strong> 个已启用语言。</p><p style="margin-top:8px;color:var(--error);">其中 ${overwritten} 个语言已有媒体，将被覆盖。</p><p class="text-muted" style="margin-top:8px;">这是一次性复制；后续修改英语媒体不会自动联动。执行必须全量成功或全量失败，不允许部分成功。</p>`,
     confirmText: '确认覆盖同步',
     danger: overwritten > 0,
     action: () => {
@@ -2180,7 +2211,7 @@ function closeBackendLocaleDrawer() {
 
 function openBackendImport() {
   document.getElementById('actionModalTitle').textContent = '导入新增智能产品文本 Key';
-  document.getElementById('actionModalBody').innerHTML = `<div class="scope-note"><strong>仅创建文本 Key</strong><br>文件可包含模块、Key、英语源及各语言富文本；富文本以文本单元格承载并进行白名单清洗。不接受媒体文件、媒体 URL 或媒体引用列。</div><div style="margin-top:14px;"><input class="input" style="padding-top:5px;" type="file" id="backendImportFile" accept=".csv,.xlsx"></div><div class="annotation-rule" style="margin-top:14px;">若检测到媒体类型、媒体列、重复 Key 或非法模块，整批预检查失败且不写入。</div>`;
+  document.getElementById('actionModalBody').innerHTML = `<div class="scope-note"><strong>仅创建文本 Key</strong><br>文件可包含模块、Key、英语源及各语言富文本；富文本以文本单元格承载并进行白名单清洗。不接受媒体文件、媒体 URL 或媒体引用列。</div><div style="margin-top:14px;"><input class="input" style="padding-top:5px;" type="file" id="backendImportFile" accept=".csv,.xlsx"></div><div class="annotation-rule" style="margin-top:14px;">导入执行整批预检查；若任一行存在媒体类型、媒体列、重复 Key 或非法模块，整批失败且不写入任何数据。</div>`;
   document.getElementById('actionModalFooter').innerHTML = '<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn btn-primary" onclick="executeBackendImport()">预检查并导入</button>';
   document.getElementById('actionModal').classList.add('open');
   highlightAnnotation(27);
@@ -2190,7 +2221,7 @@ function executeBackendImport() {
   const file = document.getElementById('backendImportFile');
   if (!file?.files?.length) { showToast('请先选择 CSV 或 XLSX 文件', 'error'); return; }
   closeActionModal();
-  showToast('文本文件预检查通过，已模拟新增 3 个 Key；媒体未写入', 'success');
+  showToast('文本文件整批预检查通过，已模拟新增 3 个 Key；媒体未写入', 'success');
 }
 
 // ===== 整体多语言配置 =====
@@ -2248,7 +2279,7 @@ function renderLanguageMain() {
         ? `<div class="locale-toggle-grid">${state.languageDraft.languages.map(lang => `<label class="locale-toggle-chip ${lang.enabled ? '' : 'disabled'}"><input type="checkbox" ${lang.enabled ? 'checked' : ''} ${lang.locked ? 'disabled' : ''} onchange="toggleLanguageEnabled('${lang.code}',this.checked)">${escHtml(lang.name)}${lang.code === 'en' ? '（默认）' : ''}</label>`).join('')}</div>`
         : `<div class="form-hint" style="margin-top:8px;">已启用 ${enabledLanguages.length} / ${state.languageDraft.languages.length}：${escHtml(enabledNames)}</div>`}
     </div>
-    <div class="annotation-rule" style="margin-bottom:14px;"><strong>多语言 KV 表</strong><br>英语列只读；其他启用语言按错误码维护富文本译文和单个图片/视频。表格横向滚动与语言列启停复用设备助手能力。</div>
+    <div class="annotation-rule" style="margin-bottom:14px;"><strong>多语言 KV 表</strong><br>英语列只读；其他启用语言按错误码维护富文本译文和单个媒体文件。分语言文件独立，同一错误码媒体类型一致；表格横向滚动与语言列启停复用设备助手能力。</div>
     <div class="language-kv-wrap">
       <table class="language-kv-table">
         <thead><tr><th>错误码</th>${enabledLanguages.map(lang => `<th>${escHtml(lang.name)}${lang.code === 'en' ? '<div class="form-hint">源内容 · 只读</div>' : `<div class="form-hint">${getLanguageCompletion(lang.code)} / ${state.languageDraft.guides.length} 项完成</div>`}</th>`).join('')}</tr></thead>
@@ -2292,13 +2323,17 @@ function renderTranslationEditor() {
   const draft = state.translationEditorDraft;
   const body = document.getElementById('translationEditorBody');
   if (!draft || !body) return;
+  const item = state.languageDraft?.guides.find(row => row.id === draft.itemId);
+  const mediaKind = getErrorGuideMediaKind(item);
   document.getElementById('translationEditorTitle').textContent = `编辑${draft.languageName}译文`;
-  body.innerHTML = `<div class="source-box"><strong>英语源</strong><div class="rich-text-preview" style="margin-top:8px;">${normalizeRichTextValue(draft.sourceContent)}</div><div class="form-hint">英语媒体：${draft.sourceMedia ? escHtml(draft.sourceMedia) : '未配置'}</div></div>
+  body.innerHTML = `<div class="source-box"><strong>英语源</strong><div class="rich-text-preview" style="margin-top:8px;">${normalizeRichTextValue(draft.sourceContent)}</div><div class="form-hint">英语媒体：${draft.sourceMedia ? escHtml(draft.sourceMedia) : '未配置'}；分语言文件独立，同一错误码媒体类型一致。</div></div>
     <div style="margin-top:14px;">${renderRichTextField({ id: 'translationEditorContent', value: draft.value.content, placeholder: `请输入${draft.languageName}译文`, limit: 1000, compact: true })}<div class="error-msg" id="err_translationEditorContent">请输入译文</div></div>
     <div class="media-choice" style="margin-top:14px;"><span>媒体：</span><label><input type="radio" name="translationEditorMedia" ${draft.value.mediaMode !== 'replace' ? 'checked' : ''} onchange="setTranslationEditorMediaMode('inherit')">沿用英语</label><label><input type="radio" name="translationEditorMedia" ${draft.value.mediaMode === 'replace' ? 'checked' : ''} onchange="setTranslationEditorMediaMode('replace')">上传替换</label></div>
     ${draft.value.mediaMode === 'replace' ? (draft.value.media
-      ? `<div class="translation-cell-meta"><span class="media-type-badge">${getMediaType(draft.value.media)}</span><span>${escHtml(draft.value.media)}</span><span class="text-muted">已占用 1 / 1</span><button class="btn btn-link btn-sm" onclick="mockUploadEditorMedia('${getMediaType(draft.value.media) === '视频' ? 'video' : 'image'}')">替换</button><button class="btn btn-link btn-sm danger-link" onclick="removeEditorMedia()">删除</button></div>`
-      : `<div class="media-upload-actions" style="justify-content:flex-start;"><button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia('image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia('video')">上传视频</button><span class="form-hint">最多 1 个</span></div>`) : ''}`;
+      ? `<div class="translation-cell-meta"><span class="media-type-badge">${getMediaType(draft.value.media)}</span><span>${escHtml(draft.value.media)}</span><span class="text-muted">已占用 1 / 1</span><button class="btn btn-link btn-sm" onclick="mockUploadEditorMedia('${getMediaKind(draft.value.media)}')">替换</button><button class="btn btn-link btn-sm danger-link" onclick="removeEditorMedia()">删除</button></div>`
+      : `<div class="media-upload-actions" style="justify-content:flex-start;">${mediaKind
+        ? `<button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia('${mediaKind}')">上传${mediaKind === 'video' ? '视频' : '图片'}</button>`
+        : '<button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia(\'image\')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadEditorMedia(\'video\')">上传视频</button>'}<span class="form-hint">最多 1 个；图片 jpg/png/json ≤ 5M，视频 mp4 ≤ 20M</span></div>`) : ''}`;
   bindRichTextEditors(body);
   bindRichTextField(body, 'translationEditorContent', value => { state.translationEditorDraft.value.content = value; });
 }
@@ -2315,6 +2350,11 @@ function mockUploadEditorMedia(type) {
   const draft = state.translationEditorDraft;
   const item = state.languageDraft?.guides.find(row => row.id === draft?.itemId);
   if (!draft || !item) return;
+  const current = getErrorGuideMediaKind(item);
+  if (current && current !== type) {
+    showToast('同一错误码在全部语言间必须保持同一媒体类型', 'error');
+    return;
+  }
   draft.value.mediaMode = 'replace';
   draft.value.media = type === 'video' ? `${draft.code}-${item.code}-video.mp4` : `${draft.code}-${item.code}-image.png`;
   renderTranslationEditor();
@@ -2418,10 +2458,10 @@ function openTransferModal(mode) {
     <div>选择${isImport ? '导入' : '导出'}类型：</div>
     <div class="choice-list">
       <div class="choice-item selected" onclick="selectTransferChoice('translation',this)"><div><div class="choice-title">CSV / XLSX 翻译文件</div><div class="choice-desc">仅非英语文本；英语不可覆盖；不包含媒体文件或引用。</div></div></div>
-      <div class="choice-item" onclick="selectTransferChoice('json',this)"><div><div class="choice-title">JSON 完整配置包</div><div class="choice-desc">包含结构、顺序、文本、多语言、媒体引用和元数据，不含媒体二进制。${isImport ? '导入将整体覆盖当前配置。' : ''}</div></div></div>
+      <div class="choice-item" onclick="selectTransferChoice('json',this)"><div><div class="choice-title">JSON 完整配置包</div><div class="choice-desc">包含结构、顺序、文本、多语言、媒体引用和元数据，不含媒体二进制。${isImport ? '导入前整批预检查，通过后整体覆盖当前配置；任一行失败则整批不写入。' : ''}</div></div></div>
     </div>
     ${isImport ? '<div id="transferFileWrap" style="margin-top:14px;"><label class="form-hint" for="transferFile">选择文件后执行预检查</label><input class="input" style="padding-top:5px;" type="file" id="transferFile" accept=".csv,.xlsx,.json"></div>' : ''}
-    <div class="annotation-rule" style="margin-top:14px;">JSON 版本不兼容、错误码重复或媒体引用非法时整体失败，当前配置保持不变。</div>`;
+    <div class="annotation-rule" style="margin-top:14px;">导入执行整批预检查；任一行 JSON 版本不兼容、错误码重复或媒体引用非法均导致整批失败，当前配置保持不变。</div>`;
   document.getElementById('actionModalFooter').innerHTML = `<button class="btn btn-default" onclick="closeActionModal()">取消</button><button class="btn btn-primary" onclick="executeTransfer()">${isImport ? '预检查并导入' : '生成导出文件'}</button>`;
   document.getElementById('actionModal').classList.add('open');
   highlightAnnotation(21);
@@ -2435,7 +2475,7 @@ function executeTransfer() {
       return;
     }
     closeActionModal();
-    showToast(state.transferChoice === 'json' ? '完整包预检查通过，已模拟原子导入' : '翻译文件校验通过，已模拟导入', 'success');
+    showToast(state.transferChoice === 'json' ? '完整包整批预检查通过，已模拟原子导入' : '翻译文件整批校验通过，已模拟原子导入', 'success');
   } else {
     closeActionModal();
     showToast(state.transferChoice === 'json' ? '已生成 JSON 完整配置包' : '已生成多语言翻译文件', 'success');
@@ -3234,7 +3274,7 @@ function renderStepBlock(step, i, total) {
             <div class="form-control">
               ${media.type
                 ? `<div class="upload-area has-file"><div class="upload-file-preview">${renderSubStepMediaIcon(media)}</div><div class="upload-file-info"><div class="upload-file-name">${escHtml(media.name)}</div><div class="upload-file-size"><span class="media-type-badge">${media.type === 'video' ? '视频' : '图片'}</span> · 已占用 1 / 1</div></div><button class="btn btn-link btn-sm" onclick="mockUploadSubMedia(${i},${si},'${media.type}')">替换</button><button class="upload-file-remove" onclick="clearSubMedia(${i},${si})">✕</button></div>`
-                : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传图片或视频</div><div class="upload-placeholder-hint">可选，最多 1 个；格式、大小和视频时长待确认</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockUploadSubMedia(${i},${si},'image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadSubMedia(${i},${si},'video')">上传视频</button></div></div></div>`}
+                : `<div class="upload-area"><div class="upload-placeholder"><div style="font-size:24px;margin-bottom:6px;">＋</div><div class="upload-placeholder-text">上传图片或视频</div><div class="upload-placeholder-hint">可选，最多 1 个；图片 jpg/png/json ≤ 5M，视频 mp4 ≤ 20M</div><div class="media-upload-actions"><button class="btn btn-default btn-sm" onclick="mockUploadSubMedia(${i},${si},'image')">上传图片</button><button class="btn btn-default btn-sm" onclick="mockUploadSubMedia(${i},${si},'video')">上传视频</button></div></div></div>`}
             </div>
           </div>
           <div class="form-row">
@@ -3410,6 +3450,10 @@ function clearStepImg(i) {
 
 function mockUploadSubMedia(stepIdx, subIdx, type) {
   const sub = state.draft.steps[stepIdx].subSteps[subIdx];
+  if (sub.mediaType && sub.mediaType !== type) {
+    showToast('已有子步骤媒体仅支持同类型替换', 'error');
+    return;
+  }
   sub.mediaType = type;
   sub.mediaName = type === 'video' ? `sub_video_${subIdx+1}.mp4` : `sub_image_${subIdx+1}.png`;
   delete sub.img;
