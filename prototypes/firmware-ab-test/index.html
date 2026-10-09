@@ -1045,12 +1045,12 @@
 
     const directedTrials = {
       fw5: { label: "A", apps: ["2.2.10 (Build 810)"], status: "运行中", devices: [
-        { mac: "A45E60123456", user: "seed.user@example.com", authorization: "有效", mode: "预装", current: "1.2.5", lastSeen: "2026-10-08 09:12" },
-        { mac: "A45E60123457", user: "mother.panel@example.com", authorization: "有效", mode: "OTA", current: "1.2.0", lastSeen: "2026-10-08 08:46" }
+        { mac: "A45E60123456", user: "seed.user@example.com", authorization: "有效", current: "1.2.5", lastSeen: "2026-10-08 09:12" },
+        { mac: "A45E60123457", user: "mother.panel@example.com", authorization: "有效", current: "1.2.0", lastSeen: "2026-10-08 08:46" }
       ] },
       fw6: { label: "B", apps: ["2.2.11 (Build 824)", "2.2.12 (Build 831)"], status: "运行中", devices: [
-        { mac: "A45E60123458", user: "seed.user@example.com", authorization: "有效", mode: "预装", current: "1.2.6", lastSeen: "2026-10-08 09:08" },
-        { mac: "A45E60123460", user: "former.seed@example.com", authorization: "已失效", mode: "OTA", current: "1.2.6", frozenApps: ["2.2.11 (Build 824)"], lastSeen: "2026-10-08 07:15" }
+        { mac: "A45E60123458", user: "seed.user@example.com", authorization: "有效", current: "1.2.6", lastSeen: "2026-10-08 09:08" },
+        { mac: "A45E60123460", user: "former.seed@example.com", authorization: "已失效", current: "1.2.6", frozenApps: ["2.2.11 (Build 824)"], lastSeen: "2026-10-08 07:15" }
       ] }
     };
     const directedAssetInventory = {
@@ -1112,7 +1112,7 @@
       if (device.authorization === "待绑定") return "待绑定校验";
       if (!device.current || device.current === "--") return "待首次上报";
       if (compareVersion(device.current, target.version) > 0) return "版本过高";
-      if (compareVersion(device.current, target.version) < 0) return device.mode === "预装" ? "预装版本不符" : "需升级";
+      if (compareVersion(device.current, target.version) < 0) return "需升级";
       return trial.status === "已暂停" ? "已安装·可用" : "可体验";
     }
     function activeDirectedIds() { return Object.keys(directedTrials).filter(trialOccupied); }
@@ -1278,11 +1278,11 @@
     ];
     notes.directedTarget = [
       { id: "directed-target", title: "目标固件内维护体验设备", body: "A/B 是多个测试固件各自的定向 MAC 清单，不另设体验组。APP 版本范围合并展示固件兼容基线：空输入按基线体验；填写具体版本后仅收窄命中范围，不能放宽基线。外部设备实际使用时还要校验当前产品授权。", loc: "测试中 > 定向体验设备" },
-      { id: "directed-target", title: "设备状态按台计算", body: "预装设备须确认上报版本；OTA 设备各自更新到目标后即可继续体验，不要求整批完成。App 版本选错时保留列表设备，但阻断控制和设置。", loc: "定向体验设备 > 设备列表" },
-      { id: "directed-target", title: "真实操作与演示分离", body: "设备表操作列只保留平台定义的动作：切换固件、移出。绑定授权、完成 OTA、错 App、打开设备、跨路径查询和恢复授权只出现在右侧批注栏的演示操作区，用于驱动原型状态，不是产品交互需求。", loc: "定向体验设备 > 设备列表与原型批注" }
+      { id: "directed-target", title: "设备状态按台计算", body: "设备状态由实际当前版本与目标版本推导；各台设备更新到目标后即可继续体验，不要求整批完成。App 版本选错时保留列表设备，但阻断控制和设置。", loc: "定向体验设备 > 设备列表" },
+      { id: "directed-target", title: "真实操作与演示分离", body: "设备表操作列只保留平台定义的动作：切换固件、移出。绑定授权、完成 OTA、错 App、跨路径查询和恢复授权只出现在右侧批注栏的演示操作区，用于驱动原型状态，不是产品交互需求。", loc: "定向体验设备 > 设备列表与原型批注" }
     ];
     notes.directedImport = [
-      { id: "directed-import", title: "跨目标批量导入", body: "模板列为 MAC、目标固件 ID、参与方式，不需要用户账号。逐行校验 MAC 格式、目标状态、重复、跨目标冲突和降级风险；任一行失败整批零写入。", loc: "批量配置体验设备" }
+      { id: "directed-import", title: "目标内批量导入 MAC", body: "先进入具体固件或虚拟版本的定向设备抽屉，再上传只有 MAC 一列的清单。系统逐行校验 MAC 格式、重复、跨目标冲突、硬件路径和降级风险；任一行失败整批零写入。", loc: "定向体验设备 > 批量导入 MAC" }
     ];
     notes.directedMove = [
       { id: "directed-move", title: "原子切换目标", body: "确认后同一 MAC 一次移出旧目标并加入新目标；版本不符时仅该设备等待 OTA，高于目标时禁止降级。", loc: "切换目标固件" }
@@ -1934,7 +1934,7 @@
       return `<div class="subsection" id="firmware-state" data-note-anchor="firmware-state">
         <div class="subsection-head">
           <div><h3><span class="anchor" data-note-anchor="firmware-state">1</span>固件版本</h3></div>
-          <div class="trial-toolbar" data-note-anchor="directed-batch"><button class="btn" id="openDirectedImport">批量配置体验设备</button><button class="btn" data-directed-bulk="pause">批量暂停</button><button class="btn" data-directed-bulk="resume">批量继续</button><button class="btn primary" data-open-drawer="firmwareVersionAdd">新建固件版本</button></div>
+          <div class="trial-toolbar"><button class="btn" data-directed-bulk="pause">批量暂停</button><button class="btn" data-directed-bulk="resume">批量继续</button><button class="btn primary" data-open-drawer="firmwareVersionAdd">新建固件版本</button></div>
         </div>
         <div class="firmware-state-flow">
           <div class="firmware-state"><strong>开发中</strong><span>${counts["开发中"] || 0} 条</span></div>
@@ -2598,7 +2598,7 @@
         extension: "产品详情 > 扩展程序批注",
         firmware: "产品详情 > 固件配置批注",
         directedTarget: "定向体验设备批注",
-        directedImport: "批量配置体验设备批注",
+        directedImport: "批量导入 MAC 批注",
         directedMove: "切换目标固件批注",
         regionalTrial: "编辑上架范围 > 待上架区域内测批注",
         whitelist: "App > 白名单管理批注",
@@ -4271,7 +4271,7 @@
     }
     function virtualVersionHtml() {
       const rows = virtualVersions.map(vv => `<tr><td>${vv.status === "测试中" && trialOccupied(vv.id) ? `<input type="checkbox" data-directed-select="${vv.id}" aria-label="选择虚拟版本 ${vv.version}" ${state.directedSelected.has(vv.id) ? "checked" : ""}>` : ""}${vv.version}</td><td>${vv.appRule} ${vv.appVersion}<span class="sub">独立于组件 APP 条件</span></td><td>${targetSummary(vv)}${vv.legacyTargeting && vv.targetValues?.length ? `<span class="sub">${vv.targetValues.join("、")}</span>` : ""}</td><td>${virtualMembers(vv).length} 个 MCU<br><span class="sub">${virtualMembers(vv).map(x => `通道${x.channel}/${x.hardware}/${x.version}`).join("；") || "无"}</span></td><td><span class="tag ${vvStatusClass(vv.status)}">${vv.status}</span><span class="sub">${vv.status === "测试中" ? trialStage(vv) : ""}</span></td><td>${vv.referenceReview ? "<span class='tag orange'>引用待核对</span>" : vv.frozen ? "<span class='tag blue'>已冻结</span>" : "可调整（进入测试前）"}</td><td>${vv.createdAt}</td><td class="table-actions">${virtualActionsHtml(vv)}</td></tr>`).join("");
-      return `<div class="subsection" id="virtual-version" data-note-anchor="virtual-version"><div class="subsection-head"><div><h3><span class="anchor">3</span>虚拟版本</h3><p class="sub">虚拟版本与单 MCU 固件独立流转；测试中定向设备的归属使用同一 MAC 规则。</p></div><button class="btn primary" data-virtual-action="new">新建虚拟版本</button></div>${state.firmwareMessage ? `<div class="notice success firmware-message">${state.firmwareMessage}</div>` : ""}<div class="notice">进入测试时冻结组件、包、版本与 APP 条件。运行中或已暂停定向随开放白名单、发布或停止自动关闭；不联动组件单 MCU 状态。</div><div class="trial-toolbar"><button class="btn" id="openDirectedImport">批量配置体验设备</button><button class="btn" data-directed-bulk="pause">批量暂停</button><button class="btn" data-directed-bulk="resume">批量继续</button></div><table><thead><tr><th>虚拟版本号</th><th>虚拟版本级 APP 条件</th><th>定向设备 / 存量对象</th><th>关联 MCU</th><th>状态</th><th>冻结状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      return `<div class="subsection" id="virtual-version" data-note-anchor="virtual-version"><div class="subsection-head"><div><h3><span class="anchor">3</span>虚拟版本</h3><p class="sub">虚拟版本与单 MCU 固件独立流转；测试中定向设备的归属使用同一 MAC 规则。</p></div><button class="btn primary" data-virtual-action="new">新建虚拟版本</button></div>${state.firmwareMessage ? `<div class="notice success firmware-message">${state.firmwareMessage}</div>` : ""}<div class="notice">进入测试时冻结组件、包、版本与 APP 条件。运行中或已暂停定向随开放白名单、发布或停止自动关闭；不联动组件单 MCU 状态。</div><div class="trial-toolbar"><button class="btn" data-directed-bulk="pause">批量暂停</button><button class="btn" data-directed-bulk="resume">批量继续</button></div><table><thead><tr><th>虚拟版本号</th><th>虚拟版本级 APP 条件</th><th>定向设备 / 存量对象</th><th>关联 MCU</th><th>状态</th><th>冻结状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
     function wireVirtualFirmware() {
       $$('[data-firmware-tab]').forEach(btn => btn.addEventListener('click', () => { state.firmwareTab = btn.dataset.firmwareTab; renderFirmware(); }));
@@ -4379,22 +4379,6 @@
       recordDirected(`${device.mac} 恢复产品授权`, [targetId]);
       refreshDirectedDemo(targetId);
     }
-    function showDirectedDeviceDemo(targetId, mac) {
-      const target = targetById(targetId);
-      const trial = trialFor(targetId);
-      const device = trial?.devices.find(row => row.mac === mac);
-      if (!target || !device) return;
-      const status = trialDeviceState(device, target, trial);
-      const app = device.usingApp || directedFallbackApp(target, trial);
-      const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial);
-      showToast(status === "可体验" || status === "已安装·可用"
-        ? appAllowed ? "设备控制页可用。" : "设备与当前 APP 不匹配，已阻断控制和设置。"
-        : status === "需升级"
-        ? "设备尚未完成体验固件更新，已阻断控制和设置。"
-        : status === "资格失效·保持当前版本"
-        ? appAllowed ? "授权已失效：原设备控制与设置仍可用，保持当前固件且不再下发更新。" : "设备与资格失效时允许的 APP 不匹配，已阻断控制和设置。"
-        : `设备不可操作：${status}。`);
-    }
     function showDirectedCrossPathDemo(targetId, mac) {
       const target = targetById(targetId);
       const trial = trialFor(targetId);
@@ -4430,7 +4414,6 @@
       if (device.authorization === "待绑定") actions.push(`<button class="btn" type="button" data-demo-action="bind">模拟绑定并授权</button>`);
       if (actionable) actions.push(`<button class="btn" type="button" data-demo-action="upgrade">模拟完成 OTA</button>`);
       actions.push(`<button class="btn" type="button" data-demo-action="app">${appAllowed ? "模拟错 App" : "恢复正确 App"}</button>`);
-      actions.push(`<button class="btn" type="button" data-demo-action="open">演示打开设备</button>`);
       actions.push(`<button class="btn" type="button" data-demo-action="query">演示跨路径查询</button>`);
       if (device.authorization === "已失效") actions.push(`<button class="btn" type="button" data-demo-action="restore">模拟恢复授权</button>`);
       $("#directedDemoDevice").innerHTML = devices.map(row => `<option value="${row.mac}">${row.mac}</option>`).join("");
@@ -4448,7 +4431,6 @@
         else if (action === "upgrade") runDirectedUpgradeDemo(targetId, mac);
         else if (action === "app") runDirectedAppDemo(targetId, mac);
         else if (action === "restore") runDirectedRestoreAuthDemo(targetId, mac);
-        else if (action === "open") showDirectedDeviceDemo(targetId, mac);
         else if (action === "query") showDirectedCrossPathDemo(targetId, mac);
       });
     }
@@ -4459,7 +4441,7 @@
         const status = trialDeviceState(device, target, trial);
         const app = device.usingApp || directedFallbackApp(target, trial);
         const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial);
-        return `<tr><td><strong>${device.mac}</strong><span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "--"}</td><td>${target.version}</td><td>${device.mode}</td><td>${escapeHtml(app)}<span class="sub">${appAllowed ? "匹配" : "不匹配 · 阻断"}</span></td><td><span class="tag ${status === "可体验" || status === "已安装·可用" ? "green" : status === "版本过高" ? "red" : "orange"}">${status}</span></td><td class="table-actions">${device.authorization === "已失效" ? "" : `<button class="btn" data-directed-move="${device.mac}">切换固件</button>`}<button class="btn danger" data-directed-remove="${device.mac}">移出</button></td></tr>`;
+        return `<tr><td><strong>${device.mac}</strong><span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "--"}</td><td>${target.version}</td><td>${escapeHtml(app)}<span class="sub">${appAllowed ? "匹配" : "不匹配 · 阻断"}</span></td><td><span class="tag ${status === "可体验" || status === "已安装·可用" ? "green" : status === "版本过高" ? "red" : "orange"}">${status}</span></td><td class="table-actions">${device.authorization === "已失效" ? "" : `<button class="btn" data-directed-move="${device.mac}">切换固件</button>`}<button class="btn danger" data-directed-remove="${device.mac}">移出</button></td></tr>`;
       }).join("");
       return `<div id="drawer-directed-target" data-note-anchor="directed-target">
         <div class="notice">${escapeHtml(trialLabel(target))} · ${trialStage(target)}。App 命中必须满足固件兼容基线；定向允许清单填写时额外收窄，留空则仅按基线判断。外部用户还须已获当前产品授权。开放白名单、发布或停止时自动关闭定向。</div>
@@ -4468,8 +4450,8 @@
           <div class="field"><label>体验标识</label><input id="directedLabel" value="${escapeAttr(trial?.label || target.version)}"><span class="hint">仅用于识别 A/B 方案，不参与命中。</span></div>
           <div class="field"><label>APP 版本范围（兼容基线 + 定向收窄）</label><input id="directedApps" value="${escapeAttr((trial?.apps || []).join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">不填时按固件兼容基线 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)} 体验。如需收窄，请填写具体 APP 版本，多个版本用半角逗号分隔；每个版本必须符合该兼容范围。</span></div>
         </div>
-        <div class="subsection-head" style="margin-top:18px"><div><h3>定向设备（${devices.length}）</h3><p>预装与 OTA 逐台记录；暂停保留 MAC 占用，不回落普通版本。</p></div><div class="trial-inline-actions"><button class="btn" id="directedImportFromDetail">导入设备</button>${trialOccupied(target.id) ? `<button class="btn" id="directedPause">${trial.status === "已暂停" ? "继续" : "暂停"}</button>` : ""}</div></div>
-        <div class="trial-device-table"><table><thead><tr><th>设备 MAC / 用户</th><th>当前版本</th><th>目标版本</th><th>参与方式</th><th>当前 App</th><th>设备状态</th><th>操作</th></tr></thead><tbody>${rows || `<tr><td colspan="7">暂无定向设备。请导入 MAC；发货前无需绑定用户。</td></tr>`}</tbody></table></div>
+        <div class="subsection-head" style="margin-top:18px"><div><h3>定向设备（${devices.length}）</h3><p>设备状态按实际当前版本与目标版本推导；暂停保留 MAC 占用，不回落普通版本。</p></div><div class="trial-inline-actions"><button class="btn" id="directedImportFromDetail">批量导入 MAC</button>${trialOccupied(target.id) ? `<button class="btn" id="directedPause">${trial.status === "已暂停" ? "继续" : "暂停"}</button>` : ""}</div></div>
+        <div class="trial-device-table"><table><thead><tr><th>设备 MAC / 用户</th><th>当前版本</th><th>目标版本</th><th>当前 App</th><th>设备状态</th><th>操作</th></tr></thead><tbody>${rows || `<tr><td colspan="6">暂无定向设备。请导入 MAC；发货前无需绑定用户。</td></tr>`}</tbody></table></div>
         ${directedAuditHtml(target.id)}
       </div>`;
     }
@@ -4515,26 +4497,28 @@
     function parseDirectedRows(value) {
       const lines = String(value || "").trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean);
       return lines.flatMap((line, index) => {
-        if (index === 0 && /^(设备\s*)?MAC\s*,/i.test(line)) return [];
+        if (index === 0 && /^(设备\s*)?MAC$/i.test(line)) return [];
         const cells = line.split(",").map(cell => cell.trim());
-        return [{ line: index + 1, mac: normalizeTrialMac(cells[0]), targetId: cells[1] || "", mode: cells[2] || "", columns: cells.length }];
+        return [{ line: index + 1, mac: normalizeTrialMac(cells[0]), columns: cells.length }];
       });
     }
-    function validateDirectedRows(rows) {
+    function validateDirectedRows(rows, target) {
       const seen = new Set();
+      const targetReady = target
+        && target.status === "测试中"
+        && !target.whitelistOpenedAt
+        && !scheduledReleasePending(target)
+        && !target.referenceReview
+        && trialFor(target.id)?.status !== "已暂停";
       return rows.map(row => {
         const errors = [];
         const asset = directedAssetInventory[row.mac];
-        const target = targetById(row.targetId);
-        if (row.columns !== 3) errors.push("应为 3 列：MAC、目标固件 ID、参与方式");
+        if (row.columns !== 1) errors.push("只能包含 1 列：MAC");
         if (!/^[0-9A-F]{12}$/.test(row.mac)) errors.push("MAC 格式错误");
         else if (!asset) errors.push("设备资产不存在或不属于当前产品");
         if (seen.has(row.mac)) errors.push("文件内 MAC 重复");
         seen.add(row.mac);
-        if (!target) errors.push("目标固件不存在");
-        else if (target.status !== "测试中" || target.whitelistOpenedAt || scheduledReleasePending(target) || target.referenceReview) errors.push("目标须为已核实引用、未开放白名单且无待生效发布的测试中版本");
-        if (!["预装", "OTA"].includes(row.mode)) errors.push("参与方式只能是预装或 OTA");
-        if (target && trialFor(target.id)?.status === "已暂停") errors.push("目标体验已暂停，不能新增设备");
+        if (!targetReady) errors.push("当前版本须为已核实引用、未开放白名单、无待生效发布且未暂停定向的测试中版本");
         if (asset && target) {
           if (!assetFitsTarget(asset, target)) errors.push("硬件版本或通道不匹配");
           const current = assetVersionForTarget(asset, target);
@@ -4545,36 +4529,41 @@
         }
         const occupied = activeDirectedIds().find(id => trialFor(id).devices.some(device => device.mac === row.mac));
         if (occupied) errors.push(`已定向到 ${occupied}；请使用切换固件`);
-        return { ...row, asset, target, errors };
+        return { ...row, asset, current: asset ? assetVersionForTarget(asset, target) : "", errors };
       });
     }
     function directedImportPreviewHtml(rows) {
       if (!rows.length) return `<div class="notice">粘贴或上传 CSV 后点击“校验”。</div>`;
       const errors = rows.filter(row => row.errors.length).length;
-      return `<div class="notice ${errors ? "warning" : "success"}">共 ${rows.length} 行，通过 ${rows.length - errors} 行，错误 ${errors} 行。${errors ? "整批 0 行写入。" : "全部通过，可整批提交。"}</div><div class="trial-device-table"><table><thead><tr><th>行</th><th>MAC</th><th>目标</th><th>方式</th><th>校验结果</th></tr></thead><tbody>${rows.map(row => `<tr><td>${row.line}</td><td>${escapeHtml(row.mac)}</td><td>${escapeHtml(row.targetId)}</td><td>${escapeHtml(row.mode)}</td><td>${row.errors.length ? `<span class="tag red">失败</span>${escapeHtml(row.errors.join("；"))}` : `<span class="tag green">通过</span>`}</td></tr>`).join("")}</tbody></table></div>`;
+      return `<div class="notice ${errors ? "warning" : "success"}">共 ${rows.length} 行，通过 ${rows.length - errors} 行，错误 ${errors} 行。${errors ? "整批 0 行写入。" : "全部通过，可整批提交。"}</div><div class="trial-device-table"><table><thead><tr><th>行</th><th>MAC</th><th>当前版本</th><th>校验结果</th></tr></thead><tbody>${rows.map(row => `<tr><td>${row.line}</td><td>${escapeHtml(row.mac)}</td><td>${escapeHtml(row.current || "--")}</td><td>${row.errors.length ? `<span class="tag red">失败</span>${escapeHtml(row.errors.join("；"))}` : `<span class="tag green">通过</span>`}</td></tr>`).join("")}</tbody></table></div>`;
     }
-    function openDirectedImport(prefillId = "") {
+    function openDirectedImport(targetId) {
       state.directedImportRows = [];
       state.directedImportValid = false;
-      const options = allFirmwareTargets().filter(target => target.status === "测试中" && !target.whitelistOpenedAt && !scheduledReleasePending(target) && !target.referenceReview).map(target => `${target.id}：${trialLabel(target)}`).join("；");
-      const initial = prefillId ? `MAC,目标固件ID,参与方式\nA45E60123501,${prefillId},OTA` : "MAC,目标固件ID,参与方式\n";
-      showDirectedShell("directedImport", "批量配置体验设备", "可在一份表中同时指定 A/B 多个固件；发货前只需 MAC，无需用户账号。", `<div id="drawer-directed-import" data-note-anchor="directed-import"><div class="notice">可选目标：${escapeHtml(options)}。同一 MAC 全查询路径最多一个生效体验目标；使用时仍校验产品授权。</div><div class="field"><label>上传 CSV</label><input type="file" id="directedCsvFile" accept=".csv,.txt,text/csv"></div><div class="field"><label>导入内容</label><textarea class="trial-import-input" id="directedCsvText" spellcheck="false">${initial}</textarea><span class="hint">列：MAC,目标固件ID,参与方式（预装或 OTA）。一行一台设备。</span></div><div class="trial-toolbar" style="margin-top:10px"><button class="btn" id="directedValidSample">通过样例</button><button class="btn" id="directedBadSample">错误样例</button><button class="btn" id="directedDownloadTemplate">下载模板</button><button class="btn primary" id="directedValidate">校验全部</button></div><div id="directedImportPreview" data-note-anchor="directed-import-preview">${directedImportPreviewHtml([])}</div></div>`, "确认导入");
+      const target = targetById(targetId);
+      if (!target || target.status !== "测试中") { showToast("请在测试中固件的定向设备抽屉内导入 MAC。"); return; }
+      if (target.whitelistOpenedAt) { showToast("该版本已开放给全部授权白名单，不能再导入定向 MAC。"); return; }
+      if (target.referenceReview) { showToast("虚拟组件包引用待核对，不能导入定向 MAC。"); return; }
+      if (scheduledReleasePending(target)) { showToast("定时发布待生效；请先取消定时发布再导入定向 MAC。"); return; }
+      if (trialFor(target.id)?.status === "已暂停") { showToast("该版本定向已暂停，不能导入新增设备。"); return; }
+      const initial = "MAC\nA45E60123503\nA45E60123504";
+      showDirectedShell("directedImport", "批量导入 MAC", `目标固定为当前版本抽屉中的 ${trialLabel(target)}。上传清单仅包含 MAC，无需用户账号。`, `<div id="drawer-directed-import" data-note-anchor="directed-import"><div class="notice">固定目标：${escapeHtml(trialLabel(target))}。同一 MAC 全查询路径最多一个生效体验目标；使用时仍校验产品授权。</div><div class="field"><label>上传 CSV</label><input type="file" id="directedCsvFile" accept=".csv,.txt,text/csv"></div><div class="field"><label>导入内容</label><textarea class="trial-import-input" id="directedCsvText" spellcheck="false">${initial}</textarea><span class="hint">一行一个 MAC，可保留表头 MAC；不要填写目标固件 ID、参与方式或用户账号。</span></div><div class="trial-toolbar" style="margin-top:10px"><button class="btn" id="directedValidSample">通过样例</button><button class="btn" id="directedBadSample">错误样例</button><button class="btn" id="directedDownloadTemplate">下载模板</button><button class="btn primary" id="directedValidate">校验全部</button></div><div id="directedImportPreview" data-note-anchor="directed-import-preview">${directedImportPreviewHtml([])}</div></div>`, "确认导入");
       $("#drawerSave").disabled = true;
       const invalidate = () => { state.directedImportValid = false; $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml([]); };
       $("#directedCsvText").oninput = invalidate;
       $("#directedCsvFile").onchange = async event => { const file = event.target.files?.[0]; if (file) { $("#directedCsvText").value = await file.text(); invalidate(); } };
-      $("#directedValidSample").onclick = () => { $("#directedCsvText").value = "MAC,目标固件ID,参与方式\nA45E60123501,fw5,OTA\nA45E60123502,fw6,预装"; invalidate(); };
-      $("#directedBadSample").onclick = () => { $("#directedCsvText").value = "MAC,目标固件ID,参与方式\nA45E60123456,fw6,OTA\nA45E60123459,fw5,OTA\nBAD-MAC,fw5,预装"; invalidate(); };
-      $("#directedDownloadTemplate").onclick = () => { const blob = new Blob(["MAC,目标固件ID,参与方式\nA45E60123501,fw5,OTA\n"], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "firmware-directed-mac-template.csv"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
-      $("#directedValidate").onclick = () => { const rows = validateDirectedRows(parseDirectedRows($("#directedCsvText").value)); state.directedImportRows = rows; state.directedImportValid = rows.length > 0 && rows.every(row => !row.errors.length); $("#drawerSave").disabled = !state.directedImportValid; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); };
+      $("#directedValidSample").onclick = () => { $("#directedCsvText").value = "MAC\nA45E60123503\nA45E60123504"; invalidate(); };
+      $("#directedBadSample").onclick = () => { $("#directedCsvText").value = "MAC\nA45E60123456\nA45E60123459\nBAD-MAC"; invalidate(); };
+      $("#directedDownloadTemplate").onclick = () => { const blob = new Blob(["MAC\nA45E60123503\n"], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "firmware-directed-mac-template.csv"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+      $("#directedValidate").onclick = () => { const rows = validateDirectedRows(parseDirectedRows($("#directedCsvText").value), target); state.directedImportRows = rows; state.directedImportValid = rows.length > 0 && rows.every(row => !row.errors.length); $("#drawerSave").disabled = !state.directedImportValid; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); };
       $("#drawerSave").onclick = () => {
         if (!state.directedImportValid) { showToast("请先完成全量校验。"); return; }
-        const rows = validateDirectedRows(state.directedImportRows);
+        const rows = validateDirectedRows(state.directedImportRows, target);
         if (rows.some(row => row.errors.length)) { state.directedImportValid = false; $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); showToast("设备状态已变化，请重新校验；整批未写入。"); return; }
-        rows.forEach(row => { const trial = ensureDirectedTrial(row.target); trial.devices.push({ mac: row.mac, user: "未绑定（寄出前）", authorization: "待绑定", mode: row.mode, current: assetVersionForTarget(row.asset, row.target), lastSeen: "--" }); });
-        const ids = [...new Set(rows.map(row => row.targetId))];
-        recordDirected(`跨固件导入 ${rows.length} 台设备：${ids.join("、")}`, ids);
-        state.firmwareMessage = `已整批导入 ${rows.length} 台设备，分别定向到 ${ids.join("、")}；设备绑定后再校验用户产品授权。`;
+        const trial = ensureDirectedTrial(target);
+        rows.forEach(row => trial.devices.push({ mac: row.mac, user: "未绑定（寄出前）", authorization: "待绑定", current: row.current, lastSeen: "--" }));
+        recordDirected(`${trialLabel(target)} 导入 ${rows.length} 台设备`, [target.id]);
+        state.firmwareMessage = `已导入 ${rows.length} 台设备到 ${trialLabel(target)}；设备绑定后再校验用户产品授权。`;
         closeDrawer(); render();
       };
     }
@@ -4598,7 +4587,7 @@
         if (!ok) return;
         directedTrials[sourceId].devices = directedTrials[sourceId].devices.filter(row => row.mac !== mac);
         if (!directedTrials[sourceId].devices.length) delete directedTrials[sourceId];
-        const next = ensureDirectedTrial(target); next.devices.push({ ...device, current, mode: "OTA", usingApp: directedFallbackApp(target, next) });
+        const next = ensureDirectedTrial(target); next.devices.push({ ...device, current, usingApp: directedFallbackApp(target, next) });
         recordDirected(`${mac} 从 ${source.version} 切换到 ${target.version}`, [sourceId, target.id]);
         state.firmwareMessage = `${mac} 已切换到目标 ${target.version}，该设备单独等待 OTA；其他设备不受影响。`;
         closeDrawer(); render();
@@ -4619,7 +4608,6 @@
       render(); return true;
     }
     function wireDirectedToolbar() {
-      $("#openDirectedImport")?.addEventListener("click", () => openDirectedImport());
       $$('[data-directed-select]').forEach(input => input.addEventListener("change", () => { input.checked ? state.directedSelected.add(input.dataset.directedSelect) : state.directedSelected.delete(input.dataset.directedSelect); }));
       $$('[data-directed-bulk]').forEach(btn => btn.addEventListener("click", () => { const ids = [...state.directedSelected]; if (!ids.length) { showToast("请先勾选需要操作的测试固件。"); return; } changeDirectedStatus(ids, { pause: "已暂停", resume: "运行中" }[btn.dataset.directedBulk]); }));
     }
