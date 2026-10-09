@@ -1,0 +1,26 @@
+{
+  "id": "firmware-ab-test",
+  "path": "/prototypes/firmware-ab-test/",
+  "title": "固件 A/B Test 原型",
+  "summary": "测试中固件投放范围、MAC 定向体验、白名单开放、正式发布与虚拟版本独立流转原型。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "firmware-ab-test",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "固件",
+    "A/B Test",
+    "MAC 定向",
+    "虚拟版本"
+  ],
+  "updatedAt": "2026-10-09T03:44:17.458Z",
+  "lastPublisher": "待确认",
+  "preview": {
+    "mode": "auto"
+  }
+}
