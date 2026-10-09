@@ -33,7 +33,7 @@
     body { overflow-x: hidden; }
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
-    .app { width: calc(100vw - var(--annotation)); height: 100vh; display: grid; grid-template-columns: var(--side) minmax(960px, 1fr); overflow: auto; position: relative; z-index: 1; }
+    .app { width: calc(100vw - var(--annotation)); height: 100vh; display: grid; grid-template-columns: var(--side) minmax(0, 1fr); overflow: hidden auto; position: relative; z-index: 1; }
     .side { background: var(--side-bg); color: rgba(255, 255, 255, .72); min-height: 100vh; position: sticky; top: 0; }
     .logo { height: 56px; display: flex; align-items: center; gap: 6px; padding: 0 14px; color: #fff; font-weight: 700; }
     .logo small { color: rgba(255, 255, 255, .66); font-weight: 500; }
@@ -843,6 +843,7 @@
       directedDemoMac: "",
       directedImportRows: [],
       directedImportValid: false,
+      directedImportMigrations: new Set(),
       directedMoveMac: null,
       gateStatus: "未配置",
       gateMessage: "",
@@ -1282,7 +1283,7 @@
       { id: "directed-target", title: "真实操作与演示分离", body: "设备表操作列只保留平台定义的动作：切换固件、移出。绑定授权、完成 OTA、错 App、跨路径查询和恢复授权只出现在右侧批注栏的演示操作区，用于驱动原型状态，不是产品交互需求。", loc: "定向体验设备 > 设备列表与原型批注" }
     ];
     notes.directedImport = [
-      { id: "directed-import", title: "目标内批量导入 MAC", body: "先进入具体固件或虚拟版本的定向设备抽屉，再上传只有 MAC 一列的清单。系统逐行校验 MAC 格式、重复、跨目标冲突、硬件路径和降级风险；任一行失败整批零写入。", loc: "定向体验设备 > 批量导入 MAC" }
+      { id: "directed-import", title: "目标内批量导入 MAC", body: "先进入具体固件或虚拟版本的定向设备抽屉，再上传只有 MAC 一列的清单。系统逐行校验 MAC 格式、重复、硬件路径和降级风险。已定向到其他可迁移目标的 MAC 默认不迁移，勾选后随本批原子切换；未勾选或其他错误仍整批零写入。", loc: "定向体验设备 > 批量导入 MAC" }
     ];
     notes.directedMove = [
       { id: "directed-move", title: "原子切换目标", body: "确认后同一 MAC 一次移出旧目标并加入新目标；版本不符时仅该设备等待 OTA，高于目标时禁止降级。", loc: "切换目标固件" }
@@ -4478,7 +4479,7 @@
       if (scheduledReleasePending(target)) { showToast("定时发布待生效；请先取消定时发布再维护定向设备。"); return; }
       state.directedTargetId = targetId;
       showDirectedShell("directedTarget", "定向体验设备", "固件应用对象在测试中精确指向 MAC；App 命中先校验兼容基线，定向允许清单选填且只能收窄。实际使用时校验授权。", directedDrawerHtml(target), "保存配置");
-      $("#drawerSave").onclick = () => {
+      $("#drawerSave").onclick = async () => {
         const apps = $("#directedApps").value.split(",").map(x => x.trim()).filter(Boolean);
         if (apps.some(app => !experienceAppMatchesFirmware(app, target))) { showToast("定向允许 APP 清单中的版本必须全部符合固件兼容版本范围。"); return; }
         const trial = ensureDirectedTrial(target);
@@ -4528,18 +4529,53 @@
           if (trial?.apps?.some(app => !experienceAppMatchesFirmware(app, target))) errors.push("目标的定向允许 APP 版本必须全部符合固件兼容版本范围");
         }
         const occupied = activeDirectedIds().find(id => trialFor(id).devices.some(device => device.mac === row.mac));
-        if (occupied) errors.push(`已定向到 ${occupied}；请使用切换固件`);
-        return { ...row, asset, current: asset ? assetVersionForTarget(asset, target) : "", errors };
+        let migratable = false;
+        let occupiedId = occupied || "";
+        if (occupied === target.id) {
+          errors.push("已在当前目标定向，无需重复导入");
+        } else if (occupied) {
+          const oldTrial = trialFor(occupied);
+          const oldDevice = oldTrial.devices.find(device => device.mac === row.mac);
+          if (scheduledReleasePending(targetById(occupied))) {
+            errors.push(`原目标 ${occupied} 待定时发布；请先取消定时发布再迁移`);
+          } else if (oldDevice.authorization === "已失效") {
+            errors.push("设备产品授权已失效；资格失效设备不跟随目标迁移");
+          } else if (!errors.length) {
+            migratable = true;
+          }
+        }
+        const migrationSelected = migratable && state.directedImportMigrations.has(row.mac);
+        return { ...row, asset, current: asset ? assetVersionForTarget(asset, target) : "", errors, migratable, migrationSelected, occupiedId };
       });
     }
     function directedImportPreviewHtml(rows) {
       if (!rows.length) return `<div class="notice">粘贴或上传 CSV 后点击“校验”。</div>`;
-      const errors = rows.filter(row => row.errors.length).length;
-      return `<div class="notice ${errors ? "warning" : "success"}">共 ${rows.length} 行，通过 ${rows.length - errors} 行，错误 ${errors} 行。${errors ? "整批 0 行写入。" : "全部通过，可整批提交。"}</div><div class="trial-device-table"><table><thead><tr><th>行</th><th>MAC</th><th>当前版本</th><th>校验结果</th></tr></thead><tbody>${rows.map(row => `<tr><td>${row.line}</td><td>${escapeHtml(row.mac)}</td><td>${escapeHtml(row.current || "--")}</td><td>${row.errors.length ? `<span class="tag red">失败</span>${escapeHtml(row.errors.join("；"))}` : `<span class="tag green">通过</span>`}</td></tr>`).join("")}</tbody></table></div>`;
+      const fatalRows = rows.filter(row => row.errors.length).length;
+      const pendingRows = rows.filter(row => row.migratable && !row.migrationSelected).length;
+      const selectedRows = rows.filter(row => row.migrationSelected).length;
+      const migratableRows = rows.filter(row => row.migratable).length;
+      const blocked = fatalRows || pendingRows;
+      const summary = blocked
+        ? `共 ${rows.length} 行，可直接通过 ${rows.length - fatalRows - migratableRows} 行，可迁移冲突 ${migratableRows} 行（已选 ${selectedRows}），失败 ${fatalRows} 行，待确认 ${pendingRows} 行；整批 0 行写入。`
+        : `共 ${rows.length} 行，新增 ${rows.length - selectedRows} 行，迁移 ${selectedRows} 行；全部通过，可整批提交。`;
+      const candidates = rows.filter(row => row.migratable);
+      const batchActions = candidates.length ? `<div class="trial-toolbar"><button class="btn" data-directed-migration-all="1">全选可迁移冲突</button><button class="btn" data-directed-migration-clear="1">清空迁移选择</button></div>` : "";
+      return `<div class="notice ${blocked ? "warning" : "success"}">${summary}</div>${batchActions}<div class="trial-device-table"><table><thead><tr><th>行</th><th>MAC</th><th>当前版本</th><th>迁移</th><th>校验结果</th></tr></thead><tbody>${rows.map(row => {
+        const result = row.errors.length
+          ? `<span class="tag red">失败</span>${escapeHtml(row.errors.join("；"))}`
+          : row.migrationSelected
+            ? `<span class="tag orange">待迁移</span>已选择从 ${escapeHtml(row.occupiedId)} 原子迁移到当前目标`
+            : row.migratable
+              ? `<span class="tag orange">待确认</span>已定向到 ${escapeHtml(row.occupiedId)}；勾选后随本批迁移`
+              : `<span class="tag green">通过</span>`;
+        const checkbox = row.migratable ? `<input type="checkbox" data-directed-migration="${escapeHtml(row.mac)}" ${row.migrationSelected ? "checked" : ""} aria-label="迁移 ${escapeHtml(row.mac)}">` : "--";
+        return `<tr><td>${row.line}</td><td>${escapeHtml(row.mac)}</td><td>${escapeHtml(row.current || "--")}</td><td>${checkbox}</td><td>${result}</td></tr>`;
+      }).join("")}</tbody></table></div>`;
     }
     function openDirectedImport(targetId) {
       state.directedImportRows = [];
       state.directedImportValid = false;
+      state.directedImportMigrations = new Set();
       const target = targetById(targetId);
       if (!target || target.status !== "测试中") { showToast("请在测试中固件的定向设备抽屉内导入 MAC。"); return; }
       if (target.whitelistOpenedAt) { showToast("该版本已开放给全部授权白名单，不能再导入定向 MAC。"); return; }
@@ -4549,21 +4585,66 @@
       const initial = "MAC\nA45E60123503\nA45E60123504";
       showDirectedShell("directedImport", "批量导入 MAC", `目标固定为当前版本抽屉中的 ${trialLabel(target)}。上传清单仅包含 MAC，无需用户账号。`, `<div id="drawer-directed-import" data-note-anchor="directed-import"><div class="notice">固定目标：${escapeHtml(trialLabel(target))}。同一 MAC 全查询路径最多一个生效体验目标；使用时仍校验产品授权。</div><div class="field"><label>上传 CSV</label><input type="file" id="directedCsvFile" accept=".csv,.txt,text/csv"></div><div class="field"><label>导入内容</label><textarea class="trial-import-input" id="directedCsvText" spellcheck="false">${initial}</textarea><span class="hint">一行一个 MAC，可保留表头 MAC；不要填写目标固件 ID、参与方式或用户账号。</span></div><div class="trial-toolbar" style="margin-top:10px"><button class="btn" id="directedValidSample">通过样例</button><button class="btn" id="directedBadSample">错误样例</button><button class="btn" id="directedDownloadTemplate">下载模板</button><button class="btn primary" id="directedValidate">校验全部</button></div><div id="directedImportPreview" data-note-anchor="directed-import-preview">${directedImportPreviewHtml([])}</div></div>`, "确认导入");
       $("#drawerSave").disabled = true;
-      const invalidate = () => { state.directedImportValid = false; $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml([]); };
+      const invalidate = () => { state.directedImportValid = false; state.directedImportMigrations = new Set(); $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml([]); };
       $("#directedCsvText").oninput = invalidate;
       $("#directedCsvFile").onchange = async event => { const file = event.target.files?.[0]; if (file) { $("#directedCsvText").value = await file.text(); invalidate(); } };
       $("#directedValidSample").onclick = () => { $("#directedCsvText").value = "MAC\nA45E60123503\nA45E60123504"; invalidate(); };
       $("#directedBadSample").onclick = () => { $("#directedCsvText").value = "MAC\nA45E60123456\nA45E60123459\nBAD-MAC"; invalidate(); };
       $("#directedDownloadTemplate").onclick = () => { const blob = new Blob(["MAC\nA45E60123503\n"], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "firmware-directed-mac-template.csv"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
-      $("#directedValidate").onclick = () => { const rows = validateDirectedRows(parseDirectedRows($("#directedCsvText").value), target); state.directedImportRows = rows; state.directedImportValid = rows.length > 0 && rows.every(row => !row.errors.length); $("#drawerSave").disabled = !state.directedImportValid; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); };
-      $("#drawerSave").onclick = () => {
+      const refreshImportRows = () => {
+        state.directedImportRows = state.directedImportRows.map(row => ({ ...row, migrationSelected: row.migratable && state.directedImportMigrations.has(row.mac) }));
+        state.directedImportValid = state.directedImportRows.length > 0 && state.directedImportRows.every(row => !row.errors.length && (!row.migratable || row.migrationSelected));
+        $("#drawerSave").disabled = !state.directedImportValid;
+        $("#directedImportPreview").innerHTML = directedImportPreviewHtml(state.directedImportRows);
+        wireDirectedImportPreview();
+      };
+      function wireDirectedImportPreview() {
+        $$('[data-directed-migration]').forEach(input => input.addEventListener("change", () => {
+          const mac = input.dataset.directedMigration;
+          input.checked ? state.directedImportMigrations.add(mac) : state.directedImportMigrations.delete(mac);
+          refreshImportRows();
+        }));
+        $$('[data-directed-migration-all]').forEach(button => button.addEventListener("click", () => {
+          state.directedImportRows.filter(row => row.migratable).forEach(row => state.directedImportMigrations.add(row.mac));
+          refreshImportRows();
+        }));
+        $$('[data-directed-migration-clear]').forEach(button => button.addEventListener("click", () => {
+          state.directedImportMigrations.clear();
+          refreshImportRows();
+        }));
+      }
+      $("#directedValidate").onclick = () => {
+        state.directedImportMigrations = new Set();
+        const rows = validateDirectedRows(parseDirectedRows($("#directedCsvText").value), target);
+        state.directedImportRows = rows;
+        state.directedImportValid = rows.length > 0 && rows.every(row => !row.errors.length && (!row.migratable || row.migrationSelected));
+        $("#drawerSave").disabled = !state.directedImportValid;
+        $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows);
+        wireDirectedImportPreview();
+      };
+      $("#drawerSave").onclick = async () => {
         if (!state.directedImportValid) { showToast("请先完成全量校验。"); return; }
         const rows = validateDirectedRows(state.directedImportRows, target);
-        if (rows.some(row => row.errors.length)) { state.directedImportValid = false; $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); showToast("设备状态已变化，请重新校验；整批未写入。"); return; }
+        state.directedImportRows = rows;
+        if (rows.some(row => row.errors.length || (row.migratable && !row.migrationSelected))) { state.directedImportValid = false; $("#drawerSave").disabled = true; $("#directedImportPreview").innerHTML = directedImportPreviewHtml(rows); wireDirectedImportPreview(); showToast("设备状态已变化或迁移未确认；整批未写入。"); return; }
+        const migrationRows = rows.filter(row => row.migrationSelected);
+        const newRows = rows.filter(row => !row.migratable);
+        const oldTargetIds = [...new Set(migrationRows.map(row => row.occupiedId))];
+        const waitingOta = rows.filter(row => compareVersion(row.current, target.version) < 0).length;
+        const ok = await showConfirm("确认导入并迁移定向设备", `将新增 <strong>${newRows.length}</strong> 台设备，迁移 <strong>${migrationRows.length}</strong> 台设备到 <strong>${escapeHtml(trialLabel(target))}</strong>。受影响原目标：${oldTargetIds.length ? oldTargetIds.map(id => escapeHtml(trialLabel(targetById(id)))).join("、") : "无"}。其中 <strong>${waitingOta}</strong> 台低于目标版本，需逐台 OTA 后继续体验。提交前已重新校验，任一失败整批不写入。`, "确认提交");
+        if (!ok) return;
         const trial = ensureDirectedTrial(target);
-        rows.forEach(row => trial.devices.push({ mac: row.mac, user: "未绑定（寄出前）", authorization: "待绑定", current: row.current, lastSeen: "--" }));
-        recordDirected(`${trialLabel(target)} 导入 ${rows.length} 台设备`, [target.id]);
-        state.firmwareMessage = `已导入 ${rows.length} 台设备到 ${trialLabel(target)}；设备绑定后再校验用户产品授权。`;
+        migrationRows.forEach(row => {
+          const sourceTrial = trialFor(row.occupiedId);
+          const device = sourceTrial.devices.find(item => item.mac === row.mac);
+          sourceTrial.devices = sourceTrial.devices.filter(item => item.mac !== row.mac);
+          if (!sourceTrial.devices.length) delete directedTrials[row.occupiedId];
+          trial.devices.push({ ...device, current: row.current, usingApp: directedFallbackApp(target, trial) });
+        });
+        newRows.forEach(row => trial.devices.push({ mac: row.mac, user: "未绑定（寄出前）", authorization: "待绑定", current: row.current, lastSeen: "--" }));
+        const affectedIds = [...new Set([target.id, ...oldTargetIds])];
+        recordDirected(`${trialLabel(target)} 导入 ${newRows.length} 台并迁移 ${migrationRows.length} 台设备`, affectedIds);
+        state.firmwareMessage = `已导入 ${newRows.length} 台并迁移 ${migrationRows.length} 台设备到 ${trialLabel(target)}；${waitingOta} 台需逐台 OTA，设备绑定后再校验用户产品授权。`;
         closeDrawer(); render();
       };
     }
