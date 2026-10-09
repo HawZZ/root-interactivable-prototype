@@ -1260,7 +1260,7 @@
       { id: "virtual-version", title: "虚拟版本独立流转", body: "进入测试时冻结组件、包和 APP 条件；测试、发布、停止不改写组件单 MCU 状态。两条查询路径分别判定，定向 MAC 跨路径唯一。", loc: "虚拟版本 > 测试与发布" }
     ];
     notes.directedTarget = [
-      { id: "directed-target", title: "目标固件内维护体验设备", body: "A/B 是多个测试固件各自的定向 MAC 清单，不另设体验组。允许 App 版本必须满足固件自身 APP 条件；外部设备实际使用时还要校验当前产品授权。", loc: "测试中 > 定向体验设备" },
+      { id: "directed-target", title: "目标固件内维护体验设备", body: "A/B 是多个测试固件各自的定向 MAC 清单，不另设体验组。固件 APP 条件是只读兼容基线，允许体验 App 是本轮定向的收窄清单，实际命中必须同时满足两者；外部设备实际使用时还要校验当前产品授权。", loc: "测试中 > 定向体验设备" },
       { id: "directed-target", title: "设备状态按台计算", body: "预装设备须确认上报版本；OTA 设备各自更新到目标后即可继续体验，不要求整批完成。App 版本选错时保留列表设备，但阻断控制和设置。", loc: "定向体验设备 > 设备列表" }
     ];
     notes.directedImport = [
@@ -4319,12 +4319,12 @@
         return `<tr><td><strong>${device.mac}</strong><span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "--"}</td><td>${target.version}</td><td>${device.mode}</td><td>${escapeHtml(app)}<span class="sub">${appAllowed ? "匹配" : "不匹配 · 阻断"}</span></td><td><span class="tag ${status === "可体验" || status === "已安装·可用" ? "green" : status === "版本过高" ? "red" : "orange"}">${status}</span></td><td class="table-actions">${device.authorization === "待绑定" ? `<button class="btn" data-directed-bind="${device.mac}">模拟绑定并授权</button>` : ""}${actionable ? `<button class="btn" data-directed-upgrade="${device.mac}">模拟完成 OTA</button>` : ""}<button class="btn" data-directed-app="${device.mac}">${appAllowed ? "模拟错 App" : "恢复正确 App"}</button><button class="btn" data-directed-open-device="${device.mac}">打开设备</button><button class="btn" data-directed-query="${device.mac}">跨路径查询</button>${device.authorization === "已失效" ? "" : `<button class="btn" data-directed-move="${device.mac}">切换固件</button>`}${device.authorization === "已失效" ? `<button class="btn" data-directed-restore="${device.mac}">恢复授权</button>` : ""}<button class="btn danger" data-directed-remove="${device.mac}">移出</button></td></tr>`;
       }).join("");
       return `<div id="drawer-directed-target" data-note-anchor="directed-target">
-        <div class="notice">${escapeHtml(trialLabel(target))} · ${trialStage(target)}。外部用户须已获当前产品授权；指定 MAC 命中后精确返回此版本。开放白名单、发布或停止时自动关闭定向。</div>
+        <div class="notice">${escapeHtml(trialLabel(target))} · ${trialStage(target)}。App 命中须同时满足固件兼容基线与定向允许清单；外部用户还须已获当前产品授权。开放白名单、发布或停止时自动关闭定向。</div>
         <div class="form-grid">
           <div class="field"><label>目标固件</label><div class="readonly">${escapeHtml(trialLabel(target))} <span class="tag orange">测试中</span></div></div>
-          <div class="field"><label>固件 APP 条件</label><div class="readonly">${target.appRule} ${target.appVersion}</div></div>
+          <div class="field"><label>固件兼容基线（只读）</label><div class="readonly">${target.appRule} ${target.appVersion}<span class="hint">由固件/虚拟版本定义，定向配置不能放宽。</span></div></div>
           <div class="field"><label>体验标识</label><input id="directedLabel" value="${escapeAttr(trial?.label || target.version)}"><span class="hint">仅用于识别 A/B 方案，不参与命中。</span></div>
-          <div class="field"><label><span class="required">*</span>允许体验 APP 版本</label><input id="directedApps" value="${escapeAttr((trial?.apps || directedApps(target)).join(", "))}"><span class="hint">多个版本用半角逗号分隔；均须满足固件 APP 条件。</span></div>
+          <div class="field"><label><span class="required">*</span>定向允许 APP 清单</label><input id="directedApps" value="${escapeAttr((trial?.apps || directedApps(target)).join(", "))}"><span class="hint">多个版本用半角逗号分隔；只能配置兼容基线内的子集，实际命中取交集。</span></div>
         </div>
         <div class="subsection-head" style="margin-top:18px"><div><h3>定向设备（${devices.length}）</h3><p>预装与 OTA 逐台记录；暂停保留 MAC 占用，不回落普通版本。</p></div><div class="trial-inline-actions"><button class="btn" id="directedImportFromDetail">导入设备</button>${trialOccupied(target.id) ? `<button class="btn" id="directedPause">${trial.status === "已暂停" ? "继续" : "暂停"}</button>` : ""}</div></div>
         <div class="trial-device-table"><table><thead><tr><th>设备 MAC / 用户</th><th>当前版本</th><th>目标版本</th><th>参与方式</th><th>当前 App</th><th>设备状态</th><th>操作</th></tr></thead><tbody>${rows || `<tr><td colspan="7">暂无定向设备。请导入 MAC；发货前无需绑定用户。</td></tr>`}</tbody></table></div>
@@ -4353,11 +4353,11 @@
       if (target.referenceReview) { showToast("虚拟组件包引用待核对，不能扩大定向范围。"); return; }
       if (scheduledReleasePending(target)) { showToast("定时发布待生效；请先取消定时发布再维护定向设备。"); return; }
       state.directedTargetId = targetId;
-      showDirectedShell("directedTarget", "定向体验设备", "固件应用对象在测试中精确指向 MAC；未绑定用户可预先导入，实际使用时校验授权。", directedDrawerHtml(target), "保存配置");
+      showDirectedShell("directedTarget", "定向体验设备", "固件应用对象在测试中精确指向 MAC；App 命中同时校验兼容基线与定向允许清单，实际使用时校验授权。", directedDrawerHtml(target), "保存配置");
       $("#drawerSave").onclick = () => {
         const apps = $("#directedApps").value.split(",").map(x => x.trim()).filter(Boolean);
         if (!apps.length) { showToast("至少填写一个允许体验 APP 版本。"); return; }
-        if (apps.some(app => !experienceAppMatchesFirmware(app, target))) { showToast("允许体验 APP 版本必须满足固件自身 APP 条件。"); return; }
+        if (apps.some(app => !experienceAppMatchesFirmware(app, target))) { showToast("定向允许 APP 清单必须全部落在固件兼容基线内。"); return; }
         const trial = ensureDirectedTrial(target);
         trial.label = $("#directedLabel").value.trim() || target.version;
         trial.apps = [...new Set(apps)];
