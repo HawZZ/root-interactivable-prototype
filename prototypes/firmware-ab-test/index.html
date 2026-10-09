@@ -308,6 +308,15 @@
     .prototype-scenario label { display: block; color: #697386; font-size: 12px; margin-bottom: 6px; }
     .prototype-scenario select { width: 100%; height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; color: #39465a; padding: 0 8px; }
     .prototype-scenario p { margin: 6px 0 0; color: #8b95a4; line-height: 1.55; }
+    .prototype-demo { margin-top: 12px; padding: 12px; border: 1px dashed #d9dfe9; background: #fffdf2; }
+    .prototype-demo-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .prototype-demo-head strong { color: #39465a; font-size: 12px; }
+    .prototype-demo-head span { color: #b7791f; font-size: 11px; }
+    .prototype-demo label { display: block; margin: 9px 0 5px; color: #697386; font-size: 12px; }
+    .prototype-demo select { width: 100%; height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; color: #39465a; padding: 0 8px; }
+    .prototype-demo-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .prototype-demo-actions .btn { min-height: 28px; font-size: 12px; }
+    .prototype-demo p { margin: 8px 0 0; color: #8b95a4; font-size: 12px; line-height: 1.55; }
     .note-item { width: 100%; text-align: left; border: 1px solid #e5eaf3; background: #fff; padding: 11px 12px; margin-top: 10px; border-radius: 4px; }
     .note-item.active { border-color: #facc15; background: #fffbe6; box-shadow: inset 3px 0 0 #facc15; }
     .note-index, .anchor { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #facc15; color: #713f12; font-size: 11px; font-weight: 700; }
@@ -659,6 +668,13 @@
         <p id="prototypeScenarioHint">用于验证产品状态、用户-产品授权与公开上架范围对固件体验和区域内测的影响。</p>
       </div>
     </div>
+    <div class="prototype-demo hide" id="directedDemoBox" aria-label="定向设备演示操作">
+      <div class="prototype-demo-head"><strong>演示操作</strong><span>不属于产品交互</span></div>
+      <label for="directedDemoDevice">选择设备 MAC</label>
+      <select id="directedDemoDevice"></select>
+      <div class="prototype-demo-actions" id="directedDemoActions"></div>
+      <p>仅用于驱动原型状态和验证命中结果；设备表操作列只保留产品定义的平台动作。</p>
+    </div>
     <div id="noteList"></div>
   </aside>
 
@@ -824,6 +840,7 @@
       firmwareTab: "firmware",
       directedSelected: new Set(),
       directedTargetId: null,
+      directedDemoMac: "",
       directedImportRows: [],
       directedImportValid: false,
       directedMoveMac: null,
@@ -1261,7 +1278,8 @@
     ];
     notes.directedTarget = [
       { id: "directed-target", title: "目标固件内维护体验设备", body: "A/B 是多个测试固件各自的定向 MAC 清单，不另设体验组。APP 版本范围合并展示固件兼容基线：空输入按基线体验；填写具体版本后仅收窄命中范围，不能放宽基线。外部设备实际使用时还要校验当前产品授权。", loc: "测试中 > 定向体验设备" },
-      { id: "directed-target", title: "设备状态按台计算", body: "预装设备须确认上报版本；OTA 设备各自更新到目标后即可继续体验，不要求整批完成。App 版本选错时保留列表设备，但阻断控制和设置。", loc: "定向体验设备 > 设备列表" }
+      { id: "directed-target", title: "设备状态按台计算", body: "预装设备须确认上报版本；OTA 设备各自更新到目标后即可继续体验，不要求整批完成。App 版本选错时保留列表设备，但阻断控制和设置。", loc: "定向体验设备 > 设备列表" },
+      { id: "directed-target", title: "真实操作与演示分离", body: "设备表操作列只保留平台定义的动作：切换固件、移出。绑定授权、完成 OTA、错 App、打开设备、跨路径查询和恢复授权只出现在右侧批注栏的演示操作区，用于驱动原型状态，不是产品交互需求。", loc: "定向体验设备 > 设备列表与原型批注" }
     ];
     notes.directedImport = [
       { id: "directed-import", title: "跨目标批量导入", body: "模板列为 MAC、目标固件 ID、参与方式，不需要用户账号。逐行校验 MAC 格式、目标状态、重复、跨目标冲突和降级风险；任一行失败整批零写入。", loc: "批量配置体验设备" }
@@ -2571,6 +2589,7 @@
         renderNotes();
         highlight(btn.dataset.noteTarget);
       }));
+      renderDirectedDemo();
     }
 
     function noteContextLabel(key) {
@@ -4312,6 +4331,127 @@
       return rows.length ? `<div class="notice">最近操作：${rows.map(row => `${row.at} · ${row.operator} · ${escapeHtml(row.action)}`).join("<br>")}</div>` : "";
     }
     function recordDirected(action, targets) { directedAudit.unshift({ at: directedNow(), operator: "当前操作员", action, targets }); }
+    function refreshDirectedDemo(targetId) {
+      openDirectedDrawer(targetId);
+      renderFirmware();
+    }
+    function runDirectedBindDemo(targetId, mac) {
+      const target = targetById(targetId);
+      const trial = trialFor(targetId);
+      const device = trial?.devices.find(row => row.mac === mac);
+      if (!target || !device) return;
+      device.user = "new.seed@example.com";
+      device.authorization = "有效";
+      device.usingApp = directedFallbackApp(target, trial);
+      recordDirected(`${device.mac} 绑定并通过产品授权校验`, [targetId]);
+      refreshDirectedDemo(targetId);
+    }
+    function runDirectedUpgradeDemo(targetId, mac) {
+      const target = targetById(targetId);
+      const device = trialFor(targetId)?.devices.find(row => row.mac === mac);
+      if (!target || !device) return;
+      device.current = target.version;
+      device.lastSeen = directedNow();
+      const asset = directedAssetInventory[device.mac];
+      if (asset) {
+        if (target.id.startsWith("vv")) asset.virtualCurrent = target.version;
+        else asset.current = target.version;
+      }
+      recordDirected(`${device.mac} 完成 OTA`, [targetId]);
+      refreshDirectedDemo(targetId);
+    }
+    function runDirectedAppDemo(targetId, mac) {
+      const target = targetById(targetId);
+      const trial = trialFor(targetId);
+      const device = trial?.devices.find(row => row.mac === mac);
+      if (!target || !device) return;
+      const allowed = device.authorization === "已失效" ? (device.frozenApps || trial.apps) : trial.apps;
+      const restoreApp = allowed.length ? allowed[0] : directedFallbackApp(target);
+      device.usingApp = directedAppAllowed(device.usingApp, target, device.authorization === "已失效" ? { apps: allowed } : trial)
+        ? "2.1.0 (Build 700)"
+        : restoreApp;
+      refreshDirectedDemo(targetId);
+    }
+    function runDirectedRestoreAuthDemo(targetId, mac) {
+      const device = trialFor(targetId)?.devices.find(row => row.mac === mac);
+      if (!device) return;
+      device.authorization = "有效";
+      recordDirected(`${device.mac} 恢复产品授权`, [targetId]);
+      refreshDirectedDemo(targetId);
+    }
+    function showDirectedDeviceDemo(targetId, mac) {
+      const target = targetById(targetId);
+      const trial = trialFor(targetId);
+      const device = trial?.devices.find(row => row.mac === mac);
+      if (!target || !device) return;
+      const status = trialDeviceState(device, target, trial);
+      const app = device.usingApp || directedFallbackApp(target, trial);
+      const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial);
+      showToast(status === "可体验" || status === "已安装·可用"
+        ? appAllowed ? "设备控制页可用。" : "设备与当前 APP 不匹配，已阻断控制和设置。"
+        : status === "需升级"
+        ? "设备尚未完成体验固件更新，已阻断控制和设置。"
+        : status === "资格失效·保持当前版本"
+        ? appAllowed ? "授权已失效：原设备控制与设置仍可用，保持当前固件且不再下发更新。" : "设备与资格失效时允许的 APP 不匹配，已阻断控制和设置。"
+        : `设备不可操作：${status}。`);
+    }
+    function showDirectedCrossPathDemo(targetId, mac) {
+      const target = targetById(targetId);
+      const trial = trialFor(targetId);
+      const device = trial?.devices.find(row => row.mac === mac);
+      if (!target || !device) return;
+      const otherPath = target.id.startsWith("vv") ? "单 MCU" : "虚拟版本";
+      const result = resolveDirectedCandidate(device.mac, otherPath, device.usingApp || directedFallbackApp(target, trial), device.authorization === "有效");
+      showToast(`${otherPath} 查询：${result.status}；${result.reason}。`);
+    }
+    function renderDirectedDemo() {
+      const box = $("#directedDemoBox");
+      if (!box) return;
+      if (state.drawer !== "directedTarget" || !state.directedTargetId) {
+        box.classList.add("hide");
+        return;
+      }
+      const target = targetById(state.directedTargetId);
+      const trial = trialFor(target?.id);
+      const devices = trial?.devices || [];
+      box.classList.remove("hide");
+      if (!target || !devices.length) {
+        $("#directedDemoDevice").innerHTML = `<option value="">暂无定向设备</option>`;
+        $("#directedDemoActions").innerHTML = `<span class="sub">导入设备后可演示状态变化。</span>`;
+        return;
+      }
+      if (!devices.some(device => device.mac === state.directedDemoMac)) state.directedDemoMac = devices[0].mac;
+      const device = devices.find(row => row.mac === state.directedDemoMac) || devices[0];
+      const status = trialDeviceState(device, target, trial);
+      const app = device.usingApp || directedFallbackApp(target, trial);
+      const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial);
+      const actionable = trial.status === "运行中" && status === "需升级" && device.authorization !== "已失效";
+      const actions = [];
+      if (device.authorization === "待绑定") actions.push(`<button class="btn" type="button" data-demo-action="bind">模拟绑定并授权</button>`);
+      if (actionable) actions.push(`<button class="btn" type="button" data-demo-action="upgrade">模拟完成 OTA</button>`);
+      actions.push(`<button class="btn" type="button" data-demo-action="app">${appAllowed ? "模拟错 App" : "恢复正确 App"}</button>`);
+      actions.push(`<button class="btn" type="button" data-demo-action="open">演示打开设备</button>`);
+      actions.push(`<button class="btn" type="button" data-demo-action="query">演示跨路径查询</button>`);
+      if (device.authorization === "已失效") actions.push(`<button class="btn" type="button" data-demo-action="restore">模拟恢复授权</button>`);
+      $("#directedDemoDevice").innerHTML = devices.map(row => `<option value="${row.mac}">${row.mac}</option>`).join("");
+      $("#directedDemoDevice").value = device.mac;
+      $("#directedDemoActions").innerHTML = actions.join("");
+      $("#directedDemoDevice").onchange = event => {
+        state.directedDemoMac = event.target.value;
+        renderDirectedDemo();
+      };
+      $$("#directedDemoActions [data-demo-action]").forEach(btn => btn.onclick = () => {
+        const action = btn.dataset.demoAction;
+        const targetId = target.id;
+        const mac = device.mac;
+        if (action === "bind") runDirectedBindDemo(targetId, mac);
+        else if (action === "upgrade") runDirectedUpgradeDemo(targetId, mac);
+        else if (action === "app") runDirectedAppDemo(targetId, mac);
+        else if (action === "restore") runDirectedRestoreAuthDemo(targetId, mac);
+        else if (action === "open") showDirectedDeviceDemo(targetId, mac);
+        else if (action === "query") showDirectedCrossPathDemo(targetId, mac);
+      });
+    }
     function directedDrawerHtml(target) {
       const trial = trialFor(target.id);
       const devices = trial?.devices || [];
@@ -4319,8 +4459,7 @@
         const status = trialDeviceState(device, target, trial);
         const app = device.usingApp || directedFallbackApp(target, trial);
         const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial);
-        const actionable = trial.status === "运行中" && status === "需升级" && device.authorization !== "已失效";
-        return `<tr><td><strong>${device.mac}</strong><span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "--"}</td><td>${target.version}</td><td>${device.mode}</td><td>${escapeHtml(app)}<span class="sub">${appAllowed ? "匹配" : "不匹配 · 阻断"}</span></td><td><span class="tag ${status === "可体验" || status === "已安装·可用" ? "green" : status === "版本过高" ? "red" : "orange"}">${status}</span></td><td class="table-actions">${device.authorization === "待绑定" ? `<button class="btn" data-directed-bind="${device.mac}">模拟绑定并授权</button>` : ""}${actionable ? `<button class="btn" data-directed-upgrade="${device.mac}">模拟完成 OTA</button>` : ""}<button class="btn" data-directed-app="${device.mac}">${appAllowed ? "模拟错 App" : "恢复正确 App"}</button><button class="btn" data-directed-open-device="${device.mac}">打开设备</button><button class="btn" data-directed-query="${device.mac}">跨路径查询</button>${device.authorization === "已失效" ? "" : `<button class="btn" data-directed-move="${device.mac}">切换固件</button>`}${device.authorization === "已失效" ? `<button class="btn" data-directed-restore="${device.mac}">恢复授权</button>` : ""}<button class="btn danger" data-directed-remove="${device.mac}">移出</button></td></tr>`;
+        return `<tr><td><strong>${device.mac}</strong><span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "--"}</td><td>${target.version}</td><td>${device.mode}</td><td>${escapeHtml(app)}<span class="sub">${appAllowed ? "匹配" : "不匹配 · 阻断"}</span></td><td><span class="tag ${status === "可体验" || status === "已安装·可用" ? "green" : status === "版本过高" ? "red" : "orange"}">${status}</span></td><td class="table-actions">${device.authorization === "已失效" ? "" : `<button class="btn" data-directed-move="${device.mac}">切换固件</button>`}<button class="btn danger" data-directed-remove="${device.mac}">移出</button></td></tr>`;
       }).join("");
       return `<div id="drawer-directed-target" data-note-anchor="directed-target">
         <div class="notice">${escapeHtml(trialLabel(target))} · ${trialStage(target)}。App 命中必须满足固件兼容基线；定向允许清单填写时额外收窄，留空则仅按基线判断。外部用户还须已获当前产品授权。开放白名单、发布或停止时自动关闭定向。</div>
@@ -4369,13 +4508,7 @@
       };
       $("#directedImportFromDetail").onclick = () => openDirectedImport(target.id);
       $("#directedPause")?.addEventListener("click", async () => { await changeDirectedStatus([target.id], trialFor(target.id).status === "已暂停" ? "运行中" : "已暂停"); if (state.drawer === "directedTarget") openDirectedDrawer(target.id); });
-      $$('[data-directed-bind]').forEach(btn => btn.onclick = () => { const trial = trialFor(target.id); const device = trial.devices.find(row => row.mac === btn.dataset.directedBind); device.user = "new.seed@example.com"; device.authorization = "有效"; device.usingApp = directedFallbackApp(target, trial); recordDirected(`${device.mac} 绑定并通过产品授权校验`, [target.id]); openDirectedDrawer(target.id); renderFirmware(); });
-      $$('[data-directed-upgrade]').forEach(btn => btn.onclick = () => { const device = trialFor(target.id).devices.find(row => row.mac === btn.dataset.directedUpgrade); device.current = target.version; device.lastSeen = directedNow(); const asset = directedAssetInventory[device.mac]; if (asset) { if (target.id.startsWith("vv")) asset.virtualCurrent = target.version; else asset.current = target.version; } recordDirected(`${device.mac} 完成 OTA`, [target.id]); openDirectedDrawer(target.id); renderFirmware(); });
-      $$('[data-directed-app]').forEach(btn => btn.onclick = () => { const trial = trialFor(target.id); const device = trial.devices.find(row => row.mac === btn.dataset.directedApp); const allowed = device.authorization === "已失效" ? (device.frozenApps || trial.apps) : trial.apps; const restoreApp = allowed.length ? allowed[0] : directedFallbackApp(target); device.usingApp = directedAppAllowed(device.usingApp, target, device.authorization === "已失效" ? { apps: allowed } : trial) ? "2.1.0 (Build 700)" : restoreApp; openDirectedDrawer(target.id); });
-      $$('[data-directed-open-device]').forEach(btn => btn.onclick = () => { const trial = trialFor(target.id); const device = trial.devices.find(row => row.mac === btn.dataset.directedOpenDevice); const status = trialDeviceState(device, target, trial); const app = device.usingApp || directedFallbackApp(target, trial); const appAllowed = directedAppAllowed(app, target, device.authorization === "已失效" ? { apps: device.frozenApps || trial.apps } : trial); showToast(status === "可体验" || status === "已安装·可用" ? appAllowed ? "设备控制页可用。" : "设备与当前 APP 不匹配，已阻断控制和设置。" : status === "需升级" ? "设备尚未完成体验固件更新，已阻断控制和设置。" : status === "资格失效·保持当前版本" ? appAllowed ? "授权已失效：原设备控制与设置仍可用，保持当前固件且不再下发更新。" : "设备与资格失效时允许的 APP 不匹配，已阻断控制和设置。" : `设备不可操作：${status}。`); });
-      $$('[data-directed-query]').forEach(btn => btn.onclick = () => { const trial = trialFor(target.id); const device = trial.devices.find(row => row.mac === btn.dataset.directedQuery); const otherPath = target.id.startsWith("vv") ? "单 MCU" : "虚拟版本"; const result = resolveDirectedCandidate(device.mac, otherPath, device.usingApp || directedFallbackApp(target, trial), device.authorization === "有效"); showToast(`${otherPath} 查询：${result.status}；${result.reason}。`); });
       $$('[data-directed-move]').forEach(btn => btn.onclick = () => openDirectedMove(target.id, btn.dataset.directedMove));
-      $$('[data-directed-restore]').forEach(btn => btn.onclick = () => { const device = trialFor(target.id).devices.find(row => row.mac === btn.dataset.directedRestore); device.authorization = "有效"; recordDirected(`${device.mac} 恢复产品授权`, [target.id]); openDirectedDrawer(target.id); renderFirmware(); });
       $$('[data-directed-remove]').forEach(btn => btn.onclick = async () => { const ok = await showConfirm("移出定向设备", `移出 ${btn.dataset.directedRemove} 后，该设备保持当前版本，不再获得此精确目标。移出最后一台时版本回到仅内部测试，可重新添加 MAC。`, "确认移出"); if (!ok) return; directedTrials[target.id].devices = directedTrials[target.id].devices.filter(row => row.mac !== btn.dataset.directedRemove); if (!directedTrials[target.id].devices.length) delete directedTrials[target.id]; recordDirected(`${btn.dataset.directedRemove} 移出定向`, [target.id]); openDirectedDrawer(target.id); renderFirmware(); });
     }
 
