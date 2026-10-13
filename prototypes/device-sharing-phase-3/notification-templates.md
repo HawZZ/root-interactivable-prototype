@@ -20,6 +20,8 @@ Source: [设备共享三期 PRD](https://momcozy-in.feishu.cn/docx/X11Hd0jKmon6q
 
 ## 2. 邮件模板
 
+Tuya 共享码的成功建联上限属于后台执行规则，邮件、短信、H5 和 APP 面向用户的提示不展示“仅接收一次”“一次性使用”等说明；该文案调整不改变每码最多成功建联 1 次的限制。
+
 ### 邮件模板 · 自研
 
 ```yaml
@@ -66,8 +68,8 @@ Source: [设备共享三期 PRD](https://momcozy-in.feishu.cn/docx/X11Hd0jKmon6q
   - 页脚
 正文:
   - '你好，{nickname} 邀请你接收设备「{device_name}」的共享。'
-  - '请使用收到本邮件的邮箱「{invited_account}」注册并登录 Momcozy App，接收设备分享。本次邀请仅供该受邀账号接收一次。'
-  - '邀请在共享者撤销前持续有效，成功接收一次后不能再次使用。'
+  - '请使用收到本邮件的邮箱「{invited_account}」注册并登录 Momcozy App，接收设备分享。'
+  - '邀请在共享者撤销前持续有效。'
   - '建议选择共享者的国家或地区「{owner_region}」注册并登录；如果选择其他国家/地区，可能无法查看共享设备及设备数据。'
 主按钮:
   文案: 打开注册网页
@@ -139,12 +141,11 @@ Source: [设备共享三期 PRD](https://momcozy-in.feishu.cn/docx/X11Hd0jKmon6q
 ```yaml
 模板: 三期未注册邀请短信 · Tuya
 适用对象: 未注册手机号
-消息正文: '【Momcozy】{nickname} 邀请你接收「{device_name}」的共享，邀请仅供本受邀账号接收一次。请用本手机号注册，建议选择「{owner_region}」；详情：{h5_url}'
+消息正文: '【Momcozy】{nickname} 邀请你接收「{device_name}」的共享。请用本手机号注册，建议选择「{owner_region}」；详情：{h5_url}'
 ---
 布局顺序:
   - 【Momcozy】品牌标识
   - 分享者与设备
-  - 仅供受邀账号接收一次
   - 注册要求与地区建议
   - 唯一 H5 链接
 展示与操作约束:
@@ -257,7 +258,7 @@ subtitle: '{nickname} 邀请你使用「{device_name}」。'
   - 主按钮「立即注册」
   - 下载区「下载 Momcozy App」
   - APP 注册/登录指引区
-提示区文案: 请使用受邀账号注册并登录，接收设备分享。本次邀请仅供该受邀账号接收一次。
+提示区文案: 请使用受邀账号注册并登录，接收设备分享。
 受邀账号: '{invited_account}'
 地区建议: '建议选择共享者的国家或地区「{owner_region}」注册并登录；如果选择其他国家/地区，可能无法查看共享设备及设备数据。'
 主按钮:
