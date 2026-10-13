@@ -3672,6 +3672,7 @@
           }
           firmwareVersions.unshift({
             id: `fw${Date.now()}`,
+            scopeRevision: 1,
             name: `${parsed.project} ${firmwareType}`,
             type: firmwareType,
             version: parsed.firmwareVersion,
@@ -3730,6 +3731,7 @@
           virtualSaveButton.textContent = "保存中…";
           virtualVersions.unshift({
             id: `vv${Date.now()}`,
+            scopeRevision: 1,
             version,
             status: "开发中",
             appRule: $("#virtualVersionAppRule").value,
