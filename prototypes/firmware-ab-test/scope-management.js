@@ -225,30 +225,16 @@
     if (node) { node.textContent = message; node.classList.remove("hide"); }
     showToast(message);
   }
-  function audience(route, trial, filter, tags) {
-    if (route === "mac") return trial.devices.map(device => `MAC ${device.mac}`);
-    if (route === "public") return ["所选正式区域内符合发布条件的设备"];
-    return whitelistUsers.filter(user => route === "company" ? user.type === "公司用户" : user.type === "外部用户" && user.products.includes(products[state.product].name) && (filter !== "tags" || user.tags.some(tag => tags.includes(tag)))).map(user => user.email);
-  }
-  function impact(target, next) {
-    const before = target.status === "开发中" ? [] : audience(mode(target), trialFor(target.id), target.whitelistFilter, target.whitelistTags || []);
-    const after = audience(next.route, next.trial, next.filter, next.tags);
-    const list = values => escapeHtml(values.join("、") || "无");
-    const alternatives = allFirmwareTargets().filter(other => other.id !== target.id && ["测试中", "发布中", "已发布"].includes(other.status) && other.id.startsWith("vv") === target.id.startsWith("vv") && mode(other) !== "mac").map(trialLabel);
-    return `<br>新增候选对象：${list(after.filter(value => !before.includes(value)))}。<br>失去本版本候选的对象：${list(before.filter(value => !after.includes(value)))}。<br>可能命中的其他版本：${list(alternatives)}；实际仍按硬件、App、授权及区域校验。`;
-  }
   async function save() {
     readFields();
     const next = clone(draft);
     const target = targetById(next.id);
     const error = errorFor(target, next);
     if (error) { showError(error); return; }
-    const oldCount = trialFor(target.id)?.devices.length || 0;
-    const oldRange = target.releaseConfig?.range || [];
-    const added = next.release.range.filter(region => !oldRange.includes(region));
-    const removed = oldRange.filter(region => !next.release.range.includes(region));
-    const detail = next.route === "public" ? `区域：${escapeHtml(next.release.range.join("、"))}；新增 ${escapeHtml(added.join("、") || "无")}，撤销 ${escapeHtml(removed.join("、") || "无")}。${next.release.mode}，${next.release.upgradeMode}。${next.release.effectiveAt === "定时生效" && ["开发中", "测试中"].includes(target.status) ? target.status === "开发中" ? "到点前保持开发中，不提供候选。" : "到点前保持原测试范围和锁。" : "正式生效后测试范围不可达。"}${target.releasePaused ? "仍保持暂停，须明确继续后才投放。" : ""}` : next.route === "mac" ? `定向 ${next.trial.devices.length} 台，迁移 ${next.migrations.length} 台，${next.trial.status}。公司用户和外部白名单不会额外叠加。` : `${next.route === "whitelist" ? `筛选：${next.filter === "all" ? "全部授权外部用户" : escapeHtml(next.tags.join("、"))}。` : "仅公司用户。"}其他测试范围不叠加。`;
-    const ok = await showConfirm("确认范围变更", `从 <strong>${target.status === "开发中" ? "尚未投放" : labels[mode(target)]}</strong> 改为 <strong>${labels[next.route]}</strong>。<br>${detail}${impact(target, next)}<br>${mode(target) === "mac" && next.route !== "mac" ? `撤销旧定向 ${oldCount} 台，立即切换时释放其 MAC 锁：${escapeHtml(trialFor(target.id).devices.map(device => device.mac).join("、") || "无")}。` : "名单及锁定一次提交。"}<br>设备已安装版本保留，不回滚；失去范围的对象不再获得本版本的新候选。${target.legacyTargeting ? `<br>存量限制保留：${escapeHtml(target.targetValues.join("、"))}。` : ""}`, "确认生效");
+    const rangeLabel = route => labels[route].replace("指定 MAC", "指定MAC");
+    const previous = target.status === "开发中" ? "尚未投放" : rangeLabel(mode(target));
+    const subject = target.id.startsWith("vv") ? "虚拟版本" : "固件";
+    const ok = await showConfirm("确认范围变更", `${subject}生效范围从${previous}改为${rangeLabel(next.route)}。`, "确认生效");
     if (!ok) return;
     const result = apply(targetById(next.id), next);
     if (result) { showError(result); return; }
@@ -493,6 +479,7 @@
     { id: "scope-legacy", title: "历史限制保留", body: "说明：存量指定对象仍是附加条件，范围编辑不清空名单。交互：保留原限制编辑能力。100%：仅指符合区域及存量对象限制的设备全面开放。", loc: "设置范围 > 存量发布限制" }
   ];
   notes.scopeImport = [{ id: "scope-import", title: "MAC 导入与原子迁移", body: "交互：只导入 MAC，目标由版本上下文确定；可迁移冲突默认未选，可全选或清空。校验：旧目标定时、资格失效、路径不符、缺失迁移版本、降级、格式或重复阻断。加入草稿后须确认范围才实际写入，失败整批零写入。", loc: "指定 MAC > 批量导入" }];
+  notes.scopeConfig.push({ id: "scope-summary", title: "简洁确认文案", body: "范围变更弹窗只显示原范围和新范围，例如：固件生效范围从尚未投放改为指定MAC。数量、候选及版本解释不放入确认正文；配置页和批注承接规则说明。确认后仍重新校验并原子提交，取消或失败均不生效。", loc: "设置范围 > 确认范围变更" });
   notes.scopeConfig.push({ id: "scope-fields", title: "定向设备清单与迁移入口", body: "字段：只展示 MAC／已有用户及移出；不展示版本或状态。迁移：在目标版本导入 MAC 后校验旧归属，逐台或批量确认迁移，不提供切换固件按钮。校验仍使用真实版本、授权、硬件和路径。App 基线支持≥／=／≤且含边界，清单选填只收窄。", loc: "指定 MAC > 定向设备清单" });
   notes.product[0].body = "沿用可控发布产品详情事实页面；固件和虚拟版本五状态、互斥测试范围与正式发布区域子集使用设置范围统一配置。产品区域内测仍只控制产品可见性。";
   versionStatusTips.firmware = [["开发中", "尚未投放，可直接选择测试或正式范围。"], ["测试中", "公司用户、MAC、外部授权白名单仅一路由生效，可互相切换。"], ["发布中", "按当前正式区域子集自动开放；暂停是执行标记。"], ["已发布", "配置正式范围内100%开放，不表示所有设备完成升级。"], ["已停止", "生命周期终止，不提供新候选，不可恢复。"]];
