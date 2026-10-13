@@ -87,7 +87,12 @@
     return "";
   }
   function retainInstalled(target) {
-    (trialFor(target.id)?.devices || []).forEach(device => heldDevices.set(device.mac, { ...clone(device), targetId: target.id, frozenApps: clone(device.frozenApps || trialFor(target.id).apps), baseline: { appRule: target.appRule, appVersion: target.appVersion } }));
+    (trialFor(target.id)?.devices || []).forEach(device => {
+      if (!heldDevices.get(device.mac)?.authorizationFrozen) heldDevices.set(device.mac, frozenDevice(target, device));
+    });
+  }
+  function frozenDevice(target, device) {
+    return { ...clone(device), targetId: target.id, frozenApps: clone(device.frozenApps || trialFor(target.id)?.apps || []), baseline: { appRule: target.appRule, appVersion: target.appVersion }, authorizationFrozen: device.authorization === "已失效" };
   }
   function apply(target, next) {
     const error = errorFor(target, next);
@@ -109,7 +114,9 @@
     }
     if (next.route === "mac") {
       const keep = new Set(next.trial.devices.map(device => device.mac));
-      (trialFor(target.id)?.devices || []).filter(device => !keep.has(device.mac)).forEach(device => heldDevices.set(device.mac, clone(device)));
+      (trialFor(target.id)?.devices || []).filter(device => !keep.has(device.mac)).forEach(device => {
+        if (!heldDevices.get(device.mac)?.authorizationFrozen) heldDevices.set(device.mac, frozenDevice(target, device));
+      });
       next.migrations.forEach(migration => {
         const source = targetById(migration.source);
         directedTrials[source.id].devices = directedTrials[source.id].devices.filter(device => device.mac !== migration.mac);
@@ -374,7 +381,15 @@
     const target = id && targetById(id);
     const device = id && trialFor(id).devices.find(row => row.mac === request.mac);
     const lostAuth = request.userType === "外部用户" && (!request.authorized || device?.authorization === "已失效");
-    if (lostAuth && !listed) return { status: "HOLD_CURRENT_VERSION", reason: "资格失效且产品未公开；保持当时可用组合" };
+    let frozen = heldDevices.get(request.mac);
+    if (lostAuth && target && !frozen?.authorizationFrozen) {
+      frozen = { ...frozenDevice(target, device), authorizationFrozen: true };
+      heldDevices.set(request.mac, frozen);
+    }
+    const frozenControl = frozen?.authorizationFrozen ? !directedAppAllowed(request.app, frozen.baseline, { apps: frozen.frozenApps }) : false;
+    if (lostAuth && !listed) return { status: "HOLD_CURRENT_VERSION", reason: "资格失效且产品未公开；保持当时可用组合", controlBlocked: frozenControl };
+    if (lostAuth && target && frozen?.targetId !== target.id) return { status: "HOLD_CURRENT_VERSION", reason: "仍有其他有效定向目标，保留锁；资格失效不回落普通候选", controlBlocked: frozenControl };
+    if (!lostAuth && frozen?.authorizationFrozen && device?.authorization === "有效") heldDevices.delete(request.mac);
     if (!visible) return { status: "HOLD_CURRENT_VERSION", reason: "产品在当前区域对用户不可见" };
     if (target && !lostAuth) {
       const trial = trialFor(id);
@@ -432,9 +447,25 @@
     $("#directedDemoDevice").innerHTML = macs.map(mac => `<option ${mac === state.directedDemoMac ? "selected" : ""}>${mac}</option>`).join("");
     const selector = $("#directedDemoDevice");
     if (!state.directedDemoMac) state.directedDemoMac = selector.value;
-    selector.onchange = () => { state.directedDemoMac = selector.value; };
     $("#directedDemoActions").innerHTML = `<div class="field"><label>用户身份</label><select id="scopeDemoType"><option>公司用户</option><option selected>外部用户</option></select></div><div class="field"><label>APP 版本</label><input id="scopeDemoApp" value="2.2.12"></div><div class="check-row"><label><input type="checkbox" id="scopeDemoAuthorized" checked> 当前产品授权有效</label></div><button class="btn" id="scopeDemoQuery">查询单 MCU 候选</button><button class="btn" id="scopeDemoVirtual">查询虚拟候选</button><button class="btn" id="scopeDemoFailure">下次提交失败</button><button class="btn" id="scopeDemoDue">模拟定时到点</button><button class="btn" id="scopeDemoDown">产品区域下架</button><button class="btn" id="scopeDemoUp">产品区域重新上架</button><button class="btn" id="scopeDemoOta">模拟该设备完成 OTA</button><div class="notice" id="scopeDemoResult">演示操作仅位于批注栏，不属于平台产品交互。</div>`;
     const query = path => { const result = resolve({ mac: selector.value, path, userType: $("#scopeDemoType").value, authorized: $("#scopeDemoAuthorized").checked, app: $("#scopeDemoApp").value, tags: ["Seed NA 2026Q2"], region: "北美数据中心" }); $("#scopeDemoResult").textContent = `${result.status} · ${result.reason}`; };
+    const selected = () => {
+      const id = activeDirectedIds().find(key => trialFor(key).devices.some(device => device.mac === selector.value));
+      return id ? { target: targetById(id), device: trialFor(id).devices.find(row => row.mac === selector.value) } : null;
+    };
+    const syncAuthorization = () => { $("#scopeDemoAuthorized").checked = selected()?.device.authorization !== "已失效"; };
+    selector.onchange = () => { state.directedDemoMac = selector.value; syncAuthorization(); };
+    syncAuthorization();
+    $("#scopeDemoAuthorized").onchange = () => {
+      const row = selected();
+      if (row) {
+        if (!$("#scopeDemoAuthorized").checked && !heldDevices.get(selector.value)?.authorizationFrozen) heldDevices.set(selector.value, { ...frozenDevice(row.target, row.device), authorizationFrozen: true });
+        row.device.authorization = $("#scopeDemoAuthorized").checked ? "有效" : "已失效";
+        if ($("#scopeDemoAuthorized").checked) heldDevices.delete(selector.value);
+        row.target.scopeRevision++;
+      }
+      $("#scopeDemoResult").textContent = $("#scopeDemoAuthorized").checked ? "授权已恢复；按当前范围及 App 规则重新校验。" : "授权已失效；保持当时可用组合，不再获得测试更新。";
+    };
     $("#scopeDemoQuery").onclick = () => query("单 MCU");
     $("#scopeDemoVirtual").onclick = () => query("虚拟版本");
     $("#scopeDemoFailure").onclick = () => { failure = "submit"; $("#scopeDemoResult").textContent = "下一次范围提交失败，校验后确认可见旧规则保留。"; };
@@ -467,7 +498,7 @@
       trial.apps = trial.apps.map(normalizedAppVersion);
       trial.devices.forEach(device => { if (device.frozenApps) device.frozenApps = device.frozenApps.map(normalizedAppVersion); });
     }
-    (trial?.devices || []).filter(device => device.authorization === "已失效").forEach(device => heldDevices.set(device.mac, clone(device)));
+    (trial?.devices || []).filter(device => device.authorization === "已失效").forEach(device => heldDevices.set(device.mac, frozenDevice(target, device)));
   });
   notes.firmware = [
     { id: "firmware-state", title: "五状态与三个行操作", body: "说明：主状态只正向流转，暂停使用执行标记。交互：设置范围、停止、删除；开发中先向公司用户开放。测试范围互转不改变测试中状态。异常：停止不可恢复；删除引用组件前阻断。", loc: "固件配置 > 版本列表" },
