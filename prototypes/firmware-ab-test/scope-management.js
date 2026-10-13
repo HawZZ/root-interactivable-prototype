@@ -48,9 +48,18 @@
     if (!Object.keys(labels).includes(route)) return false;
     return ["开发中", "测试中"].includes(target.status) ? true : ["发布中", "已发布"].includes(target.status) ? route === "public" : false;
   }
+  function eligibleExternalUsers() {
+    return whitelistUsers.filter(user => user.type === "外部用户" && user.products.includes(products[state.product].name));
+  }
+  function callerUser(request) {
+    const identity = request.userId || request.user || request.account;
+    return identity ? whitelistUsers.find(user => [user.id, user.email, user.phone].includes(identity)) : null;
+  }
   function makeDraft(target) {
     const route = target.status === "开发中" && scheduledReleasePending(target) ? "public" : mode(target);
-    return { id: target.id, route, original: fingerprint(target), trial: clone(trialFor(target.id) || { label: target.version, apps: [], status: "运行中", devices: [] }), tags: clone(target.whitelistTags || []), filter: target.whitelistFilter || "all", migrations: [], release: clone(target.releaseConfig || { mode: "自动发布", range: [], batchDays: "5", upgradeMode: "提示升级", effectiveAt: "立即生效", time: "" }) };
+    const legacyTags = target.whitelistFilter === "tags";
+    const userIds = legacyTags ? eligibleExternalUsers().filter(user => user.tags.some(tag => (target.whitelistTags || []).includes(tag))).map(user => user.id) : target.whitelistUserIds || [];
+    return { id: target.id, route, original: fingerprint(target), trial: clone(trialFor(target.id) || { label: target.version, apps: [], status: "运行中", devices: [] }), filter: legacyTags ? "specified" : target.whitelistFilter || "all", userIds: clone(userIds), userTag: "", userSearch: "", migrations: [], release: clone(target.releaseConfig || { mode: "自动发布", range: [], batchDays: "5", upgradeMode: "提示升级", effectiveAt: "立即生效", time: "" }) };
   }
   function errorFor(target, next) {
     if (!target || !canRoute(target, next.route)) return "当前生命周期不允许该范围。";
@@ -77,7 +86,14 @@
         if (device.authorization !== "已失效" && device.current && compareVersion(device.current, target.version) > 0) return "当前版本高于目标，禁止降级。";
       }
     }
-    if (next.route === "whitelist" && next.filter === "tags" && !next.tags.length) return "请选择至少一个白名单标签组。";
+    if (next.route === "whitelist") {
+      if (!["all", "specified"].includes(next.filter)) return "请选择全部或指定已授权外部用户。";
+      if (next.filter === "specified") {
+        if (!next.userIds.length) return "请勾选至少一名已授权当前产品的外部用户。";
+        const eligible = new Set(eligibleExternalUsers().map(user => user.id));
+        if (next.userIds.some(id => !eligible.has(id))) return "已选用户的当前产品授权或用户类型已变化，请清除无效选择后重新提交。";
+      }
+    }
     if (next.route === "public") {
       if (!next.release.range.length || next.release.range.some(region => !publicRegions().includes(region))) return "正式范围须为当前产品公开上架范围的非空子集。";
       if (next.release.mode === "自动发布" && !/^[1-9]\d*$/.test(next.release.batchDays)) return "自动发布天数须为正整数。";
@@ -131,7 +147,8 @@
     target.whitelistOpenedAt = null;
     if (next.route === "whitelist") {
       target.whitelistFilter = next.filter;
-      target.whitelistTags = clone(next.tags);
+      target.whitelistUserIds = next.filter === "specified" ? [...new Set(next.userIds)] : [];
+      delete target.whitelistTags;
     }
     if (next.route === "public") {
       const wasPublic = ["发布中", "已发布"].includes(target.status);
@@ -154,8 +171,8 @@
   function testBody(target) {
     if (draft.route === "company") return `<div id="scope-fields" class="notice">公司用户内部测试。${target.status === "开发中" ? "确认生效后进入测试中。" : "仅公司用户获得该版本的新 OTA 候选。"}</div>`;
     if (draft.route === "whitelist") {
-      const tags = [...new Set(whitelistUsers.filter(user => user.type === "外部用户").flatMap(user => user.tags))];
-      return `<div id="scope-fields"><div class="field"><label>外部授权用户范围</label><select id="scopeWhitelistFilter"><option value="all" ${draft.filter === "all" ? "selected" : ""}>全部授权外部用户</option><option value="tags" ${draft.filter === "tags" ? "selected" : ""}>按标签组筛选</option></select></div>${draft.filter === "tags" ? `<div class="field"><label>白名单标签组</label><div class="check-row">${tags.map(tag => `<label><input type="checkbox" data-scope-tag="${escapeAttr(tag)}" ${draft.tags.includes(tag) ? "checked" : ""}> ${escapeHtml(tag)}</label>`).join("")}</div></div>` : ""}<div class="hint">实际使用时校验当前产品授权；标签组仅筛选用户，公司用户范围不叠加。</div></div>`;
+      const tags = [...new Set(eligibleExternalUsers().flatMap(user => user.tags))];
+      return `<div id="scope-fields"><div class="field"><label>外部授权用户范围</label><select id="scopeWhitelistFilter"><option value="all" ${draft.filter === "all" ? "selected" : ""}>全部已授权外部用户</option><option value="specified" ${draft.filter === "specified" ? "selected" : ""}>指定已授权外部用户</option></select></div>${draft.filter === "specified" ? `<div class="form-grid"><div class="field"><label>白名单标签组</label><select id="scopeUserTag"><option value="">全部标签组</option>${tags.map(tag => `<option value="${escapeAttr(tag)}" ${draft.userTag === tag ? "selected" : ""}>${escapeHtml(tag)}</option>`).join("")}</select></div><div class="field"><label>账号搜索</label><input id="scopeUserSearch" value="${escapeAttr(draft.userSearch)}" placeholder="搜索邮箱或手机号"></div></div><div id="scopeUserList"></div>` : ""}<div class="hint">仅当前产品已授权的白名单外部用户；标签组和搜索只筛选勾选列表，生效范围按已选用户保存。</div></div>`;
     }
     const trial = draft.trial;
     return `<div id="scope-fields"><div class="form-grid"><div class="field"><label>体验标识</label><input id="scopeLabel" value="${escapeAttr(trial.label)}"></div><div class="field"><label>APP 版本范围（选填）</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">留空沿用兼容基线；多个版本用半角逗号分隔，填写版本必须符合 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)}。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备，MAC 范围保持，不自动回到公司用户。</td></tr>`}</tbody></table></div></div>`;
@@ -172,7 +189,6 @@
       if ($("#scopeApps")) draft.trial.apps = $("#scopeApps").value.split(",").map(app => app.trim()).filter(Boolean);
     } else if (draft.route === "whitelist") {
       draft.filter = $("#scopeWhitelistFilter")?.value || draft.filter;
-      if (draft.filter === "tags") draft.tags = $$('[data-scope-tag]:checked').map(input => input.dataset.scopeTag);
     } else if (draft.route === "public") {
       if ($("#scopeReleaseMode")) draft.release.mode = $("#scopeReleaseMode").value;
       if ($("#scopeDays")) draft.release.batchDays = $("#scopeDays").value;
@@ -205,6 +221,9 @@
       draw();
     });
     $("#scopeWhitelistFilter")?.addEventListener("change", () => { readFields(); draw(); });
+    $("#scopeUserTag")?.addEventListener("change", event => { draft.userTag = event.target.value; renderWhitelistUsers(); });
+    $("#scopeUserSearch")?.addEventListener("input", event => { draft.userSearch = event.target.value; renderWhitelistUsers(); });
+    renderWhitelistUsers();
     ["scopeReleaseMode", "scopeEffective"].forEach(id => $(`#${id}`)?.addEventListener("change", () => { readFields(); draw(); }));
     $("#scopeImport")?.addEventListener("click", () => { readFields(); openImport(); });
     $("#scopePauseMac")?.addEventListener("click", () => { readFields(); draft.trial.status = draft.trial.status === "已暂停" ? "运行中" : "已暂停"; draw(); });
@@ -221,9 +240,35 @@
     });
   }
   function showError(message) {
+    renderWhitelistUsers();
     const node = $("#scopeError");
     if (node) { node.textContent = message; node.classList.remove("hide"); }
     showToast(message);
+  }
+  function renderWhitelistUsers() {
+    const container = $("#scopeUserList");
+    if (!container || !draft || draft.route !== "whitelist" || draft.filter !== "specified") return;
+    const eligible = eligibleExternalUsers();
+    const eligibleIds = new Set(eligible.map(user => user.id));
+    const query = draft.userSearch.trim().toLowerCase();
+    const visible = eligible.filter(user => (!draft.userTag || user.tags.includes(draft.userTag)) && (!query || [user.email, user.phone].some(value => value && value.toLowerCase().includes(query))));
+    const selected = new Set(draft.userIds);
+    const invalid = draft.userIds.filter(id => !eligibleIds.has(id));
+    container.innerHTML = `<div class="subsection-head"><span>已选 ${selected.size} 人 · 当前筛选 ${visible.length} 人</span></div>${invalid.length ? `<div class="notice warning">${invalid.length} 名已选用户已不具备当前产品授权或外部身份。<button class="btn" id="scopeClearInvalidUsers">清除无效选择</button></div>` : ""}<div class="scope-user-table"><table><thead><tr><th><input type="checkbox" id="scopeSelectFiltered" aria-label="全选当前筛选结果" ${!visible.length ? "disabled" : ""}></th><th>用户账号</th><th>标签组</th><th>数据中心</th></tr></thead><tbody>${visible.map(user => `<tr><td><input type="checkbox" data-scope-user="${escapeAttr(user.id)}" aria-label="选择 ${escapeAttr(user.email || user.phone)}" ${selected.has(user.id) ? "checked" : ""}></td><td>${escapeHtml(user.email || user.phone)}</td><td>${escapeHtml(user.tags.join("、") || "--")}</td><td>${escapeHtml(user.dc)}</td></tr>`).join("") || `<tr><td colspan="4">暂无符合筛选条件的已授权外部用户</td></tr>`}</tbody></table></div>`;
+    const all = $("#scopeSelectFiltered");
+    const picked = visible.filter(user => selected.has(user.id)).length;
+    all.checked = visible.length > 0 && picked === visible.length;
+    all.indeterminate = picked > 0 && picked < visible.length;
+    const selectionUpdated = () => { draft.userIds = [...selected]; $("#scopeError")?.classList.add("hide"); renderWhitelistUsers(); };
+    all.onchange = () => {
+      visible.forEach(user => all.checked ? selected.add(user.id) : selected.delete(user.id));
+      selectionUpdated();
+    };
+    $$('[data-scope-user]').forEach(input => input.onchange = () => {
+      input.checked ? selected.add(input.dataset.scopeUser) : selected.delete(input.dataset.scopeUser);
+      selectionUpdated();
+    });
+    $("#scopeClearInvalidUsers")?.addEventListener("click", () => { invalid.forEach(id => selected.delete(id)); selectionUpdated(); });
   }
   async function save() {
     readFields();
@@ -336,7 +381,9 @@
     if (target.status !== "测试中") return false;
     if (mode(target) === "company") return request.userType === "公司用户";
     if (mode(target) !== "whitelist" || request.userType !== "外部用户" || !request.authorized) return false;
-    return target.whitelistFilter !== "tags" || (request.tags || []).some(tag => (target.whitelistTags || []).includes(tag));
+    const user = callerUser(request);
+    if (!user || user.type !== "外部用户" || !user.products.includes(products[state.product].name)) return false;
+    return target.whitelistFilter !== "specified" || (target.whitelistUserIds || []).includes(user.id);
   }
   function resolve(request) {
     const product = products[state.product];
@@ -385,7 +432,7 @@
     if (target.status === "开发中") return "尚未投放";
     if (target.status === "已停止") return "已停止投放";
     if (mode(target) === "mac") return `指定 MAC · ${trialFor(target.id)?.devices.length || 0} 台${trialFor(target.id)?.status === "已暂停" ? " · 已暂停" : ""}`;
-    if (mode(target) === "whitelist") return `外部授权白名单${target.whitelistFilter === "tags" ? ` · ${(target.whitelistTags || []).join("、")}` : " · 全部"}`;
+    if (mode(target) === "whitelist") return `外部授权白名单${target.whitelistFilter === "specified" ? ` · 指定 ${(target.whitelistUserIds || []).length} 人` : " · 全部已授权"}`;
     if (mode(target) === "public") return target.releaseConfig?.range.length ? target.releaseConfig.range.join("、") : "无有效发布范围";
     return "公司用户";
   }
@@ -414,8 +461,8 @@
     $("#directedDemoDevice").innerHTML = macs.map(mac => `<option ${mac === state.directedDemoMac ? "selected" : ""}>${mac}</option>`).join("");
     const selector = $("#directedDemoDevice");
     if (!state.directedDemoMac) state.directedDemoMac = selector.value;
-    $("#directedDemoActions").innerHTML = `<div class="field"><label>用户身份</label><select id="scopeDemoType"><option>公司用户</option><option selected>外部用户</option></select></div><div class="field"><label>APP 版本</label><input id="scopeDemoApp" value="2.2.12"></div><div class="check-row"><label><input type="checkbox" id="scopeDemoAuthorized" checked> 当前产品授权有效</label></div><button class="btn" id="scopeDemoQuery">查询单 MCU 候选</button><button class="btn" id="scopeDemoVirtual">查询虚拟候选</button><button class="btn" id="scopeDemoFailure">下次提交失败</button><button class="btn" id="scopeDemoDue">模拟定时到点</button><button class="btn" id="scopeDemoDown">产品区域下架</button><button class="btn" id="scopeDemoUp">产品区域重新上架</button><button class="btn" id="scopeDemoOta">模拟该设备完成 OTA</button><div class="notice" id="scopeDemoResult">演示操作仅位于批注栏，不属于平台产品交互。</div>`;
-    const query = path => { const result = resolve({ mac: selector.value, path, userType: $("#scopeDemoType").value, authorized: $("#scopeDemoAuthorized").checked, app: $("#scopeDemoApp").value, tags: ["Seed NA 2026Q2"], region: "北美数据中心" }); $("#scopeDemoResult").textContent = `${result.status} · ${result.reason}`; };
+    $("#directedDemoActions").innerHTML = `<div class="field"><label>用户身份</label><select id="scopeDemoType"><option>公司用户</option><option selected>外部用户</option></select></div><div class="field"><label>APP 版本</label><input id="scopeDemoApp" value="2.2.12"></div><div class="field"><label>外部用户账号</label><select id="scopeDemoUser">${whitelistUsers.filter(user => user.type === "外部用户").map(user => `<option value="${escapeAttr(user.id)}">${escapeHtml(user.email || user.phone)}</option>`).join("")}</select></div><div class="check-row"><label><input type="checkbox" id="scopeDemoAuthorized" checked> 当前产品授权有效</label></div><button class="btn" id="scopeDemoQuery">查询单 MCU 候选</button><button class="btn" id="scopeDemoVirtual">查询虚拟候选</button><button class="btn" id="scopeDemoFailure">下次提交失败</button><button class="btn" id="scopeDemoDue">模拟定时到点</button><button class="btn" id="scopeDemoDown">产品区域下架</button><button class="btn" id="scopeDemoUp">产品区域重新上架</button><button class="btn" id="scopeDemoOta">模拟该设备完成 OTA</button><div class="notice" id="scopeDemoResult">演示操作仅位于批注栏，不属于平台产品交互。</div>`;
+    const query = path => { const company = $("#scopeDemoType").value === "公司用户"; const user = whitelistUsers.find(row => row.id === $("#scopeDemoUser").value); const result = resolve({ mac: selector.value, path, userType: $("#scopeDemoType").value, userId: company ? "u3" : user?.id, authorized: $("#scopeDemoAuthorized").checked && (company || user?.products.includes(products[state.product].name)), app: $("#scopeDemoApp").value, region: company ? "北美数据中心" : user?.dc }); $("#scopeDemoResult").textContent = `${result.status} · ${result.reason}`; };
     const selected = () => {
       const id = activeDirectedIds().find(key => trialFor(key).devices.some(device => device.mac === selector.value));
       return id ? { target: targetById(id), device: trialFor(id).devices.find(row => row.mac === selector.value) } : null;
@@ -456,7 +503,14 @@
   allFirmwareTargets().forEach(target => {
     if (target.status === "暂停发布") { target.status = "发布中"; target.releasePaused = true; }
     target.scopeMode = mode(target); target.scopeRevision = 1;
-    if (target.scopeMode === "whitelist") { target.whitelistFilter = "all"; target.whitelistTags = []; }
+    if (target.scopeMode === "whitelist") {
+      if (target.whitelistFilter === "tags") {
+        target.whitelistUserIds = eligibleExternalUsers().filter(user => user.tags.some(tag => (target.whitelistTags || []).includes(tag))).map(user => user.id);
+        target.whitelistFilter = "specified";
+      } else target.whitelistFilter = target.whitelistFilter || "all";
+      target.whitelistUserIds = target.whitelistUserIds || [];
+      delete target.whitelistTags;
+    }
     if (target.scopeMode === "public") {
       target.releaseConfig = { mode: target.status === "已发布" ? "全面发布" : "自动发布", range: clone(publicRegions()), batchDays: "5", upgradeMode: target.status === "已发布" ? "强制升级" : "提示升级", effectiveAt: "已生效", time: "", startedAt: Date.now() - 2 * day, coverage: target.status === "已发布" ? 100 : 60 };
     }
@@ -473,7 +527,7 @@
   ];
   notes.scopeConfig = [
     { id: "scope-summary", title: "当前范围与待提交配置", body: "说明：显示当前状态和唯一生效范围。交互：输入仅修改草稿，取消不生效。异常：校验、并发或提交失败均保留旧范围、状态和锁。", loc: "设置范围 > 版本信息" },
-    { id: "scope-route", title: "测试三路由互斥切换", body: "交互：开发中可直接任选四路由；选择前三路由生效进入测试中，后续互相切换且可收窄。状态：MAC/白名单不叠加公司范围；发布后仅所有用户可达；名单空不回退。数据来源：白名单标签只筛选，外部产品授权实际使用时校验。", loc: "设置范围 > 可见范围" },
+    { id: "scope-route", title: "测试三路由互斥切换", body: "交互：开发中可直接任选四路由；选择前三路由生效进入测试中，后续互相切换且可收窄。状态：MAC/白名单不叠加公司范围；发布后仅所有用户可达；名单空不回退。数据来源：指定用户按已授权外部用户ID名单保存；标签组／账号只筛勾选列表，全选当前结果、跨筛选保留，产品授权实际使用时校验。", loc: "设置范围 > 可见范围" },
     { id: "scope-fields", title: "范围字段与正式区域子集", body: "交互：MAC-only 导入、默认不迁移冲突、整批确认；App 留空继承基线。正式范围：当前公开上架范围非空子集，发布中新增沿用进度，已发布新增全面开放。暂停编辑仍暂停；产品下架撤销范围，重新上架须显式选择。", loc: "设置范围 > 路由配置" },
     { id: "scope-scheduled", title: "定时计划与并发", body: "交互：等待期间修改测试配置先取消计划。取消只撤销计划，锁和暂停保持；到点复核失败不发布。异常：取消、到点、终止只有一次成功提交。默认：发布开始后不重设天数及时间。", loc: "设置范围 > 定时发布" },
     { id: "scope-legacy", title: "历史限制保留", body: "说明：存量指定对象仍是附加条件，范围编辑不清空名单。交互：保留原限制编辑能力。100%：仅指符合区域及存量对象限制的设备全面开放。", loc: "设置范围 > 存量发布限制" }
