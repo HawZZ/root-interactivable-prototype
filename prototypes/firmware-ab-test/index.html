@@ -425,6 +425,9 @@
       }
       .gate-arrow, .relation-arrow { transform: rotate(90deg); }
     }
+    #scope-fields .trial-device-table table { min-width: 0; table-layout: fixed; }
+    #scope-fields .trial-device-table th:last-child,
+    #scope-fields .trial-device-table td:last-child { width: 84px; }
     .hide { display: none !important; }
   </style>
 </head>
@@ -1248,7 +1251,7 @@
         { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
         { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后进入开发中，首次设置公司用户范围进入测试；后续通过设置范围确认投放。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
         { id: "drawer-firmware-version-add", title: "固件文件命名校验", body: "固件文件支持 .ufw、.zip、.bin。文件名规则为：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期]，例如 Lute_M9_3.08_10_aabb_20240401.ufw；固件版本可为纯数字或点分数字。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
-        { id: "ota-version-name", title: "APP 兼容范围", body: "版本兼容基线在测试与正式发布中始终生效，支持版本不低于、版本等于。指定 MAC 的选填 App 清单只能收窄该基线；留空继承。测试范围由设置范围明确选择，不因产品授权自动叠加。", loc: "固件配置 > 新建固件版本 > APP版本号" },
+        { id: "ota-version-name", title: "APP 兼容范围", body: "版本兼容基线在测试与正式发布中始终生效，支持版本不低于（≥）、版本等于（=）、版本不高于（≤），均包含所填版本。指定 MAC 的选填 App 清单只能收窄该基线；留空继承。测试范围由设置范围明确选择，不因产品授权自动叠加。", loc: "固件配置 > 新建固件版本 > APP版本号" },
         { id: "firmware-version-add", title: "保存后进入开发中", body: "固件仅开发中、测试中、发布中、已发布、已停止五个主状态；只正向流转。发布暂停是执行标记，主状态保持发布中；列表统一设置范围、停止、删除。", loc: "产品详情 > 固件配置 > 固件版本" }
       ],
       authList: [
@@ -2160,7 +2163,7 @@
           </div>
           <div class="field app-version-field" data-note-anchor="ota-version-name">
             <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareAddAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
-            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div>
+            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option><option >版本不高于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div>
             <div class="app-version-popover" id="firmwareAddAppVersionPopover">
               <p>平台用户可在 App 的"关于"页面查看当前版本号。</p>
               <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
@@ -2188,7 +2191,7 @@
           <div class="field"><label>功能版本</label>${editable ? `<select id="firmwareEditFunctionVersion"><option ${item.functionVersion === "全部" ? "selected" : ""}>全部</option><option ${item.functionVersion === "版本1 - 已发布" ? "selected" : ""}>版本1 - 已发布</option><option ${item.functionVersion === "版本2 - 开发中" ? "selected" : ""}>版本2 - 开发中</option></select>` : `<div class="readonly value-only">${item.functionVersion}</div>`}</div>
           <div class="field app-version-field" data-note-anchor="ota-version-name">
             <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareEditAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
-            ${editable ? `<div class="version-rule"><select id="firmwareEditAppRule"><option ${(item.appRule || "版本不低于") === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${item.appRule === "版本等于" ? "selected" : ""}>版本等于</option></select><input id="firmwareEditAppVersion" value="${item.appVersion || "v 2.2.10"}"></div>` : `<div class="readonly value-only">${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</div>`}
+            ${editable ? `<div class="version-rule"><select id="firmwareEditAppRule"><option ${(item.appRule || "版本不低于") === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${item.appRule === "版本等于" ? "selected" : ""}>版本等于</option><option ${item.appRule === "版本不高于" ? "selected" : ""}>版本不高于</option></select><input id="firmwareEditAppVersion" value="${item.appVersion || "v 2.2.10"}"></div>` : `<div class="readonly value-only">${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</div>`}
             <div class="app-version-popover" id="firmwareEditAppVersionPopover">
               <p>平台用户可在 App 的"关于"页面查看当前版本号。</p>
               <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
@@ -2715,7 +2718,7 @@
       if (!vv) return `<div class="notice warning">未找到需要编辑的虚拟版本。</div>`;
       return `<div id="drawer-virtual-version-edit" data-note-anchor="drawer-virtual-version-edit">
         <div class="notice">正在编辑虚拟版本 <strong>${vv.version}</strong>。仅开发中可修改虚拟版本级 APP 条件和关联 MCU；请至少关联 1 个 MCU，“通道号 + 硬件版本”不可重复。</div>
-        <div class="form-grid"><div class="field"><label>虚拟版本号</label><div class="readonly">${vv.version}<span class="hint">版本号创建后不可修改。</span></div></div><div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualEditAppRule"><option ${vv.appRule === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${vv.appRule === "版本等于" ? "selected" : ""}>版本等于</option></select><input id="virtualEditAppVersion" value="${escapeAttr(vv.appVersion)}" placeholder="例如 v 2.2.10"></div><span class="hint">独立维护，不继承组件固件；保存后立即作为虚拟版本命中条件。</span></div></div>
+        <div class="form-grid"><div class="field"><label>虚拟版本号</label><div class="readonly">${vv.version}<span class="hint">版本号创建后不可修改。</span></div></div><div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualEditAppRule"><option ${vv.appRule === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${vv.appRule === "版本等于" ? "selected" : ""}>版本等于</option><option ${vv.appRule === "版本不高于" ? "selected" : ""}>版本不高于</option></select><input id="virtualEditAppVersion" value="${escapeAttr(vv.appVersion)}" placeholder="例如 v 2.2.10"></div><span class="hint">独立维护，不继承组件固件；保存后立即作为虚拟版本命中条件。</span></div></div>
         <div class="summary-grid"><div class="summary-item"><span class="summary-label">当前状态</span><span class="summary-value"><span class="tag ${firmwareStatusClass(vv.status)}">${vv.status}</span></span></div><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">编辑边界</span><span class="summary-value">进入测试前</span></div></div>
         ${virtualAssociationPickerHtml()}
         <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
@@ -2728,7 +2731,7 @@
         <div class="notice">虚拟版本以自身的 APP 条件作为命中前置过滤，不继承所关联 MCU 的 APP 条件。请至少关联 1 个可用 MCU；“通道号 + 硬件版本”不可重复，无需覆盖全部通道。</div>
         <div class="form-grid">
           <div class="field"><label><span class="required">*</span>虚拟版本号</label><input id="virtualVersionNo" placeholder="例如 2.2.0"><span class="hint">产品内唯一，格式为 x.y.z。</span></div>
-          <div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualVersionAppRule"><option>版本不低于</option><option>版本等于</option></select><input id="virtualVersionAppVersion" value="v 2.2.10" placeholder="例如 v 2.2.10"></div><span class="hint">用于筛选虚拟版本查询候选。</span></div>
+          <div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualVersionAppRule"><option>版本不低于</option><option>版本等于</option><option >版本不高于</option></select><input id="virtualVersionAppVersion" value="v 2.2.10" placeholder="例如 v 2.2.10"></div><span class="hint">用于筛选虚拟版本查询候选。</span></div>
         </div>
         <div class="summary-grid"><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">创建后状态</span><span class="summary-value"><span class="tag gray">开发中</span></span></div></div>
         ${virtualAssociationPickerHtml()}
@@ -4263,8 +4266,7 @@
       return String(value || "0").match(/\d+(?:\.\d+)*/)?.[0] || "0";
     }
     function virtualAppRuleMatches(version, appVersion) {
-      const compared = compareVersion(normalizedAppVersion(appVersion), normalizedAppVersion(version.appVersion));
-      return version.appRule === "版本等于" ? compared === 0 : compared >= 0;
+      return experienceAppMatchesFirmware(appVersion, version);
     }
     function virtualStopVacuumImpact(target) {
       const referenceAppVersion = normalizedAppVersion(target.appVersion);
@@ -4319,7 +4321,9 @@
     function directedNow() { return new Date().toLocaleString("zh-CN", { hour12: false }); }
     function experienceAppMatchesFirmware(appVersion, firmware) {
       const compared = compareVersion(normalizedAppVersion(appVersion), normalizedAppVersion(firmware.appVersion));
-      return firmware.appRule === "版本等于" ? compared === 0 : compared >= 0;
+      if (firmware.appRule === "版本等于") return compared === 0;
+      if (firmware.appRule === "版本不高于") return compared <= 0;
+      return compared >= 0;
     }
     function directedAppAllowed(appVersion, target, trial) {
       if (!experienceAppMatchesFirmware(appVersion, target)) return false;

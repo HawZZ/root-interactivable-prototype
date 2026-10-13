@@ -155,7 +155,7 @@
       return `<div id="scope-fields"><div class="field"><label>外部授权用户范围</label><select id="scopeWhitelistFilter"><option value="all" ${draft.filter === "all" ? "selected" : ""}>全部授权外部用户</option><option value="tags" ${draft.filter === "tags" ? "selected" : ""}>按标签组筛选</option></select></div>${draft.filter === "tags" ? `<div class="field"><label>白名单标签组</label><div class="check-row">${tags.map(tag => `<label><input type="checkbox" data-scope-tag="${escapeAttr(tag)}" ${draft.tags.includes(tag) ? "checked" : ""}> ${escapeHtml(tag)}</label>`).join("")}</div></div>` : ""}<div class="hint">实际使用时校验当前产品授权；标签组仅筛选用户，公司用户范围不叠加。</div></div>`;
     }
     const trial = draft.trial;
-    return `<div id="scope-fields"><div class="form-grid"><div class="field"><label>体验标识</label><input id="scopeLabel" value="${escapeAttr(trial.label)}"></div><div class="field"><label>APP 版本范围（选填）</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">留空沿用兼容基线；多个版本用半角逗号分隔，填写版本必须符合 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)}。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>当前版本</th><th>目标版本</th><th>状态</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td>${device.current || "待上报"}</td><td>${target.version}</td><td>${escapeHtml(trialDeviceState(device, target, trial))}</td><td class="table-actions">${device.authorization !== "已失效" ? `<button class="btn" data-scope-move="${device.mac}">切换固件</button>` : ""}<button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="5">暂无定向设备，MAC 范围保持，不自动回到公司用户。</td></tr>`}</tbody></table></div></div>`;
+    return `<div id="scope-fields"><div class="form-grid"><div class="field"><label>体验标识</label><input id="scopeLabel" value="${escapeAttr(trial.label)}"></div><div class="field"><label>APP 版本范围（选填）</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">留空沿用兼容基线；多个版本用半角逗号分隔，填写版本必须符合 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)}。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备，MAC 范围保持，不自动回到公司用户。</td></tr>`}</tbody></table></div></div>`;
   }
   function releaseBody(target) {
     const release = draft.release;
@@ -206,7 +206,6 @@
     $("#scopeImport")?.addEventListener("click", () => { readFields(); openImport(); });
     $("#scopePauseMac")?.addEventListener("click", () => { readFields(); draft.trial.status = draft.trial.status === "已暂停" ? "运行中" : "已暂停"; draw(); });
     $$('[data-scope-remove]').forEach(button => button.onclick = () => { readFields(); draft.trial.devices = draft.trial.devices.filter(device => device.mac !== button.dataset.scopeRemove); draft.migrations = draft.migrations.filter(row => row.mac !== button.dataset.scopeRemove); draw(); });
-    $$('[data-scope-move]').forEach(button => button.onclick = () => { readFields(); openMove(button.dataset.scopeMove); });
     $("#scopePauseRelease")?.addEventListener("click", () => pauseRelease(target));
     $("#scopeCancelSchedule")?.addEventListener("click", () => cancelSchedule(target));
     $("#scopeEditLegacy")?.addEventListener("click", async () => {
@@ -290,27 +289,6 @@
         if (source) draft.migrations.push({ mac: row.mac, source: source.id, original: fingerprint(source) });
       });
       draw();
-    };
-  }
-  function openMove(mac) {
-    if (JSON.stringify(draft.trial) !== JSON.stringify(trialFor(draft.id))) { showError("请先保存或取消当前名单编辑，再切换设备目标。"); return; }
-    const device = trialFor(draft.id)?.devices.find(row => row.mac === mac);
-    const options = allFirmwareTargets().filter(target => target.id !== draft.id && target.status === "测试中" && mode(target) === "mac" && !scheduledReleasePending(target) && !target.referenceReview && assetFitsTarget(directedAssetInventory[mac], target));
-    if (!options.length) { showError("没有可迁移的 MAC 范围目标；请先为目标版本设置指定 MAC 范围。"); return; }
-    const sourceId = draft.id;
-    showDirectedShell("scopeMove", "切换固件", `${mac} · 迁移会一次释放旧目标并加入新目标。`, `<div id="scope-move"><div class="field"><label>新目标</label><select id="scopeMoveTarget">${options.map(target => `<option value="${target.id}">${escapeHtml(trialLabel(target))}</option>`).join("")}</select></div><div class="notice">当前 ${escapeHtml(device.current)}；按目标路径当前版本判断降级。</div><div class="notice error hide" id="scopeError"></div></div>`, "确认切换");
-    $("#drawerSave").onclick = async () => {
-      const target = targetById($("#scopeMoveTarget").value);
-      const next = makeDraft(target);
-      const current = assetVersionForTarget(directedAssetInventory[mac], target);
-      if (!current || compareVersion(current, target.version) > 0 || device.authorization === "已失效" || scheduledReleasePending(targetById(sourceId))) { showError("当前版本、资格或定时校验失败，原目标保持。"); return; }
-      next.trial.devices.push({ ...clone(device), current });
-      next.migrations.push({ mac, source: sourceId, original: fingerprint(targetById(sourceId)) });
-      const ok = await showConfirm("确认原子迁移", `${mac}：${sourceId} → ${escapeHtml(trialLabel(target))}。保持用户绑定，需升级设备逐台 OTA。`, "确认迁移");
-      if (!ok) return;
-      const result = apply(targetById(next.id), next);
-      if (result) { showError(result); return; }
-      closeDrawer(); render();
     };
   }
   async function pauseRelease(target) {
@@ -512,7 +490,7 @@
     { id: "scope-legacy", title: "历史限制保留", body: "说明：存量指定对象仍是附加条件，范围编辑不清空名单。交互：保留原限制编辑能力。100%：仅指符合区域及存量对象限制的设备全面开放。", loc: "设置范围 > 存量发布限制" }
   ];
   notes.scopeImport = [{ id: "scope-import", title: "MAC 导入与原子迁移", body: "交互：只导入 MAC，目标由版本上下文确定；可迁移冲突默认未选，可全选或清空。校验：旧目标定时、资格失效、路径不符、缺失迁移版本、降级、格式或重复阻断。加入草稿后须确认范围才实际写入，失败整批零写入。", loc: "指定 MAC > 批量导入" }];
-  notes.scopeMove = [{ id: "scope-move", title: "单 MAC 原子切换", body: "交互：明确选择已配置 MAC 范围的新目标，确认后一次移出旧目标并加入新目标。异常：版本、资格、定时或并发校验失败时原归属完整保留。", loc: "指定 MAC > 切换固件" }];
+  notes.scopeConfig.push({ id: "scope-fields", title: "定向设备清单与迁移入口", body: "字段：只展示 MAC／已有用户及移出；不展示版本或状态。迁移：在目标版本导入 MAC 后校验旧归属，逐台或批量确认迁移，不提供切换固件按钮。校验仍使用真实版本、授权、硬件和路径。App 基线支持≥／=／≤且含边界，清单选填只收窄。", loc: "指定 MAC > 定向设备清单" });
   notes.product[0].body = "沿用可控发布产品详情事实页面；固件和虚拟版本五状态、互斥测试范围与正式发布区域子集使用设置范围统一配置。产品区域内测仍只控制产品可见性。";
   versionStatusTips.firmware = [["开发中", "尚未投放，先设置公司用户范围进入测试。"], ["测试中", "公司用户、MAC、外部授权白名单仅一路由生效，可互相切换。"], ["发布中", "按当前正式区域子集自动开放；暂停是执行标记。"], ["已发布", "配置正式范围内100%开放，不表示所有设备完成升级。"], ["已停止", "生命周期终止，不提供新候选，不可恢复。"]];
   firmwareVersionHtml = firmwareHtml;
