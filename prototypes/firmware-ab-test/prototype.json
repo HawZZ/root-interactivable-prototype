@@ -2,7 +2,7 @@
   "id": "firmware-ab-test",
   "path": "/prototypes/firmware-ab-test/",
   "title": "固件 A/B Test 原型",
-  "summary": "测试中固件投放范围、MAC 定向体验、白名单开放、正式发布与虚拟版本独立流转原型。",
+  "summary": "固件五状态正向流转、三种测试范围互斥切换、MAC 定向迁移、正式区域子集与虚拟版本独立流转原型。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",

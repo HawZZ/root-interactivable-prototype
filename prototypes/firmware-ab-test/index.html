@@ -195,6 +195,13 @@
     .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
     .form-grid.single-field { grid-template-columns: minmax(0, 1fr); }
     .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #scope-route .check-row, #scope-fields .check-row { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+    #scope-route .check-row label, #scope-fields .check-row label { display: flex; align-items: center; gap: 6px; width: auto; white-space: nowrap; }
+    #scope-route input[type="radio"], #scope-fields input[type="checkbox"] { width: 15px; height: 15px; min-height: 15px; padding: 0; flex: 0 0 15px; }
+    #scope-summary { margin-bottom: 18px; }
+    #scope-route { margin-bottom: 18px; }
+    #scope-fields .field { margin-bottom: 14px; }
+    #scope-import textarea { width: 100%; min-height: 144px; resize: vertical; }
     .form-foot { border-top: 1px solid #edf0f5; margin-top: 18px; padding-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
     .ota-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
     .ota-steps .step.done { color: #315efb; font-weight: 600; }
@@ -398,7 +405,11 @@
     .range-relation strong, .range-relation span { display: block; }
     .range-relation span { color: #6b7687; margin-top: 5px; line-height: 1.5; }
     @media (max-width: 900px) {
-      .app { width: 100vw; }
+      .app { width: 100vw; grid-template-columns: minmax(0, 1fr); }
+      .side { display: none; }
+      .page-head { flex-wrap: wrap; gap: 8px; }
+      .page-title { min-width: 0; }
+      .head-icons { margin-left: auto; }
       .note-popover { width: 100vw; }
       .drawer-mask, .modal-mask { right: 0; }
       .drawer, .drawer.wide, body.notes-closed .drawer {
@@ -1091,7 +1102,7 @@
       if (!scheduledReleasePending(item)) return "版本不在待生效状态";
       const config = item.releaseConfig;
       if (!["全面发布", "自动发布"].includes(config.mode) || !config.range?.length) return "发布方式或范围无效";
-      const allowedRegions = currentProductListingRangeOptions();
+      const allowedRegions = window.FirmwareScope ? FirmwareScope.publicRegions() : currentProductListingRangeOptions();
       if (config.range.some(region => !allowedRegions.includes(region))) return "发布范围不再属于当前产品上架范围";
       if (config.mode === "自动发布" && !/^[1-9]\d*$/.test(config.batchDays)) return "自动发布批次无效";
       if (item.legacyTargeting && item.targetMode !== "不限" && !item.targetValues?.length) return "存量指定对象名单缺失";
@@ -1235,10 +1246,10 @@
       ],
       firmwareVersionAdd: [
         { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
-        { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后固件版本默认进入开发中，后续发布从固件版本行操作流转。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
+        { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后进入开发中，首次设置公司用户范围进入测试；后续通过设置范围确认投放。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
         { id: "drawer-firmware-version-add", title: "固件文件命名校验", body: "固件文件支持 .ufw、.zip、.bin。文件名规则为：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期]，例如 Lute_M9_3.08_10_aabb_20240401.ufw；固件版本可为纯数字或点分数字。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
-        { id: "ota-version-name", title: "APP 版本号用于升级版本控制", body: "OTA 不提供独立白名单策略配置；测试中固件仍按产品白名单授权命中。APP 版本号条件用于控制固件升级适用的 App 版本，支持'版本不低于'和'版本等于'。用户可在 App > 关于 > 当前版本查看版本号。", loc: "固件配置 > 新建固件版本 > APP版本号" },
-        { id: "firmware-version-add", title: "保存后进入开发中", body: "固件版本新建后默认是开发中，属于进入分发前的准备态；测试中、发布中、暂停发布、已发布和已停止都通过固件版本行操作流转。", loc: "产品详情 > 固件配置 > 固件版本" }
+        { id: "ota-version-name", title: "APP 兼容范围", body: "版本兼容基线在测试与正式发布中始终生效，支持版本不低于、版本等于。指定 MAC 的选填 App 清单只能收窄该基线；留空继承。测试范围由设置范围明确选择，不因产品授权自动叠加。", loc: "固件配置 > 新建固件版本 > APP版本号" },
+        { id: "firmware-version-add", title: "保存后进入开发中", body: "固件仅开发中、测试中、发布中、已发布、已停止五个主状态；只正向流转。发布暂停是执行标记，主状态保持发布中；列表统一设置范围、停止、删除。", loc: "产品详情 > 固件配置 > 固件版本" }
       ],
       authList: [
         { id: "drawer-auth", title: "测试白名单原界面", body: "保持产品详情 > 基础信息 > 测试白名单的原有编辑界面，只新增标签组选择时快捷勾选当前标签组用户。", loc: "测试白名单编辑抽屉" },
@@ -1688,7 +1699,7 @@
       if (!product || product.listingMode === "full" || product.listingRange?.includes("全部")) {
         return product?.listingRangeMode === "country" ? countryRegionOptions : ["北美数据中心", "欧洲数据中心", "亚太数据中心", "中国数据中心"];
       }
-      return product.listingRange?.length ? product.listingRange : ["北美数据中心", "欧洲数据中心"];
+      return product.listingRange || [];
     }
 
     function currentProductListingRangeText() {
@@ -4313,7 +4324,7 @@
     function directedAppAllowed(appVersion, target, trial) {
       if (!experienceAppMatchesFirmware(appVersion, target)) return false;
       const configuredApps = trial?.apps || [];
-      return configuredApps.length === 0 || configuredApps.includes(appVersion);
+      return configuredApps.length === 0 || configuredApps.some(app => normalizedAppVersion(app) === normalizedAppVersion(appVersion));
     }
     function directedFallbackApp(target, trial) {
       return trial?.apps?.[0] || target?.appVersion || "v 2.2.10";
@@ -4507,10 +4518,8 @@
       const seen = new Set();
       const targetReady = target
         && target.status === "测试中"
-        && !target.whitelistOpenedAt
         && !scheduledReleasePending(target)
-        && !target.referenceReview
-        && trialFor(target.id)?.status !== "已暂停";
+        && !target.referenceReview;
       return rows.map(row => {
         const errors = [];
         const asset = directedAssetInventory[row.mac];
@@ -4519,7 +4528,7 @@
         else if (!asset) errors.push("设备资产不存在或不属于当前产品");
         if (seen.has(row.mac)) errors.push("文件内 MAC 重复");
         seen.add(row.mac);
-        if (!targetReady) errors.push("当前版本须为已核实引用、未开放白名单、无待生效发布且未暂停定向的测试中版本");
+        if (!targetReady) errors.push("当前版本须为引用已核实、无待定时发布的测试中版本");
         if (asset && target) {
           if (!assetFitsTarget(asset, target)) errors.push("硬件版本或通道不匹配");
           const current = assetVersionForTarget(asset, target);
@@ -4701,7 +4710,7 @@
       wireFirmware(); wireVirtualFirmware(); wireTips($('#firmwareBody'));
     }
 
-    render();
   </script>
+  <script src="scope-management.js"></script>
 </body>
 </html>
