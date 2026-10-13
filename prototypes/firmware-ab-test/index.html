@@ -1100,7 +1100,7 @@
       recordDirected(`${trialLabel(target)} 随${reason}关闭定向，共 ${count} 台；关闭记录含操作人与时间，仅后台留存`, [target.id]);
       return count;
     }
-    function scheduledReleasePending(item) { return item.status === "测试中" && item.releaseConfig?.effectiveAt === "定时生效"; }
+    function scheduledReleasePending(item) { return ["开发中", "测试中"].includes(item.status) && item.releaseConfig?.effectiveAt === "定时生效"; }
     function scheduledReleaseValidation(item) {
       if (!scheduledReleasePending(item)) return "版本不在待生效状态";
       const config = item.releaseConfig;
@@ -1182,7 +1182,7 @@
         { id: "drawer-virtual-version-edit", title: "搜索式关联与保存反馈", body: "开发中组件可搜索、筛选并按通道号 + 硬件版本唯一校验。进入测试后冻结，不能再替换组件或包；虚拟版本状态流转不提升组件状态。", loc: "编辑虚拟版本抽屉" }
       ],
       virtualVersionCreate: [
-        { id: "drawer-virtual-version-create", title: "新建虚拟版本", body: "字段：虚拟版本号、虚拟版本级 APP 条件和关联 MCU；候选 MCU 可搜索和筛选，通道号 + 硬件版本不可重复。进入测试时才固定成员与包引用，不继承组件固件状态。", loc: "产品详情 > 固件配置 > 虚拟版本 > 新建" }
+        { id: "drawer-virtual-version-create", title: "新建虚拟版本", body: "字段：虚拟版本号、虚拟版本级 APP 条件和关联 MCU；候选 MCU 可搜索和筛选，通道号 + 硬件版本不可重复。首次提交范围（含直接正式或定时）固定成员与包引用，不继承组件固件状态。", loc: "产品详情 > 固件配置 > 虚拟版本 > 新建" }
       ],
       firmwareReleaseConfig: [
         { id: "drawer-firmware-release-config", title: "固件发布配置", body: "字段：发布方式、升级方式、生效时间、发布范围和自动发布总天数。状态规则：全面发布立即进入已发布；自动发布进入发布中；定时生效前保持测试中。异常处理：子集发布范围不能为空，定时生效必须填写时间，自动发布天数必须为正整数。", loc: "产品详情 > 固件配置 > 固件版本 > 发布" }
@@ -1249,7 +1249,7 @@
       ],
       firmwareVersionAdd: [
         { id: "drawer-firmware-version-add", title: "新建固件版本迁移固件管理", body: "新建固件版本承接设备管理 > 固件管理的新增能力。用户选择功能版本、固件类型并上传固件文件；平台按文件名解析公司、项目、固件版本、硬件版本、校验码、日期和格式，不提供手填解析字段。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
-        { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后进入开发中，首次设置公司用户范围进入测试；后续通过设置范围确认投放。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
+        { id: "drawer-firmware-version-add", title: "功能版本来自产品详情", body: "功能版本使用下拉选择，选项来源于产品详情 - 智能产品的功能版本。保存后进入开发中，可直接任选四种范围；测试范围生效进入测试中，正式范围按方式进入发布中或已发布。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
         { id: "drawer-firmware-version-add", title: "固件文件命名校验", body: "固件文件支持 .ufw、.zip、.bin。文件名规则为：[公司]_[项目]_[固件版本]_[硬件版本]_[校验码]_[日期]，例如 Lute_M9_3.08_10_aabb_20240401.ufw；固件版本可为纯数字或点分数字。", loc: "产品详情 > 固件配置 > 新建固件版本抽屉" },
         { id: "ota-version-name", title: "APP 兼容范围", body: "版本兼容基线在测试与正式发布中始终生效，支持版本不低于（≥）、版本等于（=）、版本不高于（≤），均包含所填版本。指定 MAC 的选填 App 清单只能收窄该基线；留空继承。测试范围由设置范围明确选择，不因产品授权自动叠加。", loc: "固件配置 > 新建固件版本 > APP版本号" },
         { id: "firmware-version-add", title: "保存后进入开发中", body: "固件仅开发中、测试中、发布中、已发布、已停止五个主状态；只正向流转。发布暂停是执行标记，主状态保持发布中；列表统一设置范围、停止、删除。", loc: "产品详情 > 固件配置 > 固件版本" }
@@ -2736,7 +2736,7 @@
         <div class="summary-grid"><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">创建后状态</span><span class="summary-value"><span class="tag gray">开发中</span></span></div></div>
         ${virtualAssociationPickerHtml()}
         <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
-        <div class="notice warning" id="virtualAssociationImpact">保存后仅创建开发中虚拟版本；进入测试时固定组件、包和 APP 条件，不改写组件状态。</div>
+        <div class="notice warning" id="virtualAssociationImpact">保存后仅创建开发中虚拟版本；首次提交范围（含直接正式或定时）固定组件、包和 APP 条件，不改写组件状态。</div>
       </div>`;
     }
     function virtualVersionTargetHtml() {
@@ -2829,8 +2829,8 @@
         firmwareVersionEdit: ["编辑固件版本", "开发中维护备注；测试中定向设备在列表操作；仅存量指定对象发布记录可编辑原有限制。", firmwareVersionEditHtml(false)],
         firmwareVersionDetail: ["固件版本详情", "查看当前固件版本的基础信息、版本控制条件和文件解析结果。", firmwareVersionEditHtml(true)],
         firmwareReleaseConfig: ["固件发布配置", "配置发布方式、升级方式、生效时间和发布范围；保存后才变更固件状态。", managedReleaseDrawerHtml("firmware")],
-        virtualVersionEdit: ["编辑虚拟版本", "仅开发中可维护虚拟版本级 APP 条件和关联 MCU；进入测试后固定引用。", virtualVersionEditHtml()],
-        virtualVersionCreate: ["新建虚拟版本", "配置独立 APP 条件并关联 MCU；进入测试后再配置定向设备。", virtualVersionCreateHtml()],
+        virtualVersionEdit: ["编辑虚拟版本", "仅开发中可维护虚拟版本级 APP 条件和关联 MCU；首次范围提交后固定引用。", virtualVersionEditHtml()],
+        virtualVersionCreate: ["新建虚拟版本", "配置独立 APP 条件并关联 MCU；创建后可直接选择投放范围。", virtualVersionCreateHtml()],
         virtualVersionTarget: ["编辑应用对象", "仅发布阶段编辑应用对象；不会改变冻结关联集合、包信息或发布配置。", virtualVersionTargetHtml()],
         virtualReleaseConfig: [managedReleaseTarget("virtual")?.status === "测试中" ? "虚拟版本发布配置" : "修改虚拟版本发布配置", "配置发布方式、升级方式、生效时间和范围；组件及包引用已在进入测试时冻结。", managedReleaseDrawerHtml("virtual")],
         extensionVersionAdd: ["新增版本", "产品模块扩展程序迁入产品详情后，在当前产品上下文内新增版本。", extensionVersionAddHtml()],
@@ -3380,7 +3380,7 @@
           });
           $("#virtualDraftCount").textContent = `${selected.length} 个`;
           $("#virtualAssociationImpact").textContent = isCreate
-            ? "保存后为开发中虚拟版本；进入测试时固定组件、包和 APP 条件，组件单 MCU 状态不变。"
+            ? "保存后为开发中虚拟版本；首次提交范围（含直接正式或定时）固定组件、包和 APP 条件，组件单 MCU 状态不变。"
             : "保存仅更新开发中配置；进入测试时固定引用，此后变更内容须新建虚拟版本。";
           $("#virtualSelectedChips").innerHTML = selected.length
             ? selected.map(item => `<span class="selected-chip"><span>通道 ${item.channel} · ${item.hardware} · ${item.version}</span><button type="button" data-remove-virtual-member="${item.id}" aria-label="移除通道 ${item.channel} ${item.hardware}">×</button></span>`).join("")
@@ -3690,7 +3690,7 @@
             packageDate: parsed.date,
             packageFormat: parsed.format
           });
-          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建为开发中；进入测试后可配置定向体验设备。`;
+          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建为开发中；可直接设置范围并配置定向设备。`;
         }
         if (type === "firmwareVersionEdit") {
           const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
@@ -3739,7 +3739,7 @@
             createdAt: "2026-08-14 10:00",
             log: "新建虚拟版本；独立维护 APP 条件"
           });
-          state.firmwareMessage = `虚拟版本 ${version} 已新建为开发中，关联 ${members.length} 个 MCU；进入测试后可定向体验设备。`;
+          state.firmwareMessage = `虚拟版本 ${version} 已新建为开发中，关联 ${members.length} 个 MCU；可直接设置范围并配置定向设备。`;
           state.virtualDraftMembers = new Set();
         }
         if (type === "virtualVersionEdit") {
@@ -4227,7 +4227,7 @@
     function freezeVirtual(vv) {
       if (vv.frozenMembers?.length) return;
       const members = virtualMembers(vv);
-      if (!members.length || members.length !== vv.members.length) throw new Error("组件引用不完整，不能进入测试");
+      if (!members.length || members.length !== vv.members.length) throw new Error("组件引用不完整，不能提交投放范围");
       vv.frozenMembers = members.map(item => ({ id: item.id, channel: item.channel, hardware: item.hardware, version: item.version, packageName: item.packageName || `${item.name || "组件"}-${item.version}` }));
       vv.frozenAppRule = vv.appRule;
       vv.frozenAppVersion = vv.appVersion;
@@ -4521,7 +4521,7 @@
     function validateDirectedRows(rows, target) {
       const seen = new Set();
       const targetReady = target
-        && target.status === "测试中"
+        && ["开发中", "测试中"].includes(target.status)
         && !scheduledReleasePending(target)
         && !target.referenceReview;
       return rows.map(row => {
@@ -4532,7 +4532,7 @@
         else if (!asset) errors.push("设备资产不存在或不属于当前产品");
         if (seen.has(row.mac)) errors.push("文件内 MAC 重复");
         seen.add(row.mac);
-        if (!targetReady) errors.push("当前版本须为引用已核实、无待定时发布的测试中版本");
+        if (!targetReady) errors.push("当前版本须为引用已核实、无待定时发布的开发中或测试中版本");
         if (asset && target) {
           if (!assetFitsTarget(asset, target)) errors.push("硬件版本或通道不匹配");
           const current = assetVersionForTarget(asset, target);
