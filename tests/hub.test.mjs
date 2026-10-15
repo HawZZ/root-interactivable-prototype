@@ -41,7 +41,8 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
 
     await page.locator("#resetFilters").click();
     await page.locator('[data-product-line="IoT Admin"]').click();
-    assert.equal(await page.locator(".prototype-card").count(), 20);
+    const iotSeries = new Set(manifests.filter((entry) => entry.productLine === "IoT Admin").map((entry) => entry.seriesId));
+    assert.equal(await page.locator(".prototype-card").count(), iotSeries.size);
     assert.match(page.url(), /productLine=IoT\+Admin/);
     assert.equal(await page.locator("#productLines button").count(), 3);
 
