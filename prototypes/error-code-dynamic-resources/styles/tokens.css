@@ -1,0 +1,13 @@
+/* Library token file was unavailable; values are adapted from the IoT Admin Wiki and canonical annotated reference. */
+:root{
+  color-scheme:light;
+  --el-color-primary:#4372ff;--el-color-primary-dark-2:#2b6bd9;--el-color-primary-light-9:#ecf5ff;
+  --el-color-success:#67c23a;--el-color-warning:#e6a23c;--el-color-danger:#f56c6c;--el-color-info:#909399;
+  --app-aside-bg-color:#001529;--app-aside-bg-active:#0b2a4a;--app-bg-color:#f9f9f9;--el-bg-color:#fff;
+  --el-text-color-primary:#303133;--el-text-color-regular:#606266;--el-text-color-secondary:#909399;
+  --el-border-color:#dcdfe6;--el-border-color-light:#e4e7ed;--el-border-color-lighter:#ebeef5;
+  --gap-8:8px;--gap-12:12px;--gap-16:16px;--gap-24:24px;--radius:4px;--aside-width:208px;
+  --annotation-width:352px;--annotation-accent:#e3a514;--annotation-bg:#fffdf6;
+  --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}

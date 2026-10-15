@@ -1,0 +1,27 @@
+{
+  "id": "error-code-dynamic-resources",
+  "path": "/prototypes/error-code-dynamic-resources/",
+  "title": "错误码动态加载资源 · IoT Admin 可交互原型",
+  "summary": "配网失败错误归一化、多语言标题与摘要、正文 Block 手动编辑，以及仅文案批量导入导出。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "error-code-dynamic-resources",
+  "version": "v1.4",
+  "status": "active",
+  "tags": [
+    "错误码",
+    "配网失败",
+    "多语言",
+    "Block",
+    "批量导入"
+  ],
+  "updatedAt": "2026-10-15T03:11:56.264Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
