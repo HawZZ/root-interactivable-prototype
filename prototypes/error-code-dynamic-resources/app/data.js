@@ -2,8 +2,12 @@ export const LANGUAGES=[['en','英语（默认）'],['zh','中文'],['de','德�
 export const SOURCES=[{vendor:'ROOT',sdk:'root-provisioning',label:'ROOT · root-provisioning'},{vendor:'涂鸦',sdk:'thing-activator',label:'涂鸦 · thing-activator'},{vendor:'觅睿',sdk:'ray-pairing',label:'觅睿 · ray-pairing'}];
 const block=(id,order,primary,secondary,prefixType='number',icon='')=>({id,order,prefixType,icon,number:prefixType==='number'?String(order):'',primary,secondary});
 const content=(title,summary,blocks)=>({title,summary,blocks});
-const code=(description,content)=>({description,content,updated:'2026-10-14 10:00'});
-export function initialState(){return {schema:3,version:1,codes:{
+const code=(description,content)=>{
+ const structure=(content.en?.blocks||[]).map(({primary,secondary,...b})=>b);
+ const translations=Object.fromEntries(Object.entries(content).map(([locale,c])=>[locale,{title:c.title,summary:c.summary,blocks:structure.map(b=>{const copy=c.blocks.find(x=>x.id===b.id);return {id:b.id,primary:copy?.primary||'',secondary:copy?.secondary||''};})}]));
+ return {description,structure,usedBlockIds:structure.map(b=>b.id),content:translations,updated:'2026-10-15 10:00'};
+};
+export function initialState(){return {schema:4,version:1,codes:{
  PROVISION_NETWORK_TIMEOUT:code('设备连接网络超时',{
   en:content('Unable to connect','The network connection timed out. Try these steps.',[
    block('step1',1,'Check your **Wi-Fi connection**','Use a 2.4 GHz Wi-Fi network.\nKeep your phone close to the device.','icon','wifi'),

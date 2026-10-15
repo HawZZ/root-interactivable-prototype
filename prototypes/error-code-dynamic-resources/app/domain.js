@@ -1,9 +1,9 @@
-import {completeContent} from './content.js';
+import {completeContent,contentFor} from './content.js';
 export const clone=x=>structuredClone(x);
 export const normalizeText=text=>String(text??'').replace(/\r\n?/g,'\n').replace(/\\n/g,'\n');
 export const mappingKey=r=>JSON.stringify([r.vendor,r.sdk,r.reasonType,r.reason]);
-export function languageCount(content,languages){return languages.filter(([id])=>completeContent(content?.[id])).length;}
-export function ready(code){return completeContent(code?.content?.en);}
+export function languageCount(code,languages){return languages.filter(([id])=>completeContent(contentFor(code,id))).length;}
+export function ready(code){return completeContent(contentFor(code,'en'));}
 export function parseCSV(text,requiredHeaders=['reasonType','reason','normalizedCode']){
  const rows=[];let row=[],value='',quoted=false;
  for(let i=0;i<text.length;i++){
@@ -64,7 +64,7 @@ export function applyImport(state,plan){
  const next=clone(state);const index=new Map(next.mappings.map((r,i)=>[mappingKey(r),i]));
  for(const row of plan.rows){
   if(row.status==='unchanged')continue;
-  if(!next.codes[row.normalizedCode])next.codes[row.normalizedCode]={description:row.description,content:{},updated:''};
+  if(!next.codes[row.normalizedCode])next.codes[row.normalizedCode]={description:row.description,structure:[],usedBlockIds:[],content:{},updated:''};
   const mapping={vendor:row.vendor,sdk:row.sdk,reasonType:row.reasonType,reason:row.reason,normalizedCode:row.normalizedCode};const key=mappingKey(row);
   if(index.has(key))next.mappings[index.get(key)]=mapping;else{index.set(key,next.mappings.length);next.mappings.push(mapping);}
  }

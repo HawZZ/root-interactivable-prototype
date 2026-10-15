@@ -1,13 +1,12 @@
 import {LANGUAGES,initialState} from './data.js';
 import {clone,normalizeText,parseCSV} from './domain.js';
-import {emptyContent,hasContent,validateContent} from './content.js';
+import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js';
 const locales=LANGUAGES.map(([id])=>id);
 export const FIELDS=['title','summary','primary','secondary'];
 export const COLUMNS=['normalizedCode','blockId','field',...locales];
 const structuralFields=['blockOrder','prefixType','icon','number'];
 const present=value=>value!==undefined&&value!==null&&String(value).trim()!=='';
-export const structureOf=content=>(content?.blocks||[]).map(b=>({id:b.id,order:b.order,prefixType:b.prefixType,icon:b.icon??'',number:b.number??''}));
-const signature=content=>JSON.stringify(structureOf(content));
+export {structureOf};
 export function parseMessageFile(text,name){
  let rows;
  if(name.toLowerCase().endsWith('.csv'))rows=parseCSV(text,['normalizedCode','field']);
@@ -37,7 +36,8 @@ export function inspectMessageImport(state,rows){
   if(present(row.blockId)&&(!blockId||!/^[A-Za-z0-9_-]+$/.test(blockId))){fail(line,'blockId 仅支持字母、数字、下划线和短横线。');continue;}
   if(isBlock&&!blockId){fail(line,'正文文案必须提供已存在的 blockId。');continue;}
   if(!isBlock&&blockId){fail(line,'标题和摘要不填写 blockId。');continue;}
-  if(!locales.some(locale=>present(row[locale]))){fail(line,'没有非空语言单元格；空白不会清除已有文案。');continue;}
+  if(isBlock&&!state.codes[code].structure.some(b=>b.id===blockId)){fail(line,'Block '+blockId+' 不存在；请重新下载模板，结构只能手动编辑。');continue;}
+  if(!locales.some(locale=>present(row[locale])))continue;
   for(const locale of locales){
    const raw=row[locale];if(!present(raw))continue;
    if(typeof raw!=='string'){fail(line,locale+' 文案必须为文本。');continue;}
@@ -46,10 +46,8 @@ export function inspectMessageImport(state,rows){
    seen.set(identity,value);
    const key=JSON.stringify([code,locale]);let target=targets.get(key);
    if(!target){
-    const existing=state.codes[code].content[locale],configured=hasContent(existing),structureSource=configured?locale:'en';
-    const source=configured?existing:state.codes[code].content.en;
-    const content=configured?clone(existing):{...emptyContent(),blocks:(source?.blocks||[]).map(b=>({...clone(b),primary:'',secondary:''}))};
-    target={code,locale,line,content,structureSource,baseStructure:signature(source)};targets.set(key,target);
+    const content=contentFor(state.codes[code],locale);
+    target={code,locale,line,content,baseStructure:structureSignature(state.codes[code]),baseContent:JSON.stringify(state.codes[code].content)};targets.set(key,target);
    }
    const record=isBlock?target.content.blocks.find(b=>b.id===blockId):target.content;
    if(!record){fail(line,locale+' 的 Block '+blockId+' 不存在；请先手动编辑文案结构。');continue;}
@@ -58,10 +56,9 @@ export function inspectMessageImport(state,rows){
   }
  }
  for(const target of targets.values()){
-  if(signature(target.content)!==target.baseStructure)fail(target.line,'正文结构已变更，请手动编辑后重新导入文案。');
-  for(const error of validateContent(target.content))fail(target.line,target.locale+' 合并后：'+error);
+  if(changes.some(c=>c.code===target.code&&c.locale===target.locale&&c.status!=='unchanged'))for(const error of validateContent(target.content))fail(target.line,target.locale+' 合并后：'+error);
  }
- for(const code of new Set([...targets.values()].map(t=>t.code))){const en=targets.get(JSON.stringify([code,'en']))?.content||state.codes[code].content.en;if(validateContent(en).length)fail([...targets.values()].find(t=>t.code===code).line,code+' 默认英语须完整；请先手动配置结构，再补齐文案。');}
+ for(const code of new Set(changes.filter(c=>c.status!=='unchanged').map(c=>c.code))){const en=targets.get(JSON.stringify([code,'en']))?.content||contentFor(state.codes[code],'en');if(validateContent(en).length)fail([...targets.values()].find(t=>t.code===code).line,code+' 默认英语须完整；请先手动配置结构，再补齐文案。');}
  const displayRows=new Map();for(const c of changes){const key=JSON.stringify([c.line,c.code,c.blockId,c.field]);if(!displayRows.has(key))displayRows.set(key,{line:c.line,code:c.code,blockId:c.blockId,field:c.field,cells:{}});displayRows.get(key).cells[c.locale]=c;}
  counts.conflict=errors.length;
  return {targets:[...targets.values()],changes,displayRows:[...displayRows.values()],locales:locales.filter(locale=>changes.some(c=>c.locale===locale)),errors,counts,baseVersion:state.version,valid:errors.length===0};
@@ -69,13 +66,12 @@ export function inspectMessageImport(state,rows){
 export function applyMessageImport(state,plan,timestamp){
  if(!plan.valid)throw new Error('文案预检有错误，整批未写入。');
  if(plan.baseVersion!==state.version)throw new Error('配置已更新，请重新预检查后提交。');
- for(const target of plan.targets){if(signature(state.codes[target.code].content[target.structureSource])!==target.baseStructure||signature(target.content)!==target.baseStructure)throw new Error('文案结构已变化，请重新下载模板并预检查。');}
+ for(const target of plan.targets){if(structureSignature(state.codes[target.code])!==target.baseStructure||JSON.stringify(state.codes[target.code].content)!==target.baseContent||structureSignature({structure:target.content.blocks})!==target.baseStructure)throw new Error('文案或共用结构已变化，请重新下载模板并预检查。');}
  const next=clone(state);
  for(const target of plan.targets){
   if(!plan.changes.some(c=>c.code===target.code&&c.locale===target.locale&&c.status!=='unchanged'))continue;
   // Structure stays in its existing order; only text is normalized and saved.
-  const content=clone(target.content);content.title=normalizeText(content.title);content.summary=normalizeText(content.summary);
-  for(const b of content.blocks){b.primary=normalizeText(b.primary);b.secondary=normalizeText(b.secondary);}
+  const content=translationOnly(target.content);
   next.codes[target.code].content[target.locale]=content;next.codes[target.code].updated=timestamp;
  }
  return next;
@@ -90,8 +86,8 @@ export function messageCSV(rows){const quote=v=>'"'+String(v??'').replace(/"/g,'
 export function exportMessageRows(state,codes=Object.keys(state.codes)){
  const rows=[];
  for(const code of codes){
-  const content=state.codes[code].content,blockIds=[...new Set(locales.flatMap(locale=>(content[locale]?.blocks||[]).map(b=>b.id)))];
-  const add=(blockId,field)=>{const row={normalizedCode:code,blockId,field};for(const locale of locales){const c=content[locale],b=blockId?c?.blocks.find(b=>b.id===blockId):null;row[locale]=blockId?b?.[field]??'':c?.[field]??'';}if(locales.some(locale=>present(row[locale])))rows.push(row);};
+  const content=state.codes[code].content,blockIds=structureOf(state.codes[code]).map(b=>b.id);
+  const add=(blockId,field)=>{const row={normalizedCode:code,blockId,field};for(const locale of locales){const c=content[locale],b=blockId?c?.blocks.find(b=>b.id===blockId):null;row[locale]=blockId?b?.[field]??'':c?.[field]??'';}rows.push(row);};
   add('','title');add('','summary');for(const blockId of blockIds){add(blockId,'primary');add(blockId,'secondary');}
  }
  return rows;
