@@ -1,11 +1,11 @@
-import {completeContent,contentFor} from './content.js?v=v1.7.2';
-import {blankCode} from './data.js?v=v1.7.2';
+import {completeContent,contentFor} from './content.js?v=v1.7.3';
+import {blankCode} from './data.js?v=v1.7.3';
 export const clone=x=>structuredClone(x);
 export const normalizeText=text=>String(text??'').replace(/\r\n?/g,'\n').replace(/\\n/g,'\n');
 export function languageCount(code,languages){return languages.filter(([id])=>completeContent(contentFor(code,id))).length;}
 export function ready(code){return completeContent(contentFor(code,'en'));}
 export function matchesCode(id,code,query){const q=query.trim().toLowerCase();return [id,code.description,...Object.values(code.content).flatMap(c=>[c.title,c.summary])].some(text=>String(text??'').toLowerCase().includes(q));}
-export function parseCSV(text,requiredHeaders=['normalizedCode','description']){
+export function parseCSV(text,requiredHeaders=['normalizedCode']){
  const rows=[];let row=[],value='',quoted=false;
  for(let i=0;i<text.length;i++){
   const ch=text[i];
@@ -36,13 +36,14 @@ export function inspectImport(state,rawRows){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))fail('数据行必须是对象。');
   else if(Object.keys(raw).some(k=>!['normalizedCode','description'].includes(k)))fail('错误码文件仅支持“错误码”和“标准语义”两列。');
   else if(typeof raw.normalizedCode!=='string'||!raw.normalizedCode.trim())fail('错误码必须为非空文本。');
-  else if(typeof raw.description!=='string'||!raw.description.trim())fail('标准语义必须为非空文本。');
+  else if(raw.description!=null&&typeof raw.description!=='string')fail('标准语义须为文本，可留空。');
   else{
-   row.normalizedCode=raw.normalizedCode.trim();row.description=raw.description.trim();
+   row.normalizedCode=raw.normalizedCode.trim();row.description=(raw.description??'').trim();row.hasDescription=!!row.description;
    const duplicate=seen.get(row.normalizedCode),before=Object.hasOwn(state.codes,row.normalizedCode)?state.codes[row.normalizedCode]:null;
    row.before=before?.description??'';
-   if(duplicate&&duplicate.description!==row.description){fail('同一错误码存在不同标准语义，整批不可导入。');duplicate.status='conflict';duplicate.error='同一错误码存在不同标准语义。';}
-   else if(duplicate){row.status='unchanged';row.duplicate=true;}
+   if(!row.hasDescription)row.description=row.before;
+   if(duplicate&&duplicate.hasDescription&&row.hasDescription&&duplicate.description!==row.description){fail('同一错误码存在不同标准语义，整批不可导入。');duplicate.status='conflict';duplicate.error='同一错误码存在不同标准语义。';}
+   else if(duplicate){if(row.hasDescription&&!duplicate.hasDescription&&!duplicate.error){duplicate.description=row.description;duplicate.hasDescription=true;duplicate.status=before?(before.description===row.description?'unchanged':'updated'):'added';}row.status='unchanged';row.duplicate=true;}
    else{row.status=before?(before.description===row.description?'unchanged':'updated'):'added';seen.set(row.normalizedCode,row);}
   }
   rows.push(row);
@@ -63,8 +64,8 @@ export function applyImport(state,plan,timestamp=''){
 }
 export function saveCodeMetadata(state,rawCode,rawDescription,editing=false,timestamp=''){
  if(typeof rawCode!=='string'||!rawCode.trim())throw new Error('请填写错误码。');
- if(typeof rawDescription!=='string'||!rawDescription.trim())throw new Error('请填写标准语义。');
- const id=rawCode.trim(),description=rawDescription.trim(),exists=Object.hasOwn(state.codes,id);
+ if(rawDescription!=null&&typeof rawDescription!=='string')throw new Error('标准语义须为文本，可留空。');
+ const id=rawCode.trim(),description=(rawDescription??'').trim(),exists=Object.hasOwn(state.codes,id);
  if(editing&&!exists)throw new Error('错误码已不存在，请重新加载。');
  if(!editing&&exists)throw new Error('错误码已存在，请编辑现有条目。');
  const next=clone(state);

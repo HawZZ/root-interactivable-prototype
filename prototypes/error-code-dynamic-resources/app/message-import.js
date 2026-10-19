@@ -1,6 +1,6 @@
-import {LANGUAGES,initialState} from './data.js?v=v1.7.2';
-import {clone,normalizeText,parseCSV} from './domain.js?v=v1.7.2';
-import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js?v=v1.7.2';
+import {LANGUAGES,initialState} from './data.js?v=v1.7.3';
+import {clone,normalizeText,parseCSV} from './domain.js?v=v1.7.3';
+import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js?v=v1.7.3';
 const locales=LANGUAGES.map(([id])=>id);
 export const FIELDS=['title','summary','primary','secondary'];
 export const COLUMNS=['normalizedCode','blockId','field',...locales];
