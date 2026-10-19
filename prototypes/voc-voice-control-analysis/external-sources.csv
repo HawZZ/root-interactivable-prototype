@@ -1,0 +1,32 @@
+source_id,metric_family,geography,platform,value,unit,reference_period,published_at,denominator,sample_size,source,source_url,quality_note
+EXT-01,智能音箱安装份额,美国,Amazon Echo,69,%,2021-06,2021-08-04,美国智能音箱累计安装设备,未披露,CIRP 经 GeekWire 报道,https://www.geekwire.com/2021/amazon-maintains-big-lead-google-apple-u-s-smart-speaker-market-new-study-says/,权威研究二手转述；数据较旧
+EXT-02,智能音箱安装份额,美国,Google Home,25,%,2021-06,2021-08-04,美国智能音箱累计安装设备,未披露,CIRP 经 GeekWire 报道,https://www.geekwire.com/2021/amazon-maintains-big-lead-google-apple-u-s-smart-speaker-market-new-study-says/,与 EXT-01 同口径
+EXT-03,智能音箱安装份额,美国,Apple HomePod,5,%,2021-06,2021-08-04,美国智能音箱累计安装设备,未披露,CIRP 经 GeekWire 报道,https://www.geekwire.com/2021/amazon-maintains-big-lead-google-apple-u-s-smart-speaker-market-new-study-says/,与 EXT-01 同口径；另有 Facebook Portal 1%
+EXT-04,智能音箱安装量,美国,全部平台,126,百万台,2021-06,2021-08-04,美国智能音箱累计安装设备,未披露,CIRP 经 GeekWire 报道,https://www.geekwire.com/2021/amazon-maintains-big-lead-google-apple-u-s-smart-speaker-market-new-study-says/,不可与用户渗透率混用
+EXT-05,语音助手渗透率,美国,全部平台,62,%,2022,2022-06-16,美国 18 岁以上成年人,2334,NPR 与 Edison Research Smart Audio Report,https://www.npr.org/about-npr/1105579648/npr-edison-research-smart-speaker-ownership-reaches-35-of-americans,样本由 1190 名智能音箱用户、560 名其他设备语音助手用户、584 名非用户组成
+EXT-06,智能音箱拥有率,美国,全部平台,35,%,2022,2022-06-16,美国 18 岁以上成年人,2334,NPR 与 Edison Research Smart Audio Report,https://www.npr.org/about-npr/1105579648/npr-edison-research-smart-speaker-ownership-reaches-35-of-americans,个人拥有率而非设备安装份额
+EXT-07,语音命令日用率,美国,全部平台,57,%,2022,2022-06-16,使用语音命令的美国成年人,未单列,NPR 与 Edison Research Smart Audio Report,https://www.npr.org/about-npr/1105579648/npr-edison-research-smart-speaker-ownership-reaches-35-of-americans,条件分母为语音命令用户
+EXT-08,智能家居设备拥有率,美国,全部生态,45,%,2024,2024-04-24,美国互联网家庭,未披露,Parks Associates 经 SDM 报道,https://www.sdmmag.com/articles/103103-parks-associates-finds-18-of-us-households-have-six-or-more-smart-home-devices,代理指标；不是 Alexa/Google/HomeKit 平台份额
+EXT-09,语音助手用户规模,美国,全部平台,145.1,百万人,2023,2024-08-21,eMarketer 定义的美国语音助手用户,未披露,eMarketer,https://www.emarketer.com/content/voice-assistant-user-forecast-2024,预测口径；不可拆为平台份额
+EXT-10,智能音箱家庭拥有率,加拿大,全部平台,15,%,2018,2018-11-06,加拿大家庭,未披露,Consumer Technology Association 经 Inside Radio 报道,https://www.insideradio.com/free/smart-speakers-are-canada-s-fastest-growing-tech-product/article_909c6a58-e185-11e8-a606-33f665c73d33.html,历史参考；过旧，不用于当前优先级量化
+EXT-11,智能音箱用户态度-便利,美国,全部智能音箱,90,%,2022,2022-06-16,智能音箱拥有者同意“交互短且容易并花费很少精力”,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第14页；非平台拆分
+EXT-12,智能音箱用户态度-便利,美国,全部智能音箱,86,%,2022,2022-06-16,智能音箱拥有者同意“带来更便利的生活体验”,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第10页；非平台拆分
+EXT-13,智能音箱用户态度-发现,美国,全部智能音箱,80,%,2022,2022-06-16,智能音箱拥有者同意“更容易发现新内容或活动”,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第12页；非平台拆分
+EXT-14,智能音箱用户态度-安全担忧,美国,全部智能音箱,52,%,2022,2022-06-16,智能音箱拥有者担心黑客访问家庭或个人信息,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第19至20页
+EXT-15,智能音箱用户态度-监听担忧,美国,全部智能音箱,47,%,2022,2022-06-16,智能音箱拥有者困扰于设备一直在监听,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第19至20页
+EXT-16,智能音箱用户态度-政府监听,美国,全部智能音箱,43,%,2022,2022-06-16,智能音箱拥有者担心政府监听私人对话,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第19至20页
+EXT-17,智能音箱用户态度-厂商信任,美国,全部智能音箱,58,%,2022,2022-06-16,智能音箱拥有者信任制造商保障信息安全,1190,NPR 与 Edison Research Smart Audio Report,https://www.nationalpublicmedia.com/uploads/2022/06/The-Smart-Audio-Report-Spring-2022.pdf,报告第19至20页；42%仅可表述为未明确同意信任
+EXT-18,接入架构,全球,Google Home,NA,文档,当前,当前,Cloud-to-cloud intents,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/primer/intents,官方文档；定义 SYNC QUERY EXECUTE DISCONNECT
+EXT-19,接入架构,全球,Google Home,NA,文档,当前,当前,Identify and sync devices,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/integration/sync,官方 SYNC 文档
+EXT-20,接入架构,全球,Google Home,NA,文档,当前,当前,Query and execute devices,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/integration/query-execute,官方 QUERY 与 EXECUTE 文档
+EXT-21,接入架构,全球,Google Home,NA,文档,当前,当前,Request Sync,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/integration/request-sync,官方 Request Sync 文档
+EXT-22,接入架构,全球,Google Home,NA,文档,当前,当前,Report State,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/integration/report-state,官方 Report State 文档
+EXT-23,接入架构,全球,Google Home,NA,文档,当前,当前,Cloud-to-cloud launch checklist,NA,Google Home Developers,https://developers.home.google.com/cloud-to-cloud/checklist,官方测试与发布清单
+EXT-24,竞品接入,美国,Nanit × Alexa,当前支持,能力,2025-08-29,2025-08-29,Nanit Pro Camera 用户,NA,Nanit Help Center,https://support.nanit.com/en_us/amazon-alexa-and-nanit-ByjqMhRYlg,官方 A 级；两类 Skill；直播与查询有明确限制
+EXT-25,竞品接入,美国,Nanit Sound + Light × Google Home,条件支持,能力,2025-08-29,2025-08-29,关联 Nanit Camera/账号且具 owner/admin 权限的用户,NA,Nanit Help Center,https://support.nanit.com/en_us/nanit-sound-+-light-works-with-google-home-ryMyXhAYeg,官方 A 级；开关/亮度/音量/状态
+EXT-26,竞品接入,美国,Hatch Rest+ 2nd gen × Alexa,当前支持,能力,当前,当前,关联 Hatch 账号的用户,NA,Hatch Support,https://help.hatch.co/hc/en-us/articles/16495578080663-Amazon-Alexa-integration,官方 A 级；多项控制
+EXT-27,竞品接入,美国,Hatch × Google Home,官方明确不支持,能力,当前,当前,Hatch 设备用户,NA,Hatch Support,https://help.hatch.co/hc/en-us/articles/27290532838423-Can-my-Hatch-device-connect-to-Google-Home,官方 A 级负向证据；同时提及 Siri
+EXT-28,竞品在售,美国,Owlet Dream Duo 3,379.99,美元,2026-08-19,2026-08-19,官方 DTC 标价,NA,Owlet,https://owletcare.com/products/dream-duo-3,官方产品页；价格快照不是销量
+EXT-29,竞品在售,美国,Willow 360,499.99,美元,2026-08-19,2026-08-19,官方常规标价,NA,Willow,https://onewillow.com/products/willow-pump-360,核验时另有 374.99 美元促销价；App-controlled 不等于语音接入
+EXT-30,竞品渠道代理,美国,固定竞品池,NA,快照,2026-08-19,2026-08-19,Amazon US/Best Buy US/官方 DTC,NA,渠道与官方商品页,competitor-sources.csv,价格/评分/评论量仅作商业权重代理
+EXT-31,竞品证据边界,加拿大,固定竞品池,NA,记录,2026-08-19,2026-08-19,加拿大单列,NA,官方与渠道页面,competitor-integration-matrix.csv,未核验的地区能力保留为无官方证据且不进入美国权重

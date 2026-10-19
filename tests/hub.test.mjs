@@ -47,7 +47,9 @@ test("hub search, filters, versions, favorites and URL state work", async () => 
     assert.equal(await page.locator("#productLines button").count(), 3);
 
     await page.locator("#businessAreaFilter").selectOption("AIoT Platform");
-    assert.equal(await page.locator(".prototype-card").count(), 3);
+    const platformSeries = new Set(manifests.filter((entry) =>
+      entry.productLine === "IoT Admin" && entry.businessArea === "AIoT Platform").map((entry) => entry.seriesId));
+    assert.equal(await page.locator(".prototype-card").count(), platformSeries.size);
     assert.match(page.url(), /businessArea=AIoT\+Platform/);
     assert.equal(await page.locator(".business-area").first().innerText(), "业务域 · AIoT Platform");
 

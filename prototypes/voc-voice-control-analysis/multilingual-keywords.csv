@@ -1,0 +1,15 @@
+language,platform_terms,voice_control_terms,notes
+英语,"Alexa|Amazon Echo|Echo Dot|Google Home|Google Assistant|Hey Google|OK Google|Nest Hub|Siri|Apple Home|HomeKit","voice control|voice command|voice assistant|voice activated|verbally log|hands-free control",要求出现控制、查询、记录或智能家居语境；Hey Google单独归助手类，不等同Google Home设备
+法语,"Alexa|Amazon Echo|Google Home|Assistant Google|Siri|Apple Home|HomeKit","commande vocale|contrôle vocal|assistant vocal|à la voix|sans les mains",排除 messagerie vocale 和提示音
+德语,"Alexa|Amazon Echo|Google Home|Google Assistant|Siri|Apple Home|HomeKit","Sprachsteuerung|Sprachbefehl|per Sprache steuern|Sprachassistent",排除 Sprachnachricht
+意大利语,"Alexa|Amazon Echo|Google Home|Assistente Google|Siri|Apple Home|HomeKit","comando vocale|controllo vocale|assistente vocale|con la voce",WN02 证据命中语种
+西班牙语,"Alexa|Amazon Echo|Google Home|Asistente de Google|Siri|Apple Home|HomeKit","control por voz|comando de voz|asistente de voz|con la voz",排除 mensaje de voz
+波兰语,"Alexa|Amazon Echo|Google Home|Asystent Google|Siri|Apple Home|HomeKit","sterowanie głosowe|polecenie głosowe|asystent głosowy",容纳词形变化
+中文,"Alexa|亚马逊 Echo|Google Home|谷歌助手|Siri|Apple 家庭|HomeKit","语音控制|语音命令|语音助手|声控|口述记录",排除语音留言、语音提示、双向通话
+葡萄牙语,"Alexa|Amazon Echo|Google Home|Google Assistente|Siri|Apple Home|HomeKit","controle por voz|comando de voz|assistente de voz",巴葡与欧葡均覆盖
+荷兰语,"Alexa|Amazon Echo|Google Home|Google Assistent|Siri|Apple Home|HomeKit","spraakbesturing|stembediening|stemcommando|spraakassistent",stem 单独出现不判真阳性
+日语,"Alexa|アレクサ|Amazon Echo|Google Home|Google アシスタント|Siri|HomeKit","音声コントロール|音声操作|音声コマンド|音声アシスタント",排除音声通話
+韩语,"Alexa|알렉사|Amazon Echo|Google Home|Google 어시스턴트|Siri|HomeKit","음성 제어|음성 명령|음성 비서",排除음성 메시지
+阿拉伯语,"Alexa|أليكسا|Amazon Echo|Google Home|مساعد Google|Siri|HomeKit","تحكم صوتي|أمر صوتي|مساعد صوتي",兼顾品牌拉丁拼写
+俄语,"Alexa|Алекса|Amazon Echo|Google Home|Google Ассистент|Siri|HomeKit","голосовое управление|голосовая команда|голосовой помощник",容纳格变化
+土耳其语,"Alexa|Amazon Echo|Google Home|Google Asistan|Siri|HomeKit","sesli kontrol|sesli komut|sesli asistan",排除 sesli mesaj

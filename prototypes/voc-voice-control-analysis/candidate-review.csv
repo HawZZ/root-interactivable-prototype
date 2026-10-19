@@ -1,0 +1,18 @@
+record_id,trigger_group,classification,reason
+rec27V1ZI47v4K,echo,排除,西班牙语 echo 是句中普通词/拼写表达，指已尝试配网步骤，不是 Amazon Echo。
+rec27V1ZI47zrx,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+rec27V1ZI48aRk,echo,排除,西班牙语 echo 是句中普通词/拼写表达，不是智能音箱。
+rec27V1ZI49kpD,siri / verbally / 语音记录,纳入需求,用户原文明确提出产品语音能力需求。
+rec27V1ZI49y1Q,alexa,偶发使用提及，排除需求,通话转写出现 Alexa 调空调温度的旁支话语；本条诉求为 BM08 共享访问，不计 Momcozy 语音需求。
+rec27V1ZI49Dy0,声控,排除,商品描述中的 VOX 声控触发与双向通话，不是语音命令控制。
+rec27V1ZI49FWJ,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+rec27V1ZI49GpL,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+rec27V1ZI49KT5,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+rec27V1ZI4airc,echo,排除,Echo 出现在口头拼写邮箱的字母代词中，不是平台需求。
+recvswecTAGRUt,alexa / comando vocal,纳入需求,用户原文明确提出产品语音能力需求。
+recvsTZEmX1qDB,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+recvvltzaW1aHb,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+recvvxvHP9Tqmn,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。
+recvvIrVU3pF2e,siri / hey google / heygoogle,纳入需求,用户原文明确提出产品语音能力需求。
+recvvUx8jnOgyz,verbally,排除,verbally 指通话中口头提供序列号，不是对产品发出语音指令。
+reczz28N7Z6LxGAj,alexa,排除,Alexa 字符串来自姓名或邮箱；上下文无语音平台需求。

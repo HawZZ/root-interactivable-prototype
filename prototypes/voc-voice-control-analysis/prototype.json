@@ -1,0 +1,27 @@
+{
+  "id": "voc-voice-control-analysis",
+  "path": "/prototypes/voc-voice-control-analysis/",
+  "title": "全球语音控制 VOC 事实报告",
+  "summary": "截至2026-10-19的全球语音控制VOC事实报告：2,354条记录、3条明确需求（0.127%），附脱敏证据、统计口径及历史市场与竞品资料。",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "voc-voice-control-analysis",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "VOC",
+    "语音控制",
+    "Alexa",
+    "Google Home",
+    "事实报告"
+  ],
+  "updatedAt": "2026-10-19T09:47:20.277Z",
+  "lastPublisher": "待确认",
+  "preview": {
+    "mode": "auto"
+  }
+}

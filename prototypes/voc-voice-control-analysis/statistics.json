@@ -1,0 +1,414 @@
+{
+  "generated_at": "2026-10-19",
+  "report_type": "事实数据更新",
+  "feishu": {
+    "base_title": "全量voc反馈",
+    "base_token": "WnM4bANJMaoSe8sz1GWckwyCnee",
+    "table_name": "全量明细表",
+    "table_id": "tbl6d9FKI9Rlg6Ec",
+    "revision": 21053,
+    "raw_records": 2354,
+    "record_id_unique": 2354,
+    "date_start": "2026-06-01",
+    "date_end": "2026-10-19",
+    "pagination": {
+      "offsets": [
+        0,
+        2000
+      ],
+      "counts": [
+        2000,
+        354
+      ],
+      "final_has_more": false,
+      "revision_stable": true
+    }
+  },
+  "denominator": {
+    "primary_name": "全量主表记录（按飞书 record_id）",
+    "primary": 2354,
+    "nonblank_user_voice": 2340,
+    "blank_user_voice": 14,
+    "cross_source_unique_voc": null,
+    "unique_users": null,
+    "note": "本次采用记录口径，未将其称为有效唯一 VOC。原声可用字段已移除；不沿用历史32条排除。跨来源去重未完成确认，不提供唯一VOC分母。"
+  },
+  "data_quality": {
+    "original_id_missing": 30,
+    "colliding_original_id_groups": 1,
+    "colliding_original_id_records": 3,
+    "identical_normalized_voice_groups": 31,
+    "identical_normalized_voice_surplus": 33,
+    "note": "相同正文可能是重复收录、不同工单模板或独立短评，不据此自动删除；三条同原始ID记录正文不同。"
+  },
+  "classification": {
+    "method": "全量文本多语言检索；平台/控制类候选逐条复核；以原文确认需求。未对全部未命中记录逐条语义分类。",
+    "search_fields": [
+      "用户原声",
+      "标题",
+      "翻译",
+      "对话内容",
+      "对话内容翻译",
+      "对话总结",
+      "飞书单信息提炼",
+      "问题标签2.0AI判断依据",
+      "备注"
+    ],
+    "precise_candidates_reviewed": 17,
+    "strict_positive": 3,
+    "expanded_positive": 3,
+    "strict_share_pct": 0.127,
+    "expanded_share_pct": 0.127,
+    "share_nonblank_user_voice_pct": 0.128,
+    "incidental_platform_use_records": 1,
+    "relevant_voice_mentions_including_incidental": 4,
+    "mentions_including_incidental_share_pct": 0.17,
+    "device_control_requests": 1,
+    "app_voice_logging_requests": 2,
+    "platform_multilabel_counts": {
+      "Alexa": 1,
+      "Siri / Siri-like": 2,
+      "Hey Google / Assistant 类": 1,
+      "Google Home 明确设备需求": 0,
+      "Apple Home / HomeKit": 0
+    },
+    "google_home_device_requests": 0,
+    "homekit_requests": 0
+  },
+  "voice_voc_breakdowns": {
+    "platform": {
+      "Alexa": 1,
+      "Siri / Siri-like": 2,
+      "Hey Google / Assistant 类": 1,
+      "Google Home 明确设备需求": 0,
+      "Apple Home / HomeKit": 0
+    },
+    "product": {
+      "APP": 2,
+      "WN02 台式APP白噪音": 1
+    },
+    "country": {
+      "未知": 2,
+      "意大利": 1
+    },
+    "language": {
+      "英语": 2,
+      "意大利语": 1
+    },
+    "channel": {
+      "应用市场": 2,
+      "社区/评论": 1
+    },
+    "month": {
+      "2026-07": 1,
+      "2026-08": 1,
+      "2026-09": 1
+    },
+    "intent": {
+      "App 内语音记录": 2,
+      "第三方设备语音控制": 1
+    }
+  },
+  "all_voc_context": {
+    "channel": {
+      "客服工单": 1728,
+      "应用市场": 377,
+      "社区帖子": 119,
+      "AI工单": 66,
+      "社区/评论": 64
+    },
+    "month": {
+      "2026-07": 759,
+      "2026-09": 501,
+      "2026-08": 450,
+      "2026-06": 417,
+      "2026-10": 227
+    },
+    "product": {
+      "BM04婴儿监视器": 693,
+      "APP": 391,
+      "未标注": 191,
+      "W1吸奶器": 166,
+      "M5Smart吸奶器": 143,
+      "M9吸奶器": 112,
+      "BM08智能婴儿监视器": 101,
+      "Air1吸奶器": 95,
+      "T31贴片式体温计": 88,
+      "WN02 台式APP白噪音": 78,
+      "吸奶器": 64,
+      "美珠瑜伽球": 64,
+      "M5吸奶器": 48,
+      "婴儿监视器": 44,
+      "BM01婴儿监视器": 33,
+      "WN05彩虹款APP白噪音": 17,
+      "白噪音": 12,
+      "M6吸奶器": 11,
+      "BS04小容量奶瓶消毒器": 2,
+      "Momcozy T3 体温贴网关": 2,
+      "BM02婴儿监视器": 1
+    },
+    "country_raw_labels": {
+      "其它": 655,
+      "美国": 599,
+      "未知": 455,
+      "USA": 131,
+      "法国": 89,
+      "德国": 83,
+      "英国": 82,
+      "加拿大": 54,
+      "西班牙": 16,
+      "中国": 12,
+      "CHL": 11,
+      "波兰": 10,
+      "CAN": 10,
+      "澳大利亚": 9,
+      "比利时": 7,
+      "新加坡": 7,
+      "英语区国家": 6,
+      "希腊": 5,
+      "马来西亚": 5,
+      "葡萄牙": 5,
+      "GBR": 5,
+      "未匹配": 5,
+      "瑞士": 4,
+      "科威特": 4,
+      "沙特阿拉伯": 4,
+      "阿联酋": 4,
+      "意大利": 4,
+      "克罗地亚": 3,
+      "墨西哥": 3,
+      "罗马尼亚": 3,
+      "立陶宛": 3,
+      "ESP": 3,
+      "COL": 3,
+      "MEX": 3,
+      "菲律宾": 2,
+      "CHN": 2,
+      "DEU": 2,
+      "智利": 2,
+      "CRI": 2,
+      "丹麦": 2,
+      "FRA": 2,
+      "ARG": 2,
+      "GB-英国": 2,
+      "哥伦比亚": 1,
+      "巴西": 1,
+      "印尼": 1,
+      " 美国": 1,
+      "以色列": 1,
+      "保加利亚": 1,
+      "中国大陆": 1,
+      "阿根廷": 1,
+      "土耳其": 1,
+      "荷兰": 1,
+      "匈牙利": 1,
+      "爱尔兰": 1,
+      "拉脱维亚": 1,
+      "刚果（金）": 1,
+      "加纳": 1,
+      "ROU": 1,
+      "TUR": 1,
+      "IDN": 1,
+      "RUS": 1,
+      "阿尔巴尼亚": 1,
+      "哈萨克斯坦": 1,
+      "NLD": 1,
+      "奥地利": 1,
+      "MYS": 1,
+      "瑞典": 1,
+      "斯洛文尼亚": 1,
+      "SLV": 1,
+      "卡塔尔": 1,
+      "ZAF": 1,
+      "GTM": 1,
+      "印度": 1,
+      "NIC": 1,
+      "BRA": 1,
+      "泰国": 1
+    }
+  },
+  "month_detail": [
+    {
+      "month": "2026-06",
+      "records": 417,
+      "voice": 0,
+      "share_pct": 0
+    },
+    {
+      "month": "2026-07",
+      "records": 759,
+      "voice": 1,
+      "share_pct": 0.132
+    },
+    {
+      "month": "2026-08",
+      "records": 450,
+      "voice": 1,
+      "share_pct": 0.222
+    },
+    {
+      "month": "2026-09",
+      "records": 501,
+      "voice": 1,
+      "share_pct": 0.2
+    },
+    {
+      "month": "2026-10",
+      "records": 227,
+      "voice": 0,
+      "share_pct": 0
+    }
+  ],
+  "snapshot_change": {
+    "previous_revision": 3716,
+    "previous_raw_records": 1458,
+    "added_record_ids": 947,
+    "removed_record_ids": 51,
+    "net_record_change": 896,
+    "new_voice_request_records": 1,
+    "retained_voice_request_records": 2,
+    "note": "新增/移出是 record_id 集合差异，不能推断删除原因或全部都是新发生反馈；旧版2/1411与本次3/2354分母不同，不直接比较比例趋势。"
+  },
+  "evidence": [
+    {
+      "id": "rec27V1ZI49kpD",
+      "language": "英语",
+      "platforms": [
+        "Siri / Siri-like"
+      ],
+      "intent": "App 内语音记录",
+      "action": "口述记录吸奶或小睡",
+      "quote": "a like hey siri feature that you can verbally log pump sessions or naps with having to manually input it",
+      "translation": "希望提供类似 Hey Siri 的功能，通过说话记录吸奶或小睡，减少手动录入。",
+      "note": "原文 with having to manually input it 存在笔误；按上下文解释为减少手动录入。未指定 Apple HomeKit。",
+      "date": "2026-07-14",
+      "country": "未知",
+      "channel": "社区/评论",
+      "product": "APP",
+      "is_new": false
+    },
+    {
+      "id": "recvswecTAGRUt",
+      "language": "意大利语",
+      "platforms": [
+        "Alexa"
+      ],
+      "intent": "第三方设备语音控制",
+      "action": "深夜关闭 WN02",
+      "quote": "Sarebbe una grande cosa avere la lampada con i rumori bianchi abbinabile ad Alexa. Nel pieno della notte sarebbe davvero conveniente spegnere la WN02 con il comando vocale",
+      "translation": "希望 WN02 白噪音灯可搭配 Alexa，深夜能通过语音命令关闭。",
+      "note": "明确提及 WN02、Alexa 和夜间关机；未明确要求音量、灯光调节或 Routine。",
+      "date": "2026-08-16",
+      "country": "意大利",
+      "channel": "应用市场",
+      "product": "WN02 台式APP白噪音",
+      "is_new": false
+    },
+    {
+      "id": "recvvIrVU3pF2e",
+      "language": "英语",
+      "platforms": [
+        "Siri / Siri-like",
+        "Hey Google / Assistant 类"
+      ],
+      "intent": "App 内语音记录",
+      "action": "产后与夜间口述录入记录",
+      "quote": "moms usually use this in their postpartum where they want less effort to log entries but this lacks siri and hey Google commands which forces moms to enter entries manually by opening the app which is a lot of effort especially during the no sleepy nights.",
+      "translation": "用户表示产后希望省力记录，但缺少 Siri 和 Hey Google 指令，必须打开 App 手动录入，夜间尤其费力。",
+      "note": "2026-09-17 的 Google Play 评价。Hey Google 是助手唤醒表达；未明确要求 Google Home 设备控制，也未指定记录类型。",
+      "date": "2026-09-17",
+      "country": "未知",
+      "channel": "应用市场",
+      "product": "APP",
+      "is_new": true
+    }
+  ],
+  "incidental": {
+    "id": "rec27V1ZI49y1Q",
+    "date": "2026-07-01",
+    "country": "美国",
+    "product": "BM08智能婴儿监视器",
+    "quote": "Alexa, set the AC to 75 degrees.",
+    "translation": "Alexa，把空调设为75度。",
+    "note": "来自通话转写，未核验录音或识别准确性；不是 Momcozy 设备集成诉求。"
+  },
+  "external_market": {
+    "us_adult_voice_assistant_penetration_pct": 62,
+    "us_adult_smart_speaker_ownership_pct": 35,
+    "us_voice_command_daily_use_pct": 57,
+    "us_installed_base_share_pct": {
+      "Amazon Echo": 69,
+      "Google Home": 25,
+      "Apple HomePod": 5,
+      "Facebook Portal": 1
+    },
+    "installed_base_reference_period": "2021-06",
+    "attitude_base": "美国智能音箱拥有者，n=1190，2022",
+    "attitude_benefits_pct": {
+      "交互短且容易并花费很少精力": 90,
+      "带来更便利的生活体验": 86,
+      "更容易发现新内容或活动": 80
+    },
+    "attitude_concerns_pct": {
+      "担心黑客访问家庭或个人信息": 52,
+      "困扰于设备一直在监听": 47,
+      "担心政府监听私人对话": 43
+    },
+    "manufacturer_security_trust_pct": 58,
+    "non_affirmed_trust_proxy_pct": 42
+  },
+  "external_snapshot": {
+    "last_research_date": "2026-08-19",
+    "refreshed_this_run": false,
+    "note": "历史资料保留原调查年份，本次仅更新VOC，不将市场或竞品旧快照标为2026-10-19现状。"
+  },
+  "competitor_scope": {
+    "unique_brands": 16,
+    "brand_product_line_entries": 17,
+    "representative_skus": 17,
+    "platforms": [
+      "Alexa",
+      "Google Home"
+    ],
+    "geographies": [
+      "美国",
+      "加拿大"
+    ],
+    "matrix_rows": 68,
+    "us_current_skus": 17,
+    "canada_records": 34,
+    "formal_positive_us": 3,
+    "formal_negative_us": 1,
+    "unknown_us_platform_rows": 30,
+    "verification_date": "2026-08-19"
+  },
+  "competitor_facts": {
+    "us_status_counts": {
+      "positive": 3,
+      "negative": 1,
+      "unknown": 30
+    },
+    "confirmed_capabilities": {
+      "Nanit Pro Camera × Alexa": [
+        "睡眠数据查询",
+        "夜灯开关",
+        "视频直播",
+        "音频直播"
+      ],
+      "Hatch Rest+ 2nd gen × Alexa": [
+        "开关",
+        "音量",
+        "亮度",
+        "时钟",
+        "闹钟"
+      ],
+      "Nanit Sound + Light × Google Home": [
+        "开关",
+        "亮度",
+        "音量",
+        "状态查询"
+      ],
+      "Hatch Rest+ 2nd gen × Google Home": []
+    }
+  }
+}

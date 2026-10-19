@@ -1,0 +1,25 @@
+source_id,brand,source_type,platform,geography,title,source_url,verified_at,evidence_grade,original_summary,usage_note
+COMP-001,Nanit,官方帮助中心,Alexa,美国,Amazon Alexa & Nanit,https://support.nanit.com/en_us/amazon-alexa-and-nanit-ByjqMhRYlg,2026-08-19,A,"Nanit 与 Nanit Show 两个 Skill；支持睡眠数据与夜灯查询，以及 Echo Show/Spot 视频和音频流；不支持双向通话、告警、呼吸监测和无屏设备的纯音频流。",正式接入证据
+COMP-002,Nanit,官方帮助中心,Google Home,美国,Nanit Sound + Light Works with Google Home,https://support.nanit.com/en_us/nanit-sound-+-light-works-with-google-home-ryMyXhAYeg,2026-08-19,A,"Sound + Light 必须关联 Nanit Camera/账号；支持开关、亮度、音量和在线状态；需要 owner/admin 权限。",条件支持证据
+COMP-003,Hatch,官方帮助中心,Alexa,美国,Amazon Alexa integration,https://help.hatch.co/hc/en-us/articles/16495578080663-Amazon-Alexa-integration,2026-08-19,A,"Rest+ 2nd gen 支持开关、音量、亮度、时钟和闹钟；需启用 Hatch Skill 并关联账号。",正式接入证据
+COMP-004,Hatch,官方帮助中心,Google Home,美国,Can my Hatch device connect to Google Home?,https://help.hatch.co/hc/en-us/articles/27290532838423-Can-my-Hatch-device-connect-to-Google-Home,2026-08-19,A,"Hatch 官方明确当前没有 Google Home 或 Siri Skill，并说明 Alexa 已投入。",正式负向证据
+COMP-005,Owlet,官方帮助中心搜索,Alexa,美国,Owlet Help Center search Alexa,https://support.owletcare.com/hc/en-us/search?query=Alexa,2026-08-19,B,"官方帮助中心 Alexa 搜索返回 0 条。",仅证明本次未发现官方证据；不能写成不支持
+COMP-006,Owlet,官方产品页,NA,美国,Dream Duo 3,https://owletcare.com/products/dream-duo-3,2026-08-19,A,"当前在售 Dream Duo Gen 3；官方价 379.99 美元；2K 视频、健康与睡眠数据通过 Owlet Dream App 提供。",在售与价格证据
+COMP-007,Willow,官方产品页,NA,美国,Willow 360 Wearable Breast Pump,https://onewillow.com/products/willow-pump-360,2026-08-19,A,"当前在售；标价 499.99 美元、核验时促销价 374.99 美元；官方描述为 app-controlled。",在售、价格与联网证据
+COMP-008,Willow,官方帮助中心搜索,Alexa/Google Home,美国,Willow Help Center voice ecosystem search,https://help.onewillow.com/s,2026-08-19,B,"官方帮助中心与站点限定搜索未发现 Alexa 或 Google Home 文档。",仅证明本次未发现官方证据；不能写成不支持
+COMP-009,Nanit,官方产品页,NA,美国,Nanit Pro Camera,https://www.nanit.com/products/nanit-pro-camera,2026-08-19,B,"联网婴儿监视器代表 SKU。",在售代理
+COMP-010,Nanit,官方产品页,NA,美国,Nanit Sound + Light,https://www.nanit.com/products/sound-and-light,2026-08-19,B,"联网白噪音与夜灯代表 SKU。",在售代理
+COMP-011,CuboAi,官方产品页,NA,美国,CuboAi Smart Baby Monitor 3,https://us.getcubo.com/products/cuboai-smart-baby-monitor-3,2026-08-19,B,"联网婴儿监视器代表 SKU。",在售代理
+COMP-012,Lollipop,官方产品页,NA,美国,Lollipop Baby Camera,https://www.lollipop.camera/products/lollipop-baby-camera,2026-08-19,B,"联网婴儿监视器代表 SKU。",在售代理
+COMP-013,Eufy,官方产品页,NA,美国,Eufy Baby Monitor E21,https://www.eufy.com/products/t8354121,2026-08-19,B,"联网婴儿监视器代表 SKU。",在售代理；不得把 eufy Security 其它摄像头的语音能力迁移到该 SKU
+COMP-014,Motorola Nursery,官方产品页,NA,美国,PIP1510 Connect,https://motorolanursery.com/nursery-care-products/connected-video-baby-monitors/pip1510-connect/,2026-08-19,B,"官方页面与搜索快照显示价格 169.99 美元且核验时缺货。",在售状态与价格代理
+COMP-015,VTech,官方产品页,NA,美国,RM5754HD,https://www.vtechphones.com/store/pd/4199/RM5754HD-5-inch-Smart-Wi-Fi-1080p-Video-Monitor,2026-08-19,B,"Smart Wi-Fi 婴儿监视器代表 SKU。",在售代理
+COMP-016,Harbor,官方产品页,NA,美国,Harbor Baby Monitor,https://harbor.co/products/harbor-baby-monitor,2026-08-19,B,"联网婴儿监视器代表 SKU。",在售代理
+COMP-017,Yogasleep,官方产品页,NA,美国,Duet White Noise Machine,https://yogasleep.com/products/duet-white-noise-machine-and-wireless-speaker,2026-08-19,B,"App/连接型睡眠声音产品代表 SKU。",在售代理
+COMP-018,SNOOZ,官方产品页,NA,美国,SNOOZ Pro,https://getsnooz.com/products/snooz-pro,2026-08-19,B,"App 连接型白噪音产品代表 SKU。",在售代理
+COMP-019,Dreamegg,官方产品页,NA,美国,D11 Max,https://dreamegg.com/products/d11-max,2026-08-19,C,"智能白噪音产品代表 SKU；页面可访问性和当前型号需采购前复核。",在售代理
+COMP-020,Elvie,官方产品页,NA,美国,Elvie Pump,https://www.elvie.com/en-us/shop/elvie-pump,2026-08-19,B,"App-connected 智能吸奶器代表 SKU。",在售代理
+COMP-021,Medela,官方产品页,NA,美国,Freestyle Hands-free,https://www.medela.com/en-us/breastfeeding-pumping/products/pumps/hands-free/freestyle-hands-free-breast-pump,2026-08-19,B,"App-connected 吸奶器代表 SKU。",在售代理
+COMP-022,Lansinoh,官方产品页,NA,美国,Smartpump 3.0,https://lansinoh.com/products/smartpump-3-0-double-electric-breast-pump,2026-08-19,B,"App-connected 智能吸奶器代表 SKU。",在售代理
+COMP-023,多品牌,渠道搜索快照,NA,美国,Amazon US competitor snapshot,https://www.amazon.com/s?k=smart+baby+monitor+sound+machine+wearable+breast+pump,2026-08-19,C,"价格、评分和评论量为渠道/搜索快照或公开商品页代理。",不等同销量或市场份额
+COMP-024,多品牌,渠道搜索快照,NA,美国,Best Buy US competitor snapshot,https://www.bestbuy.com/site/searchpage.jsp?st=smart+baby+monitor,2026-08-19,C,"用于判断 Amazon US 与 Best Buy US 双渠道覆盖。",不等同销量或市场份额
