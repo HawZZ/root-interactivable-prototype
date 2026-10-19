@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "error-code-dynamic-resources",
-  "version": "v1.7.1",
+  "version": "v1.7.2",
   "status": "active",
   "tags": [
     "错误码",

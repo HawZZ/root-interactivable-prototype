@@ -1,5 +1,5 @@
-import {completeContent,contentFor} from './content.js?v=v1.7.1';
-import {blankCode} from './data.js?v=v1.7.1';
+import {completeContent,contentFor} from './content.js?v=v1.7.2';
+import {blankCode} from './data.js?v=v1.7.2';
 export const clone=x=>structuredClone(x);
 export const normalizeText=text=>String(text??'').replace(/\r\n?/g,'\n').replace(/\\n/g,'\n');
 export function languageCount(code,languages){return languages.filter(([id])=>completeContent(contentFor(code,id))).length;}
@@ -19,7 +19,7 @@ export function parseCSV(text,requiredHeaders=['normalizedCode','description']){
  if(rows.length<2)throw new Error('文件未包含有效数据行。');
  const headers=rows.shift().map(x=>x.replace(/^\uFEFF/,'').trim());
  if(new Set(headers).size!==headers.length)throw new Error('CSV 列名重复。');
- if(!requiredHeaders.every(k=>headers.includes(k)))throw new Error('缺少必填列：'+requiredHeaders.join('、')+'。');
+ if(!requiredHeaders.every(k=>headers.includes(k)))throw new Error('缺少必填列：'+requiredHeaders.map(k=>({normalizedCode:'错误码',description:'标准语义',blockId:'Block 标识',field:'内容项'}[k]||k)).join('、')+'。');
  return rows.map((r,i)=>{if(r.length!==headers.length)throw new Error(`第 ${i+2} 行列数与表头不一致。`);return Object.fromEntries(headers.map((h,j)=>[h,r[j]]));});
 }
 export function parseFile(text,name){
@@ -34,7 +34,7 @@ export function inspectImport(state,rawRows){
   const row={line:i+1,normalizedCode:'',description:'',before:'',status:'added',error:''};
   const fail=message=>{row.status='conflict';row.error=message;errors.push(`第 ${row.line} 条：${message}`);};
   if(!raw||typeof raw!=='object'||Array.isArray(raw))fail('数据行必须是对象。');
-  else if(Object.keys(raw).some(k=>!['normalizedCode','description'].includes(k)))fail('码表仅支持 normalizedCode、description 两列。');
+  else if(Object.keys(raw).some(k=>!['normalizedCode','description'].includes(k)))fail('错误码文件仅支持“错误码”和“标准语义”两列。');
   else if(typeof raw.normalizedCode!=='string'||!raw.normalizedCode.trim())fail('错误码必须为非空文本。');
   else if(typeof raw.description!=='string'||!raw.description.trim())fail('标准语义必须为非空文本。');
   else{

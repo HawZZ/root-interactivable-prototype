@@ -1,6 +1,6 @@
-import {LANGUAGES,initialState} from './data.js?v=v1.7.1';
-import {clone,normalizeText,parseCSV} from './domain.js?v=v1.7.1';
-import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js?v=v1.7.1';
+import {LANGUAGES,initialState} from './data.js?v=v1.7.2';
+import {clone,normalizeText,parseCSV} from './domain.js?v=v1.7.2';
+import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js?v=v1.7.2';
 const locales=LANGUAGES.map(([id])=>id);
 export const FIELDS=['title','summary','primary','secondary'];
 export const COLUMNS=['normalizedCode','blockId','field',...locales];
@@ -15,9 +15,9 @@ export function parseMessageFile(text,name){
  if(!Array.isArray(rows)||!rows.length)throw new Error('文案文件需要非空数据数组。');
  for(const row of rows){
   if(!row||typeof row!=='object'||Array.isArray(row))throw new Error('每条文案必须是对象。');
-  if(Object.hasOwn(row,'locale'))throw new Error('模板已改为语言列，请下载新版模板，不再填写 locale 列。');
-  for(const key of Object.keys(row))if(!COLUMNS.includes(key))throw new Error('不支持的列名：'+key+'，请使用文案模板中的语言编码。');
-  if(structuralFields.includes(row.field))throw new Error('文案导入不支持 '+row.field+'，请在“编辑文案”中手动调整结构。');
+  if(Object.hasOwn(row,'locale'))throw new Error('模板按语言分列，请重新下载模板，将同一内容项的各语言文案填写在同一行。');
+  for(const key of Object.keys(row))if(!COLUMNS.includes(key))throw new Error('不支持的列名：'+({blockOrder:'Block 排序',prefixType:'前缀类型',icon:'图标',number:'数字前缀'}[key]||key)+'。请使用下载模板，仅填写固定定位列和语言文案；结构请手动编辑。');
+  if(structuralFields.includes(row.field))throw new Error('文案导入不支持'+({blockOrder:'Block 排序',prefixType:'前缀类型',icon:'图标',number:'数字前缀'}[row.field]||row.field)+'，请在“编辑文案”中手动调整结构。');
  }
  return rows;
 }
@@ -33,16 +33,16 @@ export function inspectMessageImport(state,rows){
   const code=row.normalizedCode.trim(),field=typeof row.field==='string'?row.field.trim():'';
   if(!FIELDS.includes(field)){fail(line,'仅支持标题、摘要、主文案和副文案；结构请手动编辑。');continue;}
   const blockId=typeof row.blockId==='string'?row.blockId.trim():'',isBlock=['primary','secondary'].includes(field);
-  if(present(row.blockId)&&(!blockId||!/^[A-Za-z0-9_-]+$/.test(blockId))){fail(line,'blockId 仅支持字母、数字、下划线和短横线。');continue;}
-  if(isBlock&&!blockId){fail(line,'正文文案必须提供已存在的 blockId。');continue;}
-  if(!isBlock&&blockId){fail(line,'标题和摘要不填写 blockId。');continue;}
+  if(present(row.blockId)&&(!blockId||!/^[A-Za-z0-9_-]+$/.test(blockId))){fail(line,'Block 标识仅支持字母、数字、下划线和短横线。');continue;}
+  if(isBlock&&!blockId){fail(line,'正文文案必须填写已配置的 Block 标识。');continue;}
+  if(!isBlock&&blockId){fail(line,'标题和摘要的 Block 标识须留空。');continue;}
   if(isBlock&&!state.codes[code].structure.some(b=>b.id===blockId)){fail(line,'Block '+blockId+' 不存在；请重新下载模板，结构只能手动编辑。');continue;}
   if(!locales.some(locale=>present(row[locale])))continue;
   for(const locale of locales){
    const raw=row[locale];if(!present(raw))continue;
    if(typeof raw!=='string'){fail(line,locale+' 文案必须为文本。');continue;}
    const value=normalizeText(raw),identity=JSON.stringify([code,locale,blockId,field]);
-   if(seen.has(identity)){if(seen.get(identity)!==value)fail(line,'同一内容项的 '+locale+' 存在不同文案：'+field);continue;}
+   if(seen.has(identity)){if(seen.get(identity)!==value)fail(line,'同一内容项的 '+locale+' 存在不同文案：'+({title:'标题',summary:'摘要',primary:'主文案',secondary:'副文案'}[field]||field));continue;}
    seen.set(identity,value);
    const key=JSON.stringify([code,locale]);let target=targets.get(key);
    if(!target){

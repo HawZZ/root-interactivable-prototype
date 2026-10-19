@@ -1,5 +1,5 @@
-import {upgradeDemoCopy} from './data.js?v=v1.7.1';
-import {clone,normalizeText} from './domain.js?v=v1.7.1';
+import {upgradeDemoCopy} from './data.js?v=v1.7.2';
+import {clone,normalizeText} from './domain.js?v=v1.7.2';
 export const ICONS=[['wifi','Wi-Fi'],['bluetooth','蓝牙'],['warning','提醒'],['settings','设置'],['check','检查'],['info','信息']];
 export const emptyContent=()=>({title:'',summary:'',blocks:[]});
 export const blankBlock=(id,order)=>({id,order,prefixType:'number',icon:'',number:String(order),primary:'',secondary:''});
