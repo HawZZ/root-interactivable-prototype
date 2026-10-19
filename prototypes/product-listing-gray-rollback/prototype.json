@@ -4,7 +4,7 @@
   "title": "IoT Admin 产品区域发布与版本回滚原型",
   "summary": "按数据中心或国家审批上架，当地全员可见配网入口；支持区域下架、白名单体验与产品基础信息历史版本回滚。",
   "productLine": "IoT Admin",
-  "businessArea": "智能产品",
+  "businessArea": "IoT Admin",
   "surface": "web",
   "systems": [
     "web"
@@ -19,7 +19,7 @@
     "变更审批",
     "版本回滚"
   ],
-  "updatedAt": "2026-10-19T09:50:08Z",
+  "updatedAt": "2026-10-19T09:52:09Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"
