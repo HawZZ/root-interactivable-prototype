@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IoT Admin 产品区域发布与版本回滚原型</title>
+<meta name="description" content="按数据中心或国家审批上架，当地全员可见配网入口；支持区域下架、白名单体验与产品基础信息历史版本回滚。">
+<meta name="keywords" content="区域发布,配网入口,白名单,变更审批,版本回滚">
+<meta name="prototype:product-line" content="IoT Admin">
+<meta name="prototype:business-area" content="智能产品">
+<meta name="prototype:surface" content="web">
+<meta name="prototype:systems" content="web">
+<style>
+:root{
+  --pri:#4372ff; --pri-dark:#2b6bd9; --pri-l7:#e0ecff; --pri-l9:#ecf5ff;
+  --ok:#67c23a; --warn:#e6a23c; --danger:#f56c6c; --info:#909399;
+  --t1:#303133; --t2:#606266; --t3:#909399; --t4:#a8abb2;
+  --bd:#dcdfe6; --bdl:#e4e7ed; --bdlr:#ebeef5; --th:#fafafa;
+  --app-bg:#f9f9f9; --aside:#001529; --r:4px; --ann-w:380px;
+  --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--t1);background:#e8ecf1}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+h1,h2,h3,h4,p{margin:0}
+code{font-family:"SFMono-Regular",Consolas,monospace}
+
+/* ===== 两栏原型骨架：左产品画布(固定1440px) + 右原型批注 ===== */
+.proto-shell{display:grid;grid-template-columns:minmax(0,1fr) var(--ann-w);height:100vh;overflow:hidden}
+.product-pane{overflow:auto;min-width:0;background:#e8ecf1}
+.canvas{width:1440px;min-height:100vh;margin:0 auto;background:var(--app-bg);box-shadow:0 0 0 1px #d4dbe3;display:grid;grid-template-columns:208px minmax(0,1fr)}
+
+/* ===== IoT Admin 侧边导航 ===== */
+.aside{background:var(--aside);color:#a6b7c9;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;padding:0 18px;height:54px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo-mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#91d126,#5a9420);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.logo-txt{color:#fff;font-weight:700;font-size:14px;line-height:1.2}
+.logo-sub{font-size:10px;color:#7d92a8;font-weight:400}
+.menu{padding:10px 0;flex:1}
+.menu-item{display:flex;align-items:center;gap:10px;height:48px;padding:0 18px;font-size:14px;border-left:3px solid transparent}
+.menu-item .mi{width:16px;height:16px;border-radius:4px;background:rgba(255,255,255,.14);flex:0 0 auto}
+.menu-item.active{background:rgba(67,114,255,.18);color:#fff;border-left-color:var(--pri)}
+.menu-item.active .mi{background:var(--pri)}
+.menu-item.dim{color:#5f7186}
+.aside-foot{padding:14px 18px;font-size:11px;color:#5f7186;border-top:1px solid rgba(255,255,255,.08)}
+
+/* ===== IoT Admin 顶栏与内容区 ===== */
+.main{display:grid;grid-template-rows:54px minmax(0,1fr);min-width:0}
+.hd{position:sticky;top:0;z-index:30;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:rgba(0,0,0,.06) 0 -1px 0 0 inset}
+.crumb{font-size:12px;line-height:22px;color:var(--t3);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.crumb b{color:var(--t1);font-weight:500}
+.userbar{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--t2)}
+.env-tag{height:22px;padding:0 8px;border-radius:var(--r);background:#fdf3e8;color:#b26a00;font-size:12px;display:inline-grid;place-items:center;border:1px solid #f5dab1}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--pri-l9);color:var(--pri);display:grid;place-items:center;font-weight:700;font-size:12px}
+.content{padding:16px 24px 40px;min-width:0}
+
+/* ===== 通用组件（Element Plus 风格） ===== */
+.card{background:#fff;border:1px solid var(--bdl);border-radius:var(--r);margin-bottom:16px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bdlr)}
+.card-hd h2{font-size:14px;font-weight:600;color:var(--t1)}
+.card-hd .sub{font-size:12px;color:var(--t3);font-weight:400;margin-top:2px}
+.card-bd{padding:16px}
+.btn{height:32px;padding:0 15px;border:1px solid var(--bd);border-radius:var(--r);background:#fff;color:var(--t2);font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{color:var(--pri);border-color:#c6d6ff}
+.btn:disabled{color:var(--t4);border-color:var(--bdl);background:#f5f7fa;cursor:not-allowed}
+.btn-pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn-pri:hover{background:var(--pri-dark);border-color:var(--pri-dark);color:#fff}
+.btn-pri:disabled{background:#a3c5ff;border-color:#a3c5ff;color:#fff;cursor:not-allowed}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-danger:hover{background:#e15b5b;border-color:#e15b5b;color:#fff}
+.btn-link{height:auto;padding:0 4px;border:0;color:var(--pri);font-size:13px;background:none}
+.btn-link:hover{text-decoration:underline}
+.btn-link:disabled{color:var(--t4);cursor:not-allowed;text-decoration:none}
+.btn-link.danger{color:var(--danger)}
+.btn-sm{height:28px;padding:0 10px;font-size:13px}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--r);font-size:12px;border:1px solid transparent;white-space:nowrap}
+.tag-info{background:#f4f4f5;color:#909399;border-color:#e9e9eb}
+.tag-pri{background:var(--pri-l9);color:var(--pri);border-color:#c6d6ff}
+.tag-ok{background:#f0f9eb;color:#67c23a;border-color:#e1f3d8}
+.tag-warn{background:#fdf6ec;color:#e6a23c;border-color:#faecd8}
+.tag-danger{background:#fef0f0;color:#f56c6c;border-color:#fde2e2}
+table{width:100%;border-collapse:collapse}
+th{background:var(--th);color:var(--t3);font-size:14px;font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--bdl);white-space:nowrap}
+td{color:var(--t2);font-size:14px;padding:12px;border-bottom:1px solid var(--bdlr);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.cell-main{color:var(--t1);font-weight:500}
+.cell-sub{color:var(--t3);font-size:12px;margin-top:2px}
+.ops{display:flex;flex-wrap:wrap;gap:2px 8px;max-width:220px}
+.alert{display:flex;gap:10px;padding:10px 14px;border-radius:var(--r);font-size:13px;line-height:1.6;margin-bottom:16px;border:1px solid transparent}
+.alert-info{background:var(--pri-l9);border-color:#c6d6ff;color:#3a5a9e}
+.alert-warn{background:#fdf6ec;border-color:#faecd8;color:#b26a00}
+.alert-icn{width:16px;height:16px;border-radius:50%;flex:0 0 auto;margin-top:3px;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff}
+.alert-info .alert-icn{background:var(--pri)}
+.alert-warn .alert-icn{background:var(--warn)}
+.tabs{display:flex;border-bottom:1px solid var(--bdl);padding:0 16px;background:#fff;border-radius:var(--r) var(--r) 0 0}
+.tab{height:44px;padding:0 2px;margin-right:24px;font-size:14px;color:var(--t2);border-bottom:2px solid transparent;display:inline-flex;align-items:center}
+.tab:hover{color:var(--pri)}
+.tab.active{color:var(--pri);font-weight:500;border-bottom-color:var(--pri)}
+.tab.dim{color:var(--t4)}
+.dc-tabs{display:inline-flex;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.dc-tab{height:30px;padding:0 14px;font-size:13px;color:var(--t2);background:#fff;border-right:1px solid var(--bd)}
+.dc-tab:last-child{border-right:0}
+.dc-tab.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.filter-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.f-field{display:grid;gap:4px}
+.f-field label{font-size:12px;color:var(--t3)}
+.f-field input,.f-field select{height:32px;width:200px;border:1px solid var(--bd);border-radius:var(--r);padding:0 11px;font-size:14px;background:#fff}
+.f-field input::placeholder{color:var(--t4)}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:12px 16px;color:var(--t2);font-size:13px;border-top:1px solid var(--bdlr)}
+.pager .pg{min-width:28px;height:28px;border:1px solid var(--bd);border-radius:var(--r);display:inline-grid;place-items:center;color:var(--t2);background:#fff}
+.pager .pg.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;padding:16px 20px}
+.summary h1{font-size:18px;font-weight:600;line-height:28px;display:inline}
+.sum-meta{display:grid;grid-template-columns:repeat(2,minmax(220px,auto));gap:6px 28px;margin-top:10px}
+.sum-meta .k{color:var(--t3);font-size:12px}
+.sum-meta .v{color:var(--t2);font-size:13px}
+.sum-stats{display:flex;gap:0;align-items:stretch}
+.stat{padding:4px 22px;border-left:1px solid var(--bdlr);text-align:center;min-width:104px}
+.stat .n{font-size:20px;font-weight:700;color:var(--t1);line-height:1.3}
+.stat .n.pri{color:var(--pri)} .stat .n.warn{color:var(--warn)}
+.stat .l{font-size:12px;color:var(--t3);margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--t2)}
+.legend .arrow{color:var(--t4)}
+.legend .sep{margin:0 6px;color:var(--bdl)}
+.audit{display:grid}
+.audit-item{display:grid;grid-template-columns:10px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px dashed var(--bdlr)}
+.audit-item:last-child{border-bottom:0}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--pri);margin-top:7px}
+.audit-dot.warn{background:var(--warn)} .audit-dot.danger{background:var(--danger)} .audit-dot.ok{background:var(--ok)} .audit-dot.info{background:var(--info)}
+.audit-t{color:var(--t1);font-size:13px;font-weight:500}
+.audit-m{color:var(--t3);font-size:12px;margin-top:2px}
+.empty{padding:42px 0;text-align:center;color:var(--t3);font-size:13px}
+.empty .ico{font-size:26px;opacity:.5}
+.kv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}
+.kv{border:1px solid var(--bdlr);border-radius:var(--r);padding:10px 12px;background:#fcfcfd}
+.kv .k{font-size:12px;color:var(--t3)}
+.kv .v{font-size:13px;color:var(--t1);margin-top:3px;line-height:1.5}
+.chip-set{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bdl);border-radius:var(--r);padding:6px 10px;font-size:13px;color:var(--t2);background:#fff}
+.chip b{color:var(--t1);font-weight:600}
+.diff-tbl td:first-child{color:var(--t3);white-space:nowrap;width:120px}
+.diff-tbl .old{color:var(--danger)} .diff-tbl .new{color:var(--ok)}
+.codebox{background:#f6f8fa;border:1px dashed var(--bd);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--t2);line-height:1.7}
+.form-item{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;margin-bottom:18px;align-items:start}
+.form-item>label{font-size:14px;color:var(--t2);text-align:right;padding-top:6px}
+.form-item>label .req{color:var(--danger)}
+.form-item input[type=text],.form-item input[type=number],.form-item input[type=datetime-local],.form-item select,.form-item textarea{width:100%;max-width:420px;border:1px solid var(--bd);border-radius:var(--r);padding:0 11px;height:32px;font-size:14px;background:#fff}
+.form-item textarea{height:auto;min-height:64px;padding:6px 11px;resize:vertical}
+.form-item .help{font-size:12px;color:var(--t3);margin-top:4px;line-height:1.5}
+.radio-row,.check-row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;min-height:32px}
+.radio,.check{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--t2);cursor:pointer}
+.radio input,.check input{accent-color:var(--pri)}
+.unit-check{display:grid;gap:8px}
+.unit-opt{display:flex;align-items:center;gap:10px;border:1px solid var(--bdl);border-radius:var(--r);padding:9px 12px;background:#fff}
+.unit-opt:has(input:checked){border-color:var(--pri);background:var(--pri-l9)}
+.unit-opt.dis{background:#f5f7fa;color:var(--t4)}
+.unit-opt .nm{font-weight:500;color:var(--t1)}
+.unit-opt .dc{color:var(--t3);font-size:12px}
+.validation{border:1px solid #fde2e2;background:#fef0f0;border-radius:var(--r);padding:10px 14px;color:#c45656;font-size:13px;display:grid;gap:4px;margin:0 0 4px 122px}
+.validation b{color:var(--danger)}
+
+/* ===== 抽屉 / 弹窗 / Toast ===== */
+.scrim{position:fixed;top:0;left:0;bottom:0;right:var(--ann-w);background:rgba(0,21,41,.45);z-index:100;display:none}
+.scrim.open{display:block}
+.drawer{position:fixed;top:0;right:var(--ann-w);width:720px;max-width:calc(100vw - var(--ann-w));height:100vh;background:#fff;z-index:101;display:none;grid-template-rows:56px minmax(0,1fr) 64px;box-shadow:-6px 0 24px rgba(0,21,41,.18)}
+.drawer.open{display:grid}
+.drawer-hd{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--bdlr)}
+.drawer-hd h2{font-size:16px;font-weight:400;color:var(--t1)}
+.drawer-hd .sub{font-size:12px;color:var(--t3);margin-top:2px}
+.drawer-x{font-size:20px;color:var(--t3);width:32px;height:32px;border-radius:var(--r)}
+.drawer-x:hover{background:#f5f7fa;color:var(--t1)}
+.drawer-bd{padding:20px;overflow:auto}
+.drawer-ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;border-top:1px solid var(--bdlr);background:#fcfcfd}
+.drawer-ft .hint{font-size:12px;color:var(--t3)}
+.mscrim{position:fixed;top:0;left:0;bottom:0;right:var(--ann-w);background:rgba(0,21,41,.45);z-index:110;display:none;place-items:center;padding:24px;overflow:auto}
+.mscrim.open{display:grid}
+#modalSlot{width:min(640px,100%);min-width:0}
+.modal{width:640px;max-width:100%;background:#fff;border-radius:var(--r);box-shadow:0 12px 40px rgba(0,21,41,.25);display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-height:calc(100vh - 60px)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--bdlr)}
+.modal-hd h3{font-size:16px;font-weight:500}
+.modal-bd{padding:18px 20px;overflow:auto;display:grid;gap:14px;align-content:start}
+.modal-bd>*{min-width:0}
+.modal-ft{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid var(--bdlr);background:#fcfcfd}
+.toast{position:fixed;top:18px;left:calc((100vw - var(--ann-w))/2);transform:translate(-50%,-8px);background:#fff;border:1px solid var(--bdl);border-radius:var(--r);box-shadow:0 6px 20px rgba(0,21,41,.16);padding:9px 16px;font-size:14px;color:var(--t2);opacity:0;pointer-events:none;transition:.18s;z-index:300;display:flex;gap:8px;align-items:center;max-width:min(680px,calc(100vw - var(--ann-w) - 40px))}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast .ti{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;flex:0 0 auto}
+.toast.ok .ti{background:var(--ok)} .toast.info .ti{background:var(--pri)} .toast.warn .ti{background:var(--warn)}
+
+/* ===== 原型批注面板 ===== */
+.ann{background:#fffdf6;border-left:1px solid #f3d98b;display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0}
+.ann-hd{padding:14px 16px 12px;border-bottom:1px solid #f3d98b;display:grid;gap:5px}
+.ann-title{font-weight:700;color:#5d4100;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.ann-count{font-size:11px;font-weight:500;color:#8a6d18;background:#ffefc4;border-radius:10px;padding:1px 8px}
+.ann-ctx{font-size:12px;color:#8a6d18}
+.ann-hint{font-size:11px;color:#b09255;line-height:1.5}
+.ann-list{overflow:auto;padding:12px;display:grid;gap:10px;align-content:start}
+.note-card{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;text-align:left;background:#fff;border:1px solid #f1d57c;border-radius:var(--r);padding:10px;box-shadow:0 4px 14px rgba(90,64,0,.05)}
+.note-card:hover{border-color:#e3b62f}
+.note-card.active{border-color:#d89a00;background:#fff8df}
+.note-num{width:22px;height:22px;border-radius:50%;background:#ffd666;border:1px solid #d89a00;color:#5d4100;font-size:12px;font-weight:700;display:grid;place-items:center;flex:0 0 auto}
+.note-body{min-width:0;display:grid;gap:4px}
+.note-body>strong{color:var(--t1);font-size:13px;line-height:18px}
+.note-loc{font-size:11px;color:#b09255}
+.note-sec{display:block;font-size:12px;font-weight:700;color:#5d4100;margin-top:4px}
+.note-line{display:grid;grid-template-columns:12px minmax(0,1fr);font-size:12px;color:var(--t2);line-height:1.6}
+.note-line .mk{color:#d89a00}
+.note-line.plain{grid-template-columns:minmax(0,1fr)}
+.note-flow{display:block;font-size:12px;color:#3a5a9e;background:#eef4ff;border:1px solid #d7e5ff;border-radius:var(--r);padding:5px 8px;margin-top:3px;line-height:1.6}
+.ann-empty{color:#b09255;font-size:12px;padding:16px;text-align:center}
+.anchor{position:absolute;top:-9px;right:-9px;z-index:25;width:20px;height:20px;border-radius:50%;background:#ffd666;border:1px solid #d89a00;color:#5d4100;font-size:11px;font-weight:700;display:grid;place-items:center;box-shadow:0 2px 6px rgba(90,64,0,.3);padding:0}
+.anchor:hover{transform:scale(1.15)}
+.note-host{position:relative}
+.note-target-active{outline:2px solid #d89a00 !important;outline-offset:1px;border-radius:var(--r)}
+th.note-host .anchor,td.note-host .anchor{top:-8px;right:2px}
+
+/* ===== 移动端 ===== */
+.m-tabs{display:none}
+@media (max-width:960px){
+  body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  .proto-shell{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr);height:auto;flex:1;min-height:0}
+  .m-tabs{display:grid;grid-template-columns:1fr 1fr;background:#fff;border-bottom:1px solid var(--bdl);flex:0 0 44px}
+  .m-tab{font-size:14px;color:var(--t2);border-bottom:2px solid transparent}
+  .m-tab.active{color:var(--pri);font-weight:600;border-bottom-color:var(--pri)}
+  .ann{display:none}
+  body.show-ann .ann{display:grid}
+  body.show-ann .product-pane{display:none}
+  body.show-ann .drawer,body.show-ann .scrim,body.show-ann .mscrim{display:none}
+  .scrim,.mscrim{right:0;top:44px}
+  .m-tabs{position:relative;z-index:200}
+  .modal{max-height:calc(100dvh - 100px)}
+  .drawer{top:44px;right:0;width:100vw;max-width:100vw;height:calc(100dvh - 44px)}
+  .toast{left:50%;max-width:calc(100vw - 32px)}
+}
+</style>
+</head>
+<body>
+<div class="m-tabs" id="mTabs">
+  <button class="m-tab active" data-mtab="product" type="button">产品页面</button>
+  <button class="m-tab" data-mtab="ann" type="button">原型批注</button>
+</div>
+<div class="proto-shell">
+  <div class="product-pane" id="pane">
+    <div class="canvas" id="canvas"></div>
+  </div>
+  <aside class="ann" aria-label="原型批注">
+    <div class="ann-hd">
+      <div class="ann-title"><span>原型批注</span><span class="ann-count" id="annCount"></span></div>
+      <div class="ann-ctx" id="annCtx"></div>
+      <div class="ann-hint">黄色编号为批注锚点，不属于真实产品 UI；点击批注卡片或编号可互相定位。</div>
+    </div>
+    <div class="ann-list" id="annList"></div>
+  </aside>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" aria-label="上架发布计划抽屉"></div>
+<div class="mscrim" id="mscrim"><div id="modalSlot"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $=(s,p=document)=>p.querySelector(s), $$=(s,p=document)=>Array.from(p.querySelectorAll(s));
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+function nowStr(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+
+const ST={draft:{t:'未上架',tag:'tag-info'},listed:{t:'已上架',tag:'tag-ok'},delisted:{t:'已下架',tag:'tag-info'}};
+const state={page:'list',detailTab:'units',dcFilter:'all',loadingUnits:false,drawer:null,modal:null,activeNote:null,listKw:'',globalVersion:'v3',selectedVersion:'v3',request:null,requests:[],serial:0,planShowErrors:false,plan:{targets:new Set(),effType:'now',effAt:''},units:[
+{id:'us',dc:'北美数据中心',country:'美国',status:'listed'},
+{id:'ca',dc:'北美数据中心',country:'加拿大',status:'draft'},
+{id:'de',dc:'西欧数据中心',country:'德国',status:'listed'},
+{id:'fr',dc:'西欧数据中心',country:'法国',status:'listed'},
+{id:'gb',dc:'西欧数据中心',country:'英国',status:'draft'},
+{id:'it',dc:'西欧数据中心',country:'意大利',status:'delisted'}],versions:[
+{no:'v3',type:'产品基础信息变更',time:'2026-10-02 10:12',req:'APP-20260930-017',by:'李明',appr:'王静',fv:'FV-2026.10.01（已发布）',diff:'产品名称、产品图片、基础配网与分享依赖'},
+{no:'v2',type:'产品基础信息变更',time:'2026-09-18 16:40',req:'APP-20260912-007',by:'李明',appr:'王静',fv:'FV-2026.09.02（已发布）',diff:'通讯方式、配网入口与分享依赖'},
+{no:'v1',type:'产品创建初始版本',time:'2026-09-02 09:20',req:'—',by:'系统',appr:'—',fv:'FV-2026.09.01（已发布）',diff:'产品创建时生成的基础信息快照'}],audit:[
+{t:'区域上架已生效 · 西欧数据中心 / 德国、法国',m:'2026-10-08 10:00 · APP-20261006-012 · 当地所有用户可见 · 产品版本 v3 保持不变',dot:'ok'},
+{t:'区域下架已生效 · 西欧数据中心 / 意大利',m:'2026-10-07 15:00 · APP-20261005-009 · 存量设备与既有分享不受影响',dot:'info'},
+{t:'产品版本 v3 生效',m:'2026-10-02 10:12 · APP-20260930-017 · 李明提交 · 王静审批通过 · 产品基础信息变更',dot:'ok'}]};
+const unit=id=>state.units.find(u=>u.id===id),ver=no=>state.versions.find(v=>v.no===no);
+function derivedStatus(){if(state.units.every(u=>u.status==='draft'))return{t:'开发中',tag:'tag-info'};if(state.units.every(u=>u.status==='listed'))return{t:'已上架',tag:'tag-ok'};return{t:'—',tag:'tag-info'};}
+function summaryStr(){const c=s=>state.units.filter(u=>u.status===s).length;return `${c('listed')}/${state.units.length} 已上架 · ${c('draft')} 未上架 · ${c('delisted')} 已下架`;}
+function pushAudit(t,m,dot='info'){state.audit.unshift({t,m:`${nowStr()} · ${m}`,dot});}
+// 原型按区域正式状态与白名单授权判断入口资格。
+function entryAllowed(unitId,{whitelisted=false}={}){return !!unit(unitId)&&(unit(unitId).status==='listed'||whitelisted);}
+function requestLabel(q){return ({pending:'待审批',waiting:'等待定时生效（演示）',failed:'未生效',applied:'已生效',rejected:'已驳回',revoked:'已撤销'})[q.status];}
+function renderUnits(){
+const rows=state.units.filter(u=>state.dcFilter==='all'||u.dc===state.dcFilter);
+return `<div class="card-bd" style="padding-bottom:0"><div class="alert alert-info" id="units-whitelist-alert"><span class="alert-icn">i</span><span>未上架区域仅授权白名单用户可体验；发布审批生效后，当地所有用户均可发现配网入口。</span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px"><div class="dc-tabs">${['all','北美数据中心','西欧数据中心','亚太数据中心'].map(dc=>`<button type="button" class="dc-tab ${state.dcFilter===dc?'active':''}" data-act="dc-tab" data-dc="${dc}">${dc==='all'?'全部':dc}</button>`).join('')}</div><div><button class="btn btn-sm" data-act="refresh-units" ${state.loadingUnits?'disabled':''}>${state.loadingUnits?'加载中…':'刷新'}</button> <button class="btn btn-pri btn-sm" id="new-plan-btn" data-act="open-plan" ${state.request?'disabled':''}>提交上架发布计划</button></div></div></div>
+<div id="units-table"><div style="overflow:auto"><table><thead><tr><th>发布单元</th><th>状态</th><th>普通用户入口</th><th>活跃审批</th><th id="units-actions-head">操作</th></tr></thead><tbody>${state.loadingUnits?'<tr><td colspan="5"><div class="empty">加载中…</div></td></tr>':rows.map(u=>`<tr id="unit-row-${u.id}"><td><div class="cell-main">${u.country}</div><div class="cell-sub">${u.dc}</div></td><td><span class="tag ${ST[u.status].tag}">${ST[u.status].t}</span></td><td>${entryAllowed(u.id)?'当地所有用户可见':'仅授权白名单用户可见'}</td><td>${state.request?`<span class="tag tag-warn">${state.request.no}</span><div class="cell-sub">${requestLabel(state.request)} · 同产品操作已锁定</div>`:'—'}</td><td><div class="ops">${state.request?'<button class="btn-link" disabled>审批占用</button>':u.status==='listed'?`<button class="btn-link danger" data-act="open-delist" data-unit="${u.id}">下架</button>`:`<button class="btn-link" data-act="open-plan" data-unit="${u.id}">${u.status==='delisted'?'重新上架':'提交上架计划'}</button>`}</div></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">该数据中心暂无发布单元</div></td></tr>'}</tbody></table></div></div>
+<div class="card-bd" id="units-legend" style="border-top:1px solid var(--bdlr)"><div class="legend"><b>区域状态</b><span class="tag tag-info">未上架</span>→<span class="tag tag-ok">已上架</span>⇄<span class="tag tag-info">已下架</span></div></div>
+<div class="card-bd" id="audit-list" style="border-top:1px solid var(--bdlr)"><b>操作与审批记录</b><div class="audit">${state.audit.slice(0,8).map(a=>`<div class="audit-item"><span class="audit-dot ${a.dot}"></span><div><div class="audit-t">${esc(a.t)}</div><div class="audit-m">${esc(a.m)}</div></div></div>`).join('')}</div></div>`;
+}
+function planTargets(){return state.units.filter(u=>u.status!=='listed');}
+function planErrors(){const p=state.plan,e=[];if(state.request)e.push(`当前产品已有活跃审批 ${state.request.no}`);if(!p.targets.size)e.push('请至少选择一个目标发布单元');if([...p.targets].some(id=>!unit(id)||unit(id).status==='listed'))e.push('所选发布单元已变化，请重新选择');if(p.effType==='later'&&(!p.effAt||!Number.isFinite(new Date(p.effAt).getTime())))e.push('请选择有效的定时生效时间');return e;}
+function renderDrawer(){const open=!!state.drawer;$('#drawer').classList.toggle('open',open);$('#scrim').classList.toggle('open',open);if(!open){$('#drawer').innerHTML='';return;}
+const p=state.plan,errors=state.planShowErrors?planErrors():[],groups=[...new Set(state.units.map(u=>u.dc))];
+$('#drawer').innerHTML=`<div class="drawer-hd"><h2>上架发布计划</h2><button class="drawer-x" data-act="close-drawer" aria-label="关闭">×</button></div><div class="drawer-bd"><div class="alert alert-info" id="plan-inherit"><span class="alert-icn">i</span><span>审批生效后，选定区域的所有用户均可发现配网入口。</span></div><div class="form-item"><label><span class="req">*</span> 目标发布单元</label><div id="plan-targets" class="unit-check">${groups.map(dc=>{const all=state.units.filter(u=>u.dc===dc),available=all.filter(u=>u.status!=='listed');return `<div class="card" style="margin-bottom:4px"><div class="card-hd"><label class="check"><input type="checkbox" data-plan-dc="${dc}" ${available.length&&available.every(u=>p.targets.has(u.id))?'checked':''} ${!available.length||state.request?'disabled':''}>${dc}</label></div><div class="card-bd unit-check">${all.map(u=>`<label class="unit-opt ${u.status==='listed'?'dis':''}"><input type="checkbox" data-plan-target="${u.id}" ${p.targets.has(u.id)?'checked':''} ${u.status==='listed'||state.request?'disabled':''}><span><span class="nm">${u.country}</span><span class="dc"> · ${ST[u.status].t}</span></span></label>`).join('')}</div></div>`;}).join('')}</div></div><div class="form-item" id="plan-eff"><label><span class="req">*</span> 生效时间</label><div><div class="radio-row"><label class="radio"><input type="radio" name="plan-eff" value="now" ${p.effType==='now'?'checked':''}>审批通过后立即生效</label><label class="radio"><input type="radio" name="plan-eff" value="later" ${p.effType==='later'?'checked':''}>定时生效</label></div>${p.effType==='later'?`<input type="datetime-local" data-plan="effAt" value="${esc(p.effAt)}"><div class="help">审批通过且到达指定时间后生效；时间已过则审批通过后立即生效。</div>`:''}</div></div>${errors.length?`<div class="validation" role="alert">${errors.map(e=>`<div>${esc(e)}</div>`).join('')}</div>`:''}</div><div class="drawer-ft"><span class="hint">${p.targets.size} 个目标国家 / 地区</span><div><button class="btn" data-act="close-drawer">取消</button> <button id="plan-submit" class="btn btn-pri" data-act="confirm-plan">确认并提交审批</button></div></div>`;
+$$('[data-plan-dc]').forEach(el=>{const ids=planTargets().filter(u=>u.dc===el.dataset.planDc).map(u=>u.id),n=ids.filter(id=>p.targets.has(id)).length;el.indeterminate=n>0&&n<ids.length;});
+}
+function renderModal(){const open=!!state.modal;$('#mscrim').classList.toggle('open',open);if(!open){$('#modalSlot').innerHTML='';return;}
+const m=state.modal;let title,body,act,label;
+if(m.type==='release'){title='确认提交上架审批';body=`<p>目标区域：${[...state.plan.targets].map(id=>esc(unit(id).country)).join('、')}</p><p>${state.plan.effType==='later'?`定时生效：${esc(state.plan.effAt.replace('T',' '))}`:'审批通过后立即生效'}</p><p>提交后等待审批，当前正式状态保持不变。</p>`;act='submit-plan';label='提交审批';}
+else if(m.type==='delist'){const u=unit(m.unitId);title='确认区域下架';body=`<p>${esc(u.dc)} / ${esc(u.country)}</p><div class="alert alert-warn"><span>审批生效后，普通用户不能新增发现、配网或分享。授权白名单按既有授权规则访问。</span></div><p>已添加设备的控制、升级及既有分享继续正常使用。</p>`;act='submit-delist';label='提交下架审批';}
+else{const v=ver(m.version);title='回滚产品基础信息';body=`<div id="rollback-impact"><p>全局生效版本：<b>${state.globalVersion} → ${esc(v.no)}</b></p><p style="margin-top:12px">目标版本：${esc(v.diff)}</p><p style="margin-top:12px">恢复历史基础信息，不生成新版本。所有区域的当前发布范围和上下架状态保持不变。</p></div>`;act='submit-rollback';label='提交回滚审批';}
+$('#modalSlot').innerHTML=`<div class="modal" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-hd"><h3 id="modal-title">${title}</h3><button class="drawer-x" data-act="close-modal" aria-label="关闭">×</button></div><div class="modal-bd">${body}</div><div class="modal-ft"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-pri" data-act="${act}" ${state.request?'disabled':''}>${label}</button></div></div>`;
+}
+let toastTimer;
+function toast(message,type='ok'){clearTimeout(toastTimer);$('#toast').className=`toast show ${type}`;$('#toast').innerHTML=`<span class="ti">${type==='ok'?'✓':'i'}</span><span>${esc(message)}</span>`;toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800);}
+function openPlan(id){if(state.request)return toast(`当前产品已有申请 ${state.request.no}`,'warn');state.plan={targets:new Set(id?[id]:[]),effType:'now',effAt:''};state.planShowErrors=false;state.drawer='plan';renderAll();}
+function createRequest(type,targets,extra={}){if(state.request)return toast('已有活跃审批，请先处理','warn');const q={no:`APP-DEMO-${++state.serial}`,type,targets:[...targets],status:'pending',submittedAt:nowStr(),fromVersion:state.globalVersion,...extra};state.request=q;state.requests.push(q);pushAudit(`${type==='release'?'区域上架':type==='delist'?'区域下架':'版本回滚'}待审批`,`${q.no} · 张子豪提交 · ${q.targets.map(id=>unit(id).country).join('、')||q.version}`);state.modal=null;state.drawer=null;renderAll();toast('已提交审批，正式配置保持不变');}
+function submitPlan(){if(planErrors().length){state.modal=null;state.planShowErrors=true;renderAll();return;}createRequest('release',state.plan.targets,{effectiveAt:state.plan.effType==='later'?new Date(state.plan.effAt).getTime():null});}
+function applyRequest(q,at=Date.now()){if(q.status==='applied')return false;if(q.type==='release'&&q.effectiveAt&&q.effectiveAt>at){q.status='waiting';return false;}
+if(q.type==='release')q.targets.forEach(id=>unit(id).status='listed');else if(q.type==='delist')q.targets.forEach(id=>unit(id).status='delisted');else{state.globalVersion=q.version;state.selectedVersion=q.version;}
+q.status='applied';q.appliedAt=at;pushAudit(`${q.type==='rollback'?`版本回滚 ${q.fromVersion} → ${q.version}`:q.type==='release'?'区域上架':'区域下架'}已生效`,`${q.no} · 王静审批 · ${q.type==='rollback'?'发布范围及区域状态保持不变':q.targets.map(id=>unit(id).country).join('、')+' · 产品版本保持不变'}`,'ok');if(state.request===q)state.request=null;return true;}
+function demoResolve(action){const q=state.request;if(!q)return;
+if(action==='reject'||action==='revoke'||action==='cancel'){q.status=action==='revoke'?'revoked':'rejected';pushAudit(requestLabel(q),`${q.no} · 原正式值保持不变`);state.request=null;}
+else if(action==='fail'){q.status='failed';pushAudit('审批通过但应用失败',`${q.no} · 未生效并保留冻结，正式值保持不变`,'warn');}
+else if(action==='approve'||action==='retry'){applyRequest(q);if(q.status==='waiting')pushAudit('审批通过，等待指定时间',`${q.no} · 正式状态不变`);}
+renderAll();toast(q.status==='waiting'?'审批已通过，等待指定时间':requestLabel(q));}
+function runScheduled(at=Date.now()){const q=state.request;if(q&&q.status==='waiting'&&q.effectiveAt<=at){applyRequest(q,at);renderAll();}}
+
+function renderCanvas(){
+  const crumbs=state.page==="list"
+    ?`<span>智能产品</span>`
+    :`<span>智能产品</span><span>/</span><span>产品详情</span><span>/</span><b>发布管理</b>`;
+  $("#canvas").innerHTML=`
+  <aside class="aside">
+    <div class="logo"><span class="logo-mark">L</span><div><div class="logo-txt">LuteOS</div><div class="logo-sub">IoT Admin</div></div></div>
+    <nav class="menu">
+      ${["概览","智能产品","设备管理","白名单管理","App 管理","配置中心","生产管理","运营管理"].map(m=>`<div class="menu-item ${m==="智能产品"?"active":""} ${m==="白名单管理"?"":"dim"}"><span class="mi"></span>${m}</div>`).join("")}
+    </nav>
+    <div class="aside-foot">test 环境 · v3.8.2</div>
+  </aside>
+  <div class="main">
+    <header class="hd">
+      <div class="crumb">${crumbs}</div>
+      <div class="userbar"><span class="env-tag">test 环境</span><span class="avatar">张</span><span>张子豪</span></div>
+    </header>
+    <div class="content">${state.page==="list"?renderList():renderDetail()}</div>
+  </div>`;
+}
+
+/* ---------- 产品列表 ---------- */
+function renderList(){
+  const d=derivedStatus();
+  const rows=[
+    {name:"Momcozy S12 Pro 智能吸奶器",model:"M-S12-PRO",pid:"2075767415740338177",main:true},
+    {name:"Momcozy S9 穿戴式吸奶器",model:"M-S9-W",pid:"1846392499368579074",sum:"6/6 已上架",st:{t:"已上架",tag:"tag-ok"},fv:"2.3.1 / 已发布",plat:"Andlink",upd:"2026-09-28 11:20"},
+    {name:"Momcozy M5 双边吸奶器",model:"M-M5-DB",pid:"1966833100221845506",sum:"0/4 已上架 · 4 未上架",st:{t:"开发中",tag:"tag-info"},fv:"1.0.0 / 迭代中",plat:"Andlink",upd:"2026-10-08 09:42"}
+  ];
+  const kw=state.listKw.trim();
+  const shown=kw?rows.filter(r=>r.pid.includes(kw)||r.name.includes(kw)):rows;
+  return `
+  <div class="card" id="list-filter">
+    <div class="card-bd">
+      <div class="filter-bar">
+        <div class="f-field"><label>产品分类</label><select><option>全部</option><option>吸奶器</option><option>温奶器</option></select></div>
+        <div class="f-field"><label>所属APP</label><select><option>全部</option><option>Momcozy</option></select></div>
+        <div class="f-field"><label>产品ID / 名称</label><input id="list-kw" placeholder="请输入产品ID或名称" value="${esc(kw)}"></div>
+        <button class="btn btn-pri" data-act="list-query" type="button">查询</button>
+        <button class="btn" data-act="list-reset" type="button">重置</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-pri" data-act="noop-create" type="button">+ 创建产品</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th style="min-width:220px">产品名称 / 型号</th><th>产品ID</th><th>产品状态</th><th id="list-summary-head" style="min-width:230px">区域发布摘要</th><th>功能版本/状态</th><th>所属平台</th><th>更新时间</th><th style="width:130px">操作</th></tr></thead>
+      <tbody>
+      ${shown.map(r=>r.main?`
+        <tr>
+          <td><div class="cell-main">${r.name}</div><div class="cell-sub">${r.model}</div></td>
+          <td>${r.pid}</td>
+          <td id="list-status-cell"><span class="tag ${d.tag}">${d.t}</span><div class="cell-sub">区域状态见摘要</div></td>
+          <td id="list-summary-cell">${summaryStr()}</td>
+          <td>FV-2026.10.01 / 已发布</td><td>Andlink</td><td>2026-10-08 21:10</td>
+          <td><div class="ops"><button class="btn-link" data-act="view-product" type="button">查看</button><button class="btn-link" data-act="noop-copy" type="button">复制</button></div></td>
+        </tr>`:`
+        <tr>
+          <td><div class="cell-main">${r.name}</div><div class="cell-sub">${r.model}</div></td>
+          <td>${r.pid}</td>
+          <td><span class="tag ${r.st.tag}">${r.st.t}</span><div class="cell-sub">区域状态见摘要</div></td>
+          <td>${r.sum}</td>
+          <td>${r.fv}</td><td>${r.plat}</td><td>${r.upd}</td>
+          <td><div class="ops"><button class="btn-link" data-act="noop-view" type="button">查看</button><button class="btn-link" data-act="noop-copy" type="button">复制</button></div></td>
+        </tr>`).join("")||`<tr><td colspan="8"><div class="empty"><div class="ico">∅</div>暂无匹配产品</div></td></tr>`}
+      </tbody>
+    </table></div>
+    <div class="pager"><span>共 ${shown.length} 条</span><span>10条/页</span><span class="pg on">1</span></div>
+  </div>`;
+}
+
+/* ---------- 产品详情 ---------- */
+function renderDetail(){
+  const d=derivedStatus();
+  const inert=["基础信息","功能设计","扩展程序","设备调试","配网引导","高级配置"];
+  const subs=[["units","发布单元"],["versions","版本与回滚"]];
+  return `
+  <div class="card">
+    <div class="summary">
+      <div>
+        <h1>Momcozy S12 Pro 智能吸奶器</h1>&nbsp;<span class="tag ${d.tag}">${d.t}</span>&nbsp;<span class="tag tag-info">区域状态见摘要</span>
+        <div class="sum-meta">
+          <div><span class="k">产品型号：</span><span class="v">M-S12-PRO</span></div>
+          <div><span class="k">产品ID：</span><span class="v">2075767415740338177</span></div>
+          <div><span class="k">所属APP：</span><span class="v">Momcozy</span></div>
+          <div><span class="k">通讯方式：</span><span class="v">BLE + Wi-Fi</span></div>
+        </div>
+      </div>
+      <div class="sum-stats">
+        <div class="stat" style="border-left:0"><div class="n">6</div><div class="l">数据中心 / 国家<br>发布单元</div></div>
+        <div class="stat"><div class="n pri">${state.units.filter(u=>u.status==="listed").length}</div><div class="l">已上架区域</div></div>
+        <div class="stat"><div class="n">${state.globalVersion}</div><div class="l">当前生效版本（全局）</div><div class="l" style="margin-top:2px;color:var(--t4)">创建 v1；仅基础信息审批递增</div></div>
+        <div class="stat"><div class="n warn">${state.request?1:0}</div><div class="l">活跃审批</div></div>
+      </div>
+    </div>
+    <div class="tabs" style="border-top:1px solid var(--bdlr)">
+      ${inert.map(t=>`<button class="tab dim" data-act="inert-tab" data-tab-name="${t}" type="button">${t}</button>`).join("")}
+      <button class="tab active" type="button">发布管理</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      ${subs.map(([id,label])=>`<button class="tab ${state.detailTab===id?"active":""}" data-act="sub-tab" data-tab="${id}" type="button">${label}</button>`).join("")}
+    </div>
+    ${state.detailTab==="units"?renderUnits():renderVersions()}
+  </div>`;
+}
+
+
+function renderVersions(){
+  const sv=ver(state.selectedVersion);
+  const firstHist=(state.versions.find(v=>v.no!==state.globalVersion)||{}).no;
+  return `
+  <div class="card-bd" style="padding-bottom:0">
+    <div class="alert alert-info" id="version-rule" style="margin-bottom:0">
+      <span class="alert-icn">i</span>
+      <span><b>版本域（Product Profile）：</b>产品创建生成 v1；每次产品基础信息审批通过后自动递增为 v2、v3……。发布管理、发布范围及上下架审批不生成版本。功能版本（FV-xxx）沿用自身「迭代中 → 已发布」生命周期，产品版本仅记录引用。</span>
+    </div>
+  </div>
+  <div class="card-bd" style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px">
+    <div style="min-width:0">
+      <div id="version-table"><div style="overflow-x:auto"><table>
+        <thead><tr><th>版本</th><th style="min-width:170px">变更类型</th><th>生效时间</th><th>申请号</th><th style="min-width:170px">提交人 / 审批人</th><th style="width:150px">操作</th></tr></thead>
+        <tbody>${state.versions.map(v=>`
+          <tr style="${state.selectedVersion===v.no?"background:var(--pri-l9)":""}">
+            <td><span class="cell-main">${v.no}</span>${state.globalVersion===v.no?' <span class="tag tag-ok" style="height:20px">全局生效中</span>':""}</td>
+            <td>${v.type}</td><td>${v.time}</td>
+            <td>${v.req}</td>
+            <td>${v.by} · ${v.appr==="—"?"—":v.appr+" 审批"}</td>
+            <td><div class="ops">
+              <button class="btn-link" data-act="version-detail" data-version="${v.no}" type="button">详情</button>
+              ${v.no!==state.globalVersion?`<button class="btn-link" ${v.no===firstHist?'id="version-rollback-btn"':""} ${state.request?"disabled":""} data-act="open-rollback" data-version="${v.no}" type="button">回滚到此版本</button>`:""}
+            </div></td>
+          </tr>`).join("")}</tbody>
+      </table></div></div>
+    </div>
+    <div style="min-width:0;display:grid;gap:16px;align-content:start">
+      <div class="card" style="margin:0" id="version-pointer">
+        <div class="card-hd"><div><h2>全局生效版本指针</h2><div class="sub">所有上架区域使用相同基础信息版本；回滚恢复历史基础信息，不生成新版本</div></div></div>
+        <div class="card-bd">
+          <div style="font-size:26px;font-weight:700;color:var(--t1)">${state.globalVersion}</div>
+          <div class="cell-sub" style="margin-top:6px">应用于全部 ${state.units.length} 个发布单元 · 回滚保持发布范围和单元状态</div>
+        </div>
+      </div>
+      <div class="card" style="margin:0" id="version-detail">
+        <div class="card-hd"><div><h2>版本快照详情 · ${sv.no}</h2><div class="sub">基础信息快照，只读；后续编辑基于当前生效版本创建新变更</div></div></div>
+        <div class="card-bd"><div class="kv-grid">
+          <div class="kv"><div class="k">变更类型</div><div class="v">${sv.type}</div></div>
+          <div class="kv"><div class="k">生效时间 / 申请号</div><div class="v">${sv.time} · ${sv.req}</div></div>
+          <div class="kv"><div class="k">功能版本引用</div><div class="v">${sv.fv}</div></div>
+          <div class="kv"><div class="k">差异摘要</div><div class="v">${sv.diff}</div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+
+const NOTES=[
+{ctx:'list',target:'#list-filter',title:'产品列表筛选',loc:'智能产品 > 筛选区',body:'交互：产品名称或 ID 查询；重置清空查询条件。查询无匹配时显示空态。\n原型备注：仅 S12 Pro 的查看进入本次发布管理，其余功能沿用现有页面。'},
+{ctx:'list',target:'#list-status-cell',title:'产品级状态待确认',loc:'产品列表 > 产品状态',body:'说明：区域发布状态是入口判定依据；全部未上架显示开发中，全部已上架显示已上架。\n原型备注：混合状态及全下架的产品级派生文案待 PRD D04 确认，当前显示 —，不是新增业务状态。'},
+{ctx:'list',target:'#list-summary-cell',title:'区域发布摘要',loc:'产品列表 > 区域发布摘要',body:'说明：显示已上架 / 总单元数、未上架数量、已下架数量。一个单元对应数据中心 + 国家。\n交互：查看进入发布管理，按区域查询正式状态。'},
+{ctx:'units',target:'#units-whitelist-alert',title:'上架前白名单体验',loc:'发布单元 > 顶部提示',body:'说明：未上架时仅授权白名单可体验；按邮箱 + 数据中心及现有产品授权命中，不新增白名单国家字段。\n规则：当地体验由业务人为确认，不记录验证人、结论或证据，不作为提交或审批的系统 gate。白名单可见不是新增状态。'},
+{ctx:'units',target:'#new-plan-btn',title:'按区域发布',loc:'发布单元 > 上架发布计划',body:'交互：打开抽屉，支持整个数据中心或多个国家。生效后区域所有普通用户具有配网入口资格。\n按钮状态：同产品有活跃审批时不可创建新申请，沿用现有同产品审批冻结规则。'},
+{ctx:'units',target:'#units-table',title:'区域状态及入口',loc:'发布单元 > 状态与入口列',body:'说明：正式状态仅未上架、已上架、已下架。已上架地区所有用户可见，不按账号分批。\n交互：数据中心过滤，刷新展示加载态；无单元时显示空态。\n状态/差异：审批中或定时等待不改变原正式状态；白名单授权可用于未上架 / 已下架阶段体验。'},
+{ctx:'units',target:'#units-table',title:'区域操作及能力依赖',loc:'发布单元 > 操作列',body:'按钮状态：未上架可提交上架；已上架可下架；已下架可重新上架。发布范围扩展对应新增区域上架，缩减对应选定区域下架。\n规则：配网入口、新增配网和新增分享按状态及授权判断。设备控制、升级、已添加设备、既有分享保持有效。删除后重新配网按当前状态重判。'},
+{ctx:'units',target:'#units-legend',title:'审批与正式状态分离',loc:'发布单元 > 状态关系',body:'状态图：未上架 → 已上架 ⇄ 已下架；每条转换均需审批生效。\n异常处理：未审批、应用失败及定时未到时保持原状态。\n规则：App 每次加载 / 刷新更新缓存，每次配网及分享调用由后台按当前状态判定，旧缓存不能绕过下架。'},
+{ctx:'units',target:'#audit-list',title:'审批和操作记录',loc:'发布单元 > 记录区',body:'说明：记录动作、操作者、时间、申请号及影响区域；发布操作不产生基础信息版本。回滚记录原版本到目标版本，区域状态保持。\n原型备注：右侧演示控制模拟非本人审批员的结果，不是产品功能，也不授予当前提交人审批权限。数据只在本次会话保存，刷新重置。'},
+{ctx:'drawer',target:'#plan-inherit',title:'选定区域整体开放',loc:'上架计划 > 提示',body:'说明：发布影响的是 App 产品入口，审批生效后当地所有用户具有入口资格。产品基础信息跟随当前全局生效版本，不在此重复选择或展示。'},
+{ctx:'drawer',target:'#plan-targets',title:'数据中心与国家选择',loc:'上架计划 > 目标发布单元',body:'交互：中心整组选中该中心全部可上架国家；支持国家单选及部分选中。已上架国家不可重复选择，不影响原状态。\n规则：未上架、已下架单元可以提交上架。国家映射使用现有主数据，本需求不枚举完整清单。'},
+{ctx:'drawer',target:'#plan-eff',title:'立即与定时均先审批',loc:'上架计划 > 生效时间',body:'字段：审批通过后立即生效 / 定时生效。定时必须有有效日期时间，分钟精度。\n规则：审批通过且到指定时间才应用；指定时间已过则审批通过后立即应用。审批之前不自动开放。\n待确认：等待时审批展示及占用释放参见 PRD D02；演示暂保留冻结并标明等待，不视为最终定义。'},
+{ctx:'drawer',target:'#plan-submit',title:'确认与提交校验',loc:'上架计划 > 底部按钮',body:'交互：检查目标至少一个、生效时间有效、当前无活跃审批；错误保留输入，成功打开目标核对弹窗，再提交待审批。\n规则：不新增审批原因、授权操作人、白名单验证结果字段；提交不更改正式状态，发布审批不写基础信息版本历史。'},
+{ctx:'modal:release',target:'#modal-box',title:'上架提交前核对',loc:'弹窗 > 确认上架',body:'说明：核对目标国家与生效时间，确认提交后冻结申请，当前正式状态不变。\n交互：取消关闭回到计划；确认创建待审批并关闭计划。下一步使用既有审批流程。'},
+{ctx:'modal:delist',target:'#modal-box',title:'区域下架确认',loc:'弹窗 > 下架',body:'说明：审批生效后目标地区普通用户不能新增发现、配网与分享；授权白名单按既有规则访问。\n保护：既有绑定、设备控制和升级、已有分享不受影响。\n交互：取消不产生申请，确认提交待审批；失败保留原已上架状态。下架及重新上架不新增基础信息版本。'},
+{ctx:'versions',target:'#version-rule',title:'版本来源及发布域解耦',loc:'版本与回滚 > 规则',body:'说明：创建生成 v1；产品基础信息审批通过后递增 v2、v3……。发布管理、范围变更与上下架审批不生成版本。\n规则：版本全局共用、历史不可变；功能版本、固件、扩展程序自身生命周期沿用基线。开发中直存与不可变 v1 的衔接待 D03。'},
+{ctx:'versions',target:'#version-table',title:'基础信息版本历史',loc:'版本与回滚 > 版本表',body:'交互：详情查看只读快照，历史版本可申请回滚，当前版本无回滚操作；只有一个版本时无有效回滚目标。同产品审批占用时禁用新回滚。\n数据来源：创建与基础信息审批记录；不展示仅由发布范围或上下架产生的版本。'},
+{ctx:'versions',target:'#version-pointer',title:'统一全局指针',loc:'版本与回滚 > 指针',body:'说明：所有区域共用一个生效版本。回滚仅切换到历史基础信息版本，不新增版本；各区域发布范围与状态逐项保持不变。'},
+{ctx:'versions',target:'#version-detail',title:'基础信息快照',loc:'版本与回滚 > 快照详情',body:'说明：只读展示基础信息差异、功能版本引用和审批来源，排除区域发布字段。\n规则：回滚后编辑以恢复内容为基础，下次审批使用下一未使用序号，例如 v3 回到 v2 后再次变更生成 v4。'},
+{ctx:'modal:rollback',target:'#modal-box',title:'恢复历史基础信息',loc:'弹窗 > 全局回滚',body:'流程图：选择历史版本 → 核对基础信息差异 → 提交审批 → 应用成功时切换全局指针。\n规则：至少两个版本且目标不是当前版本；不生成新版本，不恢复历史发布范围或改变区域上下架状态。\n异常处理：取消不创建申请；应用失败时原指针和区域状态保留且继续冻结，重试幂等。'}
+];
+
+function currentCtx(){
+  if(state.modal)return `modal:${state.modal.type}`;
+  if(state.drawer)return "drawer";
+  if(state.page==="list")return "list";
+  return state.detailTab;
+}
+function ctxLabel(){
+  const m={list:"产品列表",units:"产品详情 · 发布单元",versions:"产品详情 · 版本与回滚",drawer:"抽屉 · 上架发布计划"};
+  if(state.modal){const t={release:"弹窗 · 上架确认",delist:"弹窗 · 下架",rollback:"弹窗 · 版本回滚"};return t[state.modal.type]||"弹窗";}
+  return m[currentCtx()]||"";
+}
+function noteTargets(note){return note.target.split(",").map(s=>s.trim());}
+function renderNoteBody(body){
+  return body.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+    if(/^流程图[:：]|^状态图[:：]|^路径[:：]/.test(l))return `<span class="note-flow">${esc(l)}</span>`;
+    if(l.endsWith("：")||l.endsWith(":"))return `<span class="note-sec">${esc(l.replace(/[:：]$/,""))}</span>`;
+    return `<span class="note-line plain"><span>${esc(l)}</span></span>`;
+  }).join("");
+}
+function clearAnchors(){$$(".anchor").forEach(a=>a.remove());$$(".note-host").forEach(h=>h.classList.remove("note-host"));$$(".note-target-active").forEach(h=>h.classList.remove("note-target-active"));}
+function activateNote(id,scroll=true){
+  state.activeNote=id;
+  $$(".note-card").forEach(c=>c.classList.toggle("active",c.dataset.noteId===id));
+  $$(".note-target-active").forEach(h=>h.classList.remove("note-target-active"));
+  const note=idObj(id);
+  const target=note&&document.querySelector(noteTargets(note)[0]);
+  if(target){target.classList.add("note-target-active");if(scroll)target.scrollIntoView({block:"center",behavior:"smooth"});}
+}
+function idObj(id){return visibleNotes().find(n=>NOTES.indexOf(n)===Number(id));}
+function visibleNotes(){return NOTES.filter(n=>n.ctx===currentCtx());}
+function renderAnnotations(){
+  const list=$("#annList");clearAnchors();
+  const notes=visibleNotes();
+  $("#annCtx").textContent=ctxLabel();
+  $("#annCount").textContent=`${notes.length} 条`;
+  if(!notes.length){list.innerHTML=`<div class="ann-empty">当前页面暂无批注</div>`;return;}
+  if(!notes.some((n,i)=>String(NOTES.indexOf(n))===state.activeNote))state.activeNote=String(NOTES.indexOf(notes[0]));
+  list.innerHTML=notes.map((n,i)=>{
+    const id=String(NOTES.indexOf(n));
+    return `<button class="note-card ${state.activeNote===id?"active":""}" data-note-id="${id}" type="button">
+      <span class="note-num">${i+1}</span>
+      <span class="note-body"><strong>${esc(n.title)}</strong>${renderNoteBody(n.body)}<span class="note-loc">关联位置：${esc(n.loc)}</span></span>
+    </button>`;}).join("");
+  const hostCount={};
+  notes.forEach((n,i)=>{
+    const sel=noteTargets(n)[0],host=document.querySelector(sel);
+    if(!host)return;
+    host.classList.add("note-host");
+    const dup=hostCount[sel]||0;hostCount[sel]=dup+1;
+    const a=document.createElement("button");
+    a.style.right=(2+dup*24)+"px";
+    a.type="button";a.className="anchor";a.textContent=String(i+1);
+    a.setAttribute("aria-label",`查看批注：${n.title}`);
+    a.addEventListener("click",ev=>{ev.stopPropagation();activateNote(String(NOTES.indexOf(n)));});
+    host.appendChild(a);
+  });
+  $$(".note-card").forEach(c=>c.addEventListener("click",()=>activateNote(c.dataset.noteId)));
+  const active=notes.find(n=>String(NOTES.indexOf(n))===state.activeNote);
+  if(active){const t=document.querySelector(noteTargets(active)[0]);if(t)t.classList.add("note-target-active");}
+}
+
+
+const annotationsBase=renderAnnotations;
+renderAnnotations=function(){annotationsBase();const q=state.request;if(!q)return;const box=document.createElement('div');box.className='note-card';box.style.display='block';box.id='approval-demo';const buttons=q.status==='pending'?[['approve','演示：审批通过'],['reject','演示：驳回'],['revoke','演示：发起人撤销'],['fail','演示：应用失败']]:q.status==='failed'?[['retry','演示：重试成功'],['fail','演示：重试失败'],['cancel','演示：取消变更']]:[];
+box.innerHTML=`<div class="note-body"><strong>原型演示 · 审批结果</strong><span class="note-line plain">${esc(q.no)} · ${requestLabel(q)}</span><span class="note-line plain">模拟切换有权审批员王静；实际禁止自审批。等待阶段的展示 / 占用待 D02，当前仅演示保留冻结。</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${buttons.map(([a,t])=>`<button class="btn btn-sm" data-demo="${a}">${t}</button>`).join('')}</div></div>`;$('#annList').appendChild(box);box.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>demoResolve(b.dataset.demo));};
+function renderAll(){renderCanvas();renderDrawer();renderModal();renderAnnotations();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const a=b.dataset.act,id=b.dataset.unit;
+switch(a){
+case 'view-product':state.page='detail';state.detailTab='units';renderAll();break;
+case 'list-query':state.listKw=$('#list-kw').value;renderAll();break;
+case 'list-reset':state.listKw='';renderAll();break;
+case 'sub-tab':state.detailTab=b.dataset.tab;state.activeNote=null;renderAll();break;
+case 'dc-tab':state.dcFilter=b.dataset.dc;renderAll();break;
+case 'refresh-units':state.loadingUnits=true;renderAll();setTimeout(()=>{state.loadingUnits=false;runScheduled();renderAll();toast('区域状态已刷新');},400);break;
+case 'open-plan':openPlan(id);break;
+case 'close-drawer':state.drawer=null;renderAll();break;
+case 'confirm-plan':state.planShowErrors=true;if(planErrors().length){renderAll();break;}state.modal={type:'release'};renderAll();break;
+case 'submit-plan':submitPlan();break;
+case 'open-delist':if(state.request)return toast('产品有活跃审批','warn');state.modal={type:'delist',unitId:id};renderAll();break;
+case 'submit-delist':if(unit(state.modal.unitId).status==='listed')createRequest('delist',[state.modal.unitId]);break;
+case 'open-rollback':if(state.request)return toast('产品有活跃审批','warn');if(!ver(b.dataset.version)||b.dataset.version===state.globalVersion||state.versions.length<2)return;state.modal={type:'rollback',version:b.dataset.version};renderAll();break;
+case 'submit-rollback':if(ver(state.modal.version)&&state.modal.version!==state.globalVersion&&state.versions.length>=2)createRequest('rollback',[],{version:state.modal.version});break;
+case 'version-detail':state.selectedVersion=b.dataset.version;renderAll();break;
+case 'close-modal':state.modal=null;renderAll();break;
+default:toast('本原型聚焦产品区域发布与版本回滚，其他入口沿用现有功能','info');
+}});
+document.addEventListener('input',e=>{if(e.target.dataset.plan)state.plan[e.target.dataset.plan]=e.target.value;});
+document.addEventListener('change',e=>{const el=e.target;if(el.dataset.planTarget){el.checked?state.plan.targets.add(el.dataset.planTarget):state.plan.targets.delete(el.dataset.planTarget);renderDrawer();renderAnnotations();}else if(el.dataset.planDc){planTargets().filter(u=>u.dc===el.dataset.planDc).forEach(u=>el.checked?state.plan.targets.add(u.id):state.plan.targets.delete(u.id));renderDrawer();renderAnnotations();}else if(el.name==='plan-eff'){state.plan.effType=el.value;renderDrawer();renderAnnotations();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(state.modal)state.modal=null;else state.drawer=null;renderAll();}});
+$('#scrim').onclick=()=>{state.drawer=null;renderAll();};$('#mscrim').onclick=e=>{if(e.target.id==='mscrim'){state.modal=null;renderAll();}};
+$$('#mTabs .m-tab').forEach(b=>b.onclick=()=>{$$('#mTabs .m-tab').forEach(x=>x.classList.toggle('active',x===b));document.body.classList.toggle('show-ann',b.dataset.mtab==='ann');});
+renderAll();setInterval(()=>runScheduled(),1000);
+
+</script>
+</body>
+</html>
