@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IoT Admin 固件 A/B Test 原型</title>
+  <title>IoT Admin 固件开发、测试与发布管理</title>
   <style>
     :root {
       --side: 148px;
@@ -230,6 +230,13 @@
     .trial-row-select { width: 16px; height: 16px; accent-color: #315efb; }
     .trial-device-table { overflow-x: auto; margin-top: 12px; }
     .trial-device-table table { min-width: 820px; }
+    #firmware-state > .trial-device-table > table { min-width: 1540px; }
+    #virtual-version > .trial-device-table > table { min-width: 1040px; }
+    #firmware-state th:nth-child(9), #firmware-state td:nth-child(9),
+    #virtual-version th:nth-child(5), #virtual-version td:nth-child(5) { min-width: 108px; }
+    #firmware-state .tag, #virtual-version .tag { white-space: nowrap; flex-shrink: 0; }
+    #firmware-state td.table-actions, #virtual-version td.table-actions { display: table-cell; min-width: 214px; }
+    .version-actions { display: grid; grid-template-columns: repeat(2, 94px); gap: 8px; }
     .trial-import-input { min-height: 112px !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .trial-inline-actions { display: flex; flex-wrap: wrap; gap: 6px; }
     .mode-scope { margin-left: 6px; font-size: 12px; font-weight: 400; color: #8b95a4; }
@@ -1092,6 +1099,12 @@
     }
     function assetVersionForTarget(asset, target) { return target.id.startsWith("vv") ? asset?.virtualCurrent : asset?.current; }
     function allFirmwareTargets() { return [...firmwareVersions, ...virtualVersions]; }
+    function lockFirmwareAppCompatibility(target) {
+      for (const key of ["appRule", "appVersion"]) {
+        Object.defineProperty(target, key, { value: target[key], enumerable: true, writable: false, configurable: false });
+      }
+      return target;
+    }
     function targetById(id) { return allFirmwareTargets().find(item => item.id === id); }
     function trialFor(id) { return directedTrials[id]; }
     function trialOccupied(id) { const trial = trialFor(id); return Boolean(trial && trial.devices.length); }
@@ -2167,7 +2180,7 @@
           </div>
           <div class="field app-version-field" data-note-anchor="ota-version-name">
             <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareAddAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
-            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option><option >版本不高于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div>
+            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option><option >版本不高于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div><span class="hint">创建成功后兼容条件不可修改。</span>
             <div class="app-version-popover" id="firmwareAddAppVersionPopover">
               <p>平台用户可在 App 的"关于"页面查看当前版本号。</p>
               <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
@@ -2721,12 +2734,12 @@
       const vv = virtualVersions.find(item => item.id === state.virtualEditingId);
       if (!vv) return `<div class="notice warning">未找到需要编辑的虚拟版本。</div>`;
       return `<div id="drawer-virtual-version-edit" data-note-anchor="drawer-virtual-version-edit">
-        <div class="notice">正在编辑虚拟版本 <strong>${vv.version}</strong>。仅开发中可修改虚拟版本级 APP 条件和关联 MCU；请至少关联 1 个 MCU，“通道号 + 硬件版本”不可重复。</div>
-        <div class="form-grid"><div class="field"><label>虚拟版本号</label><div class="readonly">${vv.version}<span class="hint">版本号创建后不可修改。</span></div></div><div class="field"><label><span class="required">*</span>虚拟版本级 APP 条件</label><div class="version-rule"><select id="virtualEditAppRule"><option ${vv.appRule === "版本不低于" ? "selected" : ""}>版本不低于</option><option ${vv.appRule === "版本等于" ? "selected" : ""}>版本等于</option><option ${vv.appRule === "版本不高于" ? "selected" : ""}>版本不高于</option></select><input id="virtualEditAppVersion" value="${escapeAttr(vv.appVersion)}" placeholder="例如 v 2.2.10"></div><span class="hint">独立维护，不继承组件固件；保存后立即作为虚拟版本命中条件。</span></div></div>
-        <div class="summary-grid"><div class="summary-item"><span class="summary-label">当前状态</span><span class="summary-value"><span class="tag ${firmwareStatusClass(vv.status)}">${vv.status}</span></span></div><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">编辑边界</span><span class="summary-value">进入测试前</span></div></div>
+        <div class="notice">正在编辑虚拟版本 <strong>${vv.version}</strong> 的组件。首次提交测试或发布配置前可修改；请至少关联 1 个 MCU，“通道号 + 硬件版本”不可重复。</div>
+        <div class="form-grid"><div class="field"><label>虚拟版本号</label><div class="readonly">${vv.version}</div></div><div class="field"><label>虚拟版本级 APP 条件</label><div class="readonly" id="virtualFixedApp">${escapeHtml(vv.appRule)} ${escapeHtml(vv.appVersion)}</div><span class="hint">创建时固定，不继承组件条件，不可修改。</span></div></div>
+        <div class="summary-grid"><div class="summary-item"><span class="summary-label">当前状态</span><span class="summary-value"><span class="tag ${firmwareStatusClass(vv.status)}">${vv.status}</span></span></div><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">编辑边界</span><span class="summary-value">首次提交配置前</span></div></div>
         ${virtualAssociationPickerHtml()}
         <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
-        <div class="notice warning" id="virtualAssociationImpact">进入测试时冻结组件、包与 APP 条件；虚拟版本状态不改变组件单 MCU 状态。</div>
+        <div class="notice warning" id="virtualAssociationImpact">APP 条件已在创建时固定；首次提交测试或发布配置时冻结组件与包引用，不改变组件单 MCU 状态。</div>
       </div>`;
     }
 
@@ -2740,7 +2753,7 @@
         <div class="summary-grid"><div class="summary-item"><span class="summary-label">已选组件</span><span class="summary-value" id="virtualDraftCount">${state.virtualDraftMembers.size} 个</span></div><div class="summary-item"><span class="summary-label">创建后状态</span><span class="summary-value"><span class="tag gray">开发中</span></span></div></div>
         ${virtualAssociationPickerHtml()}
         <div class="notice warning virtual-save-error" id="virtualSaveError" role="alert"></div>
-        <div class="notice warning" id="virtualAssociationImpact">保存后仅创建开发中虚拟版本；首次提交范围（含直接正式或定时）固定组件、包和 APP 条件，不改写组件状态。</div>
+        <div class="notice warning" id="virtualAssociationImpact">创建后 APP 条件不可修改；首次提交测试或发布配置（含定时）冻结组件与包引用，不改写组件状态。</div>
       </div>`;
     }
     function virtualVersionTargetHtml() {
@@ -2833,8 +2846,8 @@
         firmwareVersionEdit: ["编辑固件版本", "开发中维护备注；测试中定向设备在列表操作；仅存量指定对象发布记录可编辑原有限制。", firmwareVersionEditHtml(false)],
         firmwareVersionDetail: ["固件版本详情", "查看当前固件版本的基础信息、版本控制条件和文件解析结果。", firmwareVersionEditHtml(true)],
         firmwareReleaseConfig: ["固件发布配置", "配置发布方式、升级方式、生效时间和发布范围；保存后才变更固件状态。", managedReleaseDrawerHtml("firmware")],
-        virtualVersionEdit: ["编辑虚拟版本", "仅开发中可维护虚拟版本级 APP 条件和关联 MCU；首次范围提交后固定引用。", virtualVersionEditHtml()],
-        virtualVersionCreate: ["新建虚拟版本", "配置独立 APP 条件并关联 MCU；创建后可直接选择投放范围。", virtualVersionCreateHtml()],
+        virtualVersionEdit: ["编辑虚拟版本组件", "APP 条件创建后固定；首次提交测试或发布配置前可维护组件。", virtualVersionEditHtml()],
+        virtualVersionCreate: ["新建虚拟版本", "配置独立 APP 条件并关联 MCU；创建后选择测试或发布。", virtualVersionCreateHtml()],
         virtualVersionTarget: ["编辑应用对象", "仅发布阶段编辑应用对象；不会改变冻结关联集合、包信息或发布配置。", virtualVersionTargetHtml()],
         virtualReleaseConfig: [managedReleaseTarget("virtual")?.status === "测试中" ? "虚拟版本发布配置" : "修改虚拟版本发布配置", "配置发布方式、升级方式、生效时间和范围；组件及包引用已在进入测试时冻结。", managedReleaseDrawerHtml("virtual")],
         extensionVersionAdd: ["新增版本", "产品模块扩展程序迁入产品详情后，在当前产品上下文内新增版本。", extensionVersionAddHtml()],
@@ -3384,8 +3397,8 @@
           });
           $("#virtualDraftCount").textContent = `${selected.length} 个`;
           $("#virtualAssociationImpact").textContent = isCreate
-            ? "保存后为开发中虚拟版本；首次提交范围（含直接正式或定时）固定组件、包和 APP 条件，组件单 MCU 状态不变。"
-            : "保存仅更新开发中配置；进入测试时固定引用，此后变更内容须新建虚拟版本。";
+            ? "创建后 APP 条件不可修改；首次提交测试或发布配置（含定时）冻结组件与包引用，组件单 MCU 状态不变。"
+            : "APP 条件已固定；本次只更新组件，首次提交测试或发布配置后不可替换组件与包。";
           $("#virtualSelectedChips").innerHTML = selected.length
             ? selected.map(item => `<span class="selected-chip"><span>通道 ${item.channel} · ${item.hardware} · ${item.version}</span><button type="button" data-remove-virtual-member="${item.id}" aria-label="移除通道 ${item.channel} ${item.hardware}">×</button></span>`).join("")
             : `<span class="sub">尚未选择组件。支持搜索、按通道/状态筛选；不需要覆盖全部通道。</span>`;
@@ -3695,7 +3708,8 @@
             packageDate: parsed.date,
             packageFormat: parsed.format
           });
-          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建为开发中；可直接设置范围并配置定向设备。`;
+          lockFirmwareAppCompatibility(firmwareVersions[0]);
+          state.firmwareMessage = `固件版本 ${parsed.firmwareVersion} 已新建为开发中；APP 兼容条件已固定，可配置测试或发布。`;
         }
         if (type === "firmwareVersionEdit") {
           const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
@@ -3745,16 +3759,15 @@
             createdAt: "2026-08-14 10:00",
             log: "新建虚拟版本；独立维护 APP 条件"
           });
-          state.firmwareMessage = `虚拟版本 ${version} 已新建为开发中，关联 ${members.length} 个 MCU；可直接设置范围并配置定向设备。`;
+          lockFirmwareAppCompatibility(virtualVersions[0]);
+          state.firmwareMessage = `虚拟版本 ${version} 已新建为开发中，APP 条件已固定；关联 ${members.length} 个 MCU，可配置测试或发布。`;
           state.virtualDraftMembers = new Set();
         }
         if (type === "virtualVersionEdit") {
           const vv = virtualVersions.find(item => item.id === state.virtualEditingId);
           const members = Array.from(state.virtualDraftMembers);
-          const appVersion = $("#virtualEditAppVersion").value.trim();
           if (!vv) { failVirtualSave("未找到虚拟版本，请关闭后重试。"); return; }
-          if (vv.status !== "开发中" || vv.frozen) { failVirtualSave("进入测试后组件、包和 APP 条件已冻结，请新建虚拟版本。"); return; }
-          if (!/^v?\s*\d+\.\d+\.\d+$/i.test(appVersion)) { failVirtualSave("APP 版本号格式应为 v2.2.10 或 2.2.10。", "virtualEditAppVersion"); return; }
+          if (vv.status !== "开发中" || vv.frozen) { failVirtualSave("组件与包引用已冻结，请新建虚拟版本。"); return; }
           if (!members.length) { failVirtualSave("请至少关联 1 个 MCU 固件；可使用上方搜索与筛选定位后勾选。"); return; }
           const selected = members.map(id => firmwareVersions.find(item => item.id === id)).filter(Boolean);
           const keys = selected.map(item => `${item.channel}::${item.hardware}`);
@@ -3762,11 +3775,9 @@
           virtualSaveButton.textContent = "保存中…";
           const oldMembers = new Set(vv.members);
           vv.members = members;
-          vv.appRule = $("#virtualEditAppRule").value;
-          vv.appVersion = appVersion.startsWith("v") || appVersion.startsWith("V") ? appVersion.replace(/^V/, "v") : `v ${appVersion}`;
           const added = selected.filter(item => !oldMembers.has(item.id));
           const removed = Array.from(oldMembers).filter(id => !members.includes(id));
-          state.firmwareMessage = `虚拟版本 ${vv.version} 已保存：APP 条件为 ${vv.appRule} ${vv.appVersion}；关联新增 ${added.length} 个、移除 ${removed.length} 个。组件单 MCU 状态不变。`;
+          state.firmwareMessage = `虚拟版本 ${vv.version} 组件已保存：新增 ${added.length} 个、移除 ${removed.length} 个。APP 条件和组件单 MCU 状态不变。`;
           state.virtualEditingId = null;
           state.virtualDraftMembers = new Set();
         }

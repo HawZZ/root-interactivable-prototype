@@ -1,6 +1,7 @@
 /* Firmware scope management shares the existing product page and fixed package references. */
 (() => {
-  const labels = { company: "公司用户", mac: "指定 MAC", whitelist: "外部授权白名单", public: "所有用户" };
+  const labels = { company: "仅内部测试", mac: "指定 MAC", whitelist: "授权白名单用户", public: "正式发布" };
+  const externalLabels = { company: "暂不开放", mac: "指定设备 MAC", whitelist: "授权白名单用户" };
   const clone = value => structuredClone(value);
   const heldDevices = new Map();
   const archive = [];
@@ -63,7 +64,7 @@
   }
   function errorFor(target, next) {
     if (!target || !canRoute(target, next.route)) return "当前生命周期不允许该范围。";
-    if (fingerprint(target) !== next.original) return "版本或定向配置已变化，请重新打开设置范围。";
+    if (fingerprint(target) !== next.original) return "版本或定向配置已变化，请重新打开配置。";
     if (scheduledReleasePending(target)) return "请先取消定时发布，再修改生效范围。";
     if (target.referenceReview) return "虚拟版本包引用待核对，不能扩大投放。";
     if (next.route === "mac") {
@@ -162,7 +163,7 @@
       target.revokedRegions = (target.revokedRegions || []).filter(region => !release.range.includes(region));
     } else if (target.status === "开发中") target.status = "测试中";
     target.scopeRevision++;
-    recordDirected(`设置范围：${labels[next.route]}`, [target.id]);
+    recordDirected(`${next.route === "public" ? "发布配置" : "测试配置"}：${labels[next.route]}`, [target.id]);
     return "";
   }
   function legacyHtml(target) {
@@ -175,17 +176,16 @@
       return `<div id="scope-fields"><div class="field"><label>外部授权用户范围</label><select id="scopeWhitelistFilter"><option value="all" ${draft.filter === "all" ? "selected" : ""}>全部已授权外部用户</option><option value="specified" ${draft.filter === "specified" ? "selected" : ""}>指定已授权外部用户</option></select></div>${draft.filter === "specified" ? `<div class="form-grid"><div class="field"><label>白名单标签组</label><select id="scopeUserTag"><option value="">全部标签组</option>${tags.map(tag => `<option value="${escapeAttr(tag)}" ${draft.userTag === tag ? "selected" : ""}>${escapeHtml(tag)}</option>`).join("")}</select></div><div class="field"><label>账号搜索</label><input id="scopeUserSearch" value="${escapeAttr(draft.userSearch)}" placeholder="搜索邮箱或手机号"></div></div><div id="scopeUserList"></div>` : ""}<div class="hint">仅当前产品已授权的白名单外部用户；标签组和搜索只筛选勾选列表，生效范围按已选用户保存。</div></div>`;
     }
     const trial = draft.trial;
-    return `<div id="scope-fields"><div class="form-grid"><div class="field"><label>体验标识</label><input id="scopeLabel" value="${escapeAttr(trial.label)}"></div><div class="field"><label>APP 版本范围（选填）</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">留空沿用兼容基线；多个版本用半角逗号分隔，填写版本必须符合 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)}。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备，MAC 范围保持，不自动回到公司用户。</td></tr>`}</tbody></table></div></div>`;
+    return `<div id="scope-fields"><div class="form-grid"><div class="field"><label>APP 版本范围（选填）</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="${escapeAttr(`${target.appRule} ${target.appVersion}`)}"><span class="hint">留空沿用兼容基线；多个版本用半角逗号分隔，填写版本必须符合 ${escapeHtml(target.appRule)} ${escapeHtml(target.appVersion)}。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备。公司用户仍可进行内部测试。</td></tr>`}</tbody></table></div></div>`;
   }
   function releaseBody(target) {
     const release = draft.release;
     const published = ["发布中", "已发布"].includes(target.status);
-    return `<div id="scope-fields">${target.revokedRegions?.length ? `<div class="notice warning">已撤销区域：${escapeHtml(target.revokedRegions.join("、"))}。重新上架后仍需显式选择。</div>` : ""}<div class="field"><label><span class="required">*</span>正式发布范围</label><div class="check-row">${publicRegions().map(region => `<label><input type="checkbox" data-scope-region="${escapeAttr(region)}" ${release.range.includes(region) ? "checked" : ""}> ${escapeHtml(region)}</label>`).join("") || "产品当前没有公开上架区域"}</div><span class="hint">可选择产品公开上架范围的子集；待内测区域不可选。</span></div><div class="form-grid"><div class="field"><label>发布方式</label><select id="scopeReleaseMode"><option ${release.mode === "自动发布" ? "selected" : ""} ${target.status === "已发布" ? "disabled" : ""}>自动发布</option><option ${release.mode === "全面发布" ? "selected" : ""}>全面发布</option></select></div><div class="field"><label>自动发布总天数</label><input id="scopeDays" type="number" min="1" value="${release.batchDays}" ${published || release.mode === "全面发布" ? "disabled" : ""}></div><div class="field"><label>升级方式</label><select id="scopeUpgrade"><option ${release.upgradeMode === "提示升级" ? "selected" : ""}>提示升级</option><option ${release.upgradeMode === "强制升级" ? "selected" : ""}>强制升级</option><option ${release.upgradeMode === "静默升级" ? "selected" : ""}>静默升级</option></select></div><div class="field"><label>生效时间</label><select id="scopeEffective" ${published ? "disabled" : ""}><option ${release.effectiveAt !== "定时生效" ? "selected" : ""}>立即生效</option><option ${release.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>${release.effectiveAt === "定时生效" && !published ? `<div class="field"><label>定时发布时间</label><input id="scopeTime" type="datetime-local" value="${escapeAttr(release.time || "")}"></div>` : ""}</div>${published ? `<div class="notice">开放覆盖：${coverage(target)}% · ${target.releasePaused ? "已暂停，不返回新候选" : "投放中"}。新增区域${target.status === "已发布" ? "全面开放" : "沿用当前进度"}。</div>` : ""}${target.status === "发布中" ? `<button class="btn" id="scopePauseRelease">${target.releasePaused ? "继续发布" : "暂停发布"}</button>` : ""}${legacyHtml(target)}</div>`;
+    return `<div id="scope-fields">${target.revokedRegions?.length ? `<div class="notice warning">已撤销区域：${escapeHtml(target.revokedRegions.join("、"))}。重新上架后仍需显式选择。</div>` : ""}<div class="field"><label><span class="required">*</span>正式发布范围</label><div class="check-row">${publicRegions().map(region => `<label><input type="checkbox" data-scope-region="${escapeAttr(region)}" ${release.range.includes(region) ? "checked" : ""}> ${escapeHtml(region)}</label>`).join("") || "产品当前没有公开上架区域"}</div><span class="hint">可选择产品公开上架范围的子集；待内测区域不可选。</span></div><div class="form-grid"><div class="field"><label>发布方式</label><select id="scopeReleaseMode"><option value="自动发布" ${release.mode === "自动发布" ? "selected" : ""} ${target.status === "已发布" ? "disabled" : ""}>灰度发布</option><option value="全面发布" ${release.mode === "全面发布" ? "selected" : ""}>全量发布</option></select></div><div class="field"><label>灰度发布天数</label><input id="scopeDays" type="number" min="1" value="${release.batchDays}" ${published || release.mode === "全面发布" ? "disabled" : ""}></div><div class="field"><label>升级方式</label><select id="scopeUpgrade"><option ${release.upgradeMode === "提示升级" ? "selected" : ""}>提示升级</option><option ${release.upgradeMode === "强制升级" ? "selected" : ""}>强制升级</option><option ${release.upgradeMode === "静默升级" ? "selected" : ""}>静默升级</option></select></div><div class="field"><label>生效时间</label><select id="scopeEffective" ${published ? "disabled" : ""}><option ${release.effectiveAt !== "定时生效" ? "selected" : ""}>立即生效</option><option ${release.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>${release.effectiveAt === "定时生效" && !published ? `<div class="field"><label>定时发布时间</label><input id="scopeTime" type="datetime-local" value="${escapeAttr(release.time || "")}"></div>` : ""}</div>${published ? `<div class="notice">开放覆盖：${coverage(target)}% · ${target.releasePaused ? "已暂停，不返回新候选" : "投放中"}。新增区域${target.status === "已发布" ? "全面开放" : "沿用当前进度"}。</div>` : ""}${target.status === "发布中" ? `<button class="btn" id="scopePauseRelease">${target.releasePaused ? "继续发布" : "暂停发布"}</button>` : ""}${legacyHtml(target)}</div>`;
   }
   function readFields() {
     if (!draft) return;
     if (draft.route === "mac") {
-      draft.trial.label = $("#scopeLabel")?.value || draft.trial.label;
       if ($("#scopeApps")) draft.trial.apps = $("#scopeApps").value.split(",").map(app => app.trim()).filter(Boolean);
     } else if (draft.route === "whitelist") {
       draft.filter = $("#scopeWhitelistFilter")?.value || draft.filter;
@@ -198,19 +198,22 @@
       draft.release.range = $$('[data-scope-region]:checked').map(input => input.dataset.scopeRegion);
     }
   }
-  function open(id) {
+  function open(id, stage) {
     reconcile();
     const target = targetById(id);
     if (!target || target.status === "已停止") return;
     draft = makeDraft(target);
+    if (scheduledReleasePending(target) || stage === "release") draft.route = "public";
     state.directedTargetId = id;
     draw();
   }
   function draw() {
     const target = targetById(draft.id);
     const pending = scheduledReleasePending(target);
-    const body = `<div id="scope-summary" data-note-anchor="scope-summary"><strong>${escapeHtml(trialLabel(target))}</strong> <span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span><span class="sub">当前生效范围：${target.status === "开发中" ? "尚未投放" : labels[mode(target)]}${target.releasePaused ? " · 已暂停" : ""}</span></div>${pending ? `<div class="notice warning" id="scope-scheduled">待定时发布：${escapeHtml(target.releaseConfig.time)} · ${escapeHtml(target.releaseConfig.range.join("、"))}。${target.status === "开发中" ? "开发中尚未投放，到点校验后才正式生效。" : "原测试范围、暂停标记及锁保持。"}<button class="btn" id="scopeCancelSchedule">取消定时发布</button></div>` : ""}<div class="field" id="scope-route" data-note-anchor="scope-route"><label>可见范围</label><div class="check-row">${Object.entries(labels).map(([route, label]) => `<label><input type="radio" name="scopeRoute" value="${route}" ${draft.route === route ? "checked" : ""} ${!canRoute(target, route) || pending ? "disabled" : ""}> ${label}</label>`).join("")}</div><span class="hint">${target.status === "开发中" ? "可任选测试或正式范围；提交成功后按所选范围推进状态。" : ["发布中", "已发布"].includes(target.status) ? "正式发布后不可回到测试范围。" : "测试范围互斥，可互相切换；保存前不影响当前范围。"}</span></div>${draft.route === "public" ? releaseBody(target) : testBody(target)}<div class="notice error hide" id="scopeError" role="alert"></div>`;
-    showDirectedShell("scopeConfig", "设置范围", "范围配置生效后推进生命周期；测试中只生效一种范围。", body, pending ? "计划待生效" : "确认生效");
+    const testing = draft.route !== "public";
+    const body = `<div id="scope-summary" data-note-anchor="scope-summary"><strong>${escapeHtml(trialLabel(target))}</strong> <span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span><span class="sub">当前配置：${target.status === "开发中" ? "尚未投放" : labels[mode(target)]}${target.releasePaused ? " · 已暂停" : ""}</span></div>${target.id.startsWith("vv") && target.status === "开发中" && !target.frozen ? '<div class="subsection-head"><span>组件尚未冻结</span><button class="btn" id="scopeEditMembers">编辑组件</button></div>' : ""}${pending ? `<div class="notice warning" id="scope-scheduled">待定时发布：${escapeHtml(target.releaseConfig.time)} · ${escapeHtml(target.releaseConfig.range.join("、"))}<button class="btn" id="scopeCancelSchedule">取消定时发布</button></div>` : ""}${testing ? `<div class="notice" id="scope-internal" data-note-anchor="scope-internal">公司用户可获取测试版本。</div><div class="field" id="scope-route" data-note-anchor="scope-route"><label>对外开放</label><div class="check-row">${Object.entries(externalLabels).map(([route, label]) => `<label><input type="radio" name="scopeRoute" value="${route}" ${draft.route === route ? "checked" : ""} ${pending ? "disabled" : ""}> ${label}</label>`).join("")}</div></div>` : ""}${testing ? testBody(target) : releaseBody(target)}<div class="notice error hide" id="scopeError" role="alert"></div>`;
+    showDirectedShell("scopeConfig", pending ? "发布计划" : testing ? "测试配置" : "发布配置", "", body, pending ? "计划待生效" : "确认生效");
+    if (pending) $$("#scope-fields input, #scope-fields select, #scope-fields button").forEach(control => { control.disabled = true; });
     $("#drawerSave").disabled = pending;
     $("#drawerSave").onclick = save;
     $$('[name="scopeRoute"]').forEach(input => input.onchange = () => {
@@ -219,6 +222,11 @@
       if (draft.route === "mac" && mode(target) !== "mac") draft.trial = { label: target.version, apps: [], status: "运行中", devices: [] };
       draft.migrations = draft.route === "mac" ? draft.migrations : [];
       draw();
+    });
+    $("#scopeEditMembers")?.addEventListener("click", () => {
+      state.virtualEditingId = target.id;
+      state.virtualDraftMembers = new Set(target.members);
+      openDrawer("virtualVersionEdit");
     });
     $("#scopeWhitelistFilter")?.addEventListener("change", () => { readFields(); draw(); });
     $("#scopeUserTag")?.addEventListener("change", event => { draft.userTag = event.target.value; renderWhitelistUsers(); });
@@ -325,17 +333,19 @@
       draw();
     };
   }
-  async function pauseRelease(target) {
+  async function pauseRelease(target, fromList = false) {
     const before = fingerprint(target);
     const nextPaused = !target.releasePaused;
     const ok = await showConfirm(nextPaused ? "暂停发布" : "继续发布", nextPaused ? "暂停期间不返回该版本新候选，主状态保持发布中。未保存的编辑不生效。" : `按已保存${target.releaseConfig.mode}继续；未保存编辑不生效。`, nextPaused ? "确认暂停" : "确认继续");
     if (!ok) return;
-    if (fingerprint(target) !== before || target.status !== "发布中") { showError("配置已变化，请重新打开。"); return; }
+    if (fingerprint(target) !== before || target.status !== "发布中") { (fromList ? showToast : showError)("配置已变化，请重新打开。"); return; }
     if (nextPaused) target.releaseConfig.coverage = coverage(target);
     target.releasePaused = nextPaused;
     if (!nextPaused) { target.releaseConfig.coverage = coverage(target); if (target.releaseConfig.coverage === 100) target.status = "已发布"; }
     target.scopeRevision++;
-    open(target.id); renderFirmware();
+    if (!fromList) open(target.id);
+    renderFirmware();
+    if (fromList) renderNotes();
   }
   async function cancelSchedule(target) {
     const before = fingerprint(target);
@@ -379,7 +389,7 @@
   }
   function testEligible(target, request) {
     if (target.status !== "测试中") return false;
-    if (mode(target) === "company") return request.userType === "公司用户";
+    if (request.userType === "公司用户") return true;
     if (mode(target) !== "whitelist" || request.userType !== "外部用户" || !request.authorized) return false;
     const user = callerUser(request);
     if (!user || user.type !== "外部用户" || !user.products.includes(products[state.product].name)) return false;
@@ -426,7 +436,13 @@
     return candidates.length ? { status: "普通候选", targetId: candidates[0].id, reason: `${trialLabel(candidates[0])}；按当前生效范围与普通升级策略` } : { status: "HOLD_CURRENT_VERSION", reason: "无符合当前范围的候选，保持已安装版本" };
   }
   function actions(target) {
-    return `<button class="btn primary" data-scope-open="${target.id}" ${target.status === "已停止" ? "disabled" : ""}>设置范围</button><button class="btn danger" data-scope-stop="${target.id}" ${target.status === "已停止" ? "disabled" : ""}>停止</button><button class="btn danger" data-scope-delete="${target.id}">删除</button>`;
+    const remove = `<button class="btn danger" data-scope-delete="${target.id}">删除</button>`;
+    if (target.status === "已停止") return `<div class="version-actions">${remove}</div>`;
+    let configure;
+    if (scheduledReleasePending(target)) configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="release">发布计划</button>`;
+    else if (["开发中", "测试中"].includes(target.status)) configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="test">${target.status === "开发中" ? "测试" : "测试配置"}</button><button class="btn" data-scope-release="${target.id}">发布</button>`;
+    else configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="release">发布配置</button>${target.status === "发布中" ? `<button class="btn" data-scope-pause-release="${target.id}">${target.releasePaused ? "继续发布" : "暂停发布"}</button>` : ""}`;
+    return `<div class="version-actions">${configure}<button class="btn danger" data-scope-stop="${target.id}">停止</button>${remove}</div>`;
   }
   function summary(target) {
     if (target.status === "开发中") return "尚未投放";
@@ -434,7 +450,7 @@
     if (mode(target) === "mac") return `指定 MAC · ${trialFor(target.id)?.devices.length || 0} 台${trialFor(target.id)?.status === "已暂停" ? " · 已暂停" : ""}`;
     if (mode(target) === "whitelist") return `外部授权白名单${target.whitelistFilter === "specified" ? ` · 指定 ${(target.whitelistUserIds || []).length} 人` : " · 全部已授权"}`;
     if (mode(target) === "public") return target.releaseConfig?.range.length ? target.releaseConfig.range.join("、") : "无有效发布范围";
-    return "公司用户";
+    return "仅内部测试";
   }
   function firmwareHtml() {
     const counts = firmwareVersions.reduce((result, target) => { result[target.status] = (result[target.status] || 0) + 1; return result; }, {});
@@ -444,7 +460,9 @@
     return `<div id="virtual-version" data-note-anchor="virtual-version"><div class="subsection-head"><h3>虚拟版本</h3><button class="btn primary" id="scopeNewVirtual">新建虚拟版本</button></div>${state.firmwareMessage ? `<div class="notice success">${escapeHtml(state.firmwareMessage)}</div>` : ""}<div class="trial-device-table"><table><thead><tr><th>版本</th><th>APP 兼容范围</th><th>固定组件</th><th>生效范围</th><th>状态</th><th>操作</th></tr></thead><tbody>${virtualVersions.map(target => `<tr><td>${target.version}</td><td>${target.appRule} ${target.appVersion}</td><td>${virtualMembers(target).map(member => `${member.hardware}/${member.channel}/${member.version}`).join("；")}<span class="sub">${target.referenceReview ? "引用待核对" : target.frozen ? "首次范围提交已冻结" : "待首次范围提交冻结"}</span></td><td>${escapeHtml(summary(target))}${target.legacyTargeting ? `<span class="sub">存量指定用户：${escapeHtml(target.targetValues.join("、"))}</span>` : ""}</td><td><span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span>${target.releasePaused ? `<span class="sub">已暂停</span>` : ""}</td><td class="table-actions">${actions(target)}</td></tr>`).join("")}</tbody></table></div></div>`;
   }
   function wire() {
-    $$('[data-scope-open]').forEach(button => button.onclick = () => open(button.dataset.scopeOpen));
+    $$('[data-scope-open]').forEach(button => button.onclick = () => open(button.dataset.scopeOpen, button.dataset.scopeStage));
+    $$('[data-scope-release]').forEach(button => button.onclick = () => open(button.dataset.scopeRelease, "release"));
+    $$('[data-scope-pause-release]').forEach(button => button.onclick = () => pauseRelease(targetById(button.dataset.scopePauseRelease), true));
     $$('[data-scope-stop]').forEach(button => button.onclick = () => terminate(button.dataset.scopeStop, false));
     $$('[data-scope-delete]').forEach(button => button.onclick = () => terminate(button.dataset.scopeDelete, true));
     $$('[data-firmware-tab]').forEach(button => button.onclick = () => { state.firmwareTab = button.dataset.firmwareTab; renderFirmware(); renderNotes(); });
@@ -502,6 +520,7 @@
   }
   allFirmwareTargets().forEach(target => {
     if (target.status === "暂停发布") { target.status = "发布中"; target.releasePaused = true; }
+    lockFirmwareAppCompatibility(target);
     target.scopeMode = mode(target); target.scopeRevision = 1;
     if (target.scopeMode === "whitelist") {
       if (target.whitelistFilter === "tags") {
@@ -522,21 +541,24 @@
     (trial?.devices || []).filter(device => device.authorization === "已失效").forEach(device => heldDevices.set(device.mac, frozenDevice(target, device)));
   });
   notes.firmware = [
-    { id: "firmware-state", title: "五状态与三个行操作", body: "说明：主状态只正向流转，暂停使用执行标记。交互：设置范围、停止、删除；开发中可自由选择四范围。测试范围互转不改变测试中状态。异常：停止不可恢复；删除引用组件前阻断。", loc: "固件配置 > 版本列表" },
-    { id: "virtual-version", title: "虚拟版本独立与冻结引用", body: "说明：首次提交范围固定组件及包（含直接发布、定时）；不提升组件状态。交互：与单 MCU 相同设置范围。异常：固定引用含已停止虚拟版本仍阻断组件删除；虚拟 OTA 区分完成、部分失败、零适用和禁止降级。", loc: "固件配置 > 虚拟版本" }
+    { id: "firmware-state", title: "按状态展示操作", body: "开发中：测试、发布；测试中：测试配置、发布；发布中：发布配置、暂停／继续发布；已发布：发布配置。未停止版本均可停止、删除；已停止仅删除。待定时版本改为发布计划、停止、删除，取消计划后才可编辑。点击配置入口只打开草稿，确认后生效。", loc: "固件配置 > 版本列表" },
+    { id: "virtual-version", title: "虚拟版本阶段操作及固定时点", body: "行操作与固件版本按状态一致。App条件创建时固定；组件和包首次成功提交测试／发布配置时冻结，含定时计划。取消计划不解冻。生命周期不联动组件，未删除虚拟引用阻断组件删除。", loc: "固件配置 > 虚拟版本" }
   ];
   notes.scopeConfig = [
-    { id: "scope-summary", title: "当前范围与待提交配置", body: "说明：显示当前状态和唯一生效范围。交互：输入仅修改草稿，取消不生效。异常：校验、并发或提交失败均保留旧范围、状态和锁。", loc: "设置范围 > 版本信息" },
-    { id: "scope-route", title: "测试三路由互斥切换", body: "交互：开发中可直接任选四路由；选择前三路由生效进入测试中，后续互相切换且可收窄。状态：MAC/白名单不叠加公司范围；发布后仅所有用户可达；名单空不回退。数据来源：指定用户按已授权外部用户ID名单保存；标签组／账号只筛勾选列表，全选当前结果、跨筛选保留，产品授权实际使用时校验。", loc: "设置范围 > 可见范围" },
-    { id: "scope-fields", title: "范围字段与正式区域子集", body: "交互：MAC-only 导入、默认不迁移冲突、整批确认；App 留空继承基线。正式范围：当前公开上架范围非空子集，发布中新增沿用进度，已发布新增全面开放。暂停编辑仍暂停；产品下架撤销范围，重新上架须显式选择。", loc: "设置范围 > 路由配置" },
-    { id: "scope-scheduled", title: "定时计划与并发", body: "交互：等待期间修改测试配置先取消计划。取消只撤销计划，锁和暂停保持；到点复核失败不发布。异常：取消、到点、终止只有一次成功提交。默认：发布开始后不重设天数及时间。", loc: "设置范围 > 定时发布" },
-    { id: "scope-legacy", title: "历史限制保留", body: "说明：存量指定对象仍是附加条件，范围编辑不清空名单。交互：保留原限制编辑能力。100%：仅指符合区域及存量对象限制的设备全面开放。", loc: "设置范围 > 存量发布限制" }
+    { id: "scope-summary", title: "入口决定配置阶段", body: "测试／测试配置进入测试配置，发布／发布配置进入发布配置；抽屉不再选择测试／发布。需换阶段时关闭后从列表进入，未提交草稿不沿用。标题对应当前配置或只读发布计划。点击不改状态，取消不生效；确认仅原／新范围一句话，失败保留原配置、暂停及锁。", loc: "测试／发布配置 > 版本信息" },
+    { id: "scope-internal", title: "公司用户默认测试候选", body: "全部测试中版本参与公司用户普通候选匹配，仍校验产品区域、硬件、App和禁止降级。已有MAC锁则精确目标优先；暂停保锁。额外MAC App清单不影响未定向公司设备。", loc: "测试 > 内部测试" },
+    { id: "scope-route", title: "对外开放互斥", body: "暂不开放／MAC／授权用户互转，公司默认资格保持。退出MAC释放锁，暂停不释放；清空名单不回退状态，再次进入不恢复旧名单。外部用户仍需当前产品授权。", loc: "测试 > 对外开放" },
+    { id: "scope-fields", title: "设备、用户与发布配置", body: "MAC-only导入，冲突默认未选，确认后整批迁移。设备表仅MAC／已有账号及移出，未绑定可导入。用户选择器标签／搜索只筛列表，全选当前结果、跨筛选保留，按用户ID及授权命中。正式区域仍是公开子集，暂停编辑不继续，区域下架撤销且不自动恢复。列表和配置页的暂停／继续均需确认，按已保存策略执行，不提交未保存草稿。", loc: "测试／发布配置 > 配置内容" },
+    { id: "scope-fields", title: "创建固定App条件", body: "兼容条件≥／=／≤在固件及虚拟创建成功时固定，后续修改须新版本。MAC额外清单选填、可维护、只收窄，空继承；含公司定向设备。错App保留列表但阻断控制／设置／命令；失效资格沿原可用组合保留。", loc: "测试 > APP版本范围" },
+    { id: "scope-scheduled", title: "定时及原子竞争", body: "等待保留原状态／配置／锁，测试编辑先取消计划。到点复核失败不公开；取消、执行、停止、删除只一次生效。正式开始不重设天数或时间。", loc: "发布计划 > 定时计划" },
+    { id: "scope-legacy", title: "存量正式限制保留", body: "旧指定对象规则和编辑能力保持，配置全量也不清空历史限制。新版本不继承旧名单。", loc: "发布 > 存量限制" }
   ];
-  notes.scopeImport = [{ id: "scope-import", title: "MAC 导入与原子迁移", body: "交互：只导入 MAC，目标由版本上下文确定；可迁移冲突默认未选，可全选或清空。校验：旧目标定时、资格失效、路径不符、缺失迁移版本、降级、格式或重复阻断。加入草稿后须确认范围才实际写入，失败整批零写入。", loc: "指定 MAC > 批量导入" }];
-  notes.scopeConfig.push({ id: "scope-summary", title: "简洁确认文案", body: "范围变更弹窗只显示原范围和新范围，例如：固件生效范围从尚未投放改为指定MAC。数量、候选及版本解释不放入确认正文；配置页和批注承接规则说明。确认后仍重新校验并原子提交，取消或失败均不生效。", loc: "设置范围 > 确认范围变更" });
-  notes.scopeConfig.push({ id: "scope-fields", title: "定向设备清单与迁移入口", body: "字段：只展示 MAC／已有用户及移出；不展示版本或状态。迁移：在目标版本导入 MAC 后校验旧归属，逐台或批量确认迁移，不提供切换固件按钮。校验仍使用真实版本、授权、硬件和路径。App 基线支持≥／=／≤且含边界，清单选填只收窄。", loc: "指定 MAC > 定向设备清单" });
-  notes.product[0].body = "沿用可控发布产品详情事实页面；固件和虚拟版本五状态、互斥测试范围与正式发布区域子集使用设置范围统一配置。产品区域内测仍只控制产品可见性。";
-  versionStatusTips.firmware = [["开发中", "尚未投放，可直接选择测试或正式范围。"], ["测试中", "公司用户、MAC、外部授权白名单仅一路由生效，可互相切换。"], ["发布中", "按当前正式区域子集自动开放；暂停是执行标记。"], ["已发布", "配置正式范围内100%开放，不表示所有设备完成升级。"], ["已停止", "生命周期终止，不提供新候选，不可恢复。"]];
+  notes.scopeImport = [{ id: "scope-import", title: "MAC导入与原子迁移", body: "仅MAC一列，不需账号；目标由当前版本确定。冲突默认未选，可批量确认。格式、重复、路径、降级、授权失效、旧目标定时或并发变化整批阻断。加入草稿后仍需确认配置才实际生效。", loc: "指定设备MAC > 批量导入" }];
+  notes.product[0].body = "沿用可控发布事实页面；固件开发、测试与发布管理先选阶段，再配置开放对象。公司默认参与所有测试候选，MAC锁优先。产品区域内测仅控制产品可见性。";
+  notes.firmwareVersionAdd = [{ id: "drawer-firmware-version-add", title: "创建固件与固定兼容条件", body: "版本及硬件由文件解析；APP条件支持≥／=／≤，创建成功即固定。新记录为开发中，点击测试或发布进入对应配置，确认才生效。", loc: "新建固件版本" }];
+  notes.virtualVersionEdit = [{ id: "drawer-virtual-version-edit", title: "只维护未冻结组件", body: "APP条件创建后固定。首次成功提交测试或发布配置（含定时）前可修改组件；此后组件与包冻结，取消计划也不解冻。", loc: "虚拟版本 > 编辑组件" }];
+  notes.virtualVersionCreate = [{ id: "drawer-virtual-version-create", title: "分别固定App条件与组件", body: "创建成功固定虚拟版本号及独立APP条件。组件在首次成功提交测试或发布配置时冻结，不联动组件单MCU状态。", loc: "新建虚拟版本" }];
+  versionStatusTips.firmware = [["开发中", "尚未投放，可选择测试或直接发布。"], ["测试中", "公司用户默认参与候选；外部按MAC或授权用户开放。"], ["发布中", "灰度开放当前正式区域，暂停为执行标记。"], ["已发布", "所选正式范围100%开放，不代表全部设备已升级。"], ["已停止", "不提供新候选，不可恢复。"]];
   firmwareVersionHtml = firmwareHtml;
   virtualVersionHtml = virtualHtml;
   wireFirmware = wire;
