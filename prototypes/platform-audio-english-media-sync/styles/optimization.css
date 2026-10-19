@@ -1,0 +1,70 @@
+/* Product styles remain in the original audio prototype. Only the review frame
+   and the added media-file interaction are defined here. */
+html, body { height: 100%; overflow: clip; }
+body { min-width: 0; height: 100dvh; }
+:root { --sync-panel-width: 410px; }
+[hidden] { display: none !important; }
+.sync-review-layout { display: grid; grid-template-columns: minmax(0,1fr) 410px; height: 100dvh; min-height: 320px; }
+.sync-stage { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+body.annotation-open .sync-stage > .prototype-toolbar { display: flex; flex-wrap: wrap; min-height: 44px; }
+.sync-review-controls { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.sync-review-controls label { display: flex; gap: 5px; align-items: center; }
+.sync-review-controls input[type=checkbox] { width: 14px; height: 14px; margin: 0; flex: 0 0 14px; }
+.sync-canvas-scroll { overflow: auto; min-height: 0; flex: 1; position: relative; overscroll-behavior: contain; }
+body.annotation-open .sync-canvas.app { width: 1440px; min-width: 1440px; min-height: 100%; grid-template-columns: 208px minmax(0,1fr); position: relative; }
+.sync-canvas .sidebar { min-height: 100%; }
+.sync-review-layout > .prototype-annotation-panel { display: grid; grid-template-rows: auto minmax(0,1fr); position: static; height: 100%; max-height: 100%; }
+.sync-mobile-tabs { display: none; }
+.sync-status-line { color: #909399; background: #fff; border-top: 1px solid var(--border-light); padding: 6px 16px; font-size: 11px; flex-shrink: 0; }
+.sync-cell-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sync-cell-actions .btn { padding: 0; min-height: 24px; height: auto; font-size: 12px; }
+.sync-inline-action { white-space: nowrap; }
+.sync-drawer-file-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* Keep the existing drawer inside the product pane so review notes remain visible. */
+.drawer { right: var(--sync-panel-width); top: var(--sync-frame-top,47px); height: var(--sync-frame-height,calc(100dvh - 77px)); width: min(560px,calc(100vw - var(--sync-panel-width) - 16px)); visibility: hidden; }
+body.drawer-open .drawer { visibility: visible; }
+.drawer-mask { right: var(--sync-panel-width); top: var(--sync-frame-top,47px); bottom: var(--sync-frame-bottom,30px); }
+.sync-note-anchor { position: static; padding: 0; margin-left: 5px; width: 20px; height: 20px; flex: 0 0 20px; }
+.sync-note-host { position: relative; }
+.sync-note-selected { outline: 2px solid #f5b12c; outline-offset: -2px; }
+.sync-note-card { width: 100%; cursor: pointer; }
+.sync-note-card strong { font-size: 13px; }
+.sync-note-card .sync-note-location { color: var(--secondary); font-size: 11px; margin: 4px 0 9px; }
+.sync-note-card dl { margin: 0; display: grid; gap: 8px; font-size: 12px; line-height: 20px; }
+.sync-note-card dt { color: #8a5a00; font-weight: 500; }
+.sync-note-card dd { color: var(--regular); margin: 2px 0 0; }
+.sync-prd-boundary { border-bottom: 1px solid var(--border-light); padding: 4px 2px 12px; font-size: 12px; color: var(--regular); }
+.sync-prd-boundary p { margin: 6px 0; }
+.sync-prd-boundary a { color: var(--primary); text-decoration: none; }
+.sync-assumptions { border: 1px solid #f3d38b; background: #fff9e8; padding: 12px; border-radius: var(--radius); color: #8a5a00; font-size: 12px; line-height: 21px; }
+.sync-assumptions h3 { margin: 0 0 6px; font-size: 13px; }
+.sync-assumptions ul { padding-left: 17px; margin: 0; }
+.sync-assumptions li { margin: 0 0 7px; }
+.sync-confirm-mask { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
+.sync-confirm.modal { position: sticky; transform: none; opacity: 1; pointer-events: auto; width: 520px; max-height: none; max-width: none; transition: none; }
+.sync-confirm h2 { margin: 0; }
+.sync-confirm .modal-body p { margin: 0; font-size: 14px; color: var(--regular); line-height: 24px; }
+.sync-source { padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius); background: #f8fafc; display: grid; gap: 4px; font-size: 12px; color: var(--secondary); }
+.sync-source strong { color: var(--regular); font-weight: 400; overflow-wrap: anywhere; }
+.sync-result.toast { position: absolute; transform: none; opacity: 1; pointer-events: auto; transition: none; display: flex; align-items: center; gap: 10px; text-align: left; max-width: 580px; width: max-content; }
+.sync-result .icon-btn { font-size: 18px; color: inherit; width: 22px; height: 22px; }
+.sync-spinner { width: 12px; height: 12px; border: 1.5px solid #fff6; border-top-color: #fff; border-radius: 50%; display: inline-block; margin-right: 6px; animation: sync-spin .7s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+.sync-file-input { position: fixed; top: 0; left: 0; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; overflow: hidden; }
+.sync-annotation-list { display: block; }
+.sync-annotation-list > * { margin-bottom: 10px; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media(max-width: 900px) {
+  :root { --sync-panel-width: 0px; }
+  .sync-mobile-tabs { display: flex; height: 42px; background: white; border-bottom: 1px solid var(--border-light); }
+  .sync-mobile-tabs button { flex: 1; border: 0; border-bottom: 2px solid transparent; color: var(--regular); background: white; }
+  .sync-mobile-tabs button[aria-selected=true] { color: var(--primary); border-bottom-color: var(--primary); }
+  .sync-review-layout { display: block; height: calc(100dvh - 42px); }
+  .sync-stage { height: 100%; }
+  body.annotation-open .sync-review-layout > .prototype-annotation-panel { display: none; }
+  body[data-sync-view=notes] .sync-stage { display: none; }
+  body.annotation-open[data-sync-view=notes] .sync-review-layout > .prototype-annotation-panel { display: grid; }
+  body[data-sync-view=notes] .drawer, body[data-sync-view=notes] .drawer-mask { display: none; }
+  .sync-review-controls { flex-wrap: wrap; }
+}
+@media(prefers-reduced-motion:reduce) { .sync-spinner { animation: none; } }

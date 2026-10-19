@@ -1,0 +1,15 @@
+{
+  "id": "platform-audio-english-media-sync",
+  "path": "/prototypes/platform-audio-english-media-sync/",
+  "title": "音源管理｜英文媒体文件同步",
+  "summary": "在原表格英文单元格同步媒体文件到其他语言，保留独立维护。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": ["web"],
+  "seriesId": "platform-audio-resource-pool",
+  "version": "v1.1",
+  "status": "active",
+  "tags": ["音源", "多语言", "媒体文件同步"],
+  "preview": {"mode": "auto"}
+}
