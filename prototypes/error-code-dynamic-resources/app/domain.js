@@ -1,10 +1,11 @@
-import {completeContent,contentFor} from './content.js';
+import {completeContent,contentFor} from './content.js?v=v1.7';
+import {blankCode} from './data.js?v=v1.7';
 export const clone=x=>structuredClone(x);
 export const normalizeText=text=>String(text??'').replace(/\r\n?/g,'\n').replace(/\\n/g,'\n');
-export const mappingKey=r=>JSON.stringify([r.vendor,r.sdk,r.reasonType,r.reason]);
 export function languageCount(code,languages){return languages.filter(([id])=>completeContent(contentFor(code,id))).length;}
 export function ready(code){return completeContent(contentFor(code,'en'));}
-export function parseCSV(text,requiredHeaders=['reasonType','reason','normalizedCode']){
+export function matchesCode(id,code,query){const q=query.trim().toLowerCase();return [id,code.description,...Object.values(code.content).flatMap(c=>[c.title,c.summary])].some(text=>String(text??'').toLowerCase().includes(q));}
+export function parseCSV(text,requiredHeaders=['normalizedCode','description']){
  const rows=[];let row=[],value='',quoted=false;
  for(let i=0;i<text.length;i++){
   const ch=text[i];
@@ -23,51 +24,51 @@ export function parseCSV(text,requiredHeaders=['reasonType','reason','normalized
 }
 export function parseFile(text,name){
  if(name.toLowerCase().endsWith('.csv'))return parseCSV(text);
- if(name.toLowerCase().endsWith('.json')){const data=JSON.parse(text);const rows=Array.isArray(data)?data:data.rows;if(!Array.isArray(rows)||!rows.length)throw new Error('JSON 需要非空数组或包含 rows 数组。');return rows;}
- throw new Error('演示支持 CSV 或 JSON，请使用下载的示例格式。');
+ if(name.toLowerCase().endsWith('.json')){const data=JSON.parse(text);const rows=Array.isArray(data)?data:data?.rows;if(!Array.isArray(rows)||!rows.length)throw new Error('JSON 需要非空数组或包含 rows 数组。');return rows;}
+ throw new Error('请选择 CSV 或 JSON 码表。');
 }
-export function inspectImport(state,rawRows,source){
- const existing=new Map(state.mappings.map(r=>[mappingKey(r),r]));const seen=new Map(),codeDescriptions=new Map();const rows=[],errors=[];const counts={added:0,updated:0,unchanged:0,conflict:0};
- if(!source?.vendor||!source?.sdk)throw new Error('请选择供应商及 SDK 来源。');
- if(!Array.isArray(rawRows)||!rawRows.length)throw new Error('映射表不能为空。');
- rawRows.forEach((raw,i)=>{
-  const row={vendor:source.vendor,sdk:source.sdk,reasonType:raw?.reasonType,reason:raw?.reason,normalizedCode:String(raw?.normalizedCode??'').trim(),description:String(raw?.description??'').trim(),line:i+1,status:'added',error:''};
-  const fail=message=>{row.status='conflict';row.error=message;errors.push(`第 ${i+1} 条：${message}`);};
-  if(!raw||typeof raw!=='object'||Array.isArray(raw)){fail('数据行必须是对象。');}
-  else if(!['number','string'].includes(row.reasonType))fail('reasonType 只能为 number 或 string。');
-  else if(row.reason===undefined||row.reason===null||String(row.reason).trim()==='')fail('reason 不能为空。');
-  else if(!row.normalizedCode)fail('normalizedCode 不能为空。');
+export function inspectImport(state,rawRows){
+ if(!Array.isArray(rawRows)||!rawRows.length)throw new Error('码表不能为空。');
+ const seen=new Map(),rows=[],errors=[],counts={added:0,updated:0,unchanged:0,conflict:0};
+ for(const [i,raw] of rawRows.entries()){
+  const row={line:i+1,normalizedCode:'',description:'',before:'',status:'added',error:''};
+  const fail=message=>{row.status='conflict';row.error=message;errors.push(`第 ${row.line} 条：${message}`);};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))fail('数据行必须是对象。');
+  else if(Object.keys(raw).some(k=>!['normalizedCode','description'].includes(k)))fail('码表仅支持 normalizedCode、description 两列。');
+  else if(typeof raw.normalizedCode!=='string'||!raw.normalizedCode.trim())fail('错误码必须为非空文本。');
+  else if(typeof raw.description!=='string'||!raw.description.trim())fail('标准语义必须为非空文本。');
   else{
-   if(row.reasonType==='number'){const n=Number(row.reason);if(!Number.isFinite(n)||!Number.isSafeInteger(n))fail('number reason 需要安全整数，不能解析为有效数字。');else row.reason=n;}
-   else if(typeof row.reason!=='string')fail('string reason 需要字符串，请检查类型。');
-   if(!row.error){
-    const key=mappingKey(row),before=existing.get(key),duplicate=seen.get(key);row.before=before?.normalizedCode||null;
-    if(duplicate&&duplicate.normalizedCode!==row.normalizedCode){fail('文件内同一来源、类型及 reason 指向不同标准码。');duplicate.status='conflict';duplicate.error='相同来源键存在不同目标码。';}
-    else if(duplicate){row.status='unchanged';row.duplicate=true;}
-    else if(before){row.status=before.normalizedCode===row.normalizedCode?'unchanged':'updated';}
-    if(!duplicate)seen.set(key,row);
-    if(!state.codes[row.normalizedCode]&&!row.error){
-     if(!row.description)fail('新标准码需要开发提供含义说明。');
-     else if(codeDescriptions.has(row.normalizedCode)&&codeDescriptions.get(row.normalizedCode)!==row.description)fail('同一新标准码的含义说明不一致。');
-     else codeDescriptions.set(row.normalizedCode,row.description);
-    }
-   }
+   row.normalizedCode=raw.normalizedCode.trim();row.description=raw.description.trim();
+   const duplicate=seen.get(row.normalizedCode),before=Object.hasOwn(state.codes,row.normalizedCode)?state.codes[row.normalizedCode]:null;
+   row.before=before?.description??'';
+   if(duplicate&&duplicate.description!==row.description){fail('同一错误码存在不同标准语义，整批不可导入。');duplicate.status='conflict';duplicate.error='同一错误码存在不同标准语义。';}
+   else if(duplicate){row.status='unchanged';row.duplicate=true;}
+   else{row.status=before?(before.description===row.description?'unchanged':'updated'):'added';seen.set(row.normalizedCode,row);}
   }
   rows.push(row);
- });
- for(const row of rows)counts[row.status==='conflict'?'conflict':row.status]++;
- return {rows,errors,counts,source:clone(source),baseVersion:state.version,rawRows:clone(rawRows),valid:!counts.conflict};
+ }
+ for(const row of rows)counts[row.status]++;
+ return {rows,errors,counts,baseVersion:state.version,baseCodes:JSON.stringify(state.codes),valid:!errors.length};
 }
-export function applyImport(state,plan){
- if(!plan.valid)throw new Error('预检查存在冲突，整批未写入。');
- if(state.version!==plan.baseVersion)throw new Error('配置已被其他操作更新，请重新预检查后提交。');
- const next=clone(state);const index=new Map(next.mappings.map((r,i)=>[mappingKey(r),i]));
+export function applyImport(state,plan,timestamp=''){
+ if(!plan.valid)throw new Error('码表预检查有错误，整批未写入。');
+ if(state.version!==plan.baseVersion||JSON.stringify(state.codes)!==plan.baseCodes)throw new Error('错误码、文案或结构已更新，请重新预检查后提交。');
+ const next=clone(state);
  for(const row of plan.rows){
   if(row.status==='unchanged')continue;
-  if(!next.codes[row.normalizedCode])next.codes[row.normalizedCode]={description:row.description,structure:[],usedBlockIds:[],content:{},updated:''};
-  const mapping={vendor:row.vendor,sdk:row.sdk,reasonType:row.reasonType,reason:row.reason,normalizedCode:row.normalizedCode};const key=mappingKey(row);
-  if(index.has(key))next.mappings[index.get(key)]=mapping;else{index.set(key,next.mappings.length);next.mappings.push(mapping);}
+  if(!Object.hasOwn(next.codes,row.normalizedCode))Object.defineProperty(next.codes,row.normalizedCode,{value:blankCode(row.description),enumerable:true,writable:true,configurable:true});
+  next.codes[row.normalizedCode].description=row.description;next.codes[row.normalizedCode].updated=timestamp;
  }
  return next;
+}
+export function saveCodeMetadata(state,rawCode,rawDescription,editing=false,timestamp=''){
+ if(typeof rawCode!=='string'||!rawCode.trim())throw new Error('请填写错误码。');
+ if(typeof rawDescription!=='string'||!rawDescription.trim())throw new Error('请填写标准语义。');
+ const id=rawCode.trim(),description=rawDescription.trim(),exists=Object.hasOwn(state.codes,id);
+ if(editing&&!exists)throw new Error('错误码已不存在，请重新加载。');
+ if(!editing&&exists)throw new Error('错误码已存在，请编辑现有条目。');
+ const next=clone(state);
+ if(!exists)Object.defineProperty(next.codes,id,{value:blankCode(description),enumerable:true,writable:true,configurable:true});
+ next.codes[id].description=description;next.codes[id].updated=timestamp;return next;
 }
 export const STATUS_LABELS={added:'新增',updated:'更新',unchanged:'无变化',conflict:'冲突'};

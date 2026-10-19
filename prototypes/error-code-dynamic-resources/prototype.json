@@ -2,7 +2,7 @@
   "id": "error-code-dynamic-resources",
   "path": "/prototypes/error-code-dynamic-resources/",
   "title": "错误码动态加载资源 · IoT Admin 可交互原型",
-  "summary": "配网失败错误归一化、共用 Block 结构、16语言标题摘要和主副文案，以及仅文案批量导入导出。",
+  "summary": "错误码与标准语义维护、16语言目录、共用Block正文、码表与文案批量导入导出。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "error-code-dynamic-resources",
-  "version": "v1.6",
+  "version": "v1.7",
   "status": "active",
   "tags": [
     "错误码",

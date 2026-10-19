@@ -1,4 +1,4 @@
-import {clone,normalizeText} from './domain.js';
+import {clone,normalizeText} from './domain.js?v=v1.7';
 export const ICONS=[['wifi','Wi-Fi'],['bluetooth','蓝牙'],['warning','提醒'],['settings','设置'],['check','检查'],['info','信息']];
 export const emptyContent=()=>({title:'',summary:'',blocks:[]});
 export const blankBlock=(id,order)=>({id,order,prefixType:'number',icon:'',number:String(order),primary:'',secondary:''});
@@ -48,9 +48,9 @@ export function validateContent(c){
 export const completeContent=c=>hasContent(c)&&validateContent(c).length===0;
 export function normalizeContent(c){const next=clone(c);next.title=normalizeText(next.title);next.summary=normalizeText(next.summary);next.blocks=next.blocks.map(b=>({...b,primary:normalizeText(b.primary),secondary:normalizeText(b.secondary)})).sort((a,b)=>a.order-b.order);return next;}
 export function migrateState(saved){
- if(saved.schema===4)return saved;
+ if(saved.schema===5)return saved;
  const next=clone(saved);
- for(const c of Object.values(next.codes)){
+ if(saved.schema<4)for(const c of Object.values(next.codes)){
   if(saved.schema<3){c.content={};for(const [locale,msg] of Object.entries(c.messages||{}))if(normalizeText(msg).trim())c.content[locale]={title:'',summary:'',blocks:[{...blankBlock('step1',1),primary:normalizeText(msg)}]};}
   c.content??={};
   c.structure=(c.content.en?.blocks||[]).map(({id,order,prefixType,icon='',number=''})=>({id,order,prefixType,icon,number}));
@@ -58,7 +58,8 @@ export function migrateState(saved){
   syncTranslations(c);
   delete c.messages;delete c.overrides;
  }
- next.schema=4;
+ next.schema=5;
+ delete next.mappings;
  delete next.snapshots;
  return next;
 }

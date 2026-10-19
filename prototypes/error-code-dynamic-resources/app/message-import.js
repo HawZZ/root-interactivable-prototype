@@ -1,6 +1,6 @@
-import {LANGUAGES,initialState} from './data.js';
-import {clone,normalizeText,parseCSV} from './domain.js';
-import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js';
+import {LANGUAGES,initialState} from './data.js?v=v1.7';
+import {clone,normalizeText,parseCSV} from './domain.js?v=v1.7';
+import {hasContent,validateContent,contentFor,translationOnly,structureOf,structureSignature} from './content.js?v=v1.7';
 const locales=LANGUAGES.map(([id])=>id);
 export const FIELDS=['title','summary','primary','secondary'];
 export const COLUMNS=['normalizedCode','blockId','field',...locales];
@@ -29,7 +29,7 @@ export function inspectMessageImport(state,rows){
   const line=index+1;
   if(!row||typeof row!=='object'||Array.isArray(row)){fail(line,'数据行必须是对象。');continue;}
   if(Object.keys(row).some(k=>!COLUMNS.includes(k))){fail(line,'包含不支持的列；文案导入不能携带结构配置。');continue;}
-  if(typeof row.normalizedCode!=='string'||!Object.hasOwn(state.codes,row.normalizedCode.trim())){fail(line,'标准码不存在，请先上传开发提供的映射表。');continue;}
+  if(typeof row.normalizedCode!=='string'||!Object.hasOwn(state.codes,row.normalizedCode.trim())){fail(line,'错误码不存在，请先手动新增或导入码表建立条目。');continue;}
   const code=row.normalizedCode.trim(),field=typeof row.field==='string'?row.field.trim():'';
   if(!FIELDS.includes(field)){fail(line,'仅支持标题、摘要、主文案和副文案；结构请手动编辑。');continue;}
   const blockId=typeof row.blockId==='string'?row.blockId.trim():'',isBlock=['primary','secondary'].includes(field);
@@ -77,7 +77,7 @@ export function applyMessageImport(state,plan,timestamp){
  return next;
 }
 export function messageSample(state=initialState(),conflict=false){
- const code=Object.keys(state.codes).find(id=>id==='PROVISION_NETWORK_TIMEOUT'&&hasContent(state.codes[id].content.en))||Object.keys(state.codes).find(id=>hasContent(state.codes[id].content.en));
+ const code=Object.keys(state.codes).find(id=>hasContent(state.codes[id].content.en));
  const rows=code?exportMessageRows(state,[code]):[];
  if(conflict&&rows.length){const example=rows.find(r=>r.field==='primary')||rows[0],locale=locales.find(id=>present(example[id]));rows.push({...clone(example),[locale]:'同一单元格的冲突演示文案'});}
  return rows;
