@@ -1,5 +1,5 @@
-import {normalizeText} from './domain.js?v=v1.7';
-import {textTokens} from './content.js?v=v1.7';
+import {normalizeText} from './domain.js?v=v1.7.1';
+import {textTokens} from './content.js?v=v1.7.1';
 const escape=text=>text.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function editableHTML(value){return textTokens(value).map(t=>{const text=escape(t.text).replace(/\n/g,'<br>');return t.bold?'<strong>'+text+'</strong>':text;}).join('');}
 export function serializeRuns(runs){

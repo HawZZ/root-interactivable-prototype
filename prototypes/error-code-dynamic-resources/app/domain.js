@@ -1,5 +1,5 @@
-import {completeContent,contentFor} from './content.js?v=v1.7';
-import {blankCode} from './data.js?v=v1.7';
+import {completeContent,contentFor} from './content.js?v=v1.7.1';
+import {blankCode} from './data.js?v=v1.7.1';
 export const clone=x=>structuredClone(x);
 export const normalizeText=text=>String(text??'').replace(/\r\n?/g,'\n').replace(/\\n/g,'\n');
 export function languageCount(code,languages){return languages.filter(([id])=>completeContent(contentFor(code,id))).length;}
