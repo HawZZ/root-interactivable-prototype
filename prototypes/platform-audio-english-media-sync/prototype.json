@@ -6,10 +6,20 @@
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
-  "systems": ["web"],
+  "systems": [
+    "web"
+  ],
   "seriesId": "platform-audio-resource-pool",
   "version": "v1.1",
   "status": "active",
-  "tags": ["音源", "多语言", "媒体文件同步"],
-  "preview": {"mode": "auto"}
+  "tags": [
+    "音源",
+    "多语言",
+    "媒体文件同步"
+  ],
+  "updatedAt": "2026-10-19T09:22:12Z",
+  "lastPublisher": "EC2 Default User",
+  "preview": {
+    "mode": "auto"
+  }
 }
