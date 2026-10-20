@@ -439,9 +439,9 @@
     const remove = `<button class="btn danger" data-scope-delete="${target.id}">删除</button>`;
     if (target.status === "已停止") return `<div class="version-actions">${remove}</div>`;
     let configure;
-    if (scheduledReleasePending(target)) configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="release">发布计划</button>`;
-    else if (["开发中", "测试中"].includes(target.status)) configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="test">${target.status === "开发中" ? "测试" : "测试配置"}</button><button class="btn" data-scope-release="${target.id}">发布</button>`;
-    else configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="release">发布配置</button>${target.status === "发布中" ? `<button class="btn" data-scope-pause-release="${target.id}">${target.releasePaused ? "继续发布" : "暂停发布"}</button>` : ""}`;
+    if (scheduledReleasePending(target)) configure = `<button class="btn primary" data-scope-release="${target.id}">发布</button>`;
+    else if (["开发中", "测试中"].includes(target.status)) configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="test">${target.status === "开发中" ? "进入测试" : "测试配置"}</button><button class="btn" data-scope-release="${target.id}">发布</button>`;
+    else configure = `<button class="btn primary" data-scope-open="${target.id}" data-scope-stage="release">${target.status === "已发布" ? "修改发布配置" : "修改发布"}</button>${target.status === "发布中" ? `<button class="btn" data-scope-pause-release="${target.id}">${target.releasePaused ? "继续" : "暂停发布"}</button>` : ""}`;
     return `<div class="version-actions">${configure}<button class="btn danger" data-scope-stop="${target.id}">停止</button>${remove}</div>`;
   }
   function summary(target) {
@@ -541,11 +541,11 @@
     (trial?.devices || []).filter(device => device.authorization === "已失效").forEach(device => heldDevices.set(device.mac, frozenDevice(target, device)));
   });
   notes.firmware = [
-    { id: "firmware-state", title: "按状态展示操作", body: "开发中：测试、发布；测试中：测试配置、发布；发布中：发布配置、暂停／继续发布；已发布：发布配置。未停止版本均可停止、删除；已停止仅删除。待定时版本改为发布计划、停止、删除，取消计划后才可编辑。点击配置入口只打开草稿，确认后生效。", loc: "固件配置 > 版本列表" },
+    { id: "firmware-state", title: "基线入口与必要增量", body: "开发中：进入测试、发布；测试中：测试配置、发布；发布中：修改发布、暂停发布／继续；已发布：修改发布配置。分阶段显隐、修改发布及暂停／继续复用可控发布基线；测试配置、开发中直接发布及全状态终止是本次增量。未停止可停止和删除，已停止仅删除。待定时仍从发布入口查看只读发布计划，取消后才可编辑。点击入口只打开草稿，确认后生效。", loc: "固件配置 > 版本列表" },
     { id: "virtual-version", title: "虚拟版本阶段操作及固定时点", body: "行操作与固件版本按状态一致。App条件创建时固定；组件和包首次成功提交测试／发布配置时冻结，含定时计划。取消计划不解冻。生命周期不联动组件，未删除虚拟引用阻断组件删除。", loc: "固件配置 > 虚拟版本" }
   ];
   notes.scopeConfig = [
-    { id: "scope-summary", title: "入口决定配置阶段", body: "测试／测试配置进入测试配置，发布／发布配置进入发布配置；抽屉不再选择测试／发布。需换阶段时关闭后从列表进入，未提交草稿不沿用。标题对应当前配置或只读发布计划。点击不改状态，取消不生效；确认仅原／新范围一句话，失败保留原配置、暂停及锁。", loc: "测试／发布配置 > 版本信息" },
+    { id: "scope-summary", title: "入口决定配置阶段", body: "进入测试／测试配置进入测试配置，发布／修改发布／修改发布配置进入发布配置；待定仍通过发布进入只读发布计划。抽屉不再选择测试／发布。需换阶段时关闭后从列表进入，未提交草稿不沿用。标题对应当前配置或只读发布计划。点击不改状态，取消不生效；确认仅原／新范围一句话，失败保留原配置、暂停及锁。", loc: "测试／发布配置 > 版本信息" },
     { id: "scope-internal", title: "公司用户默认测试候选", body: "全部测试中版本参与公司用户普通候选匹配，仍校验产品区域、硬件、App和禁止降级。已有MAC锁则精确目标优先；暂停保锁。额外MAC App清单不影响未定向公司设备。", loc: "测试 > 内部测试" },
     { id: "scope-route", title: "对外开放互斥", body: "暂不开放／MAC／授权用户互转，公司默认资格保持。退出MAC释放锁，暂停不释放；清空名单不回退状态，再次进入不恢复旧名单。外部用户仍需当前产品授权。", loc: "测试 > 对外开放" },
     { id: "scope-fields", title: "设备、用户与发布配置", body: "MAC-only导入，冲突默认未选，确认后整批迁移。设备表仅MAC／已有账号及移出，未绑定可导入。用户选择器标签／搜索只筛列表，全选当前结果、跨筛选保留，按用户ID及授权命中。正式区域仍是公开子集，暂停编辑不继续，区域下架撤销且不自动恢复。列表和配置页的暂停／继续均需确认，按已保存策略执行，不提交未保存草稿。", loc: "测试／发布配置 > 配置内容" },
@@ -554,8 +554,8 @@
     { id: "scope-legacy", title: "存量正式限制保留", body: "旧指定对象规则和编辑能力保持，配置全量也不清空历史限制。新版本不继承旧名单。", loc: "发布 > 存量限制" }
   ];
   notes.scopeImport = [{ id: "scope-import", title: "MAC导入与原子迁移", body: "仅MAC一列，不需账号；目标由当前版本确定。冲突默认未选，可批量确认。格式、重复、路径、降级、授权失效、旧目标定时或并发变化整批阻断。加入草稿后仍需确认配置才实际生效。", loc: "指定设备MAC > 批量导入" }];
-  notes.product[0].body = "沿用可控发布事实页面；固件开发、测试与发布管理先选阶段，再配置开放对象。公司默认参与所有测试候选，MAC锁优先。产品区域内测仅控制产品可见性。";
-  notes.firmwareVersionAdd = [{ id: "drawer-firmware-version-add", title: "创建固件与固定兼容条件", body: "版本及硬件由文件解析；APP条件支持≥／=／≤，创建成功即固定。新记录为开发中，点击测试或发布进入对应配置，确认才生效。", loc: "新建固件版本" }];
+  notes.product[0].body = "沿用可控发布事实页面；固件开发、测试与发布管理由列表入口直接进入对应配置。公司默认参与所有测试候选，MAC锁优先。产品区域内测仅控制产品可见性。";
+  notes.firmwareVersionAdd = [{ id: "drawer-firmware-version-add", title: "创建固件与固定兼容条件", body: "版本及硬件由文件解析；APP条件支持≥／=／≤，创建成功即固定。新记录为开发中，通过进入测试或发布打开对应配置，确认才生效。", loc: "新建固件版本" }];
   notes.virtualVersionEdit = [{ id: "drawer-virtual-version-edit", title: "只维护未冻结组件", body: "APP条件创建后固定。首次成功提交测试或发布配置（含定时）前可修改组件；此后组件与包冻结，取消计划也不解冻。", loc: "虚拟版本 > 编辑组件" }];
   notes.virtualVersionCreate = [{ id: "drawer-virtual-version-create", title: "分别固定App条件与组件", body: "创建成功固定虚拟版本号及独立APP条件。组件在首次成功提交测试或发布配置时冻结，不联动组件单MCU状态。", loc: "新建虚拟版本" }];
   versionStatusTips.firmware = [["开发中", "尚未投放，可选择测试或直接发布。"], ["测试中", "公司用户默认参与候选；外部按MAC或授权用户开放。"], ["发布中", "灰度开放当前正式区域，暂停为执行标记。"], ["已发布", "所选正式范围100%开放，不代表全部设备已升级。"], ["已停止", "不提供新候选，不可恢复。"]];

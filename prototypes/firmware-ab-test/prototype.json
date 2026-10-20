@@ -2,7 +2,7 @@
   "id": "firmware-ab-test",
   "path": "/prototypes/firmware-ab-test/",
   "title": "固件开发、测试与发布管理",
-  "summary": "先选测试或发布；公司默认测试候选、对外MAC或授权用户开放、创建固定App兼容、灰度与全量及虚拟独立流转。",
+  "summary": "沿用可控发布分阶段入口，更新测试与发布抽屉；支持MAC精准测试、授权用户开放、固定App兼容及虚拟独立流转。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
