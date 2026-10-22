@@ -72,9 +72,9 @@
     return `<div class="scope-app-requirement" id="scope-app-compatibility" data-note-anchor="scope-app-compatibility"><span>APP版本号：</span><strong>${escapeHtml(appConditionLabel(condition))}</strong>${virtualHint}</div>`;
   }
   function appErrorFor(target, next) {
-    if (!validFirmwareAppCondition(next.compatibility)) return isVirtualTarget(target) ? "关联固件无共同兼容APP版本，不能测试或发布。" : "请选择有效的APP版本号条件并填写版本号。";
+    if (!validFirmwareAppCondition(next.compatibility)) return isVirtualTarget(target) ? "关联固件无共同兼容APP版本，不能测试或发布。" : "APP版本号格式无效，请填写数字版本号或选择“不限”。";
     if (isVirtualTarget(target) && appCompatibilityChanged(target, next.compatibility)) return "虚拟版本APP版本号自动取关联固件交集，不可独立修改。";
-    if (!isVirtualTarget(target) && !["版本不低于", "版本等于", "版本不高于"].includes(next.compatibility.appRule)) return "请选择有效的APP版本号条件。";
+    if (!isVirtualTarget(target) && next.compatibility.appVersion && !["版本不低于", "版本等于", "版本不高于"].includes(next.compatibility.appRule)) return "请选择有效的APP版本号条件。";
     if (!firmwareAppVersionEditable(target) && appCompatibilityChanged(target, next.compatibility)) return "发布开始后APP版本号不可修改。";
     if (!isVirtualTarget(target) && appCompatibilityChanged(target, next.compatibility)) {
       for (const dependent of virtualVersions.filter(version => version.status === "测试中" && version.members.includes(target.id))) {
@@ -142,7 +142,8 @@
     return { ...clone(device), targetId: target.id, frozenApps: clone(device.frozenApps || trialFor(target.id)?.apps || []), baseline: appCompatibilityOf(target), authorizationFrozen: device.authorization === "已失效" };
   }
   function makeAppCompatibilityDraft(target) {
-    return { id: target.id, original: fingerprint(target), compatibility: appCompatibilityOf(target) };
+    const compatibility = appCompatibilityOf(target), bounds = appConditionBounds(compatibility);
+    return { id: target.id, original: fingerprint(target), compatibility: !bounds.empty && !bounds.min && !bounds.max ? { appRule: "不限", appVersion: "" } : compatibility };
   }
   function appCompatibilityError(target, next) {
     if (!target || targetById(target.id) !== target || next.id !== target.id) return "版本不存在或配置对象已变化。";
@@ -150,6 +151,7 @@
     if (scheduledReleasePending(target)) return "请先取消定时发布，再修改APP兼容配置。";
     if (!firmwareAppVersionEditable(target)) return "当前状态不允许修改APP兼容配置。";
     if (fingerprint(target) !== next.original) return "版本或投放配置已变化，请重新打开APP兼容配置。";
+    if (next.compatibility.appRule !== "不限" && !String(next.compatibility.appVersion || "").trim()) return "请输入APP版本号，或选择“不限”。";
     return appErrorFor(target, { ...next, route: mode(target), trial: trialFor(target.id) || { apps: [] } });
   }
   function applyAppCompatibility(target, next) {
@@ -162,7 +164,7 @@
       (trialFor(version.id)?.devices || []).filter(device => device.authorization === "已失效" && !heldDevices.get(device.mac)?.authorizationFrozen).forEach(device => heldDevices.set(device.mac, frozenDevice(version, device)));
     });
     target.appRule = next.compatibility.appRule;
-    target.appVersion = `v ${normalizedAppVersion(next.compatibility.appVersion)}`;
+    target.appVersion = String(next.compatibility.appVersion || "").trim() ? `v ${normalizedAppVersion(next.compatibility.appVersion)}` : "";
     target.scopeRevision++;
     recordDirected(`APP兼容配置：${trialLabel(target)}，${appConditionLabel(appCompatibilityOf(target))}；状态及投放配置保持`, [target.id]);
     return "";
@@ -175,9 +177,11 @@
     if (error) { showToast(error); return; }
     draft = null;
     appCompatibilityDraft = next;
-    showDirectedShell("appCompatibilityConfig", "APP兼容配置", "", `<div id="app-compatibility-config" data-note-anchor="app-compatibility-config"><div><strong>${escapeHtml(trialLabel(target))}</strong> <span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span></div><div class="field" style="margin-top:20px"><label for="appCompatibilityVersion">APP版本号</label><div class="version-rule"><select id="appCompatibilityRule" aria-label="APP版本号条件">${["版本不低于", "版本等于", "版本不高于"].map(rule => `<option ${next.compatibility.appRule === rule ? 'selected' : ''}>${rule}</option>`).join('')}</select><input id="appCompatibilityVersion" value="${escapeAttr(normalizedAppVersion(next.compatibility.appVersion))}" placeholder="例如：2.2.10"></div></div><div class="notice">保存仅更新APP版本号条件，不改变固件状态及投放配置。</div><div class="notice error hide" id="appCompatibilityError" role="alert"></div></div>`, "保存");
+    showDirectedShell("appCompatibilityConfig", "APP兼容配置", "", `<div id="app-compatibility-config" data-note-anchor="app-compatibility-config"><div><strong>${escapeHtml(trialLabel(target))}</strong> <span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span></div><div class="field" style="margin-top:20px"><label for="appCompatibilityVersion">APP版本号</label><div class="version-rule"><select id="appCompatibilityRule" aria-label="APP版本号条件">${["不限", "版本不低于", "版本等于", "版本不高于"].map(rule => `<option ${next.compatibility.appRule === rule ? 'selected' : ''}>${rule}</option>`).join('')}</select><input id="appCompatibilityVersion" value="${escapeAttr(next.compatibility.appVersion ? normalizedAppVersion(next.compatibility.appVersion) : '')}" placeholder="例如：2.2.10"></div><span class="hint">选择“不限”时不限制APP版本；其他条件须填写版本号。如已在“测试配置 → 指定设备 MAC”中设置“指定APP版本”，这些定向设备仍只能通过所填APP版本查询该固件OTA。</span></div><div class="notice">保存仅更新APP版本号条件，不改变固件状态及投放配置。</div><div class="notice error hide" id="appCompatibilityError" role="alert"></div></div>`, "保存");
+    bindAppVersionRule("appCompatibilityRule", "appCompatibilityVersion");
     $("#drawerSave").onclick = () => {
-      appCompatibilityDraft.compatibility = { appRule: $("#appCompatibilityRule").value, appVersion: $("#appCompatibilityVersion").value.trim() };
+      const appRule = $("#appCompatibilityRule").value;
+      appCompatibilityDraft.compatibility = { appRule, appVersion: appRule === "不限" ? "" : $("#appCompatibilityVersion").value.trim() };
       const result = applyAppCompatibility(targetById(id), clone(appCompatibilityDraft));
       if (result) { const node = $("#appCompatibilityError"); node.textContent = result; node.classList.remove("hide"); return; }
       closeDrawer(); appCompatibilityDraft = null; renderFirmware(); showToast("APP兼容配置已保存");
@@ -191,7 +195,7 @@
       try { freezeVirtual(target); } catch (err) { return err.message; }
     }
     const timed = next.route === "public" && ["开发中", "测试中"].includes(target.status) && next.release.effectiveAt === "定时生效" && Date.parse(next.release.time) > Date.now();
-    const compatibility = isVirtualTarget(target) ? clone(next.compatibility) : { appRule: next.compatibility.appRule, appVersion: `v ${normalizedAppVersion(next.compatibility.appVersion)}` };
+    const compatibility = isVirtualTarget(target) ? clone(next.compatibility) : { appRule: next.compatibility.appRule, appVersion: String(next.compatibility.appVersion || "").trim() ? `v ${normalizedAppVersion(next.compatibility.appVersion)}` : "" };
     if (timed) {
       target.releaseConfig = { ...clone(next.release), appCompatibility: compatibility, ...(isVirtualTarget(target) ? { componentAppEvidence: virtualAppEvidence(target) } : {}) };
       delete target.scheduleError;
@@ -253,7 +257,7 @@
       return `<div id="scope-fields"><div class="field"><label>外部授权用户范围</label><select id="scopeWhitelistFilter"><option value="all" ${draft.filter === "all" ? "selected" : ""}>全部已授权外部用户</option><option value="specified" ${draft.filter === "specified" ? "selected" : ""}>指定已授权外部用户</option></select></div>${draft.filter === "specified" ? `<div class="form-grid"><div class="field"><label>白名单标签组</label><select id="scopeUserTag"><option value="">全部标签组</option>${tags.map(tag => `<option value="${escapeAttr(tag)}" ${draft.userTag === tag ? "selected" : ""}>${escapeHtml(tag)}</option>`).join("")}</select></div><div class="field"><label>账号搜索</label><input id="scopeUserSearch" value="${escapeAttr(draft.userSearch)}" placeholder="搜索邮箱或手机号"></div></div><div id="scopeUserList"></div>` : ""}<div class="hint">仅当前产品已授权的白名单外部用户；标签组和搜索只筛选勾选列表，生效范围按已选用户保存。</div></div>`;
     }
     const trial = draft.trial;
-    return `<div id="scope-fields"><div class="form-grid single-field"><div class="field" id="scope-app-selection" data-note-anchor="scope-app-selection"><label for="scopeApps">指定APP版本</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="例如：${escapeAttr(normalizedAppVersion(validFirmwareAppCondition(draft.compatibility) ? draft.compatibility.appVersion : target.appVersion))}" aria-describedby="scopeAppsHint"><span class="hint" id="scopeAppsHint">填写后，本次定向设备仅可通过指定的APP版本查询该版本OTA；留空则按上方“APP版本号”条件匹配。多个版本用半角逗号分隔，所有版本均须符合上方“APP版本号”条件。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备。公司用户仍可进行内部测试。</td></tr>`}</tbody></table></div></div>`;
+    return `<div id="scope-fields"><div class="form-grid single-field"><div class="field" id="scope-app-selection" data-note-anchor="scope-app-selection"><label for="scopeApps">指定APP版本</label><input id="scopeApps" value="${escapeAttr(trial.apps.join(", "))}" placeholder="例如：${escapeAttr(draft.compatibility.appVersion ? normalizedAppVersion(draft.compatibility.appVersion) : '2.2.10')}" aria-describedby="scopeAppsHint"><span class="hint" id="scopeAppsHint">填写后，本次定向设备仅可通过指定的APP版本查询该版本OTA；留空则按上方“APP版本号”条件匹配。多个版本用半角逗号分隔，所有版本均须符合上方“APP版本号”条件。</span></div></div><div class="subsection-head"><h3>定向设备（${trial.devices.length}）</h3><div class="trial-inline-actions"><button class="btn" id="scopeImport">批量导入 MAC</button><button class="btn" id="scopePauseMac" ${!trial.devices.length ? "disabled" : ""}>${trial.status === "已暂停" ? "继续定向" : "暂停定向"}</button></div></div><div class="trial-device-table"><table><thead><tr><th>MAC / 用户</th><th>操作</th></tr></thead><tbody>${trial.devices.map(device => `<tr><td>${device.mac}<span class="sub">${escapeHtml(device.user || "未绑定（寄出前）")}</span></td><td class="table-actions"><button class="btn danger" data-scope-remove="${device.mac}">移出</button></td></tr>`).join("") || `<tr><td colspan="2">暂无定向设备。公司用户仍可进行内部测试。</td></tr>`}</tbody></table></div></div>`;
   }
   function releaseBody(target) {
     const release = draft.release;
@@ -543,7 +547,7 @@
   }
   function firmwareHtml() {
     const counts = firmwareVersions.reduce((result, target) => { result[target.status] = (result[target.status] || 0) + 1; return result; }, {});
-    return `<div id="firmware-state" data-note-anchor="firmware-state"><div class="subsection-head"><h3>固件版本</h3><button class="btn primary" id="scopeNewFirmware">新建固件版本</button></div><div class="firmware-state-flow">${["开发中", "测试中", "发布中", "已发布", "已停止"].map(status => `<div class="firmware-state"><strong>${status}</strong><span>${counts[status] || 0} 条</span></div>`).join("")}</div>${state.firmwareMessage ? `<div class="notice success">${escapeHtml(state.firmwareMessage)}</div>` : ""}<div class="trial-device-table"><table><thead><tr><th>固件名称</th><th>类型</th><th>通道</th><th>版本</th><th>硬件</th><th>功能版本</th><th>APP版本号</th><th>生效范围</th><th>状态</th><th>创建时间</th><th>备注</th><th>操作</th></tr></thead><tbody>${firmwareVersions.map(target => `<tr><td>${escapeHtml(target.name)}</td><td>${target.type}</td><td>${target.channel || "--"}</td><td>${target.version}</td><td>${target.hardware}</td><td>${target.functionVersion}</td><td>${target.appRule} ${target.appVersion}${firmwareAppVersionEditable(target) ? `<span class="sub"><button type="button" class="btn link" data-app-compatibility-open="${target.id}">APP兼容配置</button></span>` : ""}</td><td>${escapeHtml(summary(target))}${target.legacyTargeting ? `<span class="sub">存量限制 ${escapeHtml(target.targetValues.join("、"))}</span>` : ""}</td><td><span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span>${target.releasePaused ? `<span class="sub">已暂停</span>` : ""}${target.releaseConfig && mode(target) === "public" ? `<span class="sub">开放 ${coverage(target)}%</span>` : ""}${scheduledReleasePending(target) ? `<span class="sub">待定时发布${target.scheduleError ? " · 校验失败" : ""}</span>` : ""}</td><td>${target.createdAt}</td><td>${escapeHtml(target.log)}</td><td class="table-actions">${actions(target)}</td></tr>`).join("")}</tbody></table></div></div>`;
+    return `<div id="firmware-state" data-note-anchor="firmware-state"><div class="subsection-head"><h3>固件版本</h3><button class="btn primary" id="scopeNewFirmware">新建固件版本</button></div><div class="firmware-state-flow">${["开发中", "测试中", "发布中", "已发布", "已停止"].map(status => `<div class="firmware-state"><strong>${status}</strong><span>${counts[status] || 0} 条</span></div>`).join("")}</div>${state.firmwareMessage ? `<div class="notice success">${escapeHtml(state.firmwareMessage)}</div>` : ""}<div class="trial-device-table"><table><thead><tr><th>固件名称</th><th>类型</th><th>通道</th><th>版本</th><th>硬件</th><th>功能版本</th><th>APP版本号</th><th>生效范围</th><th>状态</th><th>创建时间</th><th>备注</th><th>操作</th></tr></thead><tbody>${firmwareVersions.map(target => `<tr><td>${escapeHtml(target.name)}</td><td>${target.type}</td><td>${target.channel || "--"}</td><td>${target.version}</td><td>${target.hardware}</td><td>${target.functionVersion}</td><td>${escapeHtml(appConditionLabel(appCompatibilityOf(target)))}${firmwareAppVersionEditable(target) ? `<span class="sub"><button type="button" class="btn link" data-app-compatibility-open="${target.id}">APP兼容配置</button></span>` : ""}</td><td>${escapeHtml(summary(target))}${target.legacyTargeting ? `<span class="sub">存量限制 ${escapeHtml(target.targetValues.join("、"))}</span>` : ""}</td><td><span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span>${target.releasePaused ? `<span class="sub">已暂停</span>` : ""}${target.releaseConfig && mode(target) === "public" ? `<span class="sub">开放 ${coverage(target)}%</span>` : ""}${scheduledReleasePending(target) ? `<span class="sub">待定时发布${target.scheduleError ? " · 校验失败" : ""}</span>` : ""}</td><td>${target.createdAt}</td><td>${escapeHtml(target.log)}</td><td class="table-actions">${actions(target)}</td></tr>`).join("")}</tbody></table></div></div>`;
   }
   function virtualHtml() {
     return `<div id="virtual-version" data-note-anchor="virtual-version"><div class="subsection-head"><h3>虚拟版本</h3><button class="btn primary" id="scopeNewVirtual">新建虚拟版本</button></div>${state.firmwareMessage ? `<div class="notice success">${escapeHtml(state.firmwareMessage)}</div>` : ""}<div class="trial-device-table"><table><thead><tr><th>版本</th><th>APP版本号</th><th>固定组件</th><th>生效范围</th><th>状态</th><th>操作</th></tr></thead><tbody>${virtualVersions.map(target => `<tr><td>${target.version}</td><td>${escapeHtml(appConditionLabel(appCompatibilityOf(target)))}${target.compatibilityReview ? `<span class="sub">历史组件APP条件待核对</span>` : ""}</td><td>${virtualMembers(target).map(member => `${member.hardware}/${member.channel}/${member.version}`).join("；")}<span class="sub">${target.referenceReview ? "引用待核对" : target.frozen ? "首次范围提交已冻结" : "待首次范围提交冻结"}</span></td><td>${escapeHtml(summary(target))}${target.legacyTargeting ? `<span class="sub">存量指定用户：${escapeHtml(target.targetValues.join("、"))}</span>` : ""}</td><td><span class="tag ${firmwareStatusClass(target.status)}">${target.status}</span>${target.releasePaused ? `<span class="sub">已暂停</span>` : ""}</td><td class="table-actions">${actions(target)}</td></tr>`).join("")}</tbody></table></div></div>`;
@@ -636,7 +640,7 @@
   ];
   notes.scopeConfig = [
     { id: "scope-summary", title: "入口决定配置阶段", body: "进入测试／测试配置进入测试配置，发布／修改发布／修改发布配置进入发布配置；待定仍通过发布进入只读发布计划。抽屉不再选择测试／发布。需换阶段时关闭后从列表进入，未提交草稿不沿用。标题对应当前配置或只读发布计划。点击不改状态，取消不生效；确认仅原／新范围一句话，失败保留原配置、暂停及锁。", loc: "测试／发布配置 > 版本信息" },
-    { id: "scope-app-compatibility", title: "APP版本号只读展示", body: "测试配置、发布配置及定时计划仅展示APP版本号，不承接修改，也没有字段级完成／取消。单固件需要修改时，关闭当前抽屉，回到版本列表的APP兼容配置独立保存；开发中／测试中可改，待定时先取消计划，正式后固定。虚拟始终展示全部关联固件条件交集，测试自动重算、正式时固定；虚拟计划保存交集及组件条件证据，到点变化则阻断发布。", loc: "测试／发布配置 > 版本信息" },
+    { id: "scope-app-compatibility", title: "APP版本号只读展示", body: "测试配置、发布配置及定时计划仅展示APP版本号，不承接修改，也没有字段级完成／取消。单固件需要修改时，关闭当前抽屉，回到版本列表的APP兼容配置独立保存；开发中／测试中可改，待定时先取消计划，正式后固定。虚拟始终展示全部关联固件条件交集：不限不增加限制，全部不限则不限；空配置与无交集不同，测试自动重算、正式时固定；虚拟计划保存交集及组件条件证据，到点变化则阻断发布。", loc: "测试／发布配置 > 版本信息" },
     { id: "scope-internal", title: "公司用户默认测试候选", body: "全部测试中版本参与公司用户普通候选匹配，仍校验产品区域、硬件、App和禁止降级。已有MAC锁则精确目标优先；暂停保锁。指定APP版本不影响未定向公司设备。", loc: "测试 > 内部测试" },
     { id: "scope-route", title: "对外开放互斥", body: "暂不开放／MAC／授权用户互转，公司默认资格保持。退出MAC释放锁，暂停不释放；清空名单不回退状态，再次进入不恢复旧名单。外部用户仍需当前产品授权。", loc: "测试 > 对外开放" },
     { id: "scope-fields", title: "设备、用户与发布配置", body: "MAC-only导入，冲突默认未选，确认后整批迁移。设备表仅MAC／已有账号及移出，未绑定可导入。用户选择器标签／搜索只筛列表，全选当前结果、跨筛选保留，按用户ID及授权命中。正式区域仍是公开子集，暂停编辑不继续，区域下架撤销且不自动恢复。列表和配置页的暂停／继续均需确认，按已保存策略执行，不提交未保存草稿。", loc: "测试／发布配置 > 配置内容" },
@@ -645,7 +649,7 @@
     { id: "scope-legacy", title: "存量正式限制保留", body: "旧指定对象规则和编辑能力保持，配置全量也不清空历史限制。新版本不继承旧名单。", loc: "发布 > 存量限制" }
   ];
   notes.scopeImport = [{ id: "scope-import", title: "MAC导入与原子迁移", body: "仅MAC一列，不需账号；目标由当前版本确定。冲突默认未选，可批量确认。格式、重复、路径、降级、授权失效、旧目标定时或并发变化整批阻断。加入草稿后仍需确认配置才实际生效。MAC不校验通道适配；虚拟升级命中后返回全部N个关联固定资源链接，通道识别及执行由APP／设备处理。原型示例资源链接不发起真实下载。", loc: "指定设备MAC > 批量导入" }];
-  notes.appCompatibilityConfig = [{ id: "app-compatibility-config", title: "APP兼容配置独立保存", body: "入口位于单固件版本列表的APP版本号列，仅开发中／测试中且无待定时计划可用。字段仍叫APP版本号，支持不低于／等于／不高于。保存只改APP条件，保持主状态、投放范围、MAC名单、锁及暂停，不发起测试或发布；取消、提交失败及并发变化不写入。正式版本和虚拟派生交集无入口。保存须重验当前指定APP清单及关联测试虚拟交集，任何冲突整单阻断，不自动删值；需先在测试配置调整指定APP清单。虚拟组件及包引用不解冻。", loc: "版本列表 > APP版本号 > APP兼容配置" }];
+  notes.appCompatibilityConfig = [{ id: "app-compatibility-config", title: "APP兼容配置独立保存", body: "入口位于单固件版本列表的APP版本号列，仅开发中／测试中且无待定时计划可用。字段仍叫APP版本号，支持不限／不低于／等于／不高于；选择不限隐藏并忽略版本输入，其他条件必须填写版本。历史空配置回显不限，基础不限不影响MAC额外APP清单。保存只改APP条件，保持主状态、投放范围、MAC名单、锁及暂停，不发起测试或发布；取消、提交失败及并发变化不写入。正式版本和虚拟派生交集无入口。保存须重验当前指定APP清单及关联测试虚拟交集，任何冲突整单阻断，不自动删值；需先在测试配置调整指定APP清单。虚拟组件及包引用不解冻。", loc: "版本列表 > APP版本号 > APP兼容配置" }];
   notes.product[0].body = "沿用可控发布事实页面；固件开发、测试与发布管理由列表入口直接进入对应配置。公司默认参与所有测试候选，MAC锁优先。产品区域内测仅控制产品可见性。";
   notes.firmwareVersionAdd = [{ id: "drawer-firmware-version-add", title: "创建固件与APP版本号", body: "版本及硬件由文件解析。APP版本号支持≥／=／≤，创建后通过独立APP兼容配置维护，开发中和测试中可改，正式后固定。新记录为开发中，通过进入测试或发布打开对应配置，确认后生效。", loc: "新建固件版本" }];
   notes.virtualVersionEdit = [{ id: "drawer-virtual-version-edit", title: "只维护未冻结组件", body: "本页维护组件；APP版本号自动取全部组件交集，测试期间自动重算，正式后固定。首次成功提交配置（含定时）后组件与包冻结，取消计划或修改APP条件不解冻组件。", loc: "虚拟版本 > 编辑组件" }];

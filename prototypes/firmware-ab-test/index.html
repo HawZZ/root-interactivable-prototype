@@ -130,6 +130,7 @@
     .tip-open > .tip-icon, .tip-open > .label-row .tip-icon { border-color: #315efb; background: #eef4ff; }
     .header-tip { margin-left: 5px; vertical-align: text-bottom; }
     .version-rule { display: grid; grid-template-columns: 122px minmax(0, 1fr); gap: 8px; }
+    .version-rule input[hidden] { display: none; }
     .app-version-field { position: relative; }
     .app-version-popover { position: absolute; left: 0; top: 56px; width: 332px; z-index: 40; display: none; background: #fff; border: 1px solid #dfe5ef; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 12px; }
     .app-version-popover.open, .app-version-field:hover .app-version-popover, .app-version-field:focus-within .app-version-popover, .app-version-field.tip-open .app-version-popover { display: block; }
@@ -1104,7 +1105,11 @@
     const firmwareAppConditions = new WeakMap();
     function isVirtualTarget(target) { return Boolean(target?.id?.startsWith("vv")); }
     function appConditionBounds(condition) {
-      if (!condition || condition.empty || !/^(?:v\s*)?\d+(?:\.\d+)*$/.test(String(condition.appVersion || "").trim())) return { empty: true };
+      if (!condition || condition.empty) return { empty: true };
+      const rawVersion = String(condition.appVersion || "").trim();
+      if (condition.appRule === "不限") return !rawVersion && !condition.appMaxVersion ? {} : { empty: true };
+      if (!rawVersion && !condition.appMaxVersion && ["", "版本不低于", "版本等于", "版本不高于"].includes(condition.appRule || "")) return {};
+      if (!/^(?:v\s*)?\d+(?:\.\d+)*$/.test(rawVersion)) return { empty: true };
       const version = normalizedAppVersion(condition.appVersion || "");
       if (!/^\d+(?:\.\d+)*$/.test(version)) return { empty: true };
       if (condition.appRule === "版本不低于") return { min: version };
@@ -1126,13 +1131,15 @@
       if (min && max && compareVersion(min, max) > 0) return { appRule: "无交集", appVersion: "", empty: true };
       if (min && max && compareVersion(min, max) === 0) return { appRule: "版本等于", appVersion: `v ${min}` };
       if (min && max) return { appRule: "版本区间", appVersion: `v ${min}`, appMaxVersion: `v ${max}` };
+      if (!min && !max) return { appRule: "版本不低于", appVersion: "" };
       return { appRule: min ? "版本不低于" : "版本不高于", appVersion: `v ${min || max}` };
     }
     function virtualAppEvidence(target, overrideId, overrideCondition) {
       return (target.members || []).map(id => {
         const member = firmwareVersions.find(item => item.id === id);
         const condition = id === overrideId ? overrideCondition : member;
-        return { id, appRule: condition?.appRule || "", appVersion: condition?.appVersion ? normalizedAppVersion(condition.appVersion) : "" };
+        if (!condition) return { id, empty: true };
+        return { id, appRule: condition.appRule || "", appVersion: condition.appVersion || "", ...(condition.empty ? { empty: true } : {}) };
       });
     }
     function appCompatibilityOf(target, overrideId, overrideCondition) {
@@ -1143,11 +1150,23 @@
     function appConditionLabel(condition) {
       const bounds = appConditionBounds(condition);
       if (bounds.empty) return "无共同兼容版本";
+      if (!bounds.min && !bounds.max) return "不限制APP版本";
       if (bounds.min && bounds.max && compareVersion(bounds.min, bounds.max) !== 0) return `版本不低于 ${bounds.min} 且不高于 ${bounds.max}`;
       return `${condition.appRule} ${normalizedAppVersion(condition.appVersion)}`;
     }
     function firmwareAppVersionEditable(target) {
       return ["开发中", "测试中"].includes(target.status) && !scheduledReleasePending(target);
+    }
+    function bindAppVersionRule(ruleId, versionId) {
+      const rule = document.getElementById(ruleId), input = document.getElementById(versionId);
+      const sync = () => {
+        const unrestricted = rule.value === "不限";
+        input.hidden = unrestricted;
+        input.disabled = unrestricted;
+        input.required = !unrestricted;
+      };
+      rule.addEventListener("change", sync);
+      sync();
     }
     function validFirmwareAppCondition(condition) {
       return !appConditionBounds(condition).empty;
@@ -2245,7 +2264,7 @@
           </div>
           <div class="field app-version-field" data-note-anchor="ota-version-name">
             <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareAddAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
-            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>版本不低于</option><option>版本等于</option><option >版本不高于</option></select><input id="firmwareAddAppVersion" value="v 2.2.10"></div><span class="hint">开发中、测试中可修改；发布中、已发布后固定。</span>
+            <div class="version-rule"><select id="firmwareAddAppRule"><option selected>不限</option><option>版本不低于</option><option>版本等于</option><option>版本不高于</option></select><input id="firmwareAddAppVersion" value="" placeholder="例如：2.2.10" hidden></div><span class="hint">选择“不限”时不限制APP版本；选择其他条件时须填写版本号。开发中、测试中可修改，正式后固定。</span>
             <div class="app-version-popover" id="firmwareAddAppVersionPopover">
               <p>平台用户可在 App 的"关于"页面查看当前版本号。</p>
               <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
@@ -3383,6 +3402,7 @@
         renderAuthCandidates();
       }
       if (type === "firmwareVersionAdd") {
+        bindAppVersionRule("firmwareAddAppRule", "firmwareAddAppVersion");
         const syncFirmwareAdd = () => {
           const fileInput = $("#firmwareAddFile");
           const fileName = fileInput?.files?.[0]?.name || "";
@@ -3737,6 +3757,10 @@
           const parsed = parseFirmwareFileName(fileName);
           const firmwareType = firmwareTypeName[$("#firmwareAddType")?.value || "mcu"];
           const channel = $("#firmwareAddChannel")?.value.trim() || "";
+          const appRule = $("#firmwareAddAppRule").value;
+          const appCondition = { appRule, appVersion: appRule === "不限" ? "" : $("#firmwareAddAppVersion").value.trim() };
+          if (appRule !== "不限" && !appCondition.appVersion) { showToast("请输入APP版本号，或选择“不限”。"); return; }
+          if (!validFirmwareAppCondition(appCondition)) { showToast("APP版本号格式无效，请填写数字版本号。"); return; }
           if (firmwareType === "MCU固件" && channel && !/^[1-9]\d*$/.test(channel)) {
             showToast("MCU 通道号仅支持正整数；留空将归入 NULL 桶。");
             return;
@@ -3766,8 +3790,8 @@
             status: "开发中",
             createdAt: "2026-06-09 11:30",
             log: $("#firmwareAddRemark").value.trim() || "新建固件版本",
-            appRule: $("#firmwareAddAppRule").value,
-            appVersion: $("#firmwareAddAppVersion").value.trim(),
+            appRule: appCondition.appRule,
+            appVersion: appCondition.appVersion,
             packageName: parsed.fileName,
             company: parsed.company,
             project: parsed.project,
