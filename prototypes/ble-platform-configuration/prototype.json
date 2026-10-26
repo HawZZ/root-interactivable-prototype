@@ -1,0 +1,26 @@
+{
+  "id": "ble-platform-configuration",
+  "path": "/prototypes/ble-platform-configuration/",
+  "title": "通用蓝牙协议配置与物模型绑定",
+  "summary": "基于应用层草案0.4.0，演示系统维护协议元数据、物模型绑定、三表导入、五类报文预览及评审快照。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "ble-platform-configuration",
+  "version": "v0.4.0",
+  "status": "draft",
+  "tags": [
+    "蓝牙协议",
+    "物模型",
+    "字典配置",
+    "评审原型"
+  ],
+  "updatedAt": "2026-10-26T09:25:28Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
