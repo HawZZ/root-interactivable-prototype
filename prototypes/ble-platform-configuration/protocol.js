@@ -31,6 +31,14 @@
     f32: { bits: 32, width: 4 },
     f64: { bits: 64, width: 8 }
   });
+  var DECIMAL_PATTERN = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/;
+  var CONSTRAINT_RULE_KEYS = Object.freeze([
+    'minimum',
+    'maximum',
+    'step',
+    'stepOrigin',
+    'allowedValues'
+  ]);
   var hasOwn = Object.prototype.hasOwnProperty;
 
   function error(code, message, row) {
@@ -56,6 +64,119 @@
       fail(code, message);
     }
     return value;
+  }
+
+  function plainDecimalFromNumber(value) {
+    var text = String(value);
+    if (!/e/i.test(text)) return text;
+    var negative = text.charAt(0) === '-';
+    if (negative) text = text.slice(1);
+    var exponentParts = text.toLowerCase().split('e');
+    var mantissa = exponentParts[0];
+    var exponent = Number(exponentParts[1]);
+    var pieces = mantissa.split('.');
+    var fractionLength = pieces.length === 2 ? pieces[1].length : 0;
+    var digits = pieces.join('');
+    var point = digits.length - fractionLength + exponent;
+    var plain;
+    if (point <= 0) {
+      plain = '0.' + '0'.repeat(-point) + digits;
+    } else if (point >= digits.length) {
+      plain = digits + '0'.repeat(point - digits.length);
+    } else {
+      plain = digits.slice(0, point) + '.' + digits.slice(point);
+    }
+    return (negative ? '-' : '') + plain;
+  }
+
+  function parseDecimal(value, code, label) {
+    var text;
+    if (typeof value === 'bigint') {
+      text = value.toString();
+    } else if (typeof value === 'number') {
+      if (!Number.isFinite(value)) fail(code, label + ' must be a finite decimal value');
+      text = plainDecimalFromNumber(value);
+    } else if (typeof value === 'string') {
+      text = value;
+    } else {
+      fail(code, label + ' must be a finite decimal number or string');
+    }
+    if (!DECIMAL_PATTERN.test(text)) {
+      fail(code, label + ' must be a plain finite decimal string');
+    }
+    var negative = text.charAt(0) === '-';
+    var unsigned = negative ? text.slice(1) : text;
+    var pieces = unsigned.split('.');
+    var fraction = pieces.length === 2 ? pieces[1] : '';
+    var coefficient = BigInt(pieces[0] + fraction);
+    if (negative) coefficient = -coefficient;
+    return { coefficient: coefficient, scale: fraction.length };
+  }
+
+  function normalizeDecimal(decimal) {
+    var coefficient = decimal.coefficient;
+    var scale = decimal.scale;
+    while (scale > 0 && coefficient % 10n === 0n) {
+      coefficient /= 10n;
+      scale -= 1;
+    }
+    if (coefficient === 0n) scale = 0;
+    return { coefficient: coefficient, scale: scale };
+  }
+
+  function decimalToString(decimal) {
+    var normalized = normalizeDecimal(decimal);
+    var negative = normalized.coefficient < 0n;
+    var digits = (negative ? -normalized.coefficient : normalized.coefficient).toString();
+    if (normalized.scale === 0) return (negative ? '-' : '') + digits;
+    while (digits.length <= normalized.scale) digits = '0' + digits;
+    var split = digits.length - normalized.scale;
+    return (negative ? '-' : '') + digits.slice(0, split) + '.' + digits.slice(split);
+  }
+
+  function alignDecimals(left, right) {
+    var scale = Math.max(left.scale, right.scale);
+    var leftFactor = 10n ** BigInt(scale - left.scale);
+    var rightFactor = 10n ** BigInt(scale - right.scale);
+    return {
+      left: left.coefficient * leftFactor,
+      right: right.coefficient * rightFactor,
+      scale: scale
+    };
+  }
+
+  function compareDecimals(left, right) {
+    var aligned = alignDecimals(left, right);
+    if (aligned.left < aligned.right) return -1;
+    if (aligned.left > aligned.right) return 1;
+    return 0;
+  }
+
+  function subtractDecimals(left, right) {
+    var aligned = alignDecimals(left, right);
+    return { coefficient: aligned.left - aligned.right, scale: aligned.scale };
+  }
+
+  function multiplyDecimals(left, right) {
+    return {
+      coefficient: left.coefficient * right.coefficient,
+      scale: left.scale + right.scale
+    };
+  }
+
+  function addDecimals(left, right) {
+    var aligned = alignDecimals(left, right);
+    return { coefficient: aligned.left + aligned.right, scale: aligned.scale };
+  }
+
+  function divideDecimals(numerator, denominator) {
+    if (denominator.coefficient === 0n) {
+      fail('FIELD_VALUE_TYPE', 'Decimal division by zero');
+    }
+    return {
+      numerator: numerator.coefficient * (10n ** BigInt(denominator.scale)),
+      denominator: denominator.coefficient * (10n ** BigInt(numerator.scale))
+    };
   }
 
   function parseCSV(text) {
@@ -448,7 +569,143 @@
     return raw;
   }
 
-  function normalizeField(field, index, minAddress, requireValue) {
+  function constraintDirection(operation, role) {
+    if (operation === 'write' && role === 'request') return 'write';
+    if (operation === 'invoke' && role === 'request') return 'write';
+    if (operation === 'read' && role === 'response') return 'read';
+    if (operation === 'invoke' && role === 'response') return 'read';
+    if (operation === 'report' || operation === 'event') return 'read';
+    return null;
+  }
+
+  function normalizeConstraintRule(rule, direction) {
+    if (rule === undefined) return null;
+    requireObject(rule, 'ENGINEERING_CONSTRAINT', direction + ' constraints must be an object');
+    Object.keys(rule).forEach(function (key) {
+      if (CONSTRAINT_RULE_KEYS.indexOf(key) === -1) {
+        fail('ENGINEERING_CONSTRAINT', 'Unknown ' + direction + ' constraint key: ' + key);
+      }
+    });
+
+    var output = {};
+    ['minimum', 'maximum', 'step', 'stepOrigin'].forEach(function (key) {
+      if (!hasOwn.call(rule, key)) return;
+      if (typeof rule[key] !== 'string') {
+        fail('ENGINEERING_CONSTRAINT', direction + '.' + key + ' must be a decimal string');
+      }
+      var parsed = parseDecimal(
+        rule[key],
+        'ENGINEERING_CONSTRAINT',
+        direction + '.' + key
+      );
+      output[key] = decimalToString(parsed);
+    });
+
+    if (output.stepOrigin !== undefined && output.step === undefined) {
+      fail('ENGINEERING_CONSTRAINT', direction + '.stepOrigin requires step');
+    }
+    if (output.step !== undefined) {
+      if (compareDecimals(parseDecimal(output.step, 'ENGINEERING_CONSTRAINT', 'step'), {
+        coefficient: 0n,
+        scale: 0
+      }) <= 0) {
+        fail('ENGINEERING_CONSTRAINT', direction + '.step must be greater than zero');
+      }
+      if (output.stepOrigin === undefined) output.stepOrigin = '0';
+    }
+    if (output.minimum !== undefined && output.maximum !== undefined) {
+      if (compareDecimals(
+        parseDecimal(output.minimum, 'ENGINEERING_CONSTRAINT', 'minimum'),
+        parseDecimal(output.maximum, 'ENGINEERING_CONSTRAINT', 'maximum')
+      ) > 0) {
+        fail('ENGINEERING_CONSTRAINT', direction + '.minimum must not exceed maximum');
+      }
+    }
+
+    if (hasOwn.call(rule, 'allowedValues')) {
+      if (!Array.isArray(rule.allowedValues) || rule.allowedValues.length === 0) {
+        fail('ENGINEERING_CONSTRAINT', direction + '.allowedValues must be a non-empty array');
+      }
+      var allowedSeen = Object.create(null);
+      output.allowedValues = rule.allowedValues.map(function (item, index) {
+        if (typeof item !== 'string') {
+          fail('ENGINEERING_CONSTRAINT', direction + '.allowedValues items must be decimal strings');
+        }
+        var parsed = parseDecimal(
+          item,
+          'ENGINEERING_CONSTRAINT',
+          direction + '.allowedValues[' + index + ']'
+        );
+        var normalized = decimalToString(parsed);
+        if (allowedSeen[normalized]) {
+          fail('ENGINEERING_CONSTRAINT', direction + '.allowedValues contains a duplicate value: ' + normalized);
+        }
+        allowedSeen[normalized] = true;
+        return normalized;
+      });
+    }
+
+    return Object.keys(output).length ? output : null;
+  }
+
+  function normalizeEngineeringConstraints(value, type, selectedDirection) {
+    var numeric = type.kind === 'integer' || type.kind === 'float';
+    if (value === undefined) return { read: null, write: null, selected: null };
+    requireObject(value, 'ENGINEERING_CONSTRAINT', 'constraints must be an object');
+    Object.keys(value).forEach(function (key) {
+      if (key !== 'read' && key !== 'write') {
+        fail('ENGINEERING_CONSTRAINT', 'Unknown constraints key: ' + key);
+      }
+    });
+    if (!numeric) {
+      fail('ENGINEERING_CONSTRAINT', 'Engineering constraints are only valid for non-enum numeric fields');
+    }
+    var normalized = {
+      read: normalizeConstraintRule(value.read, 'read'),
+      write: normalizeConstraintRule(value.write, 'write'),
+      selected: null
+    };
+    if (selectedDirection) normalized.selected = normalized[selectedDirection];
+    return normalized;
+  }
+
+  function validateEngineeringRule(decimal, field) {
+    var rule = field.constraints && field.constraints.selected;
+    if (!rule) return;
+    if (rule.minimum !== undefined &&
+        compareDecimals(decimal, parseDecimal(rule.minimum, 'ENGINEERING_CONSTRAINT', 'minimum')) < 0) {
+      fail('ENGINEERING_RANGE', 'Engineering value is below the minimum constraint');
+    }
+    if (rule.maximum !== undefined &&
+        compareDecimals(decimal, parseDecimal(rule.maximum, 'ENGINEERING_CONSTRAINT', 'maximum')) > 0) {
+      fail('ENGINEERING_RANGE', 'Engineering value is above the maximum constraint');
+    }
+    if (rule.step !== undefined) {
+      var step = parseDecimal(rule.step, 'ENGINEERING_CONSTRAINT', 'step');
+      var origin = parseDecimal(rule.stepOrigin, 'ENGINEERING_CONSTRAINT', 'stepOrigin');
+      var quotient = divideDecimals(subtractDecimals(decimal, origin), step);
+      if (quotient.numerator % quotient.denominator !== 0n) {
+        fail('ENGINEERING_STEP', 'Engineering value does not lie on the declared step');
+      }
+    }
+    if (rule.allowedValues !== undefined) {
+      var matched = rule.allowedValues.some(function (item) {
+        return compareDecimals(
+          decimal,
+          parseDecimal(item, 'ENGINEERING_CONSTRAINT', 'allowedValues')
+        ) === 0;
+      });
+      if (!matched) fail('ENGINEERING_ALLOWED_VALUES', 'Engineering value is not an allowed value');
+    }
+  }
+
+  function engineeringDecimal(value, field, code, message) {
+    var decimal = parseDecimal(value, code, message);
+    validateEngineeringRule(decimal, field);
+    return decimal;
+  }
+
+  function normalizeField(field, index, minAddress, requireValue, selectedDirection) {
     requireObject(field, 'FIELD_INVALID', 'Field ' + index + ' must be an object');
     if (!Number.isInteger(field.address) || field.address < minAddress || field.address > SELECTABLE_MAX_ADDRESS) {
       fail(
@@ -469,6 +726,11 @@
         (scale !== 1 || offset !== 0)) {
       fail('FIELD_64BIT_SCALING_UNSUPPORTED', '64-bit fields do not support non-default scaling');
     }
+    var engineeringConstraints = normalizeEngineeringConstraints(
+      field.constraints,
+      type,
+      selectedDirection
+    );
 
     var enums = null;
     if (type.kind === 'enum') {
@@ -526,6 +788,7 @@
       maxCount: maxCount,
       minRaw: minRaw,
       maxRaw: maxRaw,
+      constraints: engineeringConstraints,
       value: field.value
     };
   }
@@ -535,8 +798,9 @@
     if (!Array.isArray(spec.fields)) {
       fail('FIELDS_TYPE', 'fields must be an array');
     }
+    var selectedDirection = constraintDirection(spec.operation, spec.role);
     var fields = spec.fields.map(function (field, index) {
-      return normalizeField(field, index, minAddress, requireValues);
+      return normalizeField(field, index, minAddress, requireValues, selectedDirection);
     });
     var seen = Object.create(null);
     fields.forEach(function (field) {
@@ -617,26 +881,22 @@
 
   function engineeringToIntegerRaw(value, field) {
     var type = field.type;
-    var raw;
-    if (type.bits === 64) {
-      raw = inputInteger(value, 64, 'FIELD_VALUE_TYPE', '64-bit value must be an integer or decimal string');
-    } else {
-      if (typeof value !== 'number' || !Number.isFinite(value)) {
-        fail('FIELD_VALUE_TYPE', type.declaration + ' engineering value must be a finite number');
-      }
-      var scaled = (value - field.offset) / field.scale;
-      if (!Number.isFinite(scaled)) fail('FIELD_VALUE_TYPE', 'Engineering value cannot be converted to raw');
-      raw = BigInt(Math.round(scaled));
-      if (raw < BigInt(Number.MIN_SAFE_INTEGER) || raw > BigInt(Number.MAX_SAFE_INTEGER)) {
-        fail('FIELD_VALUE_RANGE', 'Raw integer exceeds JavaScript safe range');
-      }
-      var rebuilt = Number(raw) * field.scale + field.offset;
-      if (!Number.isFinite(rebuilt)) fail('FIELD_VALUE_RANGE', 'Engineering value overflows');
-      var tolerance = Number.EPSILON * Math.max(1, Math.abs(value), Math.abs(rebuilt)) * 8;
-      if (Math.abs(rebuilt - value) > tolerance) {
-        fail('FIELD_VALUE_NOT_EXACT', 'Engineering value does not map exactly to an integer raw value');
-      }
+    if (type.bits === 64 && typeof value === 'number' && !Number.isSafeInteger(value)) {
+      fail('FIELD_64BIT_PRECISION', 'Unsafe 64-bit numbers must be supplied as decimal strings');
     }
+    var decimal = engineeringDecimal(
+      value,
+      field,
+      'FIELD_VALUE_TYPE',
+      type.declaration + ' engineering value must be a finite decimal number or string'
+    );
+    var offset = parseDecimal(field.offset, 'FIELD_VALUE_TYPE', 'offset');
+    var scale = parseDecimal(field.scale, 'FIELD_VALUE_TYPE', 'scale');
+    var quotient = divideDecimals(subtractDecimals(decimal, offset), scale);
+    if (quotient.numerator % quotient.denominator !== 0n) {
+      fail('FIELD_VALUE_NOT_EXACT', 'Engineering value does not map exactly to an integer raw value');
+    }
+    var raw = quotient.numerator / quotient.denominator;
     ensureIntegerRange(raw, type);
     checkRawBounds(raw, field);
     return raw;
@@ -657,14 +917,22 @@
     return raw;
   }
 
-  function integerOutput(raw, field) {
+  function engineeringOutput(raw, field) {
+    var rawDecimal = parseDecimal(raw, 'FIELD_VALUE_TYPE', 'raw value');
+    var scale = parseDecimal(field.scale, 'FIELD_VALUE_TYPE', 'scale');
+    var offset = parseDecimal(field.offset, 'FIELD_VALUE_TYPE', 'offset');
+    var decimal = addDecimals(multiplyDecimals(rawDecimal, scale), offset);
+    validateEngineeringRule(decimal, field);
     if (field.type.bits === 64) {
-      if (raw <= BigInt(Number.MAX_SAFE_INTEGER) && raw >= BigInt(Number.MIN_SAFE_INTEGER)) {
-        return Number(raw);
+      var normalized = normalizeDecimal(decimal);
+      if (normalized.scale === 0 &&
+          normalized.coefficient <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          normalized.coefficient >= BigInt(Number.MIN_SAFE_INTEGER)) {
+        return Number(normalized.coefficient);
       }
-      return raw.toString();
+      return decimalToString(decimal);
     }
-    var engineering = Number(raw) * field.scale + field.offset;
+    var engineering = Number(decimalToString(decimal));
     if (!Number.isFinite(engineering)) fail('FIELD_VALUE_RANGE', 'Engineering value overflows');
     return engineering === 0 ? 0 : engineering;
   }
@@ -685,13 +953,19 @@
   }
 
   function encodeFloat(value, field) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      fail('FIELD_VALUE_TYPE', 'Float value must be finite');
-    }
-    var raw = (value - field.offset) / field.scale;
+    var decimal = engineeringDecimal(
+      value,
+      field,
+      'FIELD_VALUE_TYPE',
+      'Float value must be a finite decimal number or string'
+    );
+    var offset = parseDecimal(field.offset, 'FIELD_VALUE_TYPE', 'offset');
+    var scale = parseDecimal(field.scale, 'FIELD_VALUE_TYPE', 'scale');
+    var quotient = divideDecimals(subtractDecimals(decimal, offset), scale);
+    var raw = Number(quotient.numerator) / Number(quotient.denominator);
     if (!Number.isFinite(raw)) fail('FIELD_VALUE_TYPE', 'Float engineering value cannot be converted to raw');
     if (field.type.bits === 32) raw = Math.fround(raw);
-    if (!Number.isFinite(raw)) fail('FIELD_VALUE_TYPE', 'Float raw value must be finite');
+    if (!Number.isFinite(raw)) fail('VALUE_RANGE', 'Float raw value is outside the target type range');
     checkRawBounds(raw, field);
     var buffer = new ArrayBuffer(field.type.width);
     var view = new DataView(buffer);
@@ -795,21 +1069,21 @@
         fail('FIELD_ENUM_UNKNOWN', 'Enum value is not declared: ' + enumRaw.toString());
       }
       checkRawBounds(enumRaw, field);
-      return integerOutput(enumRaw, field);
+      return engineeringOutput(enumRaw, field);
     }
     if (type.kind === 'float') {
       var view = new DataView(Uint8Array.from(bytes).buffer);
       var raw = type.bits === 32 ? view.getFloat32(0, false) : view.getFloat64(0, false);
       if (!Number.isFinite(raw)) fail('FIELD_FLOAT_INVALID', 'Float raw value must be finite');
       checkRawBounds(raw, field);
-      var engineering = raw * field.scale + field.offset;
+      var engineering = engineeringOutput(raw, field);
       if (!Number.isFinite(engineering)) fail('FIELD_FLOAT_INVALID', 'Float engineering value is not finite');
-      return engineering === 0 ? 0 : engineering;
+      return engineering;
     }
     var integerRaw = readInteger(bytes, type.signed);
     ensureIntegerRange(integerRaw, type);
     checkRawBounds(integerRaw, field);
-    return integerOutput(integerRaw, field);
+    return engineeringOutput(integerRaw, field);
   }
 
   function pushTLV(target, type, valueBytes) {

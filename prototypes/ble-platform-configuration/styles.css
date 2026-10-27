@@ -8,3 +8,38 @@
 
 /* Product scheme is a read-only system association, separate from business source selection. */
 .scheme-summary{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #f0f1f3}.scheme-summary strong{font-size:14px;font-weight:500}.scheme-summary .help{max-width:710px}.context-grid{grid-template-columns:1.2fr 1fr 1.2fr}
+
+/* v0.5.0 serial application transport demo */
+.transport-panel{border-color:#dce3ee}
+.transport-intro{display:flex;justify-content:space-between;gap:24px;padding:13px 15px;background:#f6f9ff;border:1px solid #e2e9f5;border-radius:5px}
+.transport-intro strong{font-size:14px;font-weight:550}
+.transport-intro p{font-size:11px;color:#7d8795;margin-top:3px;max-width:680px}
+.transport-status-time{text-align:right;font-size:11px;color:#7d8795;white-space:nowrap;line-height:1.8}
+.transport-status-time b{color:#43536b;font-weight:500}
+.transport-policy{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;padding:8px 10px;background:#fbfcfd;border:1px dashed #dfe5ed;border-radius:4px;font-size:11px;color:#6f7b8b}
+.transport-policy>span:not(:first-child){padding-left:8px;border-left:1px solid #e6e9ee}
+.transport-policy b{color:#385575;font-weight:600}
+.transport-grid{display:grid;grid-template-columns:242px minmax(0,1fr) 292px;gap:14px;align-items:start}
+.transport-controls{border:1px solid var(--line);border-radius:5px;padding:12px;background:#fcfdfe}
+.transport-controls .field{margin-bottom:9px}
+.transport-controls .field select{width:100%}
+.transport-controls .btn-row{margin:6px 0}
+.transport-controls .btn{flex:1;padding-left:8px;padding-right:8px;min-height:30px;font-size:11px}
+.transport-guide{margin-top:10px;padding-top:9px;border-top:1px solid #edf0f4;color:#9099a5;font-size:10px;line-height:1.65}
+.transport-main,.transport-state{min-width:0}
+.dictionary-proof{display:grid;gap:3px;padding:11px 13px;border:1px solid #dfe7f0;background:#fbfdff;border-radius:4px;font-size:11px;color:#6f7b8a}
+.dictionary-proof strong{display:block;color:#384d65;font-weight:550;font-size:13px}
+.dictionary-proof.empty-proof{border-color:#f0d7d3;background:#fff8f7;color:#a35951}
+.transport-current{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;margin-top:9px;padding:10px 12px;border-left:3px solid var(--primary);background:#f6f9ff;border-radius:3px;font-size:11px}
+.transport-current strong{display:block;font-size:12px;font-weight:500}
+.transport-empty{margin-top:9px;padding:12px;border:1px dashed #dfe5ec;border-radius:4px;color:#8b95a2;font-size:11px;background:#fbfcfd}
+.transport-subhead{margin:13px 0 6px;font-size:11px;font-weight:600;color:#5c6878}
+.transport-main .readonly-table,.transport-state .readonly-table{margin-top:0}
+.transport-state .compact td,.transport-state .compact th{font-size:10px;padding:7px 6px}
+.transport-timeline,.event-log{max-height:170px;overflow:auto;border:1px solid #eceff3;border-radius:4px;background:#fcfdff;font-size:10px;line-height:1.65}
+.transport-timeline>div,.event-log>div{padding:6px 8px;border-bottom:1px solid #f0f2f5;overflow-wrap:anywhere}
+.transport-timeline>div:last-child,.event-log>div:last-child{border-bottom:0}
+.transport-timeline .mono{color:#8b97a6;margin-right:6px}
+.transport-panel .notes-box{margin-top:12px}
+.transport-panel .banner{margin-top:9px}
+.transport-panel .tag{vertical-align:middle}
