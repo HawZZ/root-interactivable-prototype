@@ -81,10 +81,10 @@ var state={
 };
 var languages=[['en','英文（默认）'],['fr','法语'],['de','德语'],['es','西班牙语'],['it','意大利语'],['ar','阿拉伯语'],['pt','葡萄牙语'],['zh','中文'],['zh-tw','繁体中文'],['vi','越南语'],['id','印尼语'],['th','泰语'],['ms','马来语'],['ja','日语'],['ru','俄语'],['fil','菲律宾语']];
 var notes={
-  basic:{title:'基础信息 · 两个动态资源入口',summary:'产品主图保持现状；同级新增用途1、用途2。每个产品维护自己的文件，两个统一字段由App按当前产品读取。',items:[
+  basic:{title:'基础信息 · 两个动态资源入口',summary:'产品主图保持现状；同级新增动态图1、动态图2。每个产品维护自己的文件，两个统一字段由App按当前产品读取。',items:[
    [1,'产品详情导航','关联位置：产品详情 > 基础信息','保留现状产品头部、六步导航与基础信息结构。A/B切换仅在右侧原型辅助区，不属于新增产品页面导航。'],
    [2,'产品图片','关联位置：基础信息 > 产品图片','保留既有一份静态产品图片入口和原消费字段；不新增原子化配网图等额外图片入口。'],
-   [3,'用途1 / 用途2','关联位置：产品图片同级','两个入口各维护单份gif/json，文件大小≤5M，无尺寸比例要求和推荐。默认选填，真实用途与业务必填性待接入确认。'],
+   [3,'动态图1 / 动态图2','关联位置：产品图片同级','两个入口各维护单份gif/json，文件大小≤5M，无尺寸比例要求和推荐。两项均为可选上传，不影响产品创建、草稿保存或原有保存/提交。'],
    [4,'编辑与消费','关联位置：各资源入口 > 编辑','复用上传组件；保存后回填，取消或失败保留原文件，删除需确认。所有产品采用相同字段，文件ID独立。右侧只读读取演示不代表生产API。']
   ]},
   provision:{title:'配网引导 · 真实页面结构',summary:'按真实 IoT Admin 页面还原：产品配网设置、配网方式、预览形态、语言页签、步骤时间线和右上角编辑入口。',items:[
@@ -114,7 +114,7 @@ var resourceStorageKey='provisioning-special-optimization-v1.2-resources';
 var productResources=ProductResourceCore.initial();
 try{var localResources=JSON.parse(localStorage.getItem(resourceStorageKey));if(localResources&&localResources.A&&localResources.B)productResources=localResources}catch(e){}
 function currentProduct(){return productSamples[state.productCode]}
-function resourceLabel(key){return key==='dynamicResource1'?'用途1':'用途2'}
+function resourceLabel(key){return key==='dynamicResource1'?'动态图1':'动态图2'}
 function readableSize(size){return size<1024?size+' B':size<1048576?(size/1024).toFixed(1)+' KB':(size/1048576).toFixed(2)+'M'}
 function saveResourceStorage(next){localStorage.setItem(resourceStorageKey,JSON.stringify(next));productResources=next;state.resourceVersion++}
 var productGuideStates={};
@@ -165,7 +165,7 @@ function renderHeader(){
   '<div class="step-nav" id="step-nav">'+steps.map(function(x){return '<div class="step-item '+(active===x[0]?'active':'')+'" onclick="goStep(\''+x[0]+'\')"><span class="check">✓</span>'+x[1]+(x[0]==='basic'?anchor(1):'')+'</div>'}).join('')+'</div>';
 }
 function renderBasic(){
- return '<div class="basic-card"><div class="basic-title">基础信息 <button class="btn btn-primary btn-sm" style="float:right" onclick="openResourceEditor(null)">编辑基础信息'+anchor(4)+'</button></div><div class="basic-grid">'+[['产品名称',currentProduct().name],['产品型号',currentProduct().model],['产品分类','Breast Pump'],['通信方式','蓝牙'],['产品状态','已上架'],['默认语言','英文'],['创建时间','2026-09-18 14:32:10'],['更新时间','2026-10-28']].map(function(x){return '<div class="basic-cell"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>'}).join('')+'</div></div><div class="basic-card"><div class="basic-title">产品图片与动态资源</div><div class="image-grid">'+imageCard('产品图片','cover')+imageCard('用途1','dynamicResource1')+imageCard('用途2','dynamicResource2')+'</div></div>';
+ return '<div class="basic-card"><div class="basic-title">基础信息 <button class="btn btn-primary btn-sm" style="float:right" onclick="openResourceEditor(null)">编辑基础信息'+anchor(4)+'</button></div><div class="basic-grid">'+[['产品名称',currentProduct().name],['产品型号',currentProduct().model],['产品分类','Breast Pump'],['通信方式','蓝牙'],['产品状态','已上架'],['默认语言','英文'],['创建时间','2026-09-18 14:32:10'],['更新时间','2026-10-28']].map(function(x){return '<div class="basic-cell"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>'}).join('')+'</div></div><div class="basic-card"><div class="basic-title">产品图片与动态资源</div><div class="image-grid">'+imageCard('产品图片','cover')+imageCard('动态图1','dynamicResource1')+imageCard('动态图2','dynamicResource2')+'</div></div>';
 }
 function imageCard(title,key){
  var dynamic=key!=='cover',value=dynamic?productResources[state.productCode][key]:{name:currentProduct().cover};
@@ -203,7 +203,7 @@ function renderWork(){
 }
 function renderAnn(){
   var el=document.getElementById('ann'),n=currentNotes();
-  el.innerHTML='<div class="review-control"><label>产品切换（原型辅助）<select id="review-product" class="input" onchange="switchReviewProduct(this.value)" '+(state.drawer?'disabled':'')+'><option value="A" '+(state.productCode==='A'?'selected':'')+'>A · V3测试</option><option value="B" '+(state.productCode==='B'?'selected':'')+'>B · 演示产品</option></select></label><label class="form-check"><input id="resource-fault" type="checkbox" '+(state.saveResourceFault?'checked':'')+' onchange="state.saveResourceFault=this.checked">下一次资源保存失败（演示）</label></div><div class="ann-switch"><button class="'+(state.surface==='product'&&state.step==='basic'?'active':'')+'" onclick="goStep(\'basic\')">基础信息</button><button class="'+(state.surface==='errors'?'active':'')+'" onclick="goSurface(\'errors\')">错误码资源</button><button class="'+(state.surface==='product'&&state.step==='provision'?'active':'')+'" onclick="goStep(\'provision\')">配网引导</button></div><h3 class="ann-title">'+n.title+'</h3><p class="ann-summary">'+n.summary+'</p><div class="notes">'+n.items.map(function(x){return '<div class="note '+(state.selected===x[0]?'selected':'')+'" onclick="pick('+x[0]+')"><span class="note-num">'+x[0]+'</span><div><h4>'+x[1]+'</h4><ul><li>'+x[2]+'</li><li>'+x[3]+'</li></ul></div></div>'}).join('')+'</div>'+resourceReading()+'<div class="assumption"><b>原型备注</b><br>产品详情保留原结构；仅新增两个动态资源入口。A/B与读取区是评审辅助，字段名为示意；B文件为演示数据。JSON真实播放器、App消费位置/正式字段及旧App兼容待技术落实。错误码保持原文本基线。</div>';
+  el.innerHTML='<div class="review-control"><label>产品切换（原型辅助）<select id="review-product" class="input" onchange="switchReviewProduct(this.value)" '+(state.drawer?'disabled':'')+'><option value="A" '+(state.productCode==='A'?'selected':'')+'>A · V3测试</option><option value="B" '+(state.productCode==='B'?'selected':'')+'>B · 演示产品</option></select></label><label class="form-check"><input id="resource-fault" type="checkbox" '+(state.saveResourceFault?'checked':'')+' onchange="state.saveResourceFault=this.checked">下一次表单保存失败（演示）</label></div><div class="ann-switch"><button class="'+(state.surface==='product'&&state.step==='basic'?'active':'')+'" onclick="goStep(\'basic\')">基础信息</button><button class="'+(state.surface==='errors'?'active':'')+'" onclick="goSurface(\'errors\')">错误码资源</button><button class="'+(state.surface==='product'&&state.step==='provision'?'active':'')+'" onclick="goStep(\'provision\')">配网引导</button></div><h3 class="ann-title">'+n.title+'</h3><p class="ann-summary">'+n.summary+'</p><div class="notes">'+n.items.map(function(x){return '<div class="note '+(state.selected===x[0]?'selected':'')+'" onclick="pick('+x[0]+')"><span class="note-num">'+x[0]+'</span><div><h4>'+x[1]+'</h4><ul><li>'+x[2]+'</li><li>'+x[3]+'</li></ul></div></div>'}).join('')+'</div>'+resourceReading()+'<div class="assumption"><b>原型备注</b><br>产品详情保留原结构；仅新增两个动态资源入口。A/B与读取区是评审辅助，字段名为示意；B文件为演示数据。JSON真实播放器、App消费位置/正式字段及旧App兼容待技术落实。错误码保持原文本基线。</div>';
 }
 function render(){
   renderWork();
@@ -298,8 +298,9 @@ document.addEventListener('change',function(e){if(e.target.dataset.dynamicFile)c
 document.addEventListener('mousedown',function(e){if(e.target.closest('.tool'))e.preventDefault()});
 document.getElementById('work').addEventListener('click',function(e){var button=e.target.closest('[data-action="edit-provision"]');if(!button)return;e.preventDefault();e.stopPropagation();openDrawer('provision')});
 var initialStep=new URLSearchParams(window.location.search).get('step');if(initialStep==='basic'||initialStep==='provision')state.step=initialStep;
-render();
+// basic-editor.js restores the observed product form and renders it.
 </script>
+<script src="./basic-editor.js"></script>
 </body>
 </html>
 
