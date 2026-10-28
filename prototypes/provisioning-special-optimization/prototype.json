@@ -2,7 +2,7 @@
   "id": "provisioning-special-optimization",
   "path": "/prototypes/provisioning-special-optimization/",
   "title": "配网专项优化",
-  "summary": "产品动态图、错误码统一媒体格式与英文源同步、配网文案格式及多页面分层引导。",
+  "summary": "产品主图同级新增两个GIF/JSON动态资源入口，按产品独立配置；配网文案格式及多页面分层引导。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
@@ -10,13 +10,13 @@
     "web"
   ],
   "seriesId": "provisioning-special-optimization",
-  "version": "v1.0",
+  "version": "v1.2",
   "status": "active",
   "tags": [
     "配网",
-    "错误码",
-    "媒体",
-    "多语言"
+    "动态图",
+    "产品配置",
+    "多页面"
   ],
   "updatedAt": "2026-10-28T02:20:40Z",
   "lastPublisher": "HawZZ",

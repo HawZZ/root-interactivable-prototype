@@ -40,7 +40,6 @@ export function inspectMessageImport(state,rows){
   if(!locales.some(locale=>present(row[locale])))continue;
   for(const locale of locales){
    const raw=row[locale];if(!present(raw))continue;
-   if(isBlock&&contentFor(state.codes[code],locale).bodyType==='media'){fail(line,locale+' 当前为媒体正文；文案导入不能写入 Block 或切换正文类型，请先手动改为文本正文。');continue;}
    if(typeof raw!=='string'){fail(line,locale+' 文案必须为文本。');continue;}
    const value=normalizeText(raw),identity=JSON.stringify([code,locale,blockId,field]);
    if(seen.has(identity)){if(seen.get(identity)!==value)fail(line,'同一内容项的 '+locale+' 存在不同文案：'+({title:'标题',summary:'摘要',primary:'主文案',secondary:'副文案'}[field]||field));continue;}
@@ -67,7 +66,7 @@ export function inspectMessageImport(state,rows){
 export function applyMessageImport(state,plan,timestamp){
  if(!plan.valid)throw new Error('文案预检有错误，整批未写入。');
  if(plan.baseVersion!==state.version)throw new Error('配置已更新，请重新预检查后提交。');
- for(const target of plan.targets){if(structureSignature(state.codes[target.code])!==target.baseStructure||JSON.stringify(state.codes[target.code].content)!==target.baseContent||(target.content.bodyType!=='media'&&structureSignature({structure:target.content.blocks})!==target.baseStructure))throw new Error('文案或共用结构已变化，请重新下载模板并预检查。');}
+ for(const target of plan.targets){if(structureSignature(state.codes[target.code])!==target.baseStructure||JSON.stringify(state.codes[target.code].content)!==target.baseContent||structureSignature({structure:target.content.blocks})!==target.baseStructure)throw new Error('文案或共用结构已变化，请重新下载模板并预检查。');}
  const next=clone(state);
  for(const target of plan.targets){
   if(!plan.changes.some(c=>c.code===target.code&&c.locale===target.locale&&c.status!=='unchanged'))continue;

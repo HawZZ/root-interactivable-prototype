@@ -26,6 +26,8 @@
 
 .step-editor{border:1px solid var(--line);border-radius:4px;margin-bottom:18px;overflow:hidden}.step-editor-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#fafafa;border-bottom:1px solid var(--line)}.step-editor-head b{display:flex;align-items:center;gap:8px}.step-square{display:inline-grid;place-items:center;border:1px solid #aeb4bd;border-radius:3px;width:23px;height:23px;font-size:12px}.step-editor-body{padding:18px 14px}.step-editor-body .form-row{grid-template-columns:110px minmax(0,1fr)}.step-editor-body .copy-edit .form-row{grid-template-columns:90px minmax(0,1fr)}.step-editor-body .sub-edit .form-row{grid-template-columns:60px minmax(0,1fr)}.form-check{display:flex;align-items:center;gap:7px;min-height:34px;color:var(--sub);font-size:13px}.form-check input{accent-color:var(--blue)}.input:disabled{background:#f5f7fa;color:#a8abb2;cursor:not-allowed}.char-count{text-align:right;font-size:12px;color:var(--muted);margin-top:3px}.field-error{font-size:12px;color:#e55252;margin-top:4px}.invalid{border-color:var(--red)}.add-copy,.add-page{width:100%;border-style:dashed;color:var(--blue)}.timeline-value{white-space:pre-wrap}
 @media(max-width:600px){.step-editor-body .upload{display:grid;grid-template-columns:38px minmax(0,1fr)}.step-editor-body .upload-info strong{white-space:normal}.step-editor-body .upload .btn{grid-column:2;justify-self:start}.annotation{margin-bottom:60px}}
+.upload-file-label{display:inline-flex;align-items:center;position:relative;overflow:hidden;cursor:pointer;flex-shrink:0}.upload-file-label input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}.resource-preview{max-width:100%;max-height:96px;object-fit:contain}.review-control{border:1px solid var(--line);padding:10px;margin-bottom:12px;background:#fafbfe;font-size:12px}.resource-readout{padding:10px;border:1px solid var(--line);font-size:12px;margin:12px 0}.resource-readout p{margin:5px 0;overflow-wrap:anywhere}.resource-readout code{font-size:11px}.single-saved{padding:50px 15px}.saved-rich{margin-top:12px;white-space:normal}.drawer-head{flex-shrink:0}
+@media(min-width:1101px){.drawer-mask,.modal-mask{right:410px}.drawer{max-width:100%}}
 </style>
 </head>
 <body>
@@ -66,9 +68,10 @@
   </aside>
 </div>
 <div id="overlay"></div>
+<script src="./resource-core.js"></script>
 <script>
 var state={
-  surface:'product',step:'provision',entry:'ble',preview:'single',lang:'en',drawer:null,modal:null,toast:null,selected:null,dynamic:null,dynamicDraft:null,dynamicError:'',
+  surface:'product',step:'basic',entry:'ble',preview:'single',lang:'en',drawer:null,modal:null,toast:null,selected:null,productCode:'A',resourceDraft:{},resourceErrors:{},resourceKeys:[],uploading:false,saveResourceFault:false,resourceVersion:1,previewUrls:{},singleConfigured:false,singleByLanguage:{},singleImage:'',singleGuide:'请将设备靠近手机。',singleGuideDraft:'请将设备靠近手机。',
   rich:'<p>请打开设备蓝牙并允许必要权限。</p>',richSaved:'<p>请打开设备蓝牙并允许必要权限。</p>',
   pages:[
     {title:'步骤 1',img:'',txt:'123123',auxTxt:'',auxSelectable:false,btnTxt:'',guideEnabled:true,copies:[{title:'准备设备',subs:[{title:'确认设备电量',body:'请确认设备电量充足，并将设备靠近手机。'}]}]},
@@ -78,11 +81,11 @@ var state={
 };
 var languages=[['en','英文（默认）'],['fr','法语'],['de','德语'],['es','西班牙语'],['it','意大利语'],['ar','阿拉伯语'],['pt','葡萄牙语'],['zh','中文'],['zh-tw','繁体中文'],['vi','越南语'],['id','印尼语'],['th','泰语'],['ms','马来语'],['ja','日语'],['ru','俄语'],['fil','菲律宾语']];
 var notes={
-  basic:{title:'基础信息 · 现状页面增量',summary:'基础信息沿用真实产品详情结构，只在现有产品图片区域新增独立动态图入口。',items:[
-    [1,'产品详情导航','关联位置：产品详情 > 基础信息','保留现状产品头部、六步导航和基础信息卡片。'],
-    [2,'既有产品图片','关联位置：基础信息 > 产品图片','产品列表图、原子化配网图继续保持原入口。'],
-    [3,'动态图入口','关联位置：基础信息 > 产品图片','与既有产品图片同级的独立入口；png/json/svg，≤5M；不增加尺寸和比例要求。'],
-    [4,'动态图编辑','关联位置：基础信息 > 编辑','上传、替换、删除和保存失败均在现有编辑抽屉内完成。']
+  basic:{title:'基础信息 · 两个动态资源入口',summary:'产品主图保持现状；同级新增用途1、用途2。每个产品维护自己的文件，两个统一字段由App按当前产品读取。',items:[
+   [1,'产品详情导航','关联位置：产品详情 > 基础信息','保留现状产品头部、六步导航与基础信息结构。A/B切换仅在右侧原型辅助区，不属于新增产品页面导航。'],
+   [2,'产品图片','关联位置：基础信息 > 产品图片','保留既有一份静态产品图片入口和原消费字段；不新增原子化配网图等额外图片入口。'],
+   [3,'用途1 / 用途2','关联位置：产品图片同级','两个入口各维护单份gif/json，文件大小≤5M，无尺寸比例要求和推荐。默认选填，真实用途与业务必填性待接入确认。'],
+   [4,'编辑与消费','关联位置：各资源入口 > 编辑','复用上传组件；保存后回填，取消或失败保留原文件，删除需确认。所有产品采用相同字段，文件ID独立。右侧只读读取演示不代表生产API。']
   ]},
   provision:{title:'配网引导 · 真实页面结构',summary:'按真实 IoT Admin 页面还原：产品配网设置、配网方式、预览形态、语言页签、步骤时间线和右上角编辑入口。',items:[
     [5,'产品配网设置','关联位置：配网引导顶部配置卡片','展示二维码前缀、优先使用配网和编辑入口，沿用现状位置。'],
@@ -92,12 +95,8 @@ var notes={
     [9,'步骤时间线','关联位置：语言页签下方','查看态按步骤纵向展示配网引导图、配网文案、辅助文案、按钮文案等现有字段。'],
     [10,'编辑配网引导','关联位置：内容区右上角','点击后打开现有右侧编辑抽屉；单页面增加富文本配网文案，多页面在每个步骤内增加多条引导文案及子步骤。']
   ]},
-  errors:{title:'错误码资源 · 沿用 v1.7.3 基线',summary:'复用错误码资源基线完整目录与编辑流程，只增加错误码 + 语言的正文类型选择。',items:[
-    [11,'错误码资源入口','关联位置：配置中心 > 错误码资源','本入口是本需求新增配置模块，不改变产品详情页面结构。'],
-    [12,'资源模式','关联位置：错误码资源 > 编辑抽屉','同一错误码 + 语言只能选择 blocks 或 mp4 media。'],
-    [13,'媒体规则','关联位置：媒体文件','mp4，≤200M，不限制或推荐宽高比；旧 App 不兼容媒体结构。'],
-    [14,'旧 App 边界','关联位置：文本 blocks','平台继续使用 blocks 时，旧 App 不受影响。']
-  ]}
+  errors:{title:'错误码 · 原基线对照',summary:'错误码新增媒体已经取消，子页面只保留v1.7.3文本基线。',items:[]}
+
 };
 notes.multiDrawer={title:'多页面配网 · 编辑抽屉',summary:'以 multi-step-provisioning-guide 为基线。原字段、步骤结构及启用逻辑继续沿用；本次只扩展引导文案及其对应子步骤。',items:[
  [15,'语言','关联位置：抽屉顶部','沿用当前语言选择；保存与回显按语言独立，取消丢弃本次未保存修改。'],
@@ -106,29 +105,72 @@ notes.multiDrawer={title:'多页面配网 · 编辑抽屉',summary:'以 multi-st
  [18,'关联子步骤 · 本次变更','关联位置：每条引导文案 > 子步骤','每条独立维护 1～5 个子步骤；沿用可选图片、必填标题和正文。达到 5 个禁用新增。不同文案的子步骤独立保存。'],
  [19,'取消与保存','关联位置：抽屉底部','原字段和启用后的引导文案逐项校验；失败定位具体字段并保留输入，通过后回显所有字段。取消不覆盖已保存内容。图片上传在原型中使用示例文件模拟。']
 ]};
+notes.dynamicDrawer={title:'动态资源编辑',summary:'仅保存当前产品所编辑的资源字段；JSON正式动画协议与播放器仍需技术核对。',items:[
+ [3,'文件规格','关联位置：动态资源编辑 > 文件','gif/json，非空且≤5M；不增加尺寸或比例要求。原型GIF检查文件头、JSON检查语法，不能代替生产动画协议/播放器验证。'],
+ [4,'保存与恢复','关联位置：动态资源编辑 > 底部','保存成功写入当前产品字段；错误定位并保留旧有效文件；取消放弃草稿；模拟保存失败可修正后重试。清空已有项需确认后保存，其他字段和产品不变。']
+]};
+var productSamples={A:{id:'2063886410419023874',name:'V3测试',model:'V300',cover:'product-list.png'},B:{id:'demo-product-B',name:'B产品（原型样例）',model:'B-DEMO',cover:'B-product.png'}};
+var resourceStorageKey='provisioning-special-optimization-v1.2-resources';
+var productResources=ProductResourceCore.initial();
+try{var localResources=JSON.parse(localStorage.getItem(resourceStorageKey));if(localResources&&localResources.A&&localResources.B)productResources=localResources}catch(e){}
+function currentProduct(){return productSamples[state.productCode]}
+function resourceLabel(key){return key==='dynamicResource1'?'用途1':'用途2'}
+function readableSize(size){return size<1024?size+' B':size<1048576?(size/1024).toFixed(1)+' KB':(size/1048576).toFixed(2)+'M'}
+function saveResourceStorage(next){localStorage.setItem(resourceStorageKey,JSON.stringify(next));productResources=next;state.resourceVersion++}
+var productGuideStates={};
+function guideSnapshot(){return JSON.parse(JSON.stringify({rich:state.richSaved,richSaved:state.richSaved,singleConfigured:state.singleConfigured,singleByLanguage:state.singleByLanguage,singleGuide:state.singleGuide,pages:state.pages,multiByLanguage:state.multiByLanguage}))}
+function switchReviewProduct(code){if(state.drawer)return;productGuideStates[state.productCode]=guideSnapshot();state.productCode=code;var saved=productGuideStates[code];if(saved)Object.assign(state,JSON.parse(JSON.stringify(saved)));else Object.assign(state,JSON.parse(JSON.stringify(defaultGuideState)));state.selected=null;render()}
+function openResourceEditor(key){state.resourceKeys=key?[key]:ProductResourceCore.keys.slice();state.resourceDraft=JSON.parse(JSON.stringify(productResources[state.productCode]));state.resourceErrors={};state.drawer='resource';state.uploading=false;renderOverlay();pick(3)}
+function resourceReading(){return '<details class="resource-readout"><summary>App读取演示（原型辅助）</summary><p>当前产品：'+esc(currentProduct().name)+'</p>'+ProductResourceCore.keys.map(function(key){var value=productResources[state.productCode][key];return '<div><code>'+key+'</code><p>'+esc(value?value.name+' · '+value.assetId:'未配置，保持为空')+'</p></div>'}).join('')+'<p>字段名仅为示意；正式名称由App与平台在接口契约中确定，产品侧不填写Key。</p></details>'}
+async function chooseDynamicFile(key,file){
+ if(!file||!state.resourceKeys.includes(key))return;
+ var issue=ProductResourceCore.validate(file);if(issue){state.resourceErrors[key]=issue;renderOverlay();return}
+ state.uploading=true;state.resourceErrors[key]='';renderOverlay();
+ try{
+  if(/\.json$/i.test(file.name))JSON.parse(await file.text());
+  else{var head=String.fromCharCode.apply(null,new Uint8Array(await file.slice(0,6).arrayBuffer()));if(!['GIF87a','GIF89a'].includes(head))throw new Error('GIF内容无效')}
+  var asset={assetId:state.productCode+'-'+(globalThis.crypto&&crypto.randomUUID?crypto.randomUUID():Date.now()),name:file.name,size:file.size,format:file.name.split('.').pop().toLowerCase()};
+  state.resourceDraft[key]=asset;if(asset.format==='gif')state.previewUrls[asset.assetId]=URL.createObjectURL(file);
+ }catch(e){state.resourceErrors[key]=/json$/i.test(file.name)?'JSON语法错误，请重新选择有效文件。':'GIF文件内容无效，请重新选择。'}
+ state.uploading=false;renderOverlay();
+}
+function resourceForm(key){var v=state.resourceDraft[key];return '<section class="drawer-section" data-resource-field="'+key+'"><h3 class="drawer-section-title">'+resourceLabel(key)+'</h3><div class="upload"><div class="upload-icon">动</div><div class="upload-info"><strong>'+esc(v?v.name:'暂未上传')+'</strong><span>'+esc(v?readableSize(v.size)+' · '+v.format:'支持 gif / json，单文件不超过 5M')+'</span></div><label class="btn btn-sm upload-file-label">'+(v?'替换文件':'选择文件')+'<input type="file" data-dynamic-file="'+key+'" accept=".gif,.json" aria-label="选择'+resourceLabel(key)+'文件" '+(state.uploading?'disabled':'')+'></label></div><p class="form-help">不限制或推荐尺寸、宽高比。</p>'+(state.resourceErrors[key]?'<div class="notice error" role="alert">'+esc(state.resourceErrors[key])+'</div>':'')+(v?'<button type="button" class="btn btn-sm btn-danger" onclick="state.resourceDraft[\''+key+'\']=null;state.resourceErrors[\''+key+'\']=\'\';renderOverlay()">清空此项</button>':'')+'</section>'}
+function renderResourceDrawer(){return '<div class="drawer-mask" onclick="if(event.target===this)closeDrawer()"><section class="drawer" role="dialog" aria-modal="true" aria-label="编辑动态资源"><header class="drawer-head"><b class="drawer-title">编辑动态资源 · '+esc(currentProduct().name)+'</b><button class="close" aria-label="关闭" onclick="closeDrawer()">×</button></header><div class="drawer-body">'+state.resourceKeys.map(resourceForm).join('')+(state.uploading?'<div class="notice" role="status">正在校验文件，请稍候…</div>':'')+'</div><footer class="drawer-foot"><button class="btn" onclick="closeDrawer()">取消</button><button class="btn btn-primary" '+(state.uploading?'disabled':'')+' onclick="saveResources(false)">保存</button></footer></section></div>'}
+function saveResources(confirmed){
+ if(state.uploading)return;
+ if(state.resourceKeys.some(function(key){return !!state.resourceErrors[key]&&!state.resourceErrors[key].startsWith('保存失败')})){toast('请先处理文件错误','error');return}
+ var removed=state.resourceKeys.filter(function(key){return productResources[state.productCode][key]&&!state.resourceDraft[key]});
+ if(removed.length&&!confirmed){state.modal={kind:'clearResources',keys:removed};renderOverlay();return}
+ if(state.saveResourceFault){state.saveResourceFault=false;state.resourceErrors[state.resourceKeys[0]]='保存失败，原文件未被覆盖。请重试。';renderOverlay();return}
+ var next=productResources;state.resourceKeys.forEach(function(key){next=ProductResourceCore.update(next,state.productCode,key,state.resourceDraft[key])});
+ try{saveResourceStorage(next)}catch(e){state.resourceErrors[state.resourceKeys[0]]='保存失败，请检查本地存储后重试。';renderOverlay();return}
+ closeDrawer();render();toast('动态资源保存成功','success');
+}
+function requestDeleteResource(key){state.modal={kind:'deleteResource',key:key};renderOverlay()}
+function confirmDeleteResource(key){try{saveResourceStorage(ProductResourceCore.update(productResources,state.productCode,key,null));state.modal=null;render();toast('资源已删除','success')}catch(e){toast('删除失败，原资源保留','error')}}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function anchor(n){return '<span class="note-anchor" data-anchor="'+n+'" onclick="pick('+n+')">'+n+'</span>'}
-function currentNotes(){if(state.drawer==='provision'&&state.preview==='multi')return notes.multiDrawer;return state.surface==='errors'?notes.errors:state.step==='basic'?notes.basic:notes.provision}
+function currentNotes(){if(state.drawer==='resource')return notes.dynamicDrawer;if(state.drawer==='provision'&&state.preview==='multi')return notes.multiDrawer;return state.surface==='errors'?notes.errors:state.step==='basic'?notes.basic:notes.provision}
 function toast(msg,type){state.toast={msg:msg,type:type||''};renderOverlay();clearTimeout(toast.t);toast.t=setTimeout(function(){state.toast=null;renderOverlay()},2500)}
 function pick(n){state.selected=Number(n);renderAnn();document.querySelectorAll('.note-anchor').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-anchor')===String(n))})}
 function goSurface(s){if(s==='errors'){window.location.href='./error-code-resources/';return}state.surface=s;state.drawer=null;state.modal=null;state.selected=null;render()}
 function goStep(s){state.surface='product';state.step=s;state.drawer=null;state.selected=null;render()}
-function openDrawer(type){state.drawer=type;state.draftLang=state.lang;state.multiErrors={};state.dynamicDraft=state.dynamic;state.dynamicError='';state.draftPages=JSON.parse(JSON.stringify(state.pages.length?state.pages:[emptyMultiPage()]));renderOverlay();pick(type==='basic'?4:type==='provision'&&state.preview==='multi'?15:10)}
+function openDrawer(type){if(type==='basic'){openResourceEditor(null);return}state.drawer=type;state.draftLang=state.lang;state.multiErrors={};state.rich=state.richSaved;state.singleGuideDraft=state.singleGuide;state.draftPages=JSON.parse(JSON.stringify(state.pages.length?state.pages:[emptyMultiPage()]));renderOverlay();pick(type==='basic'?4:type==='provision'&&state.preview==='multi'?15:10)}
 function closeDrawer(){state.drawer=null;state.modal=null;state.draftPages=null;renderOverlay();renderAnn()}
 function renderHeader(){
   var active=state.step;
   var steps=[['basic','基础信息'],['feature','功能设计'],['extension','扩展程序'],['debug','设备调试'],['provision','配网引导'],['advanced','高级配置']];
   return '<div class="work-tabbar"><div class="work-tab">概览</div><div class="work-tab active">产品详情 <span class="x">×</span></div></div>'+
-  '<div class="product-head"><div class="product-line"><div class="product-thumb">◉</div><div><div class="product-name">V3测试 <span class="tag tag-root">ROOT云</span> <span class="tag tag-online">已上架</span></div></div><div class="product-actions"><button class="btn">编辑上架范围</button><button class="btn btn-danger">下架产品</button></div></div><div class="product-data"><div><span>产品分类</span>Breast Pump</div><div><span>产品型号</span>V300</div><div><span>产品代码</span>--</div><div><span>产品ID</span>2063886410419023874</div><div><span>产品模板ID</span>1907328212561108993</div><div><span>上架范围</span>刚果（金）、摩洛哥、墨西哥…</div></div></div>'+
+  '<div class="product-head"><div class="product-line"><div class="product-thumb">◉</div><div><div class="product-name">'+esc(currentProduct().name)+' <span class="tag tag-root">ROOT云</span> <span class="tag tag-online">已上架</span></div></div><div class="product-actions"><button class="btn">编辑上架范围</button><button class="btn btn-danger">下架产品</button></div></div><div class="product-data"><div><span>产品分类</span>Breast Pump</div><div><span>产品型号</span>'+esc(currentProduct().model)+'</div><div><span>产品代码</span>--</div><div><span>产品ID</span>'+esc(currentProduct().id)+'</div><div><span>产品模板ID</span>1907328212561108993</div><div><span>上架范围</span>刚果（金）、摩洛哥、墨西哥…</div></div></div>'+
   '<div class="step-nav" id="step-nav">'+steps.map(function(x){return '<div class="step-item '+(active===x[0]?'active':'')+'" onclick="goStep(\''+x[0]+'\')"><span class="check">✓</span>'+x[1]+(x[0]==='basic'?anchor(1):'')+'</div>'}).join('')+'</div>';
 }
 function renderBasic(){
-  return '<div class="basic-card"><div class="basic-title">基础信息 <button class="btn btn-primary btn-sm" style="float:right" onclick="window.openDrawer(\'basic\')">编辑基础信息'+anchor(4)+'</button></div><div class="basic-grid">'+[['产品名称','V3测试'],['产品型号','V300'],['产品分类','Breast Pump'],['通信方式','蓝牙'],['产品状态','已上架'],['默认语言','英文'],['创建时间','2026-09-18 14:32:10'],['更新时间','2026-10-27 09:42:16']].map(function(x){return '<div class="basic-cell"><span>'+x[0]+'</span><strong>'+x[1]+'</strong></div>'}).join('')+'</div></div>'+
-  '<div class="basic-card"><div class="basic-title">产品图片 '+anchor(2)+'</div><div class="image-grid">'+imageCard('产品列表图','product-list.png · 1.2M','已配置','product')+imageCard('原子化配网图','provisioning.png · 2.4M','已配置','atomic')+imageCard('动态图',state.dynamic?state.dynamic.name+' · '+state.dynamic.size:'支持 png / json / svg，≤ 5M',state.dynamic?'已配置':'未配置','dynamic')+'</div></div>';
+ return '<div class="basic-card"><div class="basic-title">基础信息 <button class="btn btn-primary btn-sm" style="float:right" onclick="openResourceEditor(null)">编辑基础信息'+anchor(4)+'</button></div><div class="basic-grid">'+[['产品名称',currentProduct().name],['产品型号',currentProduct().model],['产品分类','Breast Pump'],['通信方式','蓝牙'],['产品状态','已上架'],['默认语言','英文'],['创建时间','2026-09-18 14:32:10'],['更新时间','2026-10-28']].map(function(x){return '<div class="basic-cell"><span>'+x[0]+'</span><strong>'+esc(x[1])+'</strong></div>'}).join('')+'</div></div><div class="basic-card"><div class="basic-title">产品图片与动态资源</div><div class="image-grid">'+imageCard('产品图片','cover')+imageCard('用途1','dynamicResource1')+imageCard('用途2','dynamicResource2')+'</div></div>';
 }
-function imageCard(title,meta,status,type){
-  var isDyn=type==='dynamic';
-  return '<div class="image-item '+(isDyn?'target':'')+'"><h4>'+title+(isDyn?anchor(3):'')+' <span class="tag '+(status==='已配置'?'tag-online':'tag-gray')+'" style="float:right">'+status+'</span></h4><div class="image-box">'+(isDyn&&state.dynamic?'<div class="motion">✦</div>':type==='product'?'▣':type==='atomic'?'⌁':'暂无动态图')+'</div><div class="image-meta">'+meta+'</div><div class="image-actions"><button class="btn btn-sm" onclick="window.openDrawer(\'basic\')">'+(isDyn?(state.dynamic?'查看 / 替换':'上传动态图'):'查看')+'</button>'+(isDyn&&state.dynamic?'<button class="btn btn-sm btn-danger" onclick="state.modal=\'deleteDynamic\';renderOverlay()">删除</button>':'')+'</div></div>';
+function imageCard(title,key){
+ var dynamic=key!=='cover',value=dynamic?productResources[state.productCode][key]:{name:currentProduct().cover};
+ var url=value&&state.previewUrls[value.assetId];
+ return '<div class="image-item" data-resource-key="'+key+'"><h4>'+title+anchor(dynamic?3:2)+' <span class="tag '+(value?'tag-online':'tag-gray')+'" style="float:right">'+(value?'已配置':'未配置')+'</span></h4><div class="image-box">'+(url?'<img class="resource-preview" alt="'+title+'" src="'+esc(url)+'">':dynamic?(value?'<div class="motion">✦</div>':'暂未上传'):'▣')+'</div><div class="image-meta">'+esc(value?value.name+(dynamic?' · '+readableSize(value.size):''):'gif / json · ≤5M')+'</div><div class="image-actions">'+(dynamic?'<button class="btn btn-sm" onclick="openResourceEditor(\''+key+'\')">'+(value?'替换文件':'上传文件')+'</button>'+(value?'<button class="btn btn-sm btn-danger" onclick="requestDeleteResource(\''+key+'\')">删除</button>':''):'<span class="form-help">沿用现有产品图片配置</span>')+'</div></div>';
 }
 function renderLanguages(){
   return '<div class="lang-tabs">'+languages.map(function(x){var ok=state.preview==='multi'?!!state.multiByLanguage[x[0]]:x[0]==='en';return '<div class="lang '+(state.lang===x[0]?'active':'')+'" onclick="selectProvisionLanguage(\''+x[0]+'\')">'+x[1]+' <span class="lang-icon '+(ok?'ok':'warn')+'">'+(ok?'●':'!')+'</span></div>'}).join('')+'</div>';
@@ -144,6 +186,7 @@ function renderProvision(){
   '<div class="footer"><button class="btn">上一步</button><button class="btn btn-primary">下一步</button></div>';
 }
 function renderSingleView(){
+  if(state.singleConfigured)return '<div class="single-saved"><b>配网文案</b><div class="saved-rich">'+sanitizeRich(state.richSaved)+'</div></div>';
   return '<div class="empty"><div class="empty-inner"><div class="empty-icon"></div><div class="empty-text">未配置</div></div></div>';
 }
 function renderMultiView(){
@@ -160,7 +203,7 @@ function renderWork(){
 }
 function renderAnn(){
   var el=document.getElementById('ann'),n=currentNotes();
-  el.innerHTML='<div class="ann-switch"><button class="'+(state.surface==='product'&&state.step==='basic'?'active':'')+'" onclick="goStep(\'basic\')">基础信息</button><button class="'+(state.surface==='errors'?'active':'')+'" onclick="goSurface(\'errors\')">错误码资源</button><button class="'+(state.surface==='product'&&state.step==='provision'?'active':'')+'" onclick="goStep(\'provision\')">配网引导</button></div><h3 class="ann-title">'+n.title+'</h3><p class="ann-summary">'+n.summary+'</p><div class="notes">'+n.items.map(function(x){return '<div class="note '+(state.selected===x[0]?'selected':'')+'" onclick="pick('+x[0]+')"><span class="note-num">'+x[0]+'</span><div><h4>'+x[1]+'</h4><ul><li>'+x[2]+'</li><li>'+x[3]+'</li></ul></div></div>'}).join('')+'</div><div class="assumption"><b>原型备注</b><br>页面结构按真实 IoT Admin 配网引导页还原；多页面抽屉仅调整引导文案及其子步骤；其余字段沿用基线。mp4 播放/缓存、动态图安全校验、富文本清洗仍需技术核对。</div>';
+  el.innerHTML='<div class="review-control"><label>产品切换（原型辅助）<select id="review-product" class="input" onchange="switchReviewProduct(this.value)" '+(state.drawer?'disabled':'')+'><option value="A" '+(state.productCode==='A'?'selected':'')+'>A · V3测试</option><option value="B" '+(state.productCode==='B'?'selected':'')+'>B · 演示产品</option></select></label><label class="form-check"><input id="resource-fault" type="checkbox" '+(state.saveResourceFault?'checked':'')+' onchange="state.saveResourceFault=this.checked">下一次资源保存失败（演示）</label></div><div class="ann-switch"><button class="'+(state.surface==='product'&&state.step==='basic'?'active':'')+'" onclick="goStep(\'basic\')">基础信息</button><button class="'+(state.surface==='errors'?'active':'')+'" onclick="goSurface(\'errors\')">错误码资源</button><button class="'+(state.surface==='product'&&state.step==='provision'?'active':'')+'" onclick="goStep(\'provision\')">配网引导</button></div><h3 class="ann-title">'+n.title+'</h3><p class="ann-summary">'+n.summary+'</p><div class="notes">'+n.items.map(function(x){return '<div class="note '+(state.selected===x[0]?'selected':'')+'" onclick="pick('+x[0]+')"><span class="note-num">'+x[0]+'</span><div><h4>'+x[1]+'</h4><ul><li>'+x[2]+'</li><li>'+x[3]+'</li></ul></div></div>'}).join('')+'</div>'+resourceReading()+'<div class="assumption"><b>原型备注</b><br>产品详情保留原结构；仅新增两个动态资源入口。A/B与读取区是评审辅助，字段名为示意；B文件为演示数据。JSON真实播放器、App消费位置/正式字段及旧App兼容待技术落实。错误码保持原文本基线。</div>';
 }
 function render(){
   renderWork();
@@ -178,14 +221,11 @@ function renderOverlay(){
   document.getElementById('overlay').innerHTML=out;
   var nextBody=document.querySelector('.drawer-body');if(nextBody)nextBody.scrollTop=savedScroll;
 }
-function renderDrawer(){
-  if(state.drawer==='basic')return '<div class="drawer-mask" onclick="if(event.target===this)closeDrawer()"><section class="drawer"><header class="drawer-head"><b class="drawer-title">编辑基础信息</b><button class="close" onclick="closeDrawer()">×</button></header><div class="drawer-body"><div class="drawer-section"><h3 class="drawer-section-title">产品图片</h3><div class="form-row"><div class="form-label">产品列表图</div><div><div class="upload"><div class="upload-icon">图</div><div class="upload-info"><strong>product-list.png</strong><span>PNG · 1.2M</span></div><button class="btn btn-sm">替换</button></div></div></div><div class="form-row"><div class="form-label">原子化配网图</div><div><div class="upload"><div class="upload-icon">图</div><div class="upload-info"><strong>provisioning.png</strong><span>PNG · 2.4M</span></div><button class="btn btn-sm">替换</button></div></div></div></div><div class="drawer-section"><h3 class="drawer-section-title">动态图'+anchor(3)+'</h3><div class="upload"><div class="upload-icon">动</div><div class="upload-info"><strong>'+ (state.dynamicDraft?state.dynamicDraft.name:'暂未上传动态图')+'</strong><span>'+ (state.dynamicDraft?state.dynamicDraft.size:'支持 png / json / svg，文件大小不超过 5M')+'</span></div>'+(state.dynamicDraft?'<button class="btn btn-sm btn-danger" onclick="state.dynamicDraft=null;renderOverlay()">删除</button>':'')+'</div><div style="margin-top:9px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="state.dynamicDraft={name:\'pairing-motion.json\',size:\'1.8M\'};state.dynamicError=\'\';renderOverlay()">选择动态图</button><button class="btn btn-sm" onclick="state.dynamicError=\'文件大小超过 5M，请重新选择动态图。\';renderOverlay()">上传 6M 样例</button></div>'+(state.dynamicError?'<div class="notice error" style="margin-top:9px">'+state.dynamicError+'</div>':'<div class="form-help">不限制尺寸和宽高比；仅做格式解析和安全校验。</div>')+'</div></div><footer class="drawer-foot"><button class="btn" onclick="closeDrawer()">取消</button><button class="btn btn-primary" onclick="saveBasic()">保存</button></footer></section></div>';
-  if(state.drawer==='provision')return renderProvisionDrawer();
-  return '';
-}
-function saveBasic(){if(state.dynamicError){toast('请先处理动态图上传错误','error');return}state.dynamic=state.dynamicDraft;closeDrawer();toast('基础信息保存成功','success');render()}
+function renderDrawer(){if(state.drawer==='resource')return renderResourceDrawer();if(state.drawer==='provision')return renderProvisionDrawer();return ''}
 function renderProvisionDrawer(){var multi=state.preview==='multi';return '<div class="drawer-mask" onclick="if(event.target===this)closeDrawer()"><section class="drawer"><header class="drawer-head"><b class="drawer-title">编辑配网引导 · '+(multi?'多页面配网':'单页面配网')+'</b><button class="close" onclick="closeDrawer()">×</button></header><div class="drawer-body">'+(multi?renderMultiForm():renderSingleForm())+'</div><footer class="drawer-foot"><button class="btn" onclick="closeDrawer()">取消</button><button class="btn btn-primary" onclick="saveProvision()">保存'+(multi?anchor(19):'')+'</button></footer></section></div>'}
-function renderSingleForm(){return '<div class="drawer-section"><h3 class="drawer-section-title">步骤 1</h3><div class="form-row"><div class="form-label required">配网引导图</div><div><div class="upload"><div class="upload-icon">图</div><div class="upload-info"><strong>暂未配置</strong><span>沿用当前配网引导图上传规则</span></div><button class="btn btn-sm">上传</button></div></div></div><div class="form-row"><div class="form-label required">配网文案'+anchor(10)+'</div><div><div class="toolbar"><button class="tool" onclick="document.execCommand(\'bold\');document.querySelector(\'#r-editor\').focus()">B</button><button class="tool" onclick="document.execCommand(\'removeFormat\');document.querySelector(\'#r-editor\').focus()">T</button><span class="form-help">支持换行、加粗</span></div><div id="r-editor" class="rich" contenteditable="true" oninput="state.rich=this.innerHTML">'+state.rich+'</div><div class="form-help">本字段使用受限 HTML 保存并由 App 渲染。</div></div></div><div class="form-row"><div class="form-label">辅助文案</div><input class="input" value="--"></div><div class="form-row"><div class="form-label">按钮文案</div><input class="input" value="--"></div></div>'}
+function plainRich(html){var div=document.createElement('div');div.innerHTML=html;return div.textContent||''}
+function sanitizeRich(html){var root=document.createElement('div');root.innerHTML=html;root.querySelectorAll('script,style,iframe,object').forEach(function(n){n.remove()});root.querySelectorAll('*').forEach(function(n){if(!['P','DIV','BR','STRONG','B'].includes(n.tagName)){n.replaceWith(document.createTextNode(n.textContent));return}Array.from(n.attributes).forEach(function(a){n.removeAttribute(a.name)})});return root.innerHTML}
+function renderSingleForm(){return '<div class="drawer-section"><div class="form-row"><div class="form-label required">语言</div><div class="input">'+esc((languages.find(function(l){return l[0]===state.lang})||languages[0])[1])+'</div></div><div class="form-row"><div class="form-label required">配网引导图</div><div class="upload"><div class="upload-icon">图</div><div class="upload-info"><strong>沿用现有配置</strong><span>配网引导图原上传规则保持</span></div></div></div><div class="form-row"><label class="form-label" for="single-guide">配网指引</label><input id="single-guide" class="input" value="'+esc(state.singleGuideDraft)+'" oninput="state.singleGuideDraft=this.value"></div><div class="form-row"><div class="form-label required">配网文案'+anchor(10)+'</div><div><div class="toolbar"><button type="button" class="tool" aria-label="加粗" onclick="document.querySelector(\'#r-editor\').focus();document.execCommand(\'bold\')"><b>B</b></button><button type="button" class="tool" aria-label="清除格式" onclick="document.querySelector(\'#r-editor\').focus();document.execCommand(\'removeFormat\')">T</button><span class="form-help">支持换行、加粗</span></div><div id="r-editor" role="textbox" aria-label="配网文案" class="rich" contenteditable="true" oninput="state.rich=this.innerHTML">'+sanitizeRich(state.rich)+'</div></div></div></div>'}
 function multiError(key){return state.multiErrors[key]?'<div class="field-error" role="alert">'+esc(state.multiErrors[key])+'</div>':''}
 function multiField(pi,field,label,value,max,required,textarea){
   var key='page-'+pi+'-'+field;
@@ -229,11 +269,12 @@ function deleteCopy(pi,ci){if(state.draftPages[pi].copies.length<=1)return;state
 function addSub(pi,ci){if(state.draftPages[pi].copies[ci].subs.length>=5)return;state.draftPages[pi].copies[ci].subs.push({img:'',title:'',body:''});renderOverlay()}
 function deleteSub(pi,ci,si){if(state.draftPages[pi].copies[ci].subs.length<=1)return;state.draftPages[pi].copies[ci].subs.splice(si,1);state.multiErrors={};renderOverlay()}
 function setMultiImage(pi,ci,si,clear){var item=ci!=null?state.draftPages[pi].copies[ci].subs[si]:state.draftPages[pi];item.img=clear?'':(ci!=null?'substep-'+(pi+1)+'-'+(ci+1)+'-'+(si+1)+'.png':'step-'+(pi+1)+'.png');renderOverlay()}
-function selectPreview(mode){state.preview=mode;if(mode==='multi')state.pages=JSON.parse(JSON.stringify(state.multiByLanguage[state.lang]||[]));render()}
-function selectProvisionLanguage(lang){state.lang=lang;if(state.preview==='multi')state.pages=JSON.parse(JSON.stringify(state.multiByLanguage[lang]||[]));render()}
+function loadSingleLanguage(lang){var saved=state.singleByLanguage[lang];state.singleConfigured=!!saved;state.richSaved=saved?saved.rich:'<p>请打开设备蓝牙并允许必要权限。</p>';state.rich=state.richSaved;state.singleGuide=saved?saved.guide:'请将设备靠近手机。';state.singleGuideDraft=state.singleGuide}
+function selectPreview(mode){state.preview=mode;if(mode==='multi')state.pages=JSON.parse(JSON.stringify(state.multiByLanguage[state.lang]||[]));else loadSingleLanguage(state.lang);render()}
+function selectProvisionLanguage(lang){state.lang=lang;if(state.preview==='multi')state.pages=JSON.parse(JSON.stringify(state.multiByLanguage[lang]||[]));else loadSingleLanguage(lang);render()}
 function switchDraftLanguage(lang){state.draftLang=lang;state.draftPages=JSON.parse(JSON.stringify(state.multiByLanguage[lang]||[emptyMultiPage()]));state.multiErrors={};renderOverlay()}
 function saveProvision(){
-  if(state.preview==='single'){state.richSaved=state.rich;var editor=document.querySelector('#r-editor');if(editor)state.richSaved=editor.innerHTML}
+  if(state.preview==='single'){var editor=document.querySelector('#r-editor');var html=sanitizeRich(editor?editor.innerHTML:state.rich);if(!plainRich(html).trim()){toast('请输入配网文案','error');return}if(plainRich(html).length>500){toast('配网文案不能超过500字','error');return}state.richSaved=html;state.rich=html;state.singleGuide=state.singleGuideDraft;state.singleConfigured=true;state.singleByLanguage[state.lang]={rich:html,guide:state.singleGuide}}
   if(state.preview==='multi'){
     state.multiErrors={};
     state.draftPages.forEach(function(page,pi){
@@ -245,9 +286,16 @@ function saveProvision(){
   }
   closeDrawer();toast('配网引导保存成功','success');render();
 }
-function renderModal(){if(state.modal==='deleteDynamic')return '<div class="modal-mask"><div class="modal"><h3>删除动态图</h3><p>删除后基础信息页面不再展示动态图资源。确认删除吗？</p><div class="modal-foot"><button class="btn" onclick="state.modal=null;renderOverlay()">取消</button><button class="btn btn-danger" onclick="state.dynamic=null;state.modal=null;render();toast(\'动态图已删除\',\'success\')">确认删除</button></div></div></div>';return ''}
-window.openDrawer=openDrawer;window.closeDrawer=closeDrawer;window.goSurface=goSurface;window.goStep=goStep;window.pick=pick;window.render=render;window.renderOverlay=renderOverlay;window.toast=toast;window.saveBasic=saveBasic;window.addCopy=addCopy;window.deleteCopy=deleteCopy;window.addSub=addSub;window.deleteSub=deleteSub;window.saveProvision=saveProvision;
+function renderModal(){
+ if(!state.modal)return '';var m=state.modal,clear=m.kind==='clearResources',label=clear?m.keys.map(resourceLabel).join('、'):resourceLabel(m.key);
+ return '<div class="modal-mask"><section class="modal" role="dialog" aria-modal="true" aria-label="删除动态资源"><h3>删除'+esc(label)+'</h3><p>确认删除当前产品的'+esc(label)+'？其他用途和产品不受影响。</p><div class="modal-foot"><button class="btn" onclick="state.modal=null;renderOverlay()">取消</button><button class="btn btn-danger" onclick="'+(clear?'state.modal=null;state.resourceErrors={};saveResources(true)':'confirmDeleteResource(\''+m.key+'\')')+'">确认删除</button></div></section></div>';
+}
+
+window.openDrawer=openDrawer;window.closeDrawer=closeDrawer;window.goSurface=goSurface;window.goStep=goStep;window.pick=pick;window.render=render;window.renderOverlay=renderOverlay;window.toast=toast;window.addCopy=addCopy;window.deleteCopy=deleteCopy;window.addSub=addSub;window.deleteSub=deleteSub;window.saveProvision=saveProvision;
 state.multiByLanguage.en=JSON.parse(JSON.stringify(state.pages));
+var defaultGuideState=guideSnapshot();
+document.addEventListener('change',function(e){if(e.target.dataset.dynamicFile)chooseDynamicFile(e.target.dataset.dynamicFile,e.target.files[0])});
+document.addEventListener('mousedown',function(e){if(e.target.closest('.tool'))e.preventDefault()});
 document.getElementById('work').addEventListener('click',function(e){var button=e.target.closest('[data-action="edit-provision"]');if(!button)return;e.preventDefault();e.stopPropagation();openDrawer('provision')});
 var initialStep=new URLSearchParams(window.location.search).get('step');if(initialStep==='basic'||initialStep==='provision')state.step=initialStep;
 render();

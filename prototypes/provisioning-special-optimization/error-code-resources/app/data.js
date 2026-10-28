@@ -1,6 +1,6 @@
 export const LANGUAGES=[['en','英语（默认）'],['zh','中文'],['de','德语'],['fr','法语'],['zh-Hant','繁体中文'],['it','意大利语'],['pt','葡萄牙语'],['es','西班牙语'],['ar','阿拉伯语'],['vi','越南语'],['id','印尼语'],['th','泰语'],['ms','马来语'],['ja','日语'],['ru','俄语'],['fil','菲律宾语']];
 export const EXAMPLE_CODES=['AA-002-0x01','AA-002-0x03','AA-002-0x04','AA-002-0x05','AA-002-0x06','AA-002-0x07','AA-003-0x02','AB-001-10004156','AB-004-10004163','AB-008-10004154','AB-009-10004153','AB-009-10004159','AB-009-10004607','AB-009-10004608','AB-009-10004700','AB-009-10004701','AB-009-403','AB-009-503','AB-012-10001002','AB-016-10004162','AB-999-10004000','BC-001-1003','BC-002-2010','BC-002-2011'];
-export const STORAGE_KEY='provisioning-special-optimization-error-resource-v1';
+export const STORAGE_KEY='iot-error-resource-prototype-v1';
 export const blankCode=description=>({description,structure:[],usedBlockIds:[],content:{},updated:''});
 export function initialState(){
  const codes=Object.fromEntries(EXAMPLE_CODES.map(id=>[id,{...blankCode('待提供'),updated:'2026-10-19 10:00'}]));
