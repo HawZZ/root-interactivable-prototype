@@ -3,7 +3,10 @@
 
   var RESULT_SUCCESS = 100000;
   var MAX_PDU_BYTES = 2048;
-  var MAX_VALUE_BYTES = 127;
+  var MAX_VALUE_BYTES_V1 = 127;
+  var MAX_VALUE_BYTES_V2 = 16383;
+  var TEMPLATE_V1 = 'flat-v1-draft';
+  var TEMPLATE_V2 = 'flat-v2-draft';
   var CID_BY_OPERATION = Object.freeze({
     read: 0x01,
     write: 0x02,
@@ -64,6 +67,29 @@
       fail(code, message);
     }
     return value;
+  }
+
+  function resolveTemplateVersion(spec) {
+    var version = spec.templateVersion === undefined ? TEMPLATE_V1 : spec.templateVersion;
+    if (version !== TEMPLATE_V1 && version !== TEMPLATE_V2) {
+      fail('TEMPLATE_VERSION_UNSUPPORTED', 'Unsupported flat templateVersion: ' + String(version));
+    }
+    return version;
+  }
+
+  function maxValueBytesForTemplate(templateVersion) {
+    return templateVersion === TEMPLATE_V2 ? MAX_VALUE_BYTES_V2 : MAX_VALUE_BYTES_V1;
+  }
+
+  function encodedLengthBytes(length, templateVersion) {
+    if (templateVersion === TEMPLATE_V1) {
+      if (length > MAX_VALUE_BYTES_V1) {
+        fail('PDU_LENGTH_UNSUPPORTED', 'TLV Value length cannot exceed 127 bytes in flat-v1-draft');
+      }
+      return [length];
+    }
+    if (length <= 0x7f) return [length];
+    return [0x80 | ((length >>> 7) & 0x7f), length & 0x7f];
   }
 
   function plainDecimalFromNumber(value) {
@@ -705,7 +731,7 @@
     return decimal;
   }
 
-  function normalizeField(field, index, minAddress, requireValue, selectedDirection) {
+  function normalizeField(field, index, minAddress, requireValue, selectedDirection, maxValueBytes) {
     requireObject(field, 'FIELD_INVALID', 'Field ' + index + ' must be an object');
     if (!Number.isInteger(field.address) || field.address < minAddress || field.address > SELECTABLE_MAX_ADDRESS) {
       fail(
@@ -741,8 +767,8 @@
 
     var maxBytes = null;
     if (field.maxBytes !== undefined && field.maxBytes !== null) {
-      if (!Number.isInteger(field.maxBytes) || field.maxBytes < 1 || field.maxBytes > MAX_VALUE_BYTES) {
-        fail('FIELD_MAX_BYTES_INVALID', 'maxBytes must be an integer from 1 to 127');
+      if (!Number.isInteger(field.maxBytes) || field.maxBytes < 1 || field.maxBytes > maxValueBytes) {
+        fail('FIELD_MAX_BYTES_INVALID', 'maxBytes must be an integer from 1 to ' + maxValueBytes);
       }
       maxBytes = field.maxBytes;
     }
@@ -755,8 +781,8 @@
       if (!Number.isInteger(field.maxCount) || field.maxCount < 0) {
         fail('FIELD_MAX_COUNT_INVALID', 'maxCount must be a non-negative integer');
       }
-      if (type.array && field.maxCount * type.width > MAX_VALUE_BYTES) {
-        fail('FIELD_WIDTH_UNSUPPORTED', 'Array maxCount multiplied by element width exceeds 127 bytes');
+      if (type.array && field.maxCount * type.width > maxValueBytes) {
+        fail('FIELD_WIDTH_UNSUPPORTED', 'Array maxCount multiplied by element width exceeds ' + maxValueBytes + ' bytes');
       }
       maxCount = field.maxCount;
     }
@@ -793,14 +819,14 @@
     };
   }
 
-  function normalizeFields(spec, minAddress, requireValues) {
+  function normalizeFields(spec, minAddress, requireValues, maxValueBytes) {
     if (spec.fields === undefined) return [];
     if (!Array.isArray(spec.fields)) {
       fail('FIELDS_TYPE', 'fields must be an array');
     }
     var selectedDirection = constraintDirection(spec.operation, spec.role);
     var fields = spec.fields.map(function (field, index) {
-      return normalizeField(field, index, minAddress, requireValues, selectedDirection);
+      return normalizeField(field, index, minAddress, requireValues, selectedDirection, maxValueBytes);
     });
     var seen = Object.create(null);
     fields.forEach(function (field) {
@@ -982,11 +1008,19 @@
     return writeInteger(raw, field.type.width);
   }
 
-  function encodeFieldValue(field) {
+  function encodeFieldValue(field, maxValueBytes) {
     var type = field.type;
     var bytes;
     if (type.kind === 'utf8') {
       if (typeof field.value !== 'string') fail('FIELD_VALUE_TYPE', 'utf8 value must be a string');
+      for (var si = 0; si < field.value.length; si += 1) {
+        var unit = field.value.charCodeAt(si);
+        if (unit >= 0xd800 && unit <= 0xdbff) {
+          var next = field.value.charCodeAt(si + 1);
+          if (!(next >= 0xdc00 && next <= 0xdfff)) fail('FIELD_UTF8_INVALID', 'String contains an unpaired surrogate');
+          si += 1;
+        } else if (unit >= 0xdc00 && unit <= 0xdfff) fail('FIELD_UTF8_INVALID', 'String contains an unpaired surrogate');
+      }
       bytes = Array.from(new TextEncoder().encode(field.value));
       if (field.maxBytes !== null && bytes.length > field.maxBytes) {
         fail('FIELD_LENGTH_EXCEEDED', 'utf8 byte length exceeds maxBytes');
@@ -1009,13 +1043,16 @@
       bytes = encodeScalar(field.value, field);
     }
 
-    if (bytes.length > MAX_VALUE_BYTES) {
-      fail('FIELD_VALUE_TOO_LARGE', 'A single field Value cannot exceed 127 bytes');
+    if (bytes.length > maxValueBytes) {
+      fail('FIELD_VALUE_TOO_LARGE', 'A single field Value cannot exceed ' + maxValueBytes + ' bytes');
     }
     return bytes;
   }
 
-  function decodeFieldValue(field, bytes) {
+  function decodeFieldValue(field, bytes, maxValueBytes) {
+    if (bytes.length > maxValueBytes) {
+      fail('FIELD_VALUE_TOO_LARGE', 'A single field Value cannot exceed ' + maxValueBytes + ' bytes');
+    }
     var type = field.type;
     if (type.kind === 'utf8') {
       if (field.maxBytes !== null && bytes.length > field.maxBytes) {
@@ -1086,11 +1123,13 @@
     return engineeringOutput(integerRaw, field);
   }
 
-  function pushTLV(target, type, valueBytes) {
-    if (valueBytes.length > MAX_VALUE_BYTES) {
-      fail('FIELD_VALUE_TOO_LARGE', 'A single TLV Value cannot exceed 127 bytes');
+  function pushTLV(target, type, valueBytes, templateVersion) {
+    var maxValueBytes = maxValueBytesForTemplate(templateVersion);
+    if (valueBytes.length > maxValueBytes) {
+      fail('FIELD_VALUE_TOO_LARGE', 'A single TLV Value cannot exceed ' + maxValueBytes + ' bytes');
     }
-    target.push(type, valueBytes.length);
+    target.push(type);
+    target.push.apply(target, encodedLengthBytes(valueBytes.length, templateVersion));
     for (var i = 0; i < valueBytes.length; i += 1) target.push(valueBytes[i]);
   }
 
@@ -1106,14 +1145,16 @@
     if (spec.selection !== undefined) fail('SELECTION_FORBIDDEN', 'selection is only valid for a read request');
   }
 
-  function addEncodedFields(target, fields) {
+  function addEncodedFields(target, fields, templateVersion, maxValueBytes) {
     fields.forEach(function (field) {
-      pushTLV(target, field.address, encodeFieldValue(field));
+      pushTLV(target, field.address, encodeFieldValue(field, maxValueBytes), templateVersion);
     });
   }
 
   function encodePDU(spec) {
     requireObject(spec, 'PDU_SPEC_INVALID', 'PDU spec must be an object');
+    var templateVersion = resolveTemplateVersion(spec);
+    var maxValueBytes = maxValueBytesForTemplate(templateVersion);
     var operation = spec.operation;
     var role = spec.role;
     validateRoute(operation, role);
@@ -1130,9 +1171,9 @@
     }
     var isReadRequest = operation === 'read' && role === 'request';
     var minAddress = operation === 'invoke' || operation === 'event' ? SELECTOR_FIELD_MIN_ADDRESS : PROPERTY_MIN_ADDRESS;
-    var fields = normalizeFields(spec, minAddress, !isReadRequest);
+    var fields = normalizeFields(spec, minAddress, !isReadRequest, maxValueBytes);
     var out = [sid, CID_BY_OPERATION[operation]];
-    pushTLV(out, MESSAGE_TYPE, u16Bytes(messageId));
+    pushTLV(out, MESSAGE_TYPE, u16Bytes(messageId), templateVersion);
 
     if (operation === 'read') {
       if (role === 'request') {
@@ -1156,7 +1197,7 @@
             });
           }
         }
-        selections.forEach(function (address) { pushTLV(out, address, []); });
+        selections.forEach(function (address) { pushTLV(out, address, [], templateVersion); });
       } else {
         requireNoSelection(spec);
         if (spec.resultCode !== undefined) {
@@ -1165,10 +1206,10 @@
           if (readResult === RESULT_SUCCESS) {
             fail('READ_SUCCESS_RESULT_FORBIDDEN', 'A successful read response carries fields instead of result 100000');
           }
-          pushTLV(out, RESULT_TYPE, u32Bytes(readResult));
+          pushTLV(out, RESULT_TYPE, u32Bytes(readResult), templateVersion);
         } else {
           if (fields.length === 0) fail('READ_FIELDS_REQUIRED', 'A successful read response requires at least one field');
-          addEncodedFields(out, fields);
+          addEncodedFields(out, fields, templateVersion, maxValueBytes);
         }
       }
     } else if (operation === 'write') {
@@ -1176,39 +1217,39 @@
       if (role === 'request') {
         if (spec.resultCode !== undefined) fail('RESULT_FORBIDDEN', 'write request cannot contain a result code');
         if (fields.length === 0) fail('WRITE_FIELDS_REQUIRED', 'Write request requires at least one field');
-        addEncodedFields(out, fields);
+        addEncodedFields(out, fields, templateVersion, maxValueBytes);
       } else {
         validateResultCode(spec.resultCode);
         if (fields.length > 0) fail('WRITE_RESPONSE_FIELDS_FORBIDDEN', 'Write response cannot contain fields');
-        pushTLV(out, RESULT_TYPE, u32Bytes(spec.resultCode));
+        pushTLV(out, RESULT_TYPE, u32Bytes(spec.resultCode), templateVersion);
       }
     } else if (operation === 'invoke') {
       requireNoSelection(spec);
       if (role === 'request') {
         if (spec.resultCode !== undefined) fail('RESULT_FORBIDDEN', 'invoke request cannot contain a result code');
         var actionId = validateSelectorId(spec.actionId, 'ACTION_ID_INVALID', 'actionId must be 1 to 255', 255);
-        pushTLV(out, SELECTOR_TYPE, [actionId]);
-        addEncodedFields(out, fields);
+        pushTLV(out, SELECTOR_TYPE, [actionId], templateVersion);
+        addEncodedFields(out, fields, templateVersion, maxValueBytes);
       } else {
         validateResultCode(spec.resultCode);
         if (spec.actionId !== undefined) {
           validateSelectorId(spec.actionId, 'ACTION_ID_INVALID', 'actionId must be 1 to 255', 255);
         }
-        pushTLV(out, RESULT_TYPE, u32Bytes(spec.resultCode));
+        pushTLV(out, RESULT_TYPE, u32Bytes(spec.resultCode), templateVersion);
         if (spec.resultCode !== RESULT_SUCCESS && fields.length > 0) {
           fail('INVOKE_FAILURE_FIELDS_FORBIDDEN', 'A failed action response cannot contain output fields');
         }
-        if (spec.resultCode === RESULT_SUCCESS) addEncodedFields(out, fields);
+        if (spec.resultCode === RESULT_SUCCESS) addEncodedFields(out, fields, templateVersion, maxValueBytes);
       }
     } else if (operation === 'report') {
       requireNoSelection(spec);
       if (fields.length === 0) fail('REPORT_FIELDS_REQUIRED', 'Property report requires at least one field');
-      addEncodedFields(out, fields);
+      addEncodedFields(out, fields, templateVersion, maxValueBytes);
     } else {
       requireNoSelection(spec);
       var eventId = validateSelectorId(spec.eventId, 'EVENT_ID_INVALID', 'eventId must be 1 to 65535', 65535);
-      pushTLV(out, SELECTOR_TYPE, u16Bytes(eventId));
-      addEncodedFields(out, fields);
+      pushTLV(out, SELECTOR_TYPE, u16Bytes(eventId), templateVersion);
+      addEncodedFields(out, fields, templateVersion, maxValueBytes);
     }
 
     if (out.length > MAX_PDU_BYTES) {
@@ -1224,23 +1265,37 @@
     return bytes;
   }
 
-  function parseTLVs(bytes) {
+  function parseTLVs(bytes, templateVersion) {
     var tlvs = [];
     var position = 2;
     while (position < bytes.length) {
       if (position + 2 > bytes.length) fail('PDU_TRUNCATED', 'Incomplete TLV header');
       var type = bytes[position];
-      var length = bytes[position + 1];
+      var firstLength = bytes[position + 1];
       if ((type & 0x80) !== 0) {
         fail('PDU_CONTAINER_UNSUPPORTED', 'Container TLVs are not supported in the flat template');
       }
-      if (length >= 0x80) {
-        fail('PDU_LENGTH_UNSUPPORTED', 'TLV Value length cannot exceed 127 bytes');
+      var length;
+      var lengthWidth = 1;
+      if (templateVersion === TEMPLATE_V1) {
+        if (firstLength >= 0x80) {
+          fail('PDU_LENGTH_UNSUPPORTED', 'TLV Value length cannot exceed 127 bytes in flat-v1-draft');
+        }
+        length = firstLength;
+      } else if (firstLength < 0x80) {
+        length = firstLength;
+      } else {
+        if (position + 3 > bytes.length) fail('PDU_TRUNCATED', 'Incomplete two-byte TLV Length');
+        var secondLength = bytes[position + 2];
+        if (secondLength & 0x80) fail('PDU_LENGTH_ENCODING', 'The second Length byte cannot request another byte');
+        length = ((firstLength & 0x7f) << 7) | secondLength;
+        if (length < 0x80) fail('PDU_LENGTH_NONCANONICAL', 'Two-byte TLV Length encodes a value below 128');
+        lengthWidth = 2;
       }
-      position += 2;
-      if (position + length > bytes.length) fail('PDU_TRUNCATED', 'TLV Value is shorter than its Length');
-      tlvs.push({ type: type, value: bytes.slice(position, position + length) });
-      position += length;
+      var valueStart = position + 1 + lengthWidth;
+      if (valueStart + length > bytes.length) fail('PDU_TRUNCATED', 'TLV Value is shorter than its Length');
+      tlvs.push({ type: type, value: bytes.slice(valueStart, valueStart + length) });
+      position = valueStart + length;
     }
     if (tlvs.length === 0) fail('PDU_MESSAGE_MISSING', 'PDU requires a message-id TLV');
     return tlvs;
@@ -1268,7 +1323,7 @@
     return ((tlv.value[0] << 24) >>> 0) + (tlv.value[1] << 16) + (tlv.value[2] << 8) + tlv.value[3];
   }
 
-  function decodeBusinessFields(tlvs, fieldMap, minAddress) {
+  function decodeBusinessFields(tlvs, fieldMap, minAddress, maxValueBytes, enforceOrder) {
     var values = {};
     var previous = 0;
     for (var i = 0; i < tlvs.length; i += 1) {
@@ -1279,21 +1334,23 @@
       if (!fieldMap[tlv.type]) {
         fail('PDU_UNKNOWN_FIELD', 'TLV Type is not declared: 0x' + tlv.type.toString(16).toUpperCase());
       }
-      if (tlv.type <= previous) fail('PDU_FIELD_ORDER', 'Business fields must be in ascending Type order');
+      if (enforceOrder && tlv.type <= previous) fail('PDU_FIELD_ORDER', 'Business fields must be in ascending Type order');
       previous = tlv.type;
-      values[String(tlv.type)] = decodeFieldValue(fieldMap[tlv.type], tlv.value);
+      values[String(tlv.type)] = decodeFieldValue(fieldMap[tlv.type], tlv.value, maxValueBytes);
     }
     return values;
   }
 
   function decodePDU(spec, hex) {
     requireObject(spec, 'PDU_SPEC_INVALID', 'PDU spec must be an object');
+    var templateVersion = resolveTemplateVersion(spec);
+    var maxValueBytes = maxValueBytesForTemplate(templateVersion);
     var operation = spec.operation;
     var role = spec.role;
     validateRoute(operation, role);
     var sid = requireInteger(spec.sid, 0, 255, 'SID_INVALID', 'sid must be a byte');
     var minAddress = operation === 'invoke' || operation === 'event' ? SELECTOR_FIELD_MIN_ADDRESS : PROPERTY_MIN_ADDRESS;
-    var fields = normalizeFields(spec, minAddress, false);
+    var fields = normalizeFields(spec, minAddress, false, maxValueBytes);
     var fieldMap = Object.create(null);
     fields.forEach(function (field) { fieldMap[field.address] = field; });
 
@@ -1306,7 +1363,7 @@
       fail('PDU_CID_MISMATCH', 'PDU CID 0x' + bytes[1].toString(16).toUpperCase() + ' does not match operation');
     }
 
-    var tlvs = parseTLVs(bytes);
+    var tlvs = parseTLVs(bytes, templateVersion);
     ensureUniqueTLVs(tlvs);
     var messageId = decodeMessage(tlvs);
     var body = tlvs.slice(1);
@@ -1322,7 +1379,9 @@
             fail('SELECTION_INVALID', 'Read selector has an invalid Type');
           }
           if (tlv.value.length !== 0) fail('SELECTOR_WIDTH_INVALID', 'Read selector Length must be zero');
-          if (tlv.type <= previous) fail('SELECTION_ORDER', 'Read selectors must be in ascending Type order');
+          if (templateVersion === TEMPLATE_V1 && tlv.type <= previous) {
+            fail('SELECTION_ORDER', 'Read selectors must be in ascending Type order');
+          }
           previous = tlv.type;
           if (fields.length > 0 && !fieldMap[tlv.type]) {
             fail('SELECTION_UNKNOWN', 'Read selector is not declared');
@@ -1338,12 +1397,12 @@
         output.resultCode = readResult;
       } else {
         if (body.length === 0) fail('READ_FIELDS_REQUIRED', 'Read success response requires at least one field');
-        values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS);
+        values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
       }
     } else if (operation === 'write') {
       if (role === 'request') {
         if (body.length === 0) fail('WRITE_FIELDS_REQUIRED', 'Write request requires at least one field');
-        values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS);
+        values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
       } else {
         if (body.length !== 1) fail('PDU_LAYOUT', 'Write response must contain exactly message_id and result_code');
         output.resultCode = readResultCode(body[0]);
@@ -1357,7 +1416,7 @@
         var actionId = body[0].value[0];
         if (actionId < 1) fail('ACTION_ID_INVALID', 'actionId must be from 1 to 255');
         output.actionId = actionId;
-        values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS);
+        values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
       } else {
         if (body.length === 0) fail('PDU_RESULT_MISSING', 'Invoke response requires result_code');
         output.resultCode = readResultCode(body[0]);
@@ -1368,12 +1427,12 @@
           fail('INVOKE_FAILURE_FIELDS_FORBIDDEN', 'Failed action response cannot contain output fields');
         }
         if (output.resultCode === RESULT_SUCCESS) {
-          values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS);
+          values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
         }
       }
     } else if (operation === 'report') {
       if (body.length === 0) fail('REPORT_FIELDS_REQUIRED', 'Property report requires at least one field');
-      values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS);
+      values = decodeBusinessFields(body, fieldMap, PROPERTY_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
     } else {
       if (body.length === 0 || body[0].type !== SELECTOR_TYPE) {
         fail('EVENT_ID_MISSING', 'Event report requires event_code as the first business TLV');
@@ -1385,11 +1444,22 @@
         fail('EVENT_ID_MISMATCH', 'Decoded eventId does not match the supplied dictionary context');
       }
       output.eventId = eventId;
-      values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS);
+      values = decodeBusinessFields(body.slice(1), fieldMap, SELECTOR_FIELD_MIN_ADDRESS, maxValueBytes, templateVersion === TEMPLATE_V1);
     }
 
     output.values = values;
     return output;
+  }
+
+  function validateFields(spec) {
+    requireObject(spec, 'PDU_SPEC_INVALID', 'PDU spec must be an object');
+    var templateVersion = resolveTemplateVersion(spec);
+    var operation = spec.operation;
+    var role = spec.role;
+    validateRoute(operation, role);
+    var minAddress = operation === 'invoke' || operation === 'event' ? SELECTOR_FIELD_MIN_ADDRESS : PROPERTY_MIN_ADDRESS;
+    normalizeFields(spec, minAddress, false, maxValueBytesForTemplate(templateVersion));
+    return true;
   }
 
   var api = {
@@ -1398,6 +1468,11 @@
     encodePDU: encodePDU,
     decodePDU: decodePDU
   };
+  Object.defineProperties(api, {
+    encodeMessage: { value: encodePDU, enumerable: false },
+    decodeMessage: { value: decodePDU, enumerable: false },
+    validateFields: { value: validateFields, enumerable: false }
+  });
 
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.BLEProto = api;

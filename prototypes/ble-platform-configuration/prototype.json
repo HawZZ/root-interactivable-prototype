@@ -2,7 +2,7 @@
   "id": "ble-platform-configuration",
   "path": "/prototypes/ble-platform-configuration/",
   "title": "通用蓝牙协议配置与物模型绑定",
-  "summary": "应用层草案0.5.1：R3既有应用规范与基于R3的BM08S产品定义；历史BBM v1.0.0不参与兼容，串行通信及字典规则不变。",
+  "summary": "通用应用层规范0.6.0：新产品派生协议、公共0D/0E配网、能力交集、1～2B Length与字段表配置，旧模板采用记录保持固定。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "ble-platform-configuration",
-  "version": "v0.5.1",
+  "version": "v0.6.0",
   "status": "draft",
   "tags": [
     "蓝牙协议",
