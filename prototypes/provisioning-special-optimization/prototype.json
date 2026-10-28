@@ -1,0 +1,26 @@
+{
+  "id": "provisioning-special-optimization",
+  "path": "/prototypes/provisioning-special-optimization/",
+  "title": "配网专项优化",
+  "summary": "产品动态图、错误码统一媒体格式与英文源同步、配网文案格式及多页面分层引导。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "provisioning-special-optimization",
+  "version": "v1.0",
+  "status": "active",
+  "tags": [
+    "配网",
+    "错误码",
+    "媒体",
+    "多语言"
+  ],
+  "updatedAt": "2026-10-28T02:07:16.550Z",
+  "lastPublisher": "待确认",
+  "preview": {
+    "mode": "auto"
+  }
+}

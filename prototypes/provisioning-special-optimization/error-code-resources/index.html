@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>错误码动态加载资源 · IoT Admin 可交互原型</title>
+  <meta name="description" content="错误码与标准语义维护、16语言目录、共用Block正文、码表与文案批量导入导出。">
+  <meta name="keywords" content="错误码,配网失败,多语言,Block,批量导入">
+  <meta name="prototype:product-line" content="IoT Admin">
+  <meta name="prototype:business-area" content="配置中心">
+  <meta name="prototype:surface" content="web">
+  <meta name="prototype:systems" content="web">
+  <link rel="icon" type="image/svg+xml" href="./assets/iot-admin-logo.svg">
+  <link rel="stylesheet" href="./styles/tokens.css">
+  <link rel="stylesheet" href="./styles/app.css?v=v1.7.3-review2">
+</head>
+<body>
+  <header class="review-header">
+    <div><span class="review-label">交互原型</span><strong>错误码动态加载资源</strong><span class="review-meta">配网专项优化 · 基于 v1.7.3</span></div>
+    <div class="review-actions"><span class="canvas-hint">多语言宽表 · 支持横向滚动</span><button id="resetDemo" class="review-button">重置演示数据</button></div>
+  </header>
+  <nav class="mobile-switch" aria-label="原型视图"><button data-mobile="product" class="active">产品页面</button><button data-mobile="notes">原型批注</button></nav>
+  <div class="review-shell" id="reviewShell">
+    <main class="product-frame" aria-label="IoT Admin 可交互产品页面">
+      <div class="product-viewport" id="productViewport">
+        <div class="product-canvas" id="productCanvas">
+          <aside class="admin-sidebar">
+            <div class="brand"><img src="./assets/iot-admin-logo.svg" alt="LuteOS IoT Admin"></div>
+            <nav class="admin-nav" aria-label="平台导航">
+              <div class="nav-heading">◷　概览</div><div class="nav-heading">▧　智能产品</div><div class="nav-item">产品列表</div><div class="nav-item">消息推送</div>
+              <div class="nav-heading">▣　设备管理</div><div class="nav-item">设备列表</div><div class="nav-item">固件管理</div><div class="nav-item">OTA</div>
+              <div class="nav-heading">▤　App</div><div class="nav-item">App 列表</div><div class="nav-item">App 升级</div>
+              <div class="nav-heading expanded">⚙　配置中心</div><div class="nav-item">物模型池</div><div class="nav-item">产品模板</div><div class="nav-item">产品分类</div><div class="nav-item">多语言</div>
+              <button class="nav-item active" id="navError">错误码资源 <span class="nav-new">新增</span></button><div class="nav-item">系统配置</div><div class="nav-item">审批管理</div>
+              <div class="nav-heading">▥　生产管理</div><div class="nav-heading">◇　运营管理</div>
+            </nav>
+            <div class="sidebar-footer"><i class="online-dot"></i> 开发环境</div>
+          </aside>
+          <div class="admin-shell">
+            <header class="admin-header"><div><span class="hamburger">☰</span><span class="breadcrumb">配置中心 <b>/</b> 错误码资源</span></div><div class="account"><span class="env-pill">测试数据</span><span class="avatar">张</span><span id="roleName">当前平台账号</span></div></header>
+            <div class="admin-main" id="adminMain"></div>
+          </div>
+        </div>
+      </div>
+      <div id="overlayRoot" class="overlay-root"></div>
+      <div id="toastRoot" class="toast-root" aria-live="polite"></div>
+    </main>
+    <aside class="annotations" aria-label="原型批注">
+      <header class="annotation-header"><div><span class="note-dot"></span><h1>原型批注</h1><span class="spec-version">本次增量</span></div><p id="noteContext">错误码目录</p><span>黄色编号为评审锚点，不属于实际产品 UI。</span><nav class="prototype-links" aria-label="专项原型页面"><a href="../?step=basic">基础信息</a><a href="../?step=provision">配网引导</a><span aria-current="page">错误码资源</span></nav></header>
+      <div id="noteList" class="annotation-list"></div>
+      <details class="review-tools"><summary>演示与边界场景</summary><div class="tool-fields">
+        <fieldset class="permission-controls"><legend>平台操作能力（演示）</legend><label><input type="checkbox" data-permission="view" checked>查看与模板下载</label><label><input type="checkbox" data-permission="manage" checked>错误码与标准语义维护</label><label><input type="checkbox" data-permission="edit" checked>文案与结构维护</label><label><input type="checkbox" data-permission="import" checked>批量导入文案</label><label><input type="checkbox" data-permission="export" checked>导出文案</label></fieldset>
+        <label>列表场景<select id="demoState"><option value="normal">正常数据</option><option value="empty">空数据</option><option value="loading">加载中</option><option value="error">服务加载失败</option></select></label>
+        <label>下一次提交<select id="demoFault"><option value="none">正常提交</option><option value="save">模拟保存失败</option><option value="concurrent">模拟并发变更</option></select></label>
+        <p>所有写入只影响本地演示数据。场景开关不属于真实后台功能。</p>
+      </div></details>
+    </aside>
+  </div>
+  <script type="module" src="./app/index.js?v=v1.7.3"></script>
+</body>
+</html>
