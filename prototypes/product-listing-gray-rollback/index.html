@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IoT Admin 产品区域发布与版本回滚原型</title>
-<meta name="description" content="按数据中心或国家审批上架，当地全员可见配网入口；支持区域下架、白名单体验与产品基础信息历史版本回滚。">
+<meta name="prototype:revision" content="20261026-rollback-field-diff">
+<title>IoT Admin 数据中心可见范围与版本回滚原型</title>
+<meta name="description" content="按数据中心独立管理所有用户不可见、仅授权白名单可见、所有用户可见；保留产品基础信息历史版本回滚。">
 <meta name="keywords" content="区域发布,配网入口,白名单,变更审批,版本回滚">
 <meta name="prototype:product-line" content="IoT Admin">
 <meta name="prototype:business-area" content="IoT Admin">
@@ -111,26 +112,14 @@ tr:last-child td{border-bottom:0}
 .pager{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:12px 16px;color:var(--t2);font-size:13px;border-top:1px solid var(--bdlr)}
 .pager .pg{min-width:28px;height:28px;border:1px solid var(--bd);border-radius:var(--r);display:inline-grid;place-items:center;color:var(--t2);background:#fff}
 .pager .pg.on{background:var(--pri);border-color:var(--pri);color:#fff}
-.summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;padding:16px 20px}
+.summary{padding:16px 20px}
 .summary h1{font-size:18px;font-weight:600;line-height:28px;display:inline}
-.sum-meta{display:grid;grid-template-columns:repeat(2,minmax(220px,auto));gap:6px 28px;margin-top:10px}
+.sum-meta{display:grid;grid-template-columns:repeat(3,minmax(200px,1fr));gap:6px 28px;margin-top:10px}
 .sum-meta .k{color:var(--t3);font-size:12px}
 .sum-meta .v{color:var(--t2);font-size:13px}
-.sum-stats{display:flex;gap:0;align-items:stretch}
-.stat{padding:4px 22px;border-left:1px solid var(--bdlr);text-align:center;min-width:104px}
-.stat .n{font-size:20px;font-weight:700;color:var(--t1);line-height:1.3}
-.stat .n.pri{color:var(--pri)} .stat .n.warn{color:var(--warn)}
-.stat .l{font-size:12px;color:var(--t3);margin-top:2px}
 .legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--t2)}
 .legend .arrow{color:var(--t4)}
 .legend .sep{margin:0 6px;color:var(--bdl)}
-.audit{display:grid}
-.audit-item{display:grid;grid-template-columns:10px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px dashed var(--bdlr)}
-.audit-item:last-child{border-bottom:0}
-.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--pri);margin-top:7px}
-.audit-dot.warn{background:var(--warn)} .audit-dot.danger{background:var(--danger)} .audit-dot.ok{background:var(--ok)} .audit-dot.info{background:var(--info)}
-.audit-t{color:var(--t1);font-size:13px;font-weight:500}
-.audit-m{color:var(--t3);font-size:12px;margin-top:2px}
 .empty{padding:42px 0;text-align:center;color:var(--t3);font-size:13px}
 .empty .ico{font-size:26px;opacity:.5}
 .kv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}
@@ -142,6 +131,11 @@ tr:last-child td{border-bottom:0}
 .chip b{color:var(--t1);font-weight:600}
 .diff-tbl td:first-child{color:var(--t3);white-space:nowrap;width:120px}
 .diff-tbl .old{color:var(--danger)} .diff-tbl .new{color:var(--ok)}
+.rollback-diff{table-layout:fixed;min-width:360px}
+.rollback-diff th:first-child{width:26%}
+.rollback-diff td{white-space:pre-wrap;overflow-wrap:anywhere}
+.rollback-diff td:nth-child(2){background:#fff8f7}
+.rollback-diff td:nth-child(3){background:#f6fbf3}
 .codebox{background:#f6f8fa;border:1px dashed var(--bd);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--t2);line-height:1.7}
 .form-item{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;margin-bottom:18px;align-items:start}
 .form-item>label{font-size:14px;color:var(--t2);text-align:right;padding-top:6px}
@@ -161,6 +155,19 @@ tr:last-child td{border-bottom:0}
 .validation{border:1px solid #fde2e2;background:#fef0f0;border-radius:var(--r);padding:10px 14px;color:#c45656;font-size:13px;display:grid;gap:4px;margin:0 0 4px 122px}
 .validation b{color:var(--danger)}
 
+.center-config{width:100%;height:32px;padding:0 8px;border:1px solid var(--bd);border-radius:var(--r);background:#fff;color:var(--t2);font-size:13px}
+.center-config:focus{outline:2px solid var(--pri-l7);border-color:var(--pri)}
+.center-config:disabled{background:#f5f7fa;color:var(--t4);cursor:not-allowed}
+.state-checks{display:flex;align-items:center;gap:20px;min-height:32px;white-space:nowrap}
+.state-choice{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.state-choice input{width:16px;height:16px;margin:0;accent-color:var(--pri);cursor:pointer}
+.state-choice input:focus-visible{outline:2px solid var(--pri);outline-offset:3px}
+.state-choice.readonly{cursor:default;color:var(--t2)}
+.state-choice.readonly input{cursor:default}
+.state-choice.locked{cursor:not-allowed;color:var(--t4)}
+.state-choice.locked input{cursor:not-allowed}
+.center-effective{display:grid;gap:6px;max-width:210px}
+.center-error{font-size:12px;color:var(--danger);margin-top:6px;line-height:1.5}
 /* ===== 抽屉 / 弹窗 / Toast ===== */
 .scrim{position:fixed;top:0;left:0;bottom:0;right:var(--ann-w);background:rgba(0,21,41,.45);z-index:100;display:none}
 .scrim.open{display:block}
@@ -248,13 +255,14 @@ th.note-host .anchor,td.note-host .anchor{top:-8px;right:2px}
     <div class="ann-hd">
       <div class="ann-title"><span>原型批注</span><span class="ann-count" id="annCount"></span></div>
       <div class="ann-ctx" id="annCtx"></div>
+      <div class="ann-hint" id="prototype-revision">评审版本：2026-10-26 · 回滚字段差异</div>
       <div class="ann-hint">黄色编号为批注锚点，不属于真实产品 UI；点击批注卡片或编号可互相定位。</div>
     </div>
     <div class="ann-list" id="annList"></div>
   </aside>
 </div>
-<div class="scrim" id="scrim"></div>
-<div class="drawer" id="drawer" aria-label="上架发布计划抽屉"></div>
+<div class="scrim" id="basic-scrim"></div>
+<div class="drawer" id="basic-drawer" aria-label="编辑产品信息"></div>
 <div class="mscrim" id="mscrim"><div id="modalSlot"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -263,68 +271,188 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const pad=n=>String(n).padStart(2,"0");
 function nowStr(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 
-const ST={draft:{t:'未上架',tag:'tag-info'},listed:{t:'已上架',tag:'tag-ok'},delisted:{t:'已下架',tag:'tag-info'}};
-const state={page:'list',detailTab:'units',dcFilter:'all',loadingUnits:false,drawer:null,modal:null,activeNote:null,listKw:'',globalVersion:'v3',selectedVersion:'v3',request:null,requests:[],serial:0,planShowErrors:false,plan:{targets:new Set(),effType:'now',effAt:''},units:[
-{id:'us',dc:'北美数据中心',country:'美国',status:'listed'},
-{id:'ca',dc:'北美数据中心',country:'加拿大',status:'draft'},
-{id:'de',dc:'西欧数据中心',country:'德国',status:'listed'},
-{id:'fr',dc:'西欧数据中心',country:'法国',status:'listed'},
-{id:'gb',dc:'西欧数据中心',country:'英国',status:'draft'},
-{id:'it',dc:'西欧数据中心',country:'意大利',status:'delisted'}],versions:[
-{no:'v3',type:'产品基础信息变更',time:'2026-10-02 10:12',req:'APP-20260930-017',by:'李明',appr:'王静',fv:'FV-2026.10.01（已发布）',diff:'产品名称、产品图片、基础配网与分享依赖'},
-{no:'v2',type:'产品基础信息变更',time:'2026-09-18 16:40',req:'APP-20260912-007',by:'李明',appr:'王静',fv:'FV-2026.09.02（已发布）',diff:'通讯方式、配网入口与分享依赖'},
-{no:'v1',type:'产品创建初始版本',time:'2026-09-02 09:20',req:'—',by:'系统',appr:'—',fv:'FV-2026.09.01（已发布）',diff:'产品创建时生成的基础信息快照'}],audit:[
-{t:'区域上架已生效 · 西欧数据中心 / 德国、法国',m:'2026-10-08 10:00 · APP-20261006-012 · 当地所有用户可见 · 产品版本 v3 保持不变',dot:'ok'},
-{t:'区域下架已生效 · 西欧数据中心 / 意大利',m:'2026-10-07 15:00 · APP-20261005-009 · 存量设备与既有分享不受影响',dot:'info'},
-{t:'产品版本 v3 生效',m:'2026-10-02 10:12 · APP-20260930-017 · 李明提交 · 王静审批通过 · 产品基础信息变更',dot:'ok'}]};
+// 三种可见范围属于数据中心发布域，不替代现有产品级状态。
+const ST={hidden:{t:'开发中',visibility:'所有用户不可见',tag:'tag-info'},whitelist:{t:'白名单体验',visibility:'仅授权白名单可见',tag:'tag-warn'},public:{t:'已上架',visibility:'所有用户可见',tag:'tag-ok'}};
+// 2026-10-26 用户确认：仅跨越「所有用户可见」边界需要审批。
+const newProductUnits=()=>[
+{id:'na',dc:'北美数据中心',status:'hidden'},
+{id:'eu',dc:'西欧数据中心',status:'hidden'},
+{id:'ap',dc:'亚太数据中心',status:'hidden'}];
+const state={page:['datacenters','versions'].includes(new URLSearchParams(location.search).get('view'))?'detail':'list',detailTab:new URLSearchParams(location.search).get('view')==='versions'?'versions':'units',loadingUnits:false,visibilityEditing:false,modal:null,activeNote:null,listKw:'',globalVersion:'v3',selectedVersion:'v3',request:null,requests:[],serial:0,configs:{},configErrors:{},schedules:{},basicEditing:false,versionDrawer:null,profile:{name:'W1 Lite',serviceModel:''},profileDraft:null,profileEditBase:null,profileErrors:[],units:newProductUnits(),versions:[
+{no:'v3',type:'产品基础信息变更',time:'2026-10-02 10:12',req:'APP-20260930-017',by:'李明',appr:'王静',fv:'版本1（已发布）',diff:'客服型号清空'},
+{no:'v2',type:'产品基础信息变更',time:'2026-09-18 16:40',req:'APP-20260912-007',by:'李明',appr:'王静',fv:'版本1（已发布）',diff:'产品名称'},
+{no:'v1',type:'产品创建初始版本',time:'2026-09-02 09:20',req:'—',by:'系统',appr:'—',fv:'版本1（已发布）',diff:'产品创建时生成的基础信息快照'}],audit:[]};
+// 仅用于展示三种范围；这不是生产状态或旧国家单元的自动合并结果。
+state.units[0].status='public';state.units[1].status='whitelist';
+// 历史版本字段仅为演示样例，不代表生产记录。
+state.versions.forEach(v=>{v.profile={name:v.no==='v1'?'W1':'W1 Lite',serviceModel:v.no==='v3'?'':'W1Lite'};v.basicInfo=basicInfoFields(v.profile);});
+state.approvalBaseline={...state.profile};
 const unit=id=>state.units.find(u=>u.id===id),ver=no=>state.versions.find(v=>v.no===no);
-function derivedStatus(){if(state.units.every(u=>u.status==='draft'))return{t:'开发中',tag:'tag-info'};if(state.units.every(u=>u.status==='listed'))return{t:'已上架',tag:'tag-ok'};return{t:'—',tag:'tag-info'};}
-function summaryStr(){const c=s=>state.units.filter(u=>u.status===s).length;return `${c('listed')}/${state.units.length} 已上架 · ${c('draft')} 未上架 · ${c('delisted')} 已下架`;}
 function pushAudit(t,m,dot='info'){state.audit.unshift({t,m:`${nowStr()} · ${m}`,dot});}
-// 原型按区域正式状态与白名单授权判断入口资格。
-function entryAllowed(unitId,{whitelisted=false}={}){return !!unit(unitId)&&(unit(unitId).status==='listed'||whitelisted);}
-function requestLabel(q){return ({pending:'待审批',waiting:'等待定时生效（演示）',failed:'未生效',applied:'已生效',rejected:'已驳回',revoked:'已撤销'})[q.status];}
-function renderUnits(){
-const rows=state.units.filter(u=>state.dcFilter==='all'||u.dc===state.dcFilter);
-return `<div class="card-bd" style="padding-bottom:0"><div class="alert alert-info" id="units-whitelist-alert"><span class="alert-icn">i</span><span>未上架区域仅授权白名单用户可体验；发布审批生效后，当地所有用户均可发现配网入口。</span></div>
-<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px"><div class="dc-tabs">${['all','北美数据中心','西欧数据中心','亚太数据中心'].map(dc=>`<button type="button" class="dc-tab ${state.dcFilter===dc?'active':''}" data-act="dc-tab" data-dc="${dc}">${dc==='all'?'全部':dc}</button>`).join('')}</div><div><button class="btn btn-sm" data-act="refresh-units" ${state.loadingUnits?'disabled':''}>${state.loadingUnits?'加载中…':'刷新'}</button> <button class="btn btn-pri btn-sm" id="new-plan-btn" data-act="open-plan" ${state.request?'disabled':''}>提交上架发布计划</button></div></div></div>
-<div id="units-table"><div style="overflow:auto"><table><thead><tr><th>发布单元</th><th>状态</th><th>普通用户入口</th><th>活跃审批</th><th id="units-actions-head">操作</th></tr></thead><tbody>${state.loadingUnits?'<tr><td colspan="5"><div class="empty">加载中…</div></td></tr>':rows.map(u=>`<tr id="unit-row-${u.id}"><td><div class="cell-main">${u.country}</div><div class="cell-sub">${u.dc}</div></td><td><span class="tag ${ST[u.status].tag}">${ST[u.status].t}</span></td><td>${entryAllowed(u.id)?'当地所有用户可见':'仅授权白名单用户可见'}</td><td>${state.request?`<span class="tag tag-warn">${state.request.no}</span><div class="cell-sub">${requestLabel(state.request)} · 同产品操作已锁定</div>`:'—'}</td><td><div class="ops">${state.request?'<button class="btn-link" disabled>审批占用</button>':u.status==='listed'?`<button class="btn-link danger" data-act="open-delist" data-unit="${u.id}">下架</button>`:`<button class="btn-link" data-act="open-plan" data-unit="${u.id}">${u.status==='delisted'?'重新上架':'提交上架计划'}</button>`}</div></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">该数据中心暂无发布单元</div></td></tr>'}</tbody></table></div></div>
-<div class="card-bd" id="units-legend" style="border-top:1px solid var(--bdlr)"><div class="legend"><b>区域状态</b><span class="tag tag-info">未上架</span>→<span class="tag tag-ok">已上架</span>⇄<span class="tag tag-info">已下架</span></div></div>
-<div class="card-bd" id="audit-list" style="border-top:1px solid var(--bdlr)"><b>操作与审批记录</b><div class="audit">${state.audit.slice(0,8).map(a=>`<div class="audit-item"><span class="audit-dot ${a.dot}"></span><div><div class="audit-t">${esc(a.t)}</div><div class="audit-m">${esc(a.m)}</div></div></div>`).join('')}</div></div>`;
+function entryAllowed(unitId,{whitelisted=false}={}){
+ const u=unit(unitId);return !!u&&(u.status==='public'||(u.status==='whitelist'&&whitelisted));
 }
-function planTargets(){return state.units.filter(u=>u.status!=='listed');}
-function planErrors(){const p=state.plan,e=[];if(state.request)e.push(`当前产品已有活跃审批 ${state.request.no}`);if(!p.targets.size)e.push('请至少选择一个目标发布单元');if([...p.targets].some(id=>!unit(id)||unit(id).status==='listed'))e.push('所选发布单元已变化，请重新选择');if(p.effType==='later'&&(!p.effAt||!Number.isFinite(new Date(p.effAt).getTime())))e.push('请选择有效的定时生效时间');return e;}
-function renderDrawer(){const open=!!state.drawer;$('#drawer').classList.toggle('open',open);$('#scrim').classList.toggle('open',open);if(!open){$('#drawer').innerHTML='';return;}
-const p=state.plan,errors=state.planShowErrors?planErrors():[],groups=[...new Set(state.units.map(u=>u.dc))];
-$('#drawer').innerHTML=`<div class="drawer-hd"><h2>上架发布计划</h2><button class="drawer-x" data-act="close-drawer" aria-label="关闭">×</button></div><div class="drawer-bd"><div class="alert alert-info" id="plan-inherit"><span class="alert-icn">i</span><span>审批生效后，选定区域的所有用户均可发现配网入口。</span></div><div class="form-item"><label><span class="req">*</span> 目标发布单元</label><div id="plan-targets" class="unit-check">${groups.map(dc=>{const all=state.units.filter(u=>u.dc===dc),available=all.filter(u=>u.status!=='listed');return `<div class="card" style="margin-bottom:4px"><div class="card-hd"><label class="check"><input type="checkbox" data-plan-dc="${dc}" ${available.length&&available.every(u=>p.targets.has(u.id))?'checked':''} ${!available.length||state.request?'disabled':''}>${dc}</label></div><div class="card-bd unit-check">${all.map(u=>`<label class="unit-opt ${u.status==='listed'?'dis':''}"><input type="checkbox" data-plan-target="${u.id}" ${p.targets.has(u.id)?'checked':''} ${u.status==='listed'||state.request?'disabled':''}><span><span class="nm">${u.country}</span><span class="dc"> · ${ST[u.status].t}</span></span></label>`).join('')}</div></div>`;}).join('')}</div></div><div class="form-item" id="plan-eff"><label><span class="req">*</span> 生效时间</label><div><div class="radio-row"><label class="radio"><input type="radio" name="plan-eff" value="now" ${p.effType==='now'?'checked':''}>审批通过后立即生效</label><label class="radio"><input type="radio" name="plan-eff" value="later" ${p.effType==='later'?'checked':''}>定时生效</label></div>${p.effType==='later'?`<input type="datetime-local" data-plan="effAt" value="${esc(p.effAt)}"><div class="help">审批通过且到达指定时间后生效；时间已过则审批通过后立即生效。</div>`:''}</div></div>${errors.length?`<div class="validation" role="alert">${errors.map(e=>`<div>${esc(e)}</div>`).join('')}</div>`:''}</div><div class="drawer-ft"><span class="hint">${p.targets.size} 个目标国家 / 地区</span><div><button class="btn" data-act="close-drawer">取消</button> <button id="plan-submit" class="btn btn-pri" data-act="confirm-plan">确认并提交审批</button></div></div>`;
-$$('[data-plan-dc]').forEach(el=>{const ids=planTargets().filter(u=>u.dc===el.dataset.planDc).map(u=>u.id),n=ids.filter(id=>p.targets.has(id)).length;el.indeterminate=n>0&&n<ids.length;});
+function visibilityNeedsApproval(from,to){return from!==to&&((from==='public')!==(to==='public'));}
+function publiclyListedCenters(){return state.units.filter(u=>u.status==='public');}
+function publiclyListedCenterNames(){return publiclyListedCenters().map(u=>u.dc).join('、')||'无';}
+function detailsNeedApproval(){return publiclyListedCenters().length>0;}
+function centerLocked(id){return !!state.request||!!state.schedules[id];}
+function requestLabel(q){return ({pending:'待审批',waiting:'等待定时生效',failed:'未生效',applied:'已生效',rejected:'已驳回',revoked:'已撤销'})[q.status];}
+function centerConfig(id){return state.configs[id]||(state.configs[id]={targetStatus:unit(id).status,effType:'now',effAt:''});}
+function centerDirty(id){return !!unit(id)&&centerConfig(id).targetStatus!==unit(id).status;}
+function activeCenterPlan(id){
+ const q=state.request,c=q&&q.type==='visibility'&&q.changes&&q.changes.find(c=>c.unitId===id&&c.phase!=='applied');
+ if(c)return {...c,approval:q};
+ const direct=state.schedules[id];return direct?{unitId:id,targetStatus:direct.targetStatus,effectiveAt:direct.effectiveAt,direct:true}:null;
+}
+function centerPlanText(id){const plan=activeCenterPlan(id);if(!plan)return '—';
+ const when=plan.effectiveAt?new Date(plan.effectiveAt).toLocaleString('zh-CN',{hour12:false}):'审批通过后立即生效';
+ const failure=plan.approval&&plan.approval.status==='failed';
+ return `<div class="cell-main">计划目标：${esc(ST[plan.targetStatus].t)}</div><div class="cell-sub">${failure?'尚未生效，请查看审批单处理':esc(when)}</div>${plan.direct?`<button class="btn-link" data-act="cancel-schedule" data-unit="${id}" ${state.request?'disabled':''}>取消定时</button>`:''}`;
+}
+function enterVisibilityEdit(){if(state.request)return toast('产品处于审批冻结，暂不能编辑','warn');state.visibilityEditing=true;renderAll();}
+function cancelVisibilityEdit(){if(state.request)return;Object.keys(state.configs).forEach(id=>{if(!state.schedules[id])delete state.configs[id];});state.configErrors={};state.visibilityEditing=false;renderAll();}
+function renderStateChecks(u,editing){
+ const status=editing?centerConfig(u.id).targetStatus:u.status,locked=centerLocked(u.id);
+ return `<div class="state-checks" role="group" aria-label="${esc(u.dc)}${editing?'目标':'当前'}状态勾选">${[['whitelist','白名单体验'],['public','上架']].map(([value,label])=>`<label class="state-choice ${!editing?'readonly':locked?'locked':''}"><input type="checkbox" data-center-state="${u.id}" value="${value}" aria-label="${esc(u.dc)}${label}" ${status===value?'checked':''} ${!editing||locked?'disabled':''}><span>${label}</span></label>`).join('')}</div>`;
+}
+function renderUnits(){
+ const editing=state.visibilityEditing&&!state.request;
+ const controls=editing?`<span class="cell-sub" id="batch-dirty-count">已修改 ${dirtyCenters().length} 个数据中心</span><button class="btn btn-sm" data-act="cancel-visibility-edit">取消编辑</button><button id="batch-save" class="btn btn-pri btn-sm" data-act="confirm-batch" ${!dirtyCenters().length?'disabled':''}>${batchChanges().some(c=>c.needsApproval)?'提交配置':'保存配置'}</button>`:`<button class="btn btn-sm" data-act="refresh-units" ${state.loadingUnits?'disabled':''}>${state.loadingUnits?'加载中…':'刷新'}</button><button id="visibility-edit" class="btn btn-pri btn-sm" data-act="edit-visibility" ${state.request?'disabled title="产品处于审批冻结"':''}>编辑上架状态</button>`;
+ return `<div class="card-bd" style="padding-bottom:0"><div id="visibility-toolbar" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:14px"><h2 style="font-size:14px;font-weight:500">数据中心上架状态</h2><div id="batch-actions" style="display:flex;align-items:center;gap:10px">${controls}</div></div></div>
+ <div id="units-table"><div style="overflow:auto"><table><thead><tr><th style="width:200px">数据中心</th><th id="visibility-head" style="width:220px">当前状态</th><th id="center-config-head" style="width:260px">${editing?'目标状态':'已生效勾选'}</th><th id="center-effective-head">生效时间</th></tr></thead><tbody>${state.loadingUnits?`<tr><td colspan="4"><div class="empty">加载中…</div></td></tr>`:state.units.map(u=>{
+ const c=centerConfig(u.id),dirty=centerDirty(u.id),errors=state.configErrors[u.id]||[],locked=centerLocked(u.id);
+ return `<tr id="unit-row-${u.id}" ${editing&&dirty?'style="background:var(--pri-l9)"':''}><td class="cell-main">${esc(u.dc)}</td><td><span class="tag ${ST[u.status].tag}" title="${ST[u.status].visibility}">${ST[u.status].t}</span><div class="cell-sub">${ST[u.status].visibility}</div></td>
+ <td>${renderStateChecks(u,editing)}${editing&&errors.length?`<div class="center-error" role="alert">${errors.map(esc).join('<br>')}</div>`:''}</td>
+ <td>${editing&&dirty&&!locked?`<div class="center-effective"><select class="center-config" data-center-effective="${u.id}" aria-label="${esc(u.dc)}生效方式"><option value="now" ${c.effType==='now'?'selected':''}>立即生效</option><option value="later" ${c.effType==='later'?'selected':''}>定时生效</option></select>${c.effType==='later'?`<input class="center-config" type="datetime-local" data-center-at="${u.id}" value="${esc(c.effAt)}" aria-label="${esc(u.dc)}生效时间">`:''}</div>`:centerPlanText(u.id)}</td></tr>`;
+ }).join('')||`<tr><td colspan="4"><div class="empty">暂无数据中心</div></td></tr>`}</tbody></table></div></div>`;
+}
+
+function centerErrors(id){
+ const u=unit(id),errors=[];if(!u)return ['数据中心不存在'];const c=centerConfig(id);
+ if(state.request)errors.push(`当前产品已有活跃申请 ${state.request.no}`);
+ if(state.schedules[id])errors.push('该数据中心已有待生效设置，请先取消定时');
+ if(!ST[c.targetStatus])errors.push('请选择有效的可见范围');
+ if(!centerDirty(id))errors.push('当前配置未变化，无需保存');
+ if(c.effType==='later'&&(!c.effAt||!Number.isFinite(new Date(c.effAt).getTime())))errors.push('请选择有效的定时生效时间');
+ return errors;
+}
+function dirtyCenters(){return state.units.filter(u=>centerDirty(u.id)&&!state.schedules[u.id]);}
+function batchChanges(){return dirtyCenters().map(u=>{const c=centerConfig(u.id);return {unitId:u.id,fromStatus:u.status,targetStatus:c.targetStatus,effectiveAt:c.effType==='later'?new Date(c.effAt).getTime():null,needsApproval:visibilityNeedsApproval(u.status,c.targetStatus),phase:'pending',profileAtSubmit:c.targetStatus==='public'?{...state.profile}:null};});}
+function batchConfirmationCopy(changes){const required=changes.filter(c=>c.needsApproval).length,exempt=changes.length-required;
+ if(!required)return {title:'确认保存数据中心配置',button:'确认保存',summary:'本次配置无需审批，确认保存后按各自生效时间生效。',toast:'已保存，按配置的时间生效'};
+ if(!exempt)return {title:'确认提交数据中心审批',button:'提交审批',summary:`本次 ${required} 项变更需要审批，将合并为一张审批单；审批通过后按各自生效时间生效。`,toast:'已提交一张审批单，等待审批'};
+ return {title:'确认提交数据中心配置',button:'确认提交',summary:`需要审批 ${required} 项，将合并为一张审批单；无需审批 ${exempt} 项，确认后按各自生效时间保存。`,toast:'已提交审批，免审批项已保存'};
+}
+function batchErrors(){const errors=[];if(state.request)errors.push('产品已有活跃审批');if(!dirtyCenters().length)errors.push('请先修改数据中心配置');dirtyCenters().forEach(u=>{const e=centerErrors(u.id);state.configErrors[u.id]=e;errors.push(...e);});return errors;}
+function confirmBatch(){if(!state.visibilityEditing)return false;if(batchErrors().length){renderAll();return false;}state.modal={type:'visibility-batch',plan:JSON.parse(JSON.stringify(batchChanges()))};renderAll();return true;}
+function submitBatch(){if(!state.visibilityEditing)return false;if(batchErrors().length){state.modal=null;renderAll();return false;}if(!state.modal||JSON.stringify(state.modal.plan)!==JSON.stringify(batchChanges())){state.modal=null;renderAll();toast('配置已变化，请重新核对','warn');return false;}const frozen=JSON.parse(JSON.stringify(state.modal.plan)),approved=frozen.filter(c=>c.needsApproval),direct=frozen.filter(c=>!c.needsApproval);
+ if(approved.length)createRequest('visibility',approved.map(c=>c.unitId),{changes:approved});
+ direct.forEach(c=>{const q={no:`SAVE-DEMO-${++state.serial}`,type:'visibility',targets:[c.unitId],fromStatus:c.fromStatus,targetStatus:c.targetStatus,effectiveAt:c.effectiveAt,status:'ready',requiresApproval:false};if(q.effectiveAt&&q.effectiveAt>Date.now())state.schedules[c.unitId]=q;applyRequest(q);});
+ state.modal=null;state.visibilityEditing=false;renderAll();toast(batchConfirmationCopy(frozen).toast);return true;
+}
+function nextBatchTime(q){return q.changes?Math.min(...q.changes.filter(c=>c.phase!=='applied'&&c.effectiveAt).map(c=>c.effectiveAt)):q.effectiveAt;}
+
+function rollbackFieldDiff(no){const v=ver(no);if(!v||!Array.isArray(v.basicInfo))return null;
+ const before=new Map(basicInfoFields(state.profile)),after=new Map(v.basicInfo);
+ for(const [label,key] of [['产品名称','name'],['客服型号','serviceModel']]){before.set(label,state.profile[key]??'');after.set(label,v.profile?.[key]??'');}
+ const labels=[...new Set([...before.keys(),...after.keys()])];
+ return labels.filter(label=>before.get(label)!==after.get(label)).map(label=>({label,before:before.get(label)??'',after:after.get(label)??''}));
+}
+function renderRollbackFieldDiff(rows){if(rows===null)return '<div class="center-error" role="alert">无法读取目标版本基础信息，请刷新后重试。</div>';
+ if(!rows.length)return '<div class="cell-sub" id="rollback-no-diff">与当前产品基础信息一致，无字段值差异。</div>';
+ return `<div style="overflow-x:auto"><table class="rollback-diff"><thead><tr><th>字段</th><th>当前值</th><th>回滚后值</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.label)}</td><td>${x.before===''?'未设置':esc(x.before)}</td><td>${x.after===''?'未设置':esc(x.after)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function openRollback(no){if(state.request)return toast('产品有活跃审批','warn');if(!ver(no)||no===state.globalVersion||state.versions.length<2)return;
+ state.modal={type:'rollback',version:no,fromVersion:state.globalVersion,diff:rollbackFieldDiff(no)};renderAll();
+}
+function submitRollback(){const m=state.modal;if(!m||m.type!=='rollback'||state.request)return;
+ const fresh=rollbackFieldDiff(m.version);if(fresh===null){toast('无法读取目标版本基础信息，请刷新后重试','warn');return;}
+ if(m.fromVersion!==state.globalVersion||JSON.stringify(m.diff)!==JSON.stringify(fresh)){state.modal=null;renderAll();toast('产品基础信息已变化，请重新核对回滚差异','warn');return;}
+ if(m.version!==state.globalVersion&&state.versions.length>=2)createRequest('rollback',[],{version:m.version,diff:JSON.parse(JSON.stringify(m.diff))});
 }
 function renderModal(){const open=!!state.modal;$('#mscrim').classList.toggle('open',open);if(!open){$('#modalSlot').innerHTML='';return;}
-const m=state.modal;let title,body,act,label;
-if(m.type==='release'){title='确认提交上架审批';body=`<p>目标区域：${[...state.plan.targets].map(id=>esc(unit(id).country)).join('、')}</p><p>${state.plan.effType==='later'?`定时生效：${esc(state.plan.effAt.replace('T',' '))}`:'审批通过后立即生效'}</p><p>提交后等待审批，当前正式状态保持不变。</p>`;act='submit-plan';label='提交审批';}
-else if(m.type==='delist'){const u=unit(m.unitId);title='确认区域下架';body=`<p>${esc(u.dc)} / ${esc(u.country)}</p><div class="alert alert-warn"><span>审批生效后，普通用户不能新增发现、配网或分享。授权白名单按既有授权规则访问。</span></div><p>已添加设备的控制、升级及既有分享继续正常使用。</p>`;act='submit-delist';label='提交下架审批';}
-else{const v=ver(m.version);title='回滚产品基础信息';body=`<div id="rollback-impact"><p>全局生效版本：<b>${state.globalVersion} → ${esc(v.no)}</b></p><p style="margin-top:12px">目标版本：${esc(v.diff)}</p><p style="margin-top:12px">恢复历史基础信息，不生成新版本。所有区域的当前发布范围和上下架状态保持不变。</p></div>`;act='submit-rollback';label='提交回滚审批';}
-$('#modalSlot').innerHTML=`<div class="modal" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-hd"><h3 id="modal-title">${title}</h3><button class="drawer-x" data-act="close-modal" aria-label="关闭">×</button></div><div class="modal-bd">${body}</div><div class="modal-ft"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-pri" data-act="${act}" ${state.request?'disabled':''}>${label}</button></div></div>`;
+ const m=state.modal;let title,body,act,label;
+ if(m.type==='visibility-batch'){const changes=m.plan,copy=batchConfirmationCopy(changes);title=copy.title;body=`<div id="batch-preview" style="overflow:auto"><table><thead><tr><th>数据中心</th><th>当前状态</th><th>配置目标</th><th>生效时间</th><th>处理方式</th></tr></thead><tbody>${changes.map(c=>`<tr><td>${esc(unit(c.unitId).dc)}</td><td>${ST[c.fromStatus].t}</td><td>${ST[c.targetStatus].t}</td><td>${c.effectiveAt?esc(centerConfig(c.unitId).effAt.replace('T',' ')):'立即生效'}</td><td>${c.needsApproval?'需审批':'无需审批'}</td></tr>`).join('')}</tbody></table><p id="batch-handling-summary" style="margin-top:12px">${copy.summary}</p></div>`;act='submit-batch';label=copy.button;}
+ else if(m.type==='approval-detail'){const q=state.requests.find(q=>q.no===m.requestNo);title='审批单详情';body=q?`<div id="approval-detail"><p>审批单号：${q.no}</p><p>处理进度：${requestLabel(q)}</p>${q.changes?`<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>数据中心</th><th>变更前</th><th>目标状态</th><th>生效时间</th><th>处理进度</th></tr></thead><tbody>${q.changes.map(c=>`<tr><td>${esc(unit(c.unitId).dc)}</td><td>${ST[c.fromStatus].t}</td><td>${ST[c.targetStatus].t}</td><td>${c.effectiveAt?esc(new Date(c.effectiveAt).toLocaleString('zh-CN',{hour12:false})):'立即生效'}</td><td>${requestLabel({status:c.phase})}</td></tr>`).join('')}</tbody></table></div>`:q.type==='profile'?`<p style="margin-top:12px">产品基础信息变更</p>`:`<p style="margin-top:12px">版本恢复：${q.fromVersion} → ${q.version}</p>`}</div>`:'未找到该申请';act=null;label='关闭';}
+ else if(m.type==='profile'){const rows=profileDiff(state.profile,state.profileDraft);title='确认提交详情变更审批';body=`<div id="profile-diff"><table><thead><tr><th>字段</th><th>变更前</th><th>变更后</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.label}</td><td>${esc(x.before)||'—'}</td><td>${esc(x.after)||'—'}</td></tr>`).join('')}</tbody></table></div>`;act='submit-profile';label='提交审批';}
+ else{const v=ver(m.version);title='回滚产品基础信息';body=`<div id="rollback-impact"><p>全局生效版本：<b>${esc(m.fromVersion)} → ${esc(v.no)}</b></p><p class="cell-sub" style="margin-top:8px">恢复历史基础信息，不生成新版本。各数据中心当前可见范围保持不变。</p></div><div id="rollback-field-diff"><h4 style="font-size:14px;font-weight:500;margin-bottom:10px">字段值差异</h4>${renderRollbackFieldDiff(m.diff)}</div>`;act='submit-rollback';label='提交回滚审批';}
+ $('#modalSlot').innerHTML=`<div class="modal" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-hd"><h3 id="modal-title">${title}</h3><button class="drawer-x" data-act="close-modal" aria-label="关闭">×</button></div><div class="modal-bd">${body}</div><div class="modal-ft">${act?`<button class="btn" data-act="close-modal">取消</button><button class="btn btn-pri" data-act="${act}" ${state.request||(m.type==='rollback'&&m.diff===null)?'disabled':''}>${label}</button>`:'<button class="btn" data-act="close-modal">关闭</button>'}</div></div>`;
 }
 let toastTimer;
 function toast(message,type='ok'){clearTimeout(toastTimer);$('#toast').className=`toast show ${type}`;$('#toast').innerHTML=`<span class="ti">${type==='ok'?'✓':'i'}</span><span>${esc(message)}</span>`;toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800);}
-function openPlan(id){if(state.request)return toast(`当前产品已有申请 ${state.request.no}`,'warn');state.plan={targets:new Set(id?[id]:[]),effType:'now',effAt:''};state.planShowErrors=false;state.drawer='plan';renderAll();}
-function createRequest(type,targets,extra={}){if(state.request)return toast('已有活跃审批，请先处理','warn');const q={no:`APP-DEMO-${++state.serial}`,type,targets:[...targets],status:'pending',submittedAt:nowStr(),fromVersion:state.globalVersion,...extra};state.request=q;state.requests.push(q);pushAudit(`${type==='release'?'区域上架':type==='delist'?'区域下架':'版本回滚'}待审批`,`${q.no} · 张子豪提交 · ${q.targets.map(id=>unit(id).country).join('、')||q.version}`);state.modal=null;state.drawer=null;renderAll();toast('已提交审批，正式配置保持不变');}
-function submitPlan(){if(planErrors().length){state.modal=null;state.planShowErrors=true;renderAll();return;}createRequest('release',state.plan.targets,{effectiveAt:state.plan.effType==='later'?new Date(state.plan.effAt).getTime():null});}
-function applyRequest(q,at=Date.now()){if(q.status==='applied')return false;if(q.type==='release'&&q.effectiveAt&&q.effectiveAt>at){q.status='waiting';return false;}
-if(q.type==='release')q.targets.forEach(id=>unit(id).status='listed');else if(q.type==='delist')q.targets.forEach(id=>unit(id).status='delisted');else{state.globalVersion=q.version;state.selectedVersion=q.version;}
-q.status='applied';q.appliedAt=at;pushAudit(`${q.type==='rollback'?`版本回滚 ${q.fromVersion} → ${q.version}`:q.type==='release'?'区域上架':'区域下架'}已生效`,`${q.no} · 王静审批 · ${q.type==='rollback'?'发布范围及区域状态保持不变':q.targets.map(id=>unit(id).country).join('、')+' · 产品版本保持不变'}`,'ok');if(state.request===q)state.request=null;return true;}
+function createRequest(type,targets,extra={}){if(state.request)return toast('已有活跃审批，请先处理','warn');const q={no:`APP-DEMO-${++state.serial}`,type,targets:[...targets],status:'pending',submittedAt:nowStr(),fromVersion:state.globalVersion,...extra};state.request=q;state.requests.push(q);pushAudit(`${type==='visibility'?'可见范围调整':type==='profile'?'详情变更':'版本回滚'}待审批`,`${q.no} · 张子豪提交 · ${q.targets.map(id=>unit(id).dc).join('、')||q.version||'产品基础信息'}`);state.modal=null;state.basicEditing=false;state.visibilityEditing=false;renderAll();toast('已提交审批，正式配置保持不变');}
+function applyRequest(q,at=Date.now()){if(q.status==='applied')return false;
+ if(q.type==='visibility'&&q.changes){
+  const due=q.changes.filter(c=>c.phase!=='applied'&&(!c.effectiveAt||c.effectiveAt<=at));
+  if(due.some(c=>!unit(c.unitId)||unit(c.unitId).status!==c.fromStatus)){q.status='failed';q.changes.filter(c=>c.phase!=='applied').forEach(c=>c.phase='failed');return false;}
+  due.forEach(c=>{unit(c.unitId).status=c.targetStatus;c.phase='applied';c.appliedAt=at;delete state.configs[c.unitId];delete state.configErrors[c.unitId];if(c.targetStatus==='public'&&c.profileAtSubmit)state.approvalBaseline={...c.profileAtSubmit};});
+  q.changes.filter(c=>c.phase!=='applied').forEach(c=>c.phase='waiting');
+  if(q.changes.some(c=>c.phase!=='applied'))q.status='waiting';
+  else{q.status='applied';q.appliedAt=at;if(state.request===q)state.request=null;pushAudit('数据中心配置统一审批已生效',q.no,'ok');}
+  return due.length>0;
+ }
+
+ if(q.type==='visibility'){
+  if(q.effectiveAt&&q.effectiveAt>at){q.status='waiting';return false;}
+  if(q.targetStatus==='public'&&q.profileAtSubmit)state.approvalBaseline={...q.profileAtSubmit};
+  q.targets.forEach(id=>{unit(id).status=q.targetStatus;delete state.configs[id];delete state.configErrors[id];if(state.schedules[id]===q)delete state.schedules[id];});
+ }else if(q.type==='profile'){
+  state.profile={...q.targetProfile};state.approvalBaseline={...q.targetProfile};const no=`v${Math.max(...state.versions.map(v=>Number(v.no.slice(1))))+1}`;
+  state.versions.unshift({no,type:'产品基础信息变更',time:nowStr(),req:q.no,by:'张子豪',appr:'王静',fv:'版本1（已发布）',diff:q.diff.map(x=>x.label).join('、'),profile:{...q.targetProfile},basicInfo:basicInfoFields(q.targetProfile)});
+  state.globalVersion=no;state.selectedVersion=no;state.profileDraft=null;
+ }else{state.globalVersion=q.version;state.selectedVersion=q.version;if(ver(q.version).profile){state.profile={...ver(q.version).profile};state.approvalBaseline={...state.profile};}}
+ q.status='applied';q.appliedAt=at;pushAudit(`${q.type==='rollback'?`版本回滚 ${q.fromVersion} → ${q.version}`:q.type==='profile'?'详情变更':'数据中心可见范围调整'}已生效`,`${q.no} · ${q.type==='rollback'||q.type==='profile'?'各数据中心可见范围保持不变':'产品基础信息版本保持不变'}`,'ok');if(state.request===q)state.request=null;return true;
+}
 function demoResolve(action){const q=state.request;if(!q)return;
-if(action==='reject'||action==='revoke'||action==='cancel'){q.status=action==='revoke'?'revoked':'rejected';pushAudit(requestLabel(q),`${q.no} · 原正式值保持不变`);state.request=null;}
-else if(action==='fail'){q.status='failed';pushAudit('审批通过但应用失败',`${q.no} · 未生效并保留冻结，正式值保持不变`,'warn');}
-else if(action==='approve'||action==='retry'){applyRequest(q);if(q.status==='waiting')pushAudit('审批通过，等待指定时间',`${q.no} · 正式状态不变`);}
-renderAll();toast(q.status==='waiting'?'审批已通过，等待指定时间':requestLabel(q));}
-function runScheduled(at=Date.now()){const q=state.request;if(q&&q.status==='waiting'&&q.effectiveAt<=at){applyRequest(q,at);renderAll();}}
+ if(action==='reject'||action==='revoke'||action==='cancel'){if(q.changes&&q.changes.some(c=>c.phase==='applied'))return toast('已有中心生效，需核对恢复结果后处理','warn');q.status=action==='revoke'?'revoked':'rejected';if(q.changes)q.changes.filter(c=>c.phase!=='applied').forEach(c=>c.phase=q.status);pushAudit(requestLabel(q),`${q.no} · 原正式值保持不变`);state.request=null;}
+ else if(action==='fail'){q.status='failed';if(q.changes)q.changes.filter(c=>c.phase!=='applied').forEach(c=>c.phase='failed');pushAudit('审批通过但应用失败',`${q.no} · 原正式值保持不变`,'warn');}
+ else if(action==='approve'||action==='retry')applyRequest(q);
+ else if(action==='advance'&&q.status==='waiting')applyRequest(q,nextBatchTime(q));
+ renderAll();toast(q.status==='waiting'?'审批已通过，等待指定时间':requestLabel(q));
+}
+function cancelSchedule(id){if(state.request||!state.schedules[id])return;delete state.schedules[id];delete state.configs[id];delete state.configErrors[id];renderAll();toast('已取消定时，当前范围保持不变');}
+function runScheduled(at=Date.now()){
+ const jobs=[...(state.request&&state.request.status==='waiting'?[state.request]:[]),...Object.values(state.schedules)];let changed=false;
+ jobs.forEach(q=>{if(q.status==='waiting'&&nextBatchTime(q)<=at)changed=applyRequest(q,at)||changed;});if(changed)renderAll();
+}
+function profileDiff(before,after){return [{key:'name',label:'产品名称'},{key:'serviceModel',label:'客服型号'}].filter(x=>before[x.key]!==after[x.key]).map(x=>({...x,before:before[x.key],after:after[x.key]}));}
+function profileErrors(){const d=state.profileDraft,e=[];
+ if(state.request)e.push(`当前产品已有活跃申请 ${state.request.no}`);
+ if(state.profileEditBase&&(state.profileEditBase.version!==state.globalVersion||JSON.stringify(state.profileEditBase.profile)!==JSON.stringify(state.profile)))e.push('产品信息已更新，请重新加载后编辑');
+ if(!d||typeof d.name!=='string'||!d.name.trim()||d.name.length>50)e.push('产品名称必填且不超过 50 个字符');
+ if(!d||typeof d.serviceModel!=='string'||d.serviceModel.length>50)e.push('客服型号不能超过 50 个字符');
+ if(d&&Object.keys(d).some(k=>!['name','serviceModel'].includes(k)))e.push('包含不可编辑或未知字段');
+ if(state.units.some(u=>!ST[u.status]))e.push('请先核对数据中心状态');
+ if(detailsNeedApproval()&&JSON.stringify(state.profile)!==JSON.stringify(state.approvalBaseline))e.push('当前详情与有效审批基准不一致，请先核对');return e;
+}
+function openBasicEditor(){if(state.request)return toast('产品有活跃申请，请先处理','warn');state.profileDraft={...state.profile};state.profileEditBase={version:state.globalVersion,profile:{...state.profile}};state.profileErrors=[];state.basicEditing=true;renderAll();}
+function saveProfile(){state.profileErrors=profileErrors();if(state.profileErrors.length){state.modal=null;renderAll();return false;}
+ const diff=profileDiff(state.profile,state.profileDraft);if(!diff.length){state.basicEditing=false;state.modal=null;renderAll();toast('没有实际变更');return false;}
+ if(detailsNeedApproval()){state.modal={type:'profile'};renderAll();return true;}
+ // 非上架工作配置直接保存，不产生审批、保存留痕或不可变版本；历史快照不改写。
+ state.profile={...state.profileDraft};state.profileDraft=null;state.basicEditing=false;state.modal=null;renderAll();toast('已保存');return true;
+}
+function submitProfile(){const errors=profileErrors();if(errors.length){state.profileErrors=errors;state.modal=null;renderAll();return false;}
+ if(!detailsNeedApproval())return saveProfile();
+ const diff=profileDiff(state.profile,state.profileDraft);if(!diff.length){state.modal=null;renderAll();return false;}
+ createRequest('profile',[],{targetProfile:{...state.profileDraft},diff});return true;
+}
+function basicInfoFields(profile){return [['产品名称',profile.name],['客服型号',profile.serviceModel||'—'],['产品型号','W1Lite'],['所属平台','ROOT云'],['通讯方式','BLE'],['配网方式','蓝牙配网'],['所属App','momcozy'],['绑定方式','弱绑定']];}
+function renderBasicInfoFields(fields){return `<div class="kv-grid">${fields.map(([k,v])=>`<div class="kv"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('')}</div>`;}
+function renderBasicInfo(){return `<div class="card"><div class="card-hd"><h2>产品信息</h2><button id="basic-edit-btn" class="btn btn-pri btn-sm" data-act="edit-basic" ${state.request?'disabled':''}>编辑产品信息</button></div><div class="card-bd" id="basic-info">${renderBasicInfoFields(basicInfoFields(state.profile))}</div></div>`;}
+function openVersionDetails(no){const v=ver(no);if(!v||!v.basicInfo)return toast('该版本基础信息暂不可用，请重试','warn');state.versionDrawer=no;state.selectedVersion=no;renderAll();$('#basic-drawer .drawer-x').focus({preventScroll:true});}
+function closeBasicDrawer(){const no=state.versionDrawer;state.versionDrawer=null;state.basicEditing=false;state.profileDraft=null;renderAll();if(no)$(`[data-act="version-detail"][data-version="${no}"]`)?.focus({preventScroll:true});}
+function renderBasicDrawer(){const snapshot=state.versionDrawer&&ver(state.versionDrawer),open=state.basicEditing||!!snapshot;$('#basic-drawer').classList.toggle('open',open);$('#basic-scrim').classList.toggle('open',open);if(!open){$('#basic-drawer').innerHTML='';return;}
+ $('#basic-drawer').setAttribute('role','dialog');$('#basic-drawer').setAttribute('aria-modal','true');$('#basic-drawer').setAttribute('aria-labelledby','basic-drawer-title');$('#basic-drawer').setAttribute('aria-label',snapshot?'产品详情 · 基础信息':'编辑产品信息');
+ if(snapshot){$('#basic-drawer').innerHTML=`<div class="drawer-hd" id="version-drawer-header"><div><h2 id="basic-drawer-title">产品详情 · 基础信息</h2><div class="sub">${esc(snapshot.no)} · ${snapshot.no===state.globalVersion?'当前生效版本':'历史版本'}</div></div><button class="drawer-x" data-act="close-basic" aria-label="关闭">×</button></div><div class="drawer-bd" id="version-basic-info"><h3 style="font-size:14px;font-weight:500;margin-bottom:12px">产品信息</h3><div id="version-basic-fields">${renderBasicInfoFields(snapshot.basicInfo)}</div></div><div class="drawer-ft" id="version-drawer-actions"><span></span><button class="btn" data-act="close-basic">关闭</button></div>`;return;}
+ const d=state.profileDraft;$('#basic-drawer').innerHTML=`<div class="drawer-hd"><h2 id="basic-drawer-title">编辑产品信息</h2><button class="drawer-x" data-act="close-basic" aria-label="关闭">×</button></div><div class="drawer-bd"><div id="basic-fields"><div class="form-item"><label><span class="req">*</span> 产品名称</label><input type="text" maxlength="50" data-profile="name" value="${esc(d.name)}"></div><div class="form-item"><label>客服型号</label><input type="text" maxlength="50" data-profile="serviceModel" value="${esc(d.serviceModel)}"></div><div class="form-item"><label>产品型号</label><input type="text" value="W1Lite" disabled></div><div class="form-item"><label>通讯方式</label><input type="text" value="BLE" disabled></div></div>${state.profileErrors.length?`<div class="validation" role="alert">${state.profileErrors.map(x=>`<div>${esc(x)}</div>`).join('')}</div>`:''}</div><div class="drawer-ft"><span></span><div><button class="btn" data-act="close-basic">取消</button> <button id="basic-save" class="btn btn-pri" data-act="save-profile" ${state.request?'disabled':''}>保存</button></div></div>`;
+}
 
 function renderCanvas(){
   const crumbs=state.page==="list"
     ?`<span>智能产品</span>`
-    :`<span>智能产品</span><span>/</span><span>产品详情</span><span>/</span><b>发布管理</b>`;
+    :`<span>智能产品</span><span>/</span><span>产品详情</span><span>/</span><b>${state.detailTab==='basic'?'基础信息':'发布管理'}</b>`;
   $("#canvas").innerHTML=`
   <aside class="aside">
     <div class="logo"><span class="logo-mark">L</span><div><div class="logo-txt">LuteOS</div><div class="logo-sub">IoT Admin</div></div></div>
@@ -344,104 +472,34 @@ function renderCanvas(){
 
 /* ---------- 产品列表 ---------- */
 function renderList(){
-  const d=derivedStatus();
-  const rows=[
-    {name:"Momcozy S12 Pro 智能吸奶器",model:"M-S12-PRO",pid:"2075767415740338177",main:true},
-    {name:"Momcozy S9 穿戴式吸奶器",model:"M-S9-W",pid:"1846392499368579074",sum:"6/6 已上架",st:{t:"已上架",tag:"tag-ok"},fv:"2.3.1 / 已发布",plat:"Andlink",upd:"2026-09-28 11:20"},
-    {name:"Momcozy M5 双边吸奶器",model:"M-M5-DB",pid:"1966833100221845506",sum:"0/4 已上架 · 4 未上架",st:{t:"开发中",tag:"tag-info"},fv:"1.0.0 / 迭代中",plat:"Andlink",upd:"2026-10-08 09:42"}
-  ];
-  const kw=state.listKw.trim();
-  const shown=kw?rows.filter(r=>r.pid.includes(kw)||r.name.includes(kw)):rows;
-  return `
-  <div class="card" id="list-filter">
-    <div class="card-bd">
-      <div class="filter-bar">
-        <div class="f-field"><label>产品分类</label><select><option>全部</option><option>吸奶器</option><option>温奶器</option></select></div>
-        <div class="f-field"><label>所属APP</label><select><option>全部</option><option>Momcozy</option></select></div>
-        <div class="f-field"><label>产品ID / 名称</label><input id="list-kw" placeholder="请输入产品ID或名称" value="${esc(kw)}"></div>
-        <button class="btn btn-pri" data-act="list-query" type="button">查询</button>
-        <button class="btn" data-act="list-reset" type="button">重置</button>
-        <span style="flex:1"></span>
-        <button class="btn btn-pri" data-act="noop-create" type="button">+ 创建产品</button>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th style="min-width:220px">产品名称 / 型号</th><th>产品ID</th><th>产品状态</th><th id="list-summary-head" style="min-width:230px">区域发布摘要</th><th>功能版本/状态</th><th>所属平台</th><th>更新时间</th><th style="width:130px">操作</th></tr></thead>
-      <tbody>
-      ${shown.map(r=>r.main?`
-        <tr>
-          <td><div class="cell-main">${r.name}</div><div class="cell-sub">${r.model}</div></td>
-          <td>${r.pid}</td>
-          <td id="list-status-cell"><span class="tag ${d.tag}">${d.t}</span><div class="cell-sub">区域状态见摘要</div></td>
-          <td id="list-summary-cell">${summaryStr()}</td>
-          <td>FV-2026.10.01 / 已发布</td><td>Andlink</td><td>2026-10-08 21:10</td>
-          <td><div class="ops"><button class="btn-link" data-act="view-product" type="button">查看</button><button class="btn-link" data-act="noop-copy" type="button">复制</button></div></td>
-        </tr>`:`
-        <tr>
-          <td><div class="cell-main">${r.name}</div><div class="cell-sub">${r.model}</div></td>
-          <td>${r.pid}</td>
-          <td><span class="tag ${r.st.tag}">${r.st.t}</span><div class="cell-sub">区域状态见摘要</div></td>
-          <td>${r.sum}</td>
-          <td>${r.fv}</td><td>${r.plat}</td><td>${r.upd}</td>
-          <td><div class="ops"><button class="btn-link" data-act="noop-view" type="button">查看</button><button class="btn-link" data-act="noop-copy" type="button">复制</button></div></td>
-        </tr>`).join("")||`<tr><td colspan="8"><div class="empty"><div class="ico">∅</div>暂无匹配产品</div></td></tr>`}
-      </tbody>
-    </table></div>
-    <div class="pager"><span>共 ${shown.length} 条</span><span>10条/页</span><span class="pg on">1</span></div>
-  </div>`;
+ const kw=state.listKw.trim();const shown=!kw||'2075767415740338177'.includes(kw)||state.profile.name.toLowerCase().includes(kw.toLowerCase());
+ return `<div class="card" id="list-filter"><div class="card-bd"><div class="filter-bar">
+ <div class="f-field"><label>产品分类</label><select><option>全部</option><option>Breast Pump</option></select></div>
+ <div class="f-field"><label>所属APP</label><select><option>全部</option><option>momcozy</option></select></div>
+ <div class="f-field"><label>产品ID / 名称</label><input id="list-kw" placeholder="请输入产品ID或名称" value="${esc(kw)}"></div><button class="btn btn-pri" data-act="list-query">查询</button><button class="btn" data-act="list-reset">重置</button><span style="flex:1"></span><button class="btn btn-pri" data-act="noop-create">+ 创建产品</button></div></div></div>
+ <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>产品名称 / 型号</th><th>产品ID</th><th>公开上架的数据中心</th><th>功能版本/状态</th><th>所属平台</th><th>所属App</th><th>通讯方式</th><th>操作</th></tr></thead><tbody>${shown?`<tr><td><div class="cell-main">${esc(state.profile.name)} ${state.request?'<span class="tag tag-warn">审批冻结</span>':''}</div><div class="cell-sub">W1Lite</div></td><td>2075767415740338177</td><td id="list-public-centers">${esc(publiclyListedCenterNames())}</td><td>版本1 / 已发布</td><td>ROOT云</td><td>momcozy</td><td>BLE</td><td><div class="ops"><button class="btn-link" data-act="view-product">查看</button><button class="btn-link" data-act="noop-copy">复制</button></div></td></tr>`:'<tr><td colspan="8"><div class="empty">暂无匹配产品</div></td></tr>'}</tbody></table></div><div class="pager"><span>共 ${shown?1:0} 条</span><span>10条/页</span><span class="pg on">1</span></div></div>`;
 }
 
 /* ---------- 产品详情 ---------- */
 function renderDetail(){
-  const d=derivedStatus();
-  const inert=["基础信息","功能设计","扩展程序","设备调试","配网引导","高级配置"];
-  const subs=[["units","发布单元"],["versions","版本与回滚"]];
-  return `
-  <div class="card">
-    <div class="summary">
-      <div>
-        <h1>Momcozy S12 Pro 智能吸奶器</h1>&nbsp;<span class="tag ${d.tag}">${d.t}</span>&nbsp;<span class="tag tag-info">区域状态见摘要</span>
-        <div class="sum-meta">
-          <div><span class="k">产品型号：</span><span class="v">M-S12-PRO</span></div>
-          <div><span class="k">产品ID：</span><span class="v">2075767415740338177</span></div>
-          <div><span class="k">所属APP：</span><span class="v">Momcozy</span></div>
-          <div><span class="k">通讯方式：</span><span class="v">BLE + Wi-Fi</span></div>
-        </div>
-      </div>
-      <div class="sum-stats">
-        <div class="stat" style="border-left:0"><div class="n">6</div><div class="l">数据中心 / 国家<br>发布单元</div></div>
-        <div class="stat"><div class="n pri">${state.units.filter(u=>u.status==="listed").length}</div><div class="l">已上架区域</div></div>
-        <div class="stat"><div class="n">${state.globalVersion}</div><div class="l">当前生效版本（全局）</div><div class="l" style="margin-top:2px;color:var(--t4)">创建 v1；仅基础信息审批递增</div></div>
-        <div class="stat"><div class="n warn">${state.request?1:0}</div><div class="l">活跃审批</div></div>
-      </div>
-    </div>
-    <div class="tabs" style="border-top:1px solid var(--bdlr)">
-      ${inert.map(t=>`<button class="tab dim" data-act="inert-tab" data-tab-name="${t}" type="button">${t}</button>`).join("")}
-      <button class="tab active" type="button">发布管理</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="tabs">
-      ${subs.map(([id,label])=>`<button class="tab ${state.detailTab===id?"active":""}" data-act="sub-tab" data-tab="${id}" type="button">${label}</button>`).join("")}
-    </div>
-    ${state.detailTab==="units"?renderUnits():renderVersions()}
-  </div>`;
+ const tabs=[['basic','基础信息'],['noop','功能设计'],['noop','扩展程序'],['noop','设备调试'],['noop','配网引导'],['noop','高级配置'],['release','发布管理']];
+ const basic=state.detailTab==='basic',subs=[['units','数据中心上架状态'],['versions','版本与回滚']];
+ return `<div class="card"><div class="summary" id="product-baseline"><h1>${esc(state.profile.name)}</h1> <span class="tag tag-info">ROOT云</span> ${state.request?'<span id="approval-freeze-badge" class="tag tag-warn">审批冻结</span>':''}<div class="sum-meta">
+ <div><span class="k">产品分类：</span><span class="v">Breast Pump</span></div><div><span class="k">产品型号：</span><span class="v">W1Lite</span></div><div><span class="k">产品代码：</span><span class="v">--</span></div><div><span class="k">产品ID：</span><span class="v">2075767415740338177</span></div><div><span class="k">产品模板ID：</span><span class="v">1907328212561108993</span></div><div><span class="k">功能版本：</span><span class="v">版本1 - 已发布</span></div><div id="product-public-centers" style="grid-column:1/-1"><span class="k">公开上架的数据中心：</span><span class="v">${esc(publiclyListedCenterNames())}</span></div>${state.request?`<div id="approval-freeze-info" style="grid-column:1/-1"><span class="k">当前申请：</span><span class="v">${state.request.no}</span> <button class="btn-link" data-act="view-approval" data-request="${state.request.no}">查看审批单</button></div>`:''}</div></div>
+ <div class="tabs" style="border-top:1px solid var(--bdlr)">${tabs.map(([id,label])=>`<button class="tab ${(id==='basic'&&basic)||(id==='release'&&!basic)?'active':id==='noop'?'dim':''}" data-act="${id==='noop'?'inert-tab':'main-tab'}" data-tab="${id}" data-tab-name="${label}">${label}</button>`).join('')}</div></div>
+ ${basic?renderBasicInfo():`<div class="card"><div class="tabs">${subs.map(([id,label])=>`<button class="tab ${state.detailTab===id?'active':''}" data-act="sub-tab" data-tab="${id}">${label}</button>`).join('')}</div>${state.detailTab==='units'?renderUnits():renderVersions()}</div>`}`;
 }
 
-
 function renderVersions(){
-  const sv=ver(state.selectedVersion);
   const firstHist=(state.versions.find(v=>v.no!==state.globalVersion)||{}).no;
   return `
   <div class="card-bd" style="padding-bottom:0">
     <div class="alert alert-info" id="version-rule" style="margin-bottom:0">
       <span class="alert-icn">i</span>
-      <span><b>版本域（Product Profile）：</b>产品创建生成 v1；每次产品基础信息审批通过后自动递增为 v2、v3……。发布管理、发布范围及上下架审批不生成版本。功能版本（FV-xxx）沿用自身「迭代中 → 已发布」生命周期，产品版本仅记录引用。</span>
+      <span><b>产品基础信息版本：</b>产品创建生成 v1；每次产品基础信息审批通过后自动递增为 v2、v3……。数据中心可见范围调整不生成版本。功能版本（FV-xxx）沿用自身「迭代中 → 已发布」生命周期，产品版本仅记录引用。</span>
     </div>
   </div>
-  <div class="card-bd" style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px">
+  <div class="card-bd">
     <div style="min-width:0">
       <div id="version-table"><div style="overflow-x:auto"><table>
         <thead><tr><th>版本</th><th style="min-width:170px">变更类型</th><th>生效时间</th><th>申请号</th><th style="min-width:170px">提交人 / 审批人</th><th style="width:150px">操作</th></tr></thead>
@@ -458,60 +516,187 @@ function renderVersions(){
           </tr>`).join("")}</tbody>
       </table></div></div>
     </div>
-    <div style="min-width:0;display:grid;gap:16px;align-content:start">
-      <div class="card" style="margin:0" id="version-pointer">
-        <div class="card-hd"><div><h2>全局生效版本指针</h2><div class="sub">所有上架区域使用相同基础信息版本；回滚恢复历史基础信息，不生成新版本</div></div></div>
-        <div class="card-bd">
-          <div style="font-size:26px;font-weight:700;color:var(--t1)">${state.globalVersion}</div>
-          <div class="cell-sub" style="margin-top:6px">应用于全部 ${state.units.length} 个发布单元 · 回滚保持发布范围和单元状态</div>
-        </div>
-      </div>
-      <div class="card" style="margin:0" id="version-detail">
-        <div class="card-hd"><div><h2>版本快照详情 · ${sv.no}</h2><div class="sub">基础信息快照，只读；后续编辑基于当前生效版本创建新变更</div></div></div>
-        <div class="card-bd"><div class="kv-grid">
-          <div class="kv"><div class="k">变更类型</div><div class="v">${sv.type}</div></div>
-          <div class="kv"><div class="k">生效时间 / 申请号</div><div class="v">${sv.time} · ${sv.req}</div></div>
-          <div class="kv"><div class="k">功能版本引用</div><div class="v">${sv.fv}</div></div>
-          <div class="kv"><div class="k">差异摘要</div><div class="v">${sv.diff}</div></div>
-        </div></div>
-      </div>
-    </div>
   </div>`;
 }
 
 
 const NOTES=[
-{ctx:'list',target:'#list-filter',title:'产品列表筛选',loc:'智能产品 > 筛选区',body:'交互：产品名称或 ID 查询；重置清空查询条件。查询无匹配时显示空态。\n原型备注：仅 S12 Pro 的查看进入本次发布管理，其余功能沿用现有页面。'},
-{ctx:'list',target:'#list-status-cell',title:'产品级状态待确认',loc:'产品列表 > 产品状态',body:'说明：区域发布状态是入口判定依据；全部未上架显示开发中，全部已上架显示已上架。\n原型备注：混合状态及全下架的产品级派生文案待 PRD D04 确认，当前显示 —，不是新增业务状态。'},
-{ctx:'list',target:'#list-summary-cell',title:'区域发布摘要',loc:'产品列表 > 区域发布摘要',body:'说明：显示已上架 / 总单元数、未上架数量、已下架数量。一个单元对应数据中心 + 国家。\n交互：查看进入发布管理，按区域查询正式状态。'},
-{ctx:'units',target:'#units-whitelist-alert',title:'上架前白名单体验',loc:'发布单元 > 顶部提示',body:'说明：未上架时仅授权白名单可体验；按邮箱 + 数据中心及现有产品授权命中，不新增白名单国家字段。\n规则：当地体验由业务人为确认，不记录验证人、结论或证据，不作为提交或审批的系统 gate。白名单可见不是新增状态。'},
-{ctx:'units',target:'#new-plan-btn',title:'按区域发布',loc:'发布单元 > 上架发布计划',body:'交互：打开抽屉，支持整个数据中心或多个国家。生效后区域所有普通用户具有配网入口资格。\n按钮状态：同产品有活跃审批时不可创建新申请，沿用现有同产品审批冻结规则。'},
-{ctx:'units',target:'#units-table',title:'区域状态及入口',loc:'发布单元 > 状态与入口列',body:'说明：正式状态仅未上架、已上架、已下架。已上架地区所有用户可见，不按账号分批。\n交互：数据中心过滤，刷新展示加载态；无单元时显示空态。\n状态/差异：审批中或定时等待不改变原正式状态；白名单授权可用于未上架 / 已下架阶段体验。'},
-{ctx:'units',target:'#units-table',title:'区域操作及能力依赖',loc:'发布单元 > 操作列',body:'按钮状态：未上架可提交上架；已上架可下架；已下架可重新上架。发布范围扩展对应新增区域上架，缩减对应选定区域下架。\n规则：配网入口、新增配网和新增分享按状态及授权判断。设备控制、升级、已添加设备、既有分享保持有效。删除后重新配网按当前状态重判。'},
-{ctx:'units',target:'#units-legend',title:'审批与正式状态分离',loc:'发布单元 > 状态关系',body:'状态图：未上架 → 已上架 ⇄ 已下架；每条转换均需审批生效。\n异常处理：未审批、应用失败及定时未到时保持原状态。\n规则：App 每次加载 / 刷新更新缓存，每次配网及分享调用由后台按当前状态判定，旧缓存不能绕过下架。'},
-{ctx:'units',target:'#audit-list',title:'审批和操作记录',loc:'发布单元 > 记录区',body:'说明：记录动作、操作者、时间、申请号及影响区域；发布操作不产生基础信息版本。回滚记录原版本到目标版本，区域状态保持。\n原型备注：右侧演示控制模拟非本人审批员的结果，不是产品功能，也不授予当前提交人审批权限。数据只在本次会话保存，刷新重置。'},
-{ctx:'drawer',target:'#plan-inherit',title:'选定区域整体开放',loc:'上架计划 > 提示',body:'说明：发布影响的是 App 产品入口，审批生效后当地所有用户具有入口资格。产品基础信息跟随当前全局生效版本，不在此重复选择或展示。'},
-{ctx:'drawer',target:'#plan-targets',title:'数据中心与国家选择',loc:'上架计划 > 目标发布单元',body:'交互：中心整组选中该中心全部可上架国家；支持国家单选及部分选中。已上架国家不可重复选择，不影响原状态。\n规则：未上架、已下架单元可以提交上架。国家映射使用现有主数据，本需求不枚举完整清单。'},
-{ctx:'drawer',target:'#plan-eff',title:'立即与定时均先审批',loc:'上架计划 > 生效时间',body:'字段：审批通过后立即生效 / 定时生效。定时必须有有效日期时间，分钟精度。\n规则：审批通过且到指定时间才应用；指定时间已过则审批通过后立即应用。审批之前不自动开放。\n待确认：等待时审批展示及占用释放参见 PRD D02；演示暂保留冻结并标明等待，不视为最终定义。'},
-{ctx:'drawer',target:'#plan-submit',title:'确认与提交校验',loc:'上架计划 > 底部按钮',body:'交互：检查目标至少一个、生效时间有效、当前无活跃审批；错误保留输入，成功打开目标核对弹窗，再提交待审批。\n规则：不新增审批原因、授权操作人、白名单验证结果字段；提交不更改正式状态，发布审批不写基础信息版本历史。'},
-{ctx:'modal:release',target:'#modal-box',title:'上架提交前核对',loc:'弹窗 > 确认上架',body:'说明：核对目标国家与生效时间，确认提交后冻结申请，当前正式状态不变。\n交互：取消关闭回到计划；确认创建待审批并关闭计划。下一步使用既有审批流程。'},
-{ctx:'modal:delist',target:'#modal-box',title:'区域下架确认',loc:'弹窗 > 下架',body:'说明：审批生效后目标地区普通用户不能新增发现、配网与分享；授权白名单按既有规则访问。\n保护：既有绑定、设备控制和升级、已有分享不受影响。\n交互：取消不产生申请，确认提交待审批；失败保留原已上架状态。下架及重新上架不新增基础信息版本。'},
-{ctx:'versions',target:'#version-rule',title:'版本来源及发布域解耦',loc:'版本与回滚 > 规则',body:'说明：创建生成 v1；产品基础信息审批通过后递增 v2、v3……。发布管理、范围变更与上下架审批不生成版本。\n规则：版本全局共用、历史不可变；功能版本、固件、扩展程序自身生命周期沿用基线。开发中直存与不可变 v1 的衔接待 D03。'},
-{ctx:'versions',target:'#version-table',title:'基础信息版本历史',loc:'版本与回滚 > 版本表',body:'交互：详情查看只读快照，历史版本可申请回滚，当前版本无回滚操作；只有一个版本时无有效回滚目标。同产品审批占用时禁用新回滚。\n数据来源：创建与基础信息审批记录；不展示仅由发布范围或上下架产生的版本。'},
-{ctx:'versions',target:'#version-pointer',title:'统一全局指针',loc:'版本与回滚 > 指针',body:'说明：所有区域共用一个生效版本。回滚仅切换到历史基础信息版本，不新增版本；各区域发布范围与状态逐项保持不变。'},
-{ctx:'versions',target:'#version-detail',title:'基础信息快照',loc:'版本与回滚 > 快照详情',body:'说明：只读展示基础信息差异、功能版本引用和审批来源，排除区域发布字段。\n规则：回滚后编辑以恢复内容为基础，下次审批使用下一未使用序号，例如 v3 回到 v2 后再次变更生成 v4。'},
-{ctx:'modal:rollback',target:'#modal-box',title:'恢复历史基础信息',loc:'弹窗 > 全局回滚',body:'流程图：选择历史版本 → 核对基础信息差异 → 提交审批 → 应用成功时切换全局指针。\n规则：至少两个版本且目标不是当前版本；不生成新版本，不恢复历史发布范围或改变区域上下架状态。\n异常处理：取消不创建申请；应用失败时原指针和区域状态保留且继续冻结，重试幂等。'}
+  {
+    "ctx": "list",
+    "target": "#list-filter",
+    "title": "现有产品列表",
+    "loc": "智能产品 > 筛选区",
+    "body": "交互：按名称或 ID 查询；重置清空条件；无匹配显示空态。查看进入本次发布管理。\n事实基线：基础元数据使用已核对W1 Lite样例，原产品状态列替换为实际公开中心名称，不增加数量指标。其他列表能力沿用现有产品页。"
+  },
+  {
+    "ctx": "list",
+    "target": "#list-public-centers",
+    "title": "明确列出公开上架的数据中心",
+    "loc": "产品列表 > 公开上架的数据中心",
+    "body": "说明：替换原全局产品状态列，列出当前正式状态为所有用户可见的数据中心名称；没有公开中心显示无。\n规则：不产生全部上架、部分上架等产品级汇总状态。名单与详情头部使用同一正式状态来源；白名单、隐藏、未提交草稿、未通过审批或尚未到时的目标均不计入。"
+  },
+  {
+    "ctx": "units",
+    "target": "#product-public-centers",
+    "title": "产品头部展示具体公开中心",
+    "loc": "产品详情 > 公开上架的数据中心",
+    "body": "说明：采用用户确认的拆分展示，移除全局已上架标签，明确列出当前公开上架中心；其他基础元数据沿既有页面。\n规则：公开上架仅对应某数据中心当前正式状态所有用户可见，不代表所有区域都已发布。无公开中心显示无，不推导产品级发布状态。\n交互：上架或下架只有完整成功应用且到时后才更新名单，草稿、审批等待、应用失败不提前改变名单。产品列表与头部取同一数据来源。"
+  },
+  {
+    "ctx": "units",
+    "target": "#visibility-toolbar",
+    "title": "查看态与编辑态",
+    "loc": "发布管理 > 数据中心上架状态",
+    "body": "交互：默认只读，点击编辑上架状态后各中心进入同一编辑页面，可分别配置不同目标和生效时间。无需再选数据中心或统一目标。\n规则：有活跃申请时产品显示审批冻结，编辑入口禁用；提交成功立即退出编辑态。审批具体进度在查看审批单中展示，不设变更状态列。"
+  },
+  {
+    "ctx": "units",
+    "target": "#visibility-head",
+    "title": "产品在该数据中心的当前状态",
+    "loc": "数据中心列表 > 当前状态",
+    "body": "状态定义：开发中＝所有用户不可见；白名单体验＝仅授权白名单可见；已上架＝所有用户可见。这里表示产品在该中心已生效的上架状态。\n规则：目标草稿及审批进度不覆盖当前状态；公开上架中心名单只统计当前已上架的中心。新建产品各中心默认开发中。"
+  },
+  {
+    "ctx": "units",
+    "target": "#center-config-head",
+    "title": "平铺状态勾选",
+    "loc": "编辑上架状态 > 目标状态",
+    "body": "字段：每行平铺白名单体验与上架两个勾选项；都不勾选＝开发中，分别勾选＝白名单体验 / 已上架。上架包含授权白名单用户。\n交互：按用户确认的互斥勾选，选中一项自动取消另一项，取消当前项则两项均不选，对应开发中。查看态只读显示已生效勾选，编辑态显示目标草稿，当前状态仍保留正式值。\n规则：多中心独立修改、统一提交；仅进入或退出已上架需审批，草稿不提前覆盖正式状态。",
+    "when": null
+  },
+  {
+    "ctx": "units",
+    "target": "#center-effective-head",
+    "title": "各中心的生效时间",
+    "loc": "数据中心列表 > 生效时间",
+    "body": "编辑态：有实际变化的行可选立即 / 定时；定时必填有效日期时间。各行时间独立。\n查看态：显示已提交计划的目标及时间，不把批准但未到时的目标当成当前已上架。需要审批的变更通过且到时才应用；免审项按保存的时间应用。\n原型备注：等待或应用失败的占用沿既有冻结方案，具体定时占用实现保留D02核验；详情能查看真实进度。"
+  },
+  {
+    "ctx": "modal:visibility-batch",
+    "target": "#modal-box",
+    "title": "统一核对与处理分流",
+    "loc": "弹窗 > 确认保存或审批",
+    "body": "说明：逐行核对变更前、目标、生效时间及处理方式。纯免审批显示确认保存且明确无需审批，不提示生成审批单；纯审批显示提交审批并合为一单；混合时分别说明审批及直接保存。\n规则：先验证整批，任一行错误则均不提交、不应用；确认内容变化需重新核对。需审批项冻结各自目标及时间，批准前当前状态不变。\n交互：成功后退出编辑态；取消确认回到编辑态保留全部草稿。审批失败 / 重试沿用同一申请，不重复应用已生效行。"
+  },
+  {
+    "ctx": "versions",
+    "target": "#version-rule",
+    "title": "版本来源与可见范围解耦",
+    "loc": "版本与回滚 > 规则",
+    "body": "说明：创建 v1，基础信息审批成功生效后递增版本。任一中心当前所有用户可见时，允许字段变更须审批；全部中心非公开时详情免审直存，不生成审批版本、不改不可变历史。\n规则：中心范围变更无论是否审批都不产生基础信息版本。离线工作配置与历史版本、后续上架的完整衔接仍见 D03，不以示例补齐。"
+  },
+  {
+    "ctx": "versions",
+    "target": "#version-table",
+    "title": "基础信息版本历史",
+    "loc": "版本与回滚 > 版本表",
+    "body": "交互：点击任一版本的详情，打开只读的产品详情－基础信息抽屉；字段布局沿用基础信息页，值读取该行版本快照。当前版本也能查看。关闭后回到版本表。\n规则：表格占满内容区，不展示当前基础信息版本或快照摘要侧卡；生效版本仅由表内标记识别。查看不切换生效指针，不创建审批。非当前版本的回滚仍使用独立入口。"
+  },
+  {
+    "ctx": "modal:rollback",
+    "target": "#modal-box",
+    "title": "恢复历史基础信息",
+    "loc": "弹窗 > 全局回滚",
+    "body": "流程图：选择历史版本 → 核对全局版本与字段值差异 → 提交审批 → 应用成功后切换全局版本。\n规则：至少两个版本且目标不是当前版本，不生成新版本，不恢复或改变数据中心可见范围。\n异常处理：取消不创建申请；失败保留原指针和所有中心范围，重试幂等。"
+  },
+  {
+    "ctx": "modal:rollback",
+    "target": "#rollback-field-diff",
+    "title": "逐字段核对恢复结果",
+    "loc": "回滚确认 > 字段值差异",
+    "body": "字段：仅列实际有变化的基础信息，三列为字段 / 当前值 / 回滚后值；空值显示未设置，实际文字值原样展示。按当前实际配置与目标版本完整快照比较，不使用目标版本当时的变更摘要代替。\n状态/差异：无变化时明确显示无字段值差异，仍可恢复不同历史版本的指针；快照不可读取时阻止提交并提示重试。\n交互：只读；提交前重新核对当前版本及差异，已变化时要求重新确认；确认差异随审批冻结保存。\n权限：仍须按PRD校验实际变更字段的可修改资格；本原型仅覆盖现有8项展示字段及名称 / 客服型号的恢复演示。"
+  },
+  {
+    "ctx": "basic",
+    "target": "#basic-info",
+    "title": "基础信息与全局审批条件",
+    "loc": "基础信息 > 产品信息",
+    "body": "规则：任一中心的当前正式范围为所有用户可见，产品基础详情变更需审批；全部中心为隐藏或仅白名单则直接保存。未提交草稿不参与判断；待审批 / 未生效申请仍阻止正式保存。\n权限：沿审批优化既有字段权限，不能因免审批扩展可编辑范围；永久不可编辑字段保持只读。"
+  },
+  {
+    "ctx": "basic",
+    "target": "#basic-edit-btn",
+    "title": "编辑现有允许字段",
+    "loc": "基础信息 > 编辑产品信息",
+    "body": "交互：打开现有形态的产品信息抽屉，本原型以产品名称、客服型号验证审批分支，型号及通讯方式只读。\n原型备注：字段来源为审批优化模型 FIELDS，不扩展其他字段权限；示例只验证触发、生效和历史隔离，真实全字段集仍由基线承载。"
+  },
+  {
+    "ctx": "basic-edit",
+    "target": "#basic-fields",
+    "title": "字段权限与校验",
+    "loc": "编辑产品信息 > 字段",
+    "body": "字段：名称必填且不超过50字符，客服型号可空且不超过50字符；型号、通讯方式不可改。\n规则：未知或不可编辑字段被拒绝；无净变化不产生详情审批；清空可选字段也算变化。"
+  },
+  {
+    "ctx": "basic-edit",
+    "target": "#basic-save",
+    "title": "保存时重新判定是否需要审批",
+    "loc": "编辑产品信息 > 保存",
+    "body": "流程图：校验权限及活跃申请 → 读取所有中心当前正式范围 → 任一全部可见则核对差异并提交审批，否则直接保存。\n状态/差异：最后一个公开中心的下架仍未生效时继续审批控制；首个公开中心上架审批在途时，虽尚无公开正式值，也因活跃申请阻止直存。\n规则：离线直存不生成审批单、保存留痕或不可变版本，历史快照不改写；工作配置与后续版本衔接保留 D03。"
+  },
+  {
+    "ctx": "modal:profile",
+    "target": "#profile-diff",
+    "title": "基础详情变更差异",
+    "loc": "详情审批确认 > 字段前后值",
+    "body": "说明：只列实际变化的字段、变更前及变更后，包含可选字段清空。冻结提交目标，审批应用成功前当前详情不变。\n规则：成功后新增基础信息版本；失败或撤销不改正式详情或历史；不修改任何中心范围。后续比较基于最新成功生效值。"
+  },
+  {
+    "ctx": "units",
+    "target": "#batch-actions",
+    "when": "editing",
+    "title": "取消编辑与统一提交",
+    "loc": "编辑上架状态 > 操作区",
+    "body": "交互：取消编辑丢弃本次未提交目标，返回查看态；提交配置仅包含实际变化的所有行。需审批项共同使用一个申请号，免审项在确认中单独说明。\n按钮：没有变化时提交禁用；日期或范围错误定位到相应行，保留编辑态及其他行草稿。无逐行保存按钮。"
+  },
+  {
+    "ctx": "units",
+    "target": "#approval-freeze-badge",
+    "when": "freeze",
+    "title": "审批冻结与只读展示",
+    "loc": "产品头部 > 审批冻结",
+    "body": "说明：审批冻结是申请占用提示，不是全局发布状态。只读列表仍展示每中心当前已生效状态，公开名单不提前变化。\n交互：查看审批单展示冻结目标、时间及实际处理进度；审批操作的演示入口仅在右侧。待审批 / 未生效沿既有占用规则，定时未完整生效保留原型占用示例，实施仍见D02。"
+  },
+  {
+    "ctx": "modal:approval-detail",
+    "target": "#approval-detail",
+    "title": "一单包含多个中心",
+    "loc": "审批单详情",
+    "body": "说明：同一申请号列出所有需审批中心的冻结前值、目标及各自时间；处理进度只在审批详情展示。\n规则：不因移除主表变更状态列而把未生效目标写入当前状态；重试跳过已应用条目，历史冻结内容不改写。"
+  },
+  {
+    "ctx": "version-readonly",
+    "target": "#version-drawer-header",
+    "title": "查看指定版本的基础信息",
+    "loc": "详情抽屉 > 标题",
+    "body": "说明：标题为产品详情 · 基础信息，标注所选版本及其当前生效 / 历史身份，不代表打开即恢复版本。\n交互：打开后焦点进入关闭按钮；关闭、遮罩或Esc返回版本表，不改变当前生效版本。"
+  },
+  {
+    "ctx": "version-readonly",
+    "target": "#version-basic-fields",
+    "title": "沿用基础信息布局，只读历史值",
+    "loc": "详情抽屉 > 产品信息",
+    "body": "数据来源：读取点击行的基础信息快照，不读取最新工作配置；布局与当前基础信息页共用。空值显示—。\n规则：无输入框、编辑、保存或发布操作；查看不改任何版本、数据中心状态或审批记录。\n原型备注：沿用现有基础信息页的字段展示，历史值为演示样例；完整字段及11项权限仍由PRD基线承载。"
+  },
+  {
+    "ctx": "version-readonly",
+    "target": "#version-drawer-actions",
+    "title": "关闭只读详情",
+    "loc": "详情抽屉 > 底部",
+    "body": "交互：仅关闭；返回版本表并恢复到原详情按钮的焦点。查看不会触发回滚，回滚从版本表的独立操作发起。"
+  }
 ];
 
 function currentCtx(){
   if(state.modal)return `modal:${state.modal.type}`;
-  if(state.drawer)return "drawer";
+  if(state.versionDrawer)return 'version-readonly';
+  if(state.basicEditing)return 'basic-edit';
   if(state.page==="list")return "list";
   return state.detailTab;
 }
 function ctxLabel(){
-  const m={list:"产品列表",units:"产品详情 · 发布单元",versions:"产品详情 · 版本与回滚",drawer:"抽屉 · 上架发布计划"};
-  if(state.modal){const t={release:"弹窗 · 上架确认",delist:"弹窗 · 下架",rollback:"弹窗 · 版本回滚"};return t[state.modal.type]||"弹窗";}
+  const m={list:"产品列表",units:state.visibilityEditing?"发布管理 · 编辑上架状态":"发布管理 · 数据中心上架状态",basic:"产品详情 · 基础信息","basic-edit":"抽屉 · 编辑产品信息","version-readonly":"抽屉 · 产品详情 · 基础信息",versions:"产品详情 · 版本与回滚"};
+  if(state.modal){const t={visibility:"弹窗 · 确认可见范围","visibility-batch":"弹窗 · 统一核对","approval-detail":"审批单详情",profile:"弹窗 · 详情变更审批",rollback:"弹窗 · 版本回滚"};return t[state.modal.type]||"弹窗";}
   return m[currentCtx()]||"";
 }
 function noteTargets(note){return note.target.split(",").map(s=>s.trim());}
@@ -532,7 +717,7 @@ function activateNote(id,scroll=true){
   if(target){target.classList.add("note-target-active");if(scroll)target.scrollIntoView({block:"center",behavior:"smooth"});}
 }
 function idObj(id){return visibleNotes().find(n=>NOTES.indexOf(n)===Number(id));}
-function visibleNotes(){return NOTES.filter(n=>n.ctx===currentCtx());}
+function visibleNotes(){return NOTES.filter(n=>n.ctx===currentCtx()&&(!n.when||(n.when==='editing'&&state.visibilityEditing)||(n.when==='freeze'&&state.request)));}
 function renderAnnotations(){
   const list=$("#annList");clearAnchors();
   const notes=visibleNotes();
@@ -566,33 +751,44 @@ function renderAnnotations(){
 
 
 const annotationsBase=renderAnnotations;
-renderAnnotations=function(){annotationsBase();const q=state.request;if(!q)return;const box=document.createElement('div');box.className='note-card';box.style.display='block';box.id='approval-demo';const buttons=q.status==='pending'?[['approve','演示：审批通过'],['reject','演示：驳回'],['revoke','演示：发起人撤销'],['fail','演示：应用失败']]:q.status==='failed'?[['retry','演示：重试成功'],['fail','演示：重试失败'],['cancel','演示：取消变更']]:[];
-box.innerHTML=`<div class="note-body"><strong>原型演示 · 审批结果</strong><span class="note-line plain">${esc(q.no)} · ${requestLabel(q)}</span><span class="note-line plain">模拟切换有权审批员王静；实际禁止自审批。等待阶段的展示 / 占用待 D02，当前仅演示保留冻结。</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${buttons.map(([a,t])=>`<button class="btn btn-sm" data-demo="${a}">${t}</button>`).join('')}</div></div>`;$('#annList').appendChild(box);box.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>demoResolve(b.dataset.demo));};
-function renderAll(){renderCanvas();renderDrawer();renderModal();renderAnnotations();}
+renderAnnotations=function(){annotationsBase();Object.values(state.schedules).forEach(job=>{const box=document.createElement('div');box.className='note-card';box.style.display='block';box.innerHTML=`<div class="note-body"><strong>原型演示 · 定时保存</strong><span class="note-line plain">${esc(unit(job.targets[0]).dc)} · 不需要审批，等待指定时间</span><button class="btn btn-sm" data-schedule-demo="${job.targets[0]}">演示：到达生效时间</button></div>`;$('#annList').appendChild(box);box.querySelector('[data-schedule-demo]').onclick=()=>{runScheduled(job.effectiveAt);};});const q=state.request;if(!q)return;const box=document.createElement('div');box.className='note-card';box.style.display='block';box.id='approval-demo';const buttons=q.status==='pending'?[['approve','演示：审批通过'],['reject','演示：驳回'],['revoke','演示：发起人撤销'],['fail','演示：应用失败']]:q.status==='failed'?[['retry','演示：重试成功'],['fail','演示：重试失败'],['cancel','演示：取消变更']]:q.status==='waiting'?[['advance','演示：到达生效时间']]:[];
+box.innerHTML=`<div class="note-body"><strong>原型演示 · 审批结果</strong><span class="note-line plain">${esc(q.no)} · ${requestLabel(q)}</span><span class="note-line plain">模拟有权审批员王静，实际禁止自审批。涉及所有用户可见的切换需要审批；任一中心当前全部可见时，详情变更需审批。等待阶段展示及占用仍待 D02。</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${buttons.map(([a,t])=>`<button class="btn btn-sm" data-demo="${a}">${t}</button>`).join('')}</div></div>`;$('#annList').appendChild(box);box.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>demoResolve(b.dataset.demo));};
+function renderAll(){renderCanvas();renderBasicDrawer();renderModal();renderAnnotations();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const a=b.dataset.act,id=b.dataset.unit;
 switch(a){
 case 'view-product':state.page='detail';state.detailTab='units';renderAll();break;
 case 'list-query':state.listKw=$('#list-kw').value;renderAll();break;
 case 'list-reset':state.listKw='';renderAll();break;
+case 'main-tab':state.detailTab=b.dataset.tab==='basic'?'basic':'units';state.activeNote=null;renderAll();break;
+case 'edit-basic':openBasicEditor();break;
+case 'close-basic':closeBasicDrawer();break;
+case 'save-profile':saveProfile();break;
+case 'submit-profile':submitProfile();break;
+case 'cancel-schedule':cancelSchedule(id);break;
 case 'sub-tab':state.detailTab=b.dataset.tab;state.activeNote=null;renderAll();break;
-case 'dc-tab':state.dcFilter=b.dataset.dc;renderAll();break;
-case 'refresh-units':state.loadingUnits=true;renderAll();setTimeout(()=>{state.loadingUnits=false;runScheduled();renderAll();toast('区域状态已刷新');},400);break;
-case 'open-plan':openPlan(id);break;
-case 'close-drawer':state.drawer=null;renderAll();break;
-case 'confirm-plan':state.planShowErrors=true;if(planErrors().length){renderAll();break;}state.modal={type:'release'};renderAll();break;
-case 'submit-plan':submitPlan();break;
-case 'open-delist':if(state.request)return toast('产品有活跃审批','warn');state.modal={type:'delist',unitId:id};renderAll();break;
-case 'submit-delist':if(unit(state.modal.unitId).status==='listed')createRequest('delist',[state.modal.unitId]);break;
-case 'open-rollback':if(state.request)return toast('产品有活跃审批','warn');if(!ver(b.dataset.version)||b.dataset.version===state.globalVersion||state.versions.length<2)return;state.modal={type:'rollback',version:b.dataset.version};renderAll();break;
-case 'submit-rollback':if(ver(state.modal.version)&&state.modal.version!==state.globalVersion&&state.versions.length>=2)createRequest('rollback',[],{version:state.modal.version});break;
-case 'version-detail':state.selectedVersion=b.dataset.version;renderAll();break;
+case 'refresh-units':state.loadingUnits=true;renderAll();setTimeout(()=>{state.loadingUnits=false;runScheduled();renderAll();toast('数据中心可见范围已刷新');},400);break;
+case 'edit-visibility':enterVisibilityEdit();break;
+case 'cancel-visibility-edit':cancelVisibilityEdit();break;
+case 'view-approval':state.modal={type:'approval-detail',requestNo:b.dataset.request};renderAll();break;
+case 'confirm-batch':confirmBatch();break;
+case 'submit-batch':submitBatch();break;
+case 'open-rollback':openRollback(b.dataset.version);break;
+case 'submit-rollback':submitRollback();break;
+case 'version-detail':openVersionDetails(b.dataset.version);break;
 case 'close-modal':state.modal=null;renderAll();break;
-default:toast('本原型聚焦产品区域发布与版本回滚，其他入口沿用现有功能','info');
+default:toast('本原型聚焦数据中心可见范围与版本回滚，其他入口沿用现有功能','info');
 }});
-document.addEventListener('input',e=>{if(e.target.dataset.plan)state.plan[e.target.dataset.plan]=e.target.value;});
-document.addEventListener('change',e=>{const el=e.target;if(el.dataset.planTarget){el.checked?state.plan.targets.add(el.dataset.planTarget):state.plan.targets.delete(el.dataset.planTarget);renderDrawer();renderAnnotations();}else if(el.dataset.planDc){planTargets().filter(u=>u.dc===el.dataset.planDc).forEach(u=>el.checked?state.plan.targets.add(u.id):state.plan.targets.delete(u.id));renderDrawer();renderAnnotations();}else if(el.name==='plan-eff'){state.plan.effType=el.value;renderDrawer();renderAnnotations();}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(state.modal)state.modal=null;else state.drawer=null;renderAll();}});
-$('#scrim').onclick=()=>{state.drawer=null;renderAll();};$('#mscrim').onclick=e=>{if(e.target.id==='mscrim'){state.modal=null;renderAll();}};
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.centerAt)centerConfig(el.dataset.centerAt).effAt=el.value;else if(el.dataset.profile)state.profileDraft[el.dataset.profile]=el.value;});
+document.addEventListener('change',e=>{const el=e.target;let id;
+ if(el.dataset.centerState){id=el.dataset.centerState;if(!state.visibilityEditing||centerLocked(id)||!['whitelist','public'].includes(el.value)){renderAll();return;}const c=centerConfig(id);c.targetStatus=el.checked?el.value:'hidden';if(!centerDirty(id)){c.effType='now';c.effAt='';}}
+ else if(el.dataset.centerEffective){id=el.dataset.centerEffective;centerConfig(id).effType=el.value;}
+ else if(el.dataset.centerAt){id=el.dataset.centerAt;centerConfig(id).effAt=el.value;}
+ else return;
+ delete state.configErrors[id];const focusValue=el.dataset.centerState?el.value:null;renderAll();if(focusValue)document.querySelector(`[data-center-state="${id}"][value="${focusValue}"]`)?.focus({preventScroll:true});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(state.modal)state.modal=null;else if(state.basicEditing||state.versionDrawer){closeBasicDrawer();return;}else if(state.visibilityEditing){cancelVisibilityEdit();return;}renderAll();}});
+$('#basic-scrim').onclick=closeBasicDrawer;
+$('#mscrim').onclick=e=>{if(e.target.id==='mscrim'){state.modal=null;renderAll();}};
 $$('#mTabs .m-tab').forEach(b=>b.onclick=()=>{$$('#mTabs .m-tab').forEach(x=>x.classList.toggle('active',x===b));document.body.classList.toggle('show-ann',b.dataset.mtab==='ann');});
 renderAll();setInterval(()=>runScheduled(),1000);
 

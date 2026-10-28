@@ -1,8 +1,8 @@
 {
   "id": "product-listing-gray-rollback",
   "path": "/prototypes/product-listing-gray-rollback/",
-  "title": "IoT Admin 产品区域发布与版本回滚原型",
-  "summary": "按数据中心或国家审批上架，当地全员可见配网入口；支持区域下架、白名单体验与产品基础信息历史版本回滚。",
+  "title": "IoT Admin 产品数据中心上架与版本回滚原型",
+  "summary": "按数据中心独立配置开发中、白名单体验和已上架；多中心统一审批，支持基础信息只读历史详情与回滚字段差异。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
