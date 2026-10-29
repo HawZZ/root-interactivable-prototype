@@ -2,7 +2,7 @@
   "id": "ble-platform-configuration",
   "path": "/prototypes/ble-platform-configuration/",
   "title": "通用蓝牙协议配置与物模型绑定",
-  "summary": "通用应用层规范0.6.0：新产品派生协议、公共0D/0E配网、能力交集、1～2B Length与字段表配置，旧模板采用记录保持固定。",
+  "summary": "通用应用层规范0.6.1：Service08/Func00、下行WWR与上行Notify承载映射；系统只读配置、通道异常阻断及断开重连校验。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "ble-platform-configuration",
-  "version": "v0.6.0",
+  "version": "v0.6.1",
   "status": "draft",
   "tags": [
     "蓝牙协议",
@@ -18,7 +18,7 @@
     "字典配置",
     "评审原型"
   ],
-  "updatedAt": "2026-10-28T11:56:33Z",
+  "updatedAt": "2026-10-29T10:08:34.629003Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"
