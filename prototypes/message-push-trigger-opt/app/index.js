@@ -1,10 +1,10 @@
-import { $, $$, esc, showToast } from "./ui.js?v=20260903";
-import { appState, products, rules, newRule } from "./state.js?v=20260903";
-import { renderAnnotations } from "./annotations.js?v=20260903";
-import { openRuleDrawer, resetRuleDraft } from "./rule-editor.js?v=20260903";
-import { openProductLanguageDrawer } from "./language-editor.js?v=20260903";
-import { openProductPicker, renderProductPickerTrigger } from "./product-picker.js?v=20260903";
-import { openConfirmationDialog } from "./confirmation-dialog.js?v=20260903";
+import { $, $$, esc, showToast } from "./ui.js?v=20261029-labels";
+import { appState, products, rules, newRule } from "./state.js?v=20261029-labels";
+import { renderAnnotations } from "./annotations.js?v=20261029-labels";
+import { openRuleDrawer, resetRuleDraft } from "./rule-editor.js?v=20261029-labels";
+import { openProductLanguageDrawer } from "./language-editor.js?v=20261029-labels";
+import { openProductPicker, renderProductPickerTrigger } from "./product-picker.js?v=20261029-labels";
+import { openConfirmationDialog } from "./confirmation-dialog.js?v=20261029-labels";
 
 const workspace = $("#workspace");
 let query = "", statusQuery = "", typeQuery = "";
@@ -65,3 +65,5 @@ $("#primaryCreateBtn").addEventListener("click", typeChooser); $("#productLangua
 $("#annotationToggle").addEventListener("click", () => $(".prototype-shell").classList.add("annotation-closed")); $("#annotationReopen").addEventListener("click", () => $(".prototype-shell").classList.remove("annotation-closed"));
 window.addEventListener("message-push:rule-changed", render); window.addEventListener("message-push:product-changed", event => setProduct(event.detail)); render();
 const demo = new URLSearchParams(location.search).get("demo"); if (demo === "language") setTimeout(() => openProductLanguageDrawer({ onClose: render }), 0);
+
+if (demo === "analytics-label") { const row = rules.find(item => item.id === "R-2048"); if (row) { seedRule(row); openRuleDrawer({ edit: true }); } }

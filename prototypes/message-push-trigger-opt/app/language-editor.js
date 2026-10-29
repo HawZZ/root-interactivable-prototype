@@ -1,6 +1,6 @@
-import { $, esc, showToast } from "./ui.js?v=20260903";
-import { appState, productLanguageConfig, rules, supportedLanguages } from "./state.js?v=20260903";
-import { renderAnnotations } from "./annotations.js?v=20260903";
+import { $, esc, showToast } from "./ui.js?v=20261029-labels";
+import { appState, productLanguageConfig, rules, supportedLanguages } from "./state.js?v=20261029-labels";
+import { renderAnnotations } from "./annotations.js?v=20261029-labels";
 const clone = value => JSON.parse(JSON.stringify(value));
 const languageName = code => supportedLanguages.find(item => item[0] === code)?.[1] || code;
 const languageHeader = code => `${languageName(code)} (${code})`;
