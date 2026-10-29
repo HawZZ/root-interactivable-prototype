@@ -1,8 +1,8 @@
 {
   "id": "message-push-trigger-opt",
   "path": "/prototypes/message-push-trigger-opt/",
-  "title": "消息推送规则与埋点标签",
-  "summary": "普通推送与汇总推送三步配置，按产品分类展示埋点标签，支持单选可空、保存回显及统一多语言。",
+  "title": "消息推送 P0 规则闭环原型",
+  "summary": "首期闭环覆盖现状设备 / 云端 / 耗材触发、English + 多语言 KV 快速导入，以及 each / discard 投递模式。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -16,10 +16,9 @@
     "消息推送",
     "P0 规则闭环",
     "多语言 KV",
-    "each / discard",
-    "埋点标签"
+    "each / discard"
   ],
-  "updatedAt": "2026-10-29T09:15:06Z",
+  "updatedAt": "2026-09-03T09:12:00Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"

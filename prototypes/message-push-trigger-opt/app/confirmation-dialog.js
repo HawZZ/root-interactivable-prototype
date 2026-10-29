@@ -1,4 +1,4 @@
-import { $, esc } from "./ui.js?v=20261029-labels";
+import { $, esc } from "./ui.js?v=20260903";
 
 let activeDialog = null;
 

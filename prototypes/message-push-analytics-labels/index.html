@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>消息推送 · 埋点标签独立需求原型</title>
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+  <div class="prototype-shell">
+    <main class="product-frame" aria-label="IoT Admin 可交互产品画布">
+      <div class="product-canvas">
+        <aside class="admin-aside">
+          <div class="brand"><span class="brand-mark">L</span><span>LuteOS IoT</span></div>
+          <nav class="admin-menu">
+            <a>⌂ <span>概览</span></a>
+            <a class="active">▣ <span>智能产品</span></a>
+            <a class="sub active">消息推送</a>
+            <a>◇ <span>设备管理</span></a>
+            <a>▤ <span>配置中心</span></a>
+            <a>⚙ <span>系统管理</span></a>
+          </nav>
+        </aside>
+
+        <section class="admin-main">
+          <header class="admin-header">
+            <div class="breadcrumb">智能产品 <span>/</span> 消息推送</div>
+            <div class="header-actions"><span class="environment">TEST</span><span>产品运营 · 林葳</span><span class="avatar">林</span></div>
+          </header>
+
+          <div class="page-body">
+            <div class="page-heading" data-anchor="page-heading">
+              <div>
+                <h1>消息推送 · 埋点标签</h1>
+                <p>埋点标签独立需求原型 · 在既有规则配置中验证标签选择与保存</p>
+              </div>
+              <div class="page-actions">
+                <div class="product-control" data-anchor="product-switcher">
+                  <span>当前产品</span>
+                  <button type="button" class="product-picker-trigger" id="productPickerTrigger" aria-haspopup="dialog" aria-expanded="false"></button>
+                </div>
+                <button class="el-btn" id="refreshBtn">刷新</button>
+                <button class="el-btn" id="productLanguageBtn" data-anchor="product-language-entry">统一多语言</button>
+                <button class="el-btn el-btn--primary" id="primaryCreateBtn">新建推送规则</button>
+              </div>
+            </div>
+
+            <section class="content-panel" id="workspace" aria-live="polite"></section>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <aside class="annotation-panel" aria-label="原型批注">
+      <header class="annotation-header">
+        <div><h2>原型批注</h2><p id="annotationContext">推送规则列表</p></div>
+        <button class="icon-btn" id="annotationToggle" title="收起批注">›</button>
+      </header>
+      <div class="annotation-help">黄色编号是原型锚点，不属于真实 IoT Admin 页面。点击批注可定位控件。</div>
+      <div class="annotation-scenario" data-anchor="prototype-scenario">
+        <span>原型场景</span>
+        <select class="el-select" id="annotationScenarioSelect" aria-label="切换原型场景">
+          <option value="normal">正常数据</option>
+          <option value="loading">加载中</option>
+          <option value="error">加载失败</option>
+          <option value="empty">空数据</option>
+          <option value="permission">只读权限</option>
+          <option value="label-unavailable">标签候选暂不可用</option>
+          <option value="model-loading">物模型加载中</option>
+          <option value="model-empty">物模型为空</option>
+          <option value="model-error">物模型加载失败</option>
+          <option value="model-invalid">已选物模型失效</option>
+        </select>
+      </div>
+      <div class="annotation-list" id="annotationList"></div>
+    </aside>
+  </div>
+
+  <button class="annotation-reopen" id="annotationReopen">查看批注</button>
+  <div id="productPickerMount"></div>
+  <div id="overlayRoot"></div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script type="module" src="app/bootstrap-20260903.js?v=20261029-labels"></script>
+</body>
+</html>

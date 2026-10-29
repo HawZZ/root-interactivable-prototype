@@ -1,0 +1,27 @@
+{
+  "id": "message-push-analytics-labels",
+  "path": "/prototypes/message-push-analytics-labels/",
+  "title": "消息推送 · 埋点标签",
+  "summary": "按产品分类配置埋点标签候选；消息内容步骤单选可空、初始化为空，保存标签与展示文本。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "message-push-analytics-labels",
+  "version": "v1.0",
+  "status": "active",
+  "tags": [
+    "消息推送",
+    "埋点标签",
+    "分类配置",
+    "单选可空"
+  ],
+  "updatedAt": "2026-10-29T10:01:33.831590+00:00",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto",
+    "route": "?demo=analytics-label"
+  }
+}

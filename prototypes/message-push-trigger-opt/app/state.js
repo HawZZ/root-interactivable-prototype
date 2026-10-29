@@ -1,11 +1,7 @@
 export const products = [
-  { id: "prod-s12", name: "S12 Pro 吸乳器", model: "S12 Pro", category: "breast pump", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "care", label: "护理记录" }] },
-  { id: "prod-air-p3", name: "Cozy Air P3", model: "Air P3", category: "other-demo", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "filter", label: "滤芯管理" }] }
+  { id: "prod-s12", name: "S12 Pro 吸乳器", model: "S12 Pro", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "care", label: "护理记录" }] },
+  { id: "prod-air-p3", name: "Cozy Air P3", model: "Air P3", presetLinks: [{ id: "message-center", label: "消息中心" }, { id: "home", label: "设备首页" }, { id: "filter", label: "滤芯管理" }] }
 ];
-
-// 演示配置：以展示文本模拟标签值，正式标识由埋点需求提供。
-export const analyticsLabelsByCategory = { "breast pump": ["吸乳结束", "吸乳过久", "溢奶", "奶量达标", "姿势异常", "剧烈晃动", "倾斜暂停"].map(text => ({ value: text, text })) };
-export const getAnalyticsLabelOptions = productId => analyticsLabelsByCategory[products.find(item => item.id === productId)?.category] || [];
 
 const numeric = (id, name, group, dataType, unit, example, min, max, step) => ({ kind: "property", id, name, group, dataType, unit, example, min, max, step });
 const enumeration = (id, name, group, options) => ({ kind: "property", id, name, group, dataType: "enum", options });
@@ -24,7 +20,7 @@ export const supportedLanguages = [["en-US", "English"], ["zh-CN", "简体中文
 export const stablePlaceholders = ["${cozyDeviceName}", "${cozyDeviceModel}", "${cozyUserEmail}", "${cozyUserFirstName}", "${cozyUserLastName}"];
 export const normalPlaceholders = [...stablePlaceholders, "${cozyCountdownTimer}", "${cozyDeviceConsumableName}", "${cozyConsumableUseValue}", "${cozyConsumableRemainValue}", "${cozyConsumableUnit}"];
 
-export const newRule = (ruleType = "NORMAL") => ({ id: "", productId: "prod-s12", ruleType, name: "", status: "草稿", revision: 1, languages: "1", updated: "2026-09-03 10:00", title: "", body: "", localeValues: {}, analyticsLabel: null, systemNotificationEnabled: false, triggerType: "device", thingModelId: "milkLevel", operator: ">=", conditionValue: "180", conditionValues: [], cloudCountdownId: "feed-reminder", cloudThreshold: "0", consumableId: "shield-timer", consumableEvent: "low", timeMode: "all-day", timeStart: "00:00", timeEnd: "23:59", reminderMode: "each", minIntervalMinutes: "30", presetLinkId: "message-center", conditions: [] });
+export const newRule = (ruleType = "NORMAL") => ({ id: "", productId: "prod-s12", ruleType, name: "", status: "草稿", revision: 1, languages: "1", updated: "2026-09-03 10:00", title: "", body: "", localeValues: {}, systemNotificationEnabled: false, triggerType: "device", thingModelId: "milkLevel", operator: ">=", conditionValue: "180", conditionValues: [], cloudCountdownId: "feed-reminder", cloudThreshold: "0", consumableId: "shield-timer", consumableEvent: "low", timeMode: "all-day", timeStart: "00:00", timeEnd: "23:59", reminderMode: "each", minIntervalMinutes: "30", presetLinkId: "message-center", conditions: [] });
 const summary = data => ({ ...newRule("DAILY_SUMMARY"), ...data });
 export const rules = [
   { ...newRule(), id: "R-2048", name: "储奶量过高提醒", title: "Milk overflow detected", body: "Your ${cozyDeviceModel} needs attention.", trigger: "物模型：储奶量 >= 180 ml", strategy: "逐条发送 · 消息中心", status: "启用", updated: "2026-08-25 09:30" },
