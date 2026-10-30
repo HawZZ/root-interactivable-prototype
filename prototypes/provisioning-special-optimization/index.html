@@ -29,6 +29,7 @@
 .upload-file-label{display:inline-flex;align-items:center;position:relative;overflow:hidden;cursor:pointer;flex-shrink:0}.upload-file-label input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}.resource-preview{max-width:100%;max-height:96px;object-fit:contain}.review-control{border:1px solid var(--line);padding:10px;margin-bottom:12px;background:#fafbfe;font-size:12px}.resource-readout{padding:10px;border:1px solid var(--line);font-size:12px;margin:12px 0}.resource-readout p{margin:5px 0;overflow-wrap:anywhere}.resource-readout code{font-size:11px}.single-saved{padding:50px 15px}.saved-rich{margin-top:12px;white-space:normal}.drawer-head{flex-shrink:0}
 @media(min-width:1101px){.drawer-mask,.modal-mask{right:410px}.drawer{max-width:100%}}
 </style>
+<link rel="stylesheet" href="./multi-preview.css">
 </head>
 <body>
 <div class="shell">
@@ -302,6 +303,7 @@ var initialStep=new URLSearchParams(window.location.search).get('step');if(initi
 // basic-editor.js restores the observed product form and renders it.
 </script>
 <script src="./basic-editor.js"></script>
+<script src="./multi-preview.js"></script>
 </body>
 </html>
 

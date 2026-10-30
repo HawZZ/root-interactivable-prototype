@@ -2,7 +2,7 @@
   "id": "provisioning-special-optimization",
   "path": "/prototypes/provisioning-special-optimization/",
   "title": "配网专项优化",
-  "summary": "保留完整基础信息表单和两个可选动态图入口；单步骤配网文案支持换行、加粗和无序列表，多页面分层引导保持。",
+  "summary": "恢复多页面配网实时手机预览、多引导独立子步骤弹层；补充历史配置及旧新App兼容待确认要求。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "provisioning-special-optimization",
-  "version": "v1.4",
+  "version": "v1.5",
   "status": "active",
   "tags": [
     "配网",
