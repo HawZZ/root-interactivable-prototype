@@ -2,7 +2,7 @@
   "id": "product-series-secondary-category",
   "path": "/prototypes/product-series-secondary-category/",
   "title": "产品二级分类与系列配置",
-  "summary": "在现有产品分类内管理系列图文与同分类产品关联，覆盖唯一归属、删除保护、多语言及保存异常。",
+  "summary": "默认英语，支持平台16种语言；维护系列图文、同分类产品关联、唯一归属和删除保护。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
@@ -18,7 +18,7 @@
     "关联产品",
     "多语言"
   ],
-  "updatedAt": "2026-11-02T08:31:28Z",
+  "updatedAt": "2026-11-02T09:17:18Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto",
