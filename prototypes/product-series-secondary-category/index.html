@@ -569,40 +569,11 @@
       color: var(--text-secondary);
       font-size: 12px;
     }
-    .language-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #fff;
-      flex-wrap: wrap;
-    }
-    .language-tab {
-      min-height: 32px;
-      padding: 4px 12px;
-      border: 0;
-      border-right: 1px solid var(--border);
-      background: #fff;
-      color: var(--text-regular);
-      position: relative;
-      white-space: nowrap;
-    }
-    .language-tab:last-child { border-right: 0; }
-    .language-tab.active { color: var(--primary); background: var(--primary-light); font-weight: 500; }
-    .language-tab .lang-dot {
-      width: 6px;
-      height: 6px;
-      margin-left: 5px;
-      border-radius: 50%;
-      display: inline-block;
-      background: #c0c4cc;
-      vertical-align: 1px;
-    }
-    .language-tab .lang-dot.complete { background: var(--success); }
+    .language-switch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 100%; }
+    .language-select { width: 230px; max-width: 100%; height: 32px; background: #fff; }
+    .language-count { color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
     .detail-section { margin-top: 16px; }
-    .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .section-title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     .section-title { margin: 0; font-size: 14px; font-weight: 600; }
     .section-hint { color: var(--text-secondary); font-size: 12px; }
     .readonly-field {
@@ -1106,14 +1077,26 @@
   <script>
     "use strict";
 
-    const DEFAULT_LOCALE = "zh-CN";
+    const DEFAULT_LOCALE = "en";
     const DEFAULT_CATEGORY_ID = "DEMO_CAT_BABY";
     const DEFAULT_SERIES_ID = "DEMO_SERIES_BABY_001";
     const LOCALES = [
-      { id: "zh-CN", label: "中文", note: "默认", fieldPrefix: "中文" },
-      { id: "en", label: "English", note: "", fieldPrefix: "英文" },
-      { id: "fr", label: "Français", note: "", fieldPrefix: "法语" },
-      { id: "ja", label: "日本語", note: "", fieldPrefix: "日语" }
+      {"id": "en", "label": "英语", "note": "默认", "fieldPrefix": "英文"},
+      {"id": "zh", "label": "简体中文", "note": "", "fieldPrefix": "中文"},
+      {"id": "de", "label": "德语", "note": "", "fieldPrefix": "德语"},
+      {"id": "fr", "label": "法语", "note": "", "fieldPrefix": "法语"},
+      {"id": "zh-Hant", "label": "繁体中文", "note": "", "fieldPrefix": "繁体中文"},
+      {"id": "it", "label": "意大利语", "note": "", "fieldPrefix": "意大利语"},
+      {"id": "pt", "label": "葡萄牙语", "note": "", "fieldPrefix": "葡萄牙语"},
+      {"id": "es", "label": "西班牙语", "note": "", "fieldPrefix": "西班牙语"},
+      {"id": "ar", "label": "阿拉伯语", "note": "", "fieldPrefix": "阿拉伯语"},
+      {"id": "vi", "label": "越南语", "note": "", "fieldPrefix": "越南语"},
+      {"id": "id", "label": "印尼语", "note": "", "fieldPrefix": "印尼语"},
+      {"id": "th", "label": "泰语", "note": "", "fieldPrefix": "泰语"},
+      {"id": "ms", "label": "马来语", "note": "", "fieldPrefix": "马来语"},
+      {"id": "ja", "label": "日语", "note": "", "fieldPrefix": "日语"},
+      {"id": "ru", "label": "俄语", "note": "", "fieldPrefix": "俄语"},
+      {"id": "fil", "label": "菲律宾语", "note": "", "fieldPrefix": "菲律宾语"}
     ];
     const SERIES_MODES = new Set(["series", "watch", "edit", "create"]);
     const ROUTE_TITLES = {
@@ -1125,7 +1108,7 @@
     };
 
     function seedData() {
-      return {
+      const data = {
         categories: [
           { id: "DEMO_CAT_BABY", name: "Baby monitor", code: 10, createdAt: "2026-08-16 11:25:08", updatedAt: "2026-10-30 16:45:12" },
           { id: "DEMO_CAT_BREAST", name: "Breast pump", code: 11, createdAt: "2026-08-12 09:18:43", updatedAt: "2026-09-28 10:22:31" },
@@ -1146,7 +1129,7 @@
             createdAt: "2026-10-20 10:14:36",
             updatedAt: "2026-10-30 16:45:12",
             i18n: {
-              "zh-CN": {
+              zh: {
                 entry: "Baby Monitor 系列",
                 title: "查看设备铭牌信息",
                 content: "请核对实物铭牌上的型号。示例内容仅用于验证平台字段与多语言回退，最终配置内容需业务确认。"
@@ -1170,12 +1153,12 @@
             createdAt: "2026-10-24 15:32:07",
             updatedAt: "2026-10-28 11:08:45",
             i18n: {
-              "zh-CN": {
+              zh: {
                 entry: "Baby Monitor 夜视系列",
                 title: "夜视系列配置示例",
                 content: "演示同分类下存在多个系列时的唯一归属校验。"
               },
-              en: { entry: "", title: "", content: "" },
+              en: { entry: "Baby Monitor Night Vision Series", title: "Night vision series example", content: "Example used to review unique product membership across series in the same category." },
               fr: { entry: "", title: "", content: "" },
               ja: { entry: "", title: "", content: "" }
             },
@@ -1190,12 +1173,12 @@
             createdAt: "2026-10-29 09:20:18",
             updatedAt: "2026-10-29 09:20:18",
             i18n: {
-              "zh-CN": {
+              zh: {
                 entry: "Baby Monitor 备用系列",
                 title: "备用系列配置示例",
                 content: "用于演示编辑清空全部产品后，允许确认删除系列。"
               },
-              en: { entry: "", title: "", content: "" },
+              en: { entry: "Baby Monitor Reserve Series", title: "Reserve series example", content: "Example used to review clearing product associations before deleting a series." },
               fr: { entry: "", title: "", content: "" },
               ja: { entry: "", title: "", content: "" }
             },
@@ -1212,6 +1195,10 @@
           { id: "DEMO_PROD_AIR_01", model: "A1", name: "Air Purifier A1（演示）", app: "Lullabee App", status: "已上架", categoryId: "DEMO_CAT_AIR" }
         ]
       };
+      data.series.forEach((series) => LOCALES.forEach((locale) => {
+        if (!series.i18n[locale.id]) series.i18n[locale.id] = { entry: "", title: "", content: "" };
+      }));
+      return data;
     }
 
     let db = seedData();
@@ -1292,7 +1279,8 @@
       state.saveToken = (state.saveToken || 0) + 1;
       state.route = parseRoute();
       state.demo = state.route.params.get("demo") || "normal";
-      const queryLocale = state.route.params.get("lang");
+      const requestedLocale = state.route.params.get("lang");
+      const queryLocale = ({ "zh-CN": "zh", "zh-TW": "zh-Hant" })[requestedLocale] || requestedLocale;
       state.activeLocale = LOCALES.some((item) => item.id === queryLocale) ? queryLocale : DEFAULT_LOCALE;
       state.modal = null;
       state.saveError = null;
@@ -1819,17 +1807,18 @@
         </div>`;
     }
     function languageSwitchHtml(series, context) {
+      const saving = state.saveStatus === "saving";
       return `
-        <div class="language-switch" data-note-target="language-switch" role="tablist" aria-label="配置语言">
-          ${LOCALES.map((locale) => {
-            const values = series?.i18n?.[locale.id] || {};
-            const complete = ["entry", "title", "content"].every((field) => String(values[field] || "").trim());
-            return `
-              <button class="language-tab ${state.activeLocale === locale.id ? "active" : ""}" type="button" role="tab" aria-selected="${state.activeLocale === locale.id}" data-action="select-locale" data-locale="${locale.id}" data-context="${context}">
-                ${locale.label}${locale.note ? `<span class="assumption" style="margin-left:5px">${locale.note}</span>` : ""}
-                <span class="lang-dot ${complete ? "complete" : ""}" title="${complete ? "三项均已填写" : "存在未填写字段"}"></span>
-              </button>`;
-          }).join("")}
+        <div class="language-switch" data-note-target="language-switch">
+          <label class="visually-hidden" for="localeSelect">配置语言</label>
+          <select id="localeSelect" class="select language-select" aria-label="配置语言" data-locale-select="${context}" ${saving ? "disabled" : ""}>
+            ${LOCALES.map((locale) => {
+              const values = series?.i18n?.[locale.id] || {};
+              const filled = ["entry", "title", "content"].filter((field) => String(values[field] || "").trim()).length;
+              return `<option value="${esc(locale.id)}" ${state.activeLocale === locale.id ? "selected" : ""}>${esc(locale.label)}${locale.id === DEFAULT_LOCALE ? "（默认）" : ""} · ${filled}/3 已填写</option>`;
+            }).join("")}
+          </select>
+          <span class="language-count">共 ${LOCALES.length} 种语言</span>
         </div>`;
     }
 
@@ -1840,7 +1829,7 @@
         .map((item, index) => item.fallback && fields[index].value ? ["入口文案", "主要标题", "内容"][index] : "")
         .filter(Boolean);
       const fallbackNotice = fallbackFields.length
-        ? `<div class="notice warning" style="margin-bottom:14px"><strong>缺少${esc(locale.label)}翻译：</strong>${esc(fallbackFields.join("、"))}已回退到默认语言（中文）。系列图与关联产品跨语言共享。</div>`
+        ? `<div class="notice warning" style="margin-bottom:14px"><strong>缺少${esc(locale.label)}翻译：</strong>${esc(fallbackFields.join("、"))}已回退到默认语言（英语）。系列图与关联产品跨语言共享。</div>`
         : `<div class="notice info" style="margin-bottom:14px">当前语言三项文案均已配置。系列图与关联产品跨语言共享。</div>`;
       const products = series.productIds.map(getProduct).filter(Boolean);
       return `
@@ -1885,10 +1874,10 @@
             <span class="tag primary">只读</span>
           </div>
           <div class="readonly-grid">
-            <div class="readonly-field"><div class="readonly-label">入口文案</div><div class="readonly-value">${esc(fields[0].value)}</div></div>
-            <div class="readonly-field"><div class="readonly-label">主要标题</div><div class="readonly-value">${esc(fields[1].value)}</div></div>
+            <div class="readonly-field"><div class="readonly-label">入口文案</div><div class="readonly-value" dir="auto">${esc(fields[0].value)}</div></div>
+            <div class="readonly-field"><div class="readonly-label">主要标题</div><div class="readonly-value" dir="auto">${esc(fields[1].value)}</div></div>
           </div>
-          <div class="readonly-field" style="margin-top:12px"><div class="readonly-label">内容</div><div class="readonly-value">${esc(fields[2].value)}</div></div>
+          <div class="readonly-field" style="margin-top:12px"><div class="readonly-label">内容</div><div class="readonly-value" dir="auto">${esc(fields[2].value)}</div></div>
         </section>
 
         <section class="form-section association-section" data-note-target="view-products">
@@ -1963,8 +1952,8 @@
             ${languageSwitchHtml(form, "form")}
             <div class="notice ${otherLocale && currentComplete < 3 ? "warning" : "info"}" style="margin-top:12px">
               ${otherLocale
-                ? `当前为${esc(locale.label)}。${currentComplete < 3 ? "缺少的字段将在查看时逐项回退到默认语言（中文）。" : "当前语言字段已完整；缺失翻译时仍按默认语言回退。"}`
-                : "中文为当前默认语言，三项文案均必填；其他语言可留空并回退到默认语言。"}
+                ? `当前为${esc(locale.label)}。${currentComplete < 3 ? "缺少的字段将在查看时逐项回退到默认语言（英语）。" : "当前语言字段已完整；缺失翻译时仍按默认语言回退。"}`
+                : "英语为默认语言，三项文案均必填；其他15种语言可留空，缺译字段逐项回退英语。"}
             </div>
           </div>
         </section>
@@ -1977,22 +1966,22 @@
             </div>
           </div>
           <div class="form-grid">
-            <label class="form-label required" for="seriesEntry">入口文案</label>
+            <label class="form-label ${state.activeLocale === DEFAULT_LOCALE ? "required" : ""}" for="seriesEntry">入口文案</label>
             <div class="form-control ${state.formErrors?.entry ? "has-error" : ""}">
-              <input class="input" id="seriesEntry" data-form-field="entry" value="${esc(values.entry)}" placeholder="例如：Baby Monitor 系列" ${locked ? "disabled" : ""}>
+              <input class="input" id="seriesEntry" data-form-field="entry" value="${esc(values.entry)}" dir="auto" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.entry || "未配置")}` : "例如：Baby Monitor Series"}" ${locked ? "disabled" : ""}>
               ${fieldError("entry")}
               <div class="field-help">入口文案同时用于后台识别；展示文案允许同名。</div>
             </div>
 
             <label class="form-label ${state.activeLocale === DEFAULT_LOCALE ? "required" : ""}" for="seriesTitle">主要标题</label>
             <div class="form-control ${state.formErrors?.title ? "has-error" : ""}">
-              <input class="input" id="seriesTitle" data-form-field="title" value="${esc(values.title)}" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.title || "未配置")}` : "请输入主要标题"}" ${locked ? "disabled" : ""}>
+              <input class="input" id="seriesTitle" dir="auto" data-form-field="title" value="${esc(values.title)}" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.title || "未配置")}` : "请输入主要标题"}" ${locked ? "disabled" : ""}>
               ${fieldError("title")}
             </div>
 
             <label class="form-label ${state.activeLocale === DEFAULT_LOCALE ? "required" : ""}" for="seriesContent">内容</label>
             <div class="form-control ${state.formErrors?.content ? "has-error" : ""}">
-              <textarea class="textarea" id="seriesContent" data-form-field="content" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.content || "未配置")}` : "请输入内容"}" ${locked ? "disabled" : ""}>${esc(values.content)}</textarea>
+              <textarea class="textarea" id="seriesContent" dir="auto" data-form-field="content" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.content || "未配置")}` : "请输入内容"}" ${locked ? "disabled" : ""}>${esc(values.content)}</textarea>
               ${fieldError("content")}
               <div class="field-help">缺译时按默认语言回退。</div>
             </div>
@@ -2272,7 +2261,7 @@
         },
         {
           id: "view-locale", spec: "view-language-fallback", title: "语言切换与缺项回退", target: '[data-note-target="language-switch"]', loc: "查看二级分类 > 语言切换",
-          body: "交互：切换中文、English、Français、日本語查看文案。\n规则：默认语言三项必须完整；其他语言缺项逐项回退默认语言。\n共享：系列图与关联产品不会随语言切换而变化。\n原型备注：示例以中文为默认语言；生产默认语言具体值待登记。"
+          body: "交互：使用语言选择器切换平台现有16种语言。\n规则：英语为默认语言，入口文案、主要标题、内容三项必填；其他15种语言缺项逐项回退英语。\n共享：系列图与关联产品不会随语言切换而变化。\n语言集合：英语、简体中文、德语、法语、繁体中文、意大利语、葡萄牙语、西班牙语、阿拉伯语、越南语、印尼语、泰语、马来语、日语、俄语、菲律宾语。"
         },
         {
           id: "view-copy", spec: "view-platform-copy", title: "平台配置文案", target: '[data-note-target="view-copy"]', loc: "查看二级分类 > 配置文案",
@@ -2302,7 +2291,7 @@
         },
         {
           id: "form-locale", spec: "series-multilingual", title: "多语言配置与回退", target: '[data-note-target="form-locale"]', loc: "配置表单 > 多语言文案",
-          body: "交互：按语言切换编辑入口文案、主要标题、内容。\n校验：默认语言三项必填，其他语言可留空；缺项查看时回退默认语言。\n共享：图片与关联产品跨语言共享。\n原型备注：本原型以中文为默认语言演示，生产默认语言具体值待登记。"
+          body: "交互：在同一选择器切换16种语言，草稿分别保存，不互相覆盖。\n校验：英语三项必填；其他15种语言可留空，查看及读取时按字段回退英语。\n共享：图片与关联产品跨语言共享。\n来源：用户已确认“默认英语，支持16种语言”；集合沿用平台现有多语言。界面使用紧凑选择器；阿拉伯语字段按输入内容自动排版方向。"
         },
         {
           id: "form-fields", spec: "series-copy-fields", title: "文案字段与非阻断提醒", target: '[data-note-target="form-fields"]', loc: "配置表单 > 文案字段",
@@ -2657,10 +2646,10 @@
     function validateSeriesForm() {
       if (!state.form) return false;
       const errors = {};
-      const zh = state.form.i18n?.[DEFAULT_LOCALE] || {};
-      if (!String(zh.entry || "").trim()) errors.entry = "请输入默认语言入口文案";
-      if (!String(zh.title || "").trim()) errors.title = "请输入默认语言主要标题";
-      if (!String(zh.content || "").trim()) errors.content = "请输入默认语言内容";
+      const defaultCopy = state.form.i18n?.[DEFAULT_LOCALE] || {};
+      if (!String(defaultCopy.entry || "").trim()) errors.entry = "请输入英语入口文案（默认语言）";
+      if (!String(defaultCopy.title || "").trim()) errors.title = "请输入英语主要标题（默认语言）";
+      if (!String(defaultCopy.content || "").trim()) errors.content = "请输入英语内容（默认语言）";
       if (!state.form.image && !state.form.imagePlaceholder) errors.image = "请选择系列图";
       if (state.route.page === "create" && state.form.productIds.length < 1) errors.products = "新建二级分类时至少关联 1 个产品";
       state.formErrors = errors;
@@ -2965,7 +2954,7 @@
         }
         case "fill-duplicate":
           if (!state.form) return;
-          state.form.i18n[DEFAULT_LOCALE].entry = "Baby Monitor 系列";
+          state.form.i18n[DEFAULT_LOCALE].entry = seriesDefaultEntry(getSeries(DEFAULT_SERIES_ID));
           state.activeLocale = DEFAULT_LOCALE;
           markFormDirty();
           renderAll();
@@ -3037,6 +3026,12 @@
 
     document.addEventListener("change", (event) => {
       const target = event.target;
+      if (target.matches("[data-locale-select]")) {
+        if (state.saveStatus === "saving") return;
+        state.activeLocale = target.value;
+        replaceRoute(state.route.page, { lang: target.value });
+        return;
+      }
       if (target.matches("[data-demo-select]")) {
         const context = target.dataset.demoSelect;
         const value = target.value;
