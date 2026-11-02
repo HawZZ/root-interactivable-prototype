@@ -991,6 +991,31 @@
       }
       .drawer-footer .footer-actions .btn { flex: 0 0 auto; }
     }
+    .input-copy { display: block; line-height: 22px; padding: 5px 11px; white-space: pre-wrap; }
+    .import-entry-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .import-scrim { padding: 12px; }
+    .modal.text-import-modal { width: min(950px, 100%); height: min(800px, calc(100% - 24px)); max-height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+    .text-import-modal .modal-body { overflow: auto; min-height: 0; }
+    .text-import-modal .modal-footer { flex-wrap: nowrap; padding: 10px 18px; min-height: 58px; }
+    .import-context { padding: 12px; background: #f6f8fc; border: 1px solid var(--border-light); border-radius: 4px; }
+    .import-context > div { margin-bottom: 6px; overflow-wrap: anywhere; }
+    .import-template-row, .import-file-actions, .import-summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .import-template-row { margin-top: 10px; }
+    .import-template-row > span { font-size: 12px; color: var(--text-secondary); }
+    .import-file-zone { margin: 14px 0; padding: 12px; border: 1px dashed var(--border); border-radius: 4px; }
+    .import-filename { flex: 1 1 140px; overflow-wrap: anywhere; font-size: 12px; color: var(--text-secondary); }
+    .import-result h4 { margin: 0 0 10px; font-size: 14px; }
+    .import-summary { margin: 0 0 10px; font-size: 12px; }
+    .import-errors { margin: 10px 0; padding: 10px 12px 10px 30px; max-height: 150px; overflow: auto; background: #fef0f0; color: #c45656; border-radius: 4px; }
+    .import-diff-wrap { max-height: 300px; overflow: auto; margin-top: 12px; border: 1px solid var(--border-light); }
+    .import-diff { min-width: 730px; table-layout: fixed; }
+    .import-diff th:nth-child(1) { width: 55px; }
+    .import-diff th:nth-child(2), .import-diff th:nth-child(3) { width: 95px; }
+    .import-diff th:last-child { width: 60px; }
+    .import-diff pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; max-height: 90px; overflow: auto; }
+    .import-action-error, .import-file-error { margin: 10px 0; }
+    .text-import-modal .form-demo-panel { margin-top: 16px; }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
@@ -1946,7 +1971,7 @@
               <div class="locale-panel-title">多语言文案</div>
               <div class="field-help" style="margin:0">系列图与关联产品跨语言共享</div>
             </div>
-            <span class="locale-status"><span class="status-dot ${currentComplete === 3 ? "complete" : ""}"></span>${esc(locale.label)} ${currentComplete}/3 已填写</span>
+            <div class="import-entry-actions" data-note-target="text-import-entry"><span class="locale-status"><span class="status-dot ${currentComplete === 3 ? "complete" : ""}"></span>${esc(locale.label)} ${currentComplete}/3 已填写</span><button class="btn" type="button" data-action="open-text-import" ${locked ? "disabled" : ""}>导入多语言文案</button></div>
           </div>
           <div class="locale-panel-body">
             ${languageSwitchHtml(form, "form")}
@@ -1968,14 +1993,14 @@
           <div class="form-grid">
             <label class="form-label ${state.activeLocale === DEFAULT_LOCALE ? "required" : ""}" for="seriesEntry">入口文案</label>
             <div class="form-control ${state.formErrors?.entry ? "has-error" : ""}">
-              <input class="input" id="seriesEntry" data-form-field="entry" value="${esc(values.entry)}" dir="auto" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.entry || "未配置")}` : "例如：Baby Monitor Series"}" ${locked ? "disabled" : ""}>
+              <textarea class="input input-copy" id="seriesEntry" data-form-field="entry" dir="auto" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.entry || "未配置")}` : "例如：Baby Monitor Series"}" ${locked ? "disabled" : ""} rows="${Math.min(4, Math.max(1, String(values.entry || "").split("\n").length))}" style="height:auto;resize:vertical">${esc(values.entry)}</textarea>
               ${fieldError("entry")}
               <div class="field-help">入口文案同时用于后台识别；展示文案允许同名。</div>
             </div>
 
             <label class="form-label ${state.activeLocale === DEFAULT_LOCALE ? "required" : ""}" for="seriesTitle">主要标题</label>
             <div class="form-control ${state.formErrors?.title ? "has-error" : ""}">
-              <input class="input" id="seriesTitle" dir="auto" data-form-field="title" value="${esc(values.title)}" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.title || "未配置")}` : "请输入主要标题"}" ${locked ? "disabled" : ""}>
+              <textarea class="input input-copy" id="seriesTitle" dir="auto" data-form-field="title" placeholder="${otherLocale ? `留空时回退：${esc(defaultValues.title || "未配置")}` : "请输入主要标题"}" ${locked ? "disabled" : ""} rows="${Math.min(4, Math.max(1, String(values.title || "").split("\n").length))}" style="height:auto;resize:vertical">${esc(values.title)}</textarea>
               ${fieldError("title")}
             </div>
 
@@ -2097,12 +2122,185 @@
           </button>
         </div>`;
     }
+    const IMPORT_FIELDS = { entry: "入口文案", title: "主要标题", content: "内容" };
+    const IMPORT_LOCALES = LOCALES.map((locale) => locale.id);
+    const IMPORT_COLUMNS = ["field", ...IMPORT_LOCALES];
+
+    function openTextImport() {
+      if (!state.form || isReadonly() || state.saveStatus === "saving") return;
+      state.modal = { type: "textImport", name: "", records: null, loading: false, loadToken: 0, fileError: "", actionError: "", plan: null };
+      renderOverlay(); renderAnnotations();
+      requestAnimationFrame(() => $('[data-action="download-text-template"]')?.focus());
+    }
+
+    function csvTextImportRecords(text) {
+      const rows = []; let row = [], value = "", quoted = false, afterQuote = false;
+      text = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+      const endCell = () => { row.push(value); value = ""; afterQuote = false; };
+      const endRow = () => { endCell(); if (row.some((v) => v.trim())) rows.push(row); row = []; };
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        if (quoted) {
+          if (char === '"') {
+            if (text[i + 1] === '"') { value += '"'; i += 1; }
+            else { quoted = false; afterQuote = true; }
+          } else value += char;
+        } else if (char === ",") endCell();
+        else if (char === "\n") endRow();
+        else if (char === '"') {
+          if (value || afterQuote) throw new Error("CSV 引号位置不正确，请使用模板并保留文本格的完整引号。");
+          quoted = true;
+        } else {
+          if (afterQuote) throw new Error("CSV 引号结束后存在多余字符，请检查逗号分隔。");
+          value += char;
+        }
+      }
+      if (quoted) throw new Error("CSV 引号未闭合，请检查文件内容。");
+      endRow();
+      if (rows.length < 2) throw new Error("文件未包含有效文案行，请填写模板后重新选择。");
+      const headers = rows.shift().map((cell) => cell.trim());
+      if (headers.some((header) => !header)) throw new Error("CSV 存在空列名，请使用下载模板。");
+      if (new Set(headers).size !== headers.length) throw new Error("CSV 列名重复，整批不可导入。");
+      if (!headers.includes("field")) throw new Error("缺少 field 列，请使用下载模板。");
+      const unknown = headers.filter((header) => !IMPORT_COLUMNS.includes(header));
+      if (unknown.length) throw new Error(`不支持的列或语种：${unknown.join("、")}。只允许文案字段与16种语言列。`);
+      if (!headers.some((header) => IMPORT_LOCALES.includes(header))) throw new Error("至少需要一个支持的语言列。");
+      return rows.map((cells, index) => {
+        if (cells.length !== headers.length) throw new Error(`第 ${index + 2} 行列数与表头不一致。`);
+        return { row: index + 2, record: Object.fromEntries(headers.map((header, column) => [header, cells[column]])) };
+      });
+    }
+
+    function parseTextImport(text, name) {
+      if (text.includes("\u0000")) throw new Error("文件包含非文本内容，请重新另存为 UTF-8 CSV 或 JSON。");
+      if (/\.csv$/i.test(name)) return csvTextImportRecords(text);
+      if (!/\.json$/i.test(name)) throw new Error("请选择 UTF-8 CSV 或 JSON 文案文件。");
+      let data;
+      try { data = JSON.parse(text.replace(/^\uFEFF/, "")); }
+      catch { throw new Error("JSON 格式不正确，请检查引号、逗号和数组结构。"); }
+      if (data && !Array.isArray(data) && typeof data === "object") {
+        if (Object.keys(data).some((key) => key !== "rows")) throw new Error("JSON 外层仅支持 rows 数组，不可携带图片、产品或分类配置。");
+        data = data.rows;
+      }
+      if (!Array.isArray(data) || !data.length) throw new Error("JSON 需要非空文案数组或包含 rows 数组。");
+      return data.map((record, index) => ({ row: index + 1, record }));
+    }
+
+    async function readTextImportFile(file) {
+      const modal = state.modal;
+      if (!file || modal?.type !== "textImport" || !state.form || isReadonly()) return;
+      const token = ++modal.loadToken;
+      modal.name = file.name; modal.records = null; modal.plan = null; modal.fileError = ""; modal.actionError = ""; modal.loading = true;
+      renderOverlay(); renderAnnotations();
+      try {
+        if (!/\.(csv|json)$/i.test(file.name)) throw new Error("请选择 UTF-8 CSV 或 JSON 文案文件。");
+        const bytes = await file.arrayBuffer();
+        let text;
+        try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+        catch { throw new Error("文件编码不是 UTF-8，请另存为 UTF-8 CSV 或 JSON 后重新选择。"); }
+        if (state.modal !== modal || token !== modal.loadToken) return;
+        modal.records = parseTextImport(text, file.name);
+      } catch (error) {
+        if (state.modal !== modal || token !== modal.loadToken) return;
+        modal.fileError = error.message;
+      } finally {
+        if (state.modal === modal && token === modal.loadToken) { modal.loading = false; renderOverlay(); renderAnnotations(); }
+      }
+    }
+
+    function inspectTextImport(records) {
+      const plan = { merged: clone(state.form.i18n), changes: [], errors: [], counts: { added: 0, overwritten: 0, unchanged: 0, blank: 0 }, baseForm: JSON.stringify(state.form), formKey: state.formKey, baseRevision: getSeries(state.form.id)?.revision ?? null };
+      const seen = new Set();
+      for (const { row, record } of records) {
+        const fail = (message) => plan.errors.push(`第 ${row} 行/条：${message}`);
+        if (!record || typeof record !== "object" || Array.isArray(record)) { fail("文案行必须是对象。"); continue; }
+        const unknown = Object.keys(record).filter((key) => !IMPORT_COLUMNS.includes(key));
+        if (unknown.length) { fail(`不支持的列或语种：${unknown.join("、")}。`); continue; }
+        const field = typeof record.field === "string" ? record.field.trim() : "";
+        if (!Object.prototype.hasOwnProperty.call(IMPORT_FIELDS, field)) { fail("field 仅支持 entry（入口文案）、title（主要标题）、content（内容）。"); continue; }
+        if (seen.has(field)) { fail(`${IMPORT_FIELDS[field]}字段重复，请合并到同一行；整批不可导入。`); continue; }
+        seen.add(field);
+        if (!IMPORT_LOCALES.some((locale) => Object.prototype.hasOwnProperty.call(record, locale))) { fail("至少需要一个支持的语言列或键。"); continue; }
+        for (const locale of IMPORT_LOCALES) {
+          if (!Object.prototype.hasOwnProperty.call(record, locale)) continue;
+          const raw = record[locale];
+          if (typeof raw !== "string") { fail(`${localeInfo(locale).label}的${IMPORT_FIELDS[field]}必须为文本。`); continue; }
+          const after = raw.replace(/\r\n?/g, "\n");
+          if (!after.trim()) { plan.counts.blank += 1; continue; }
+          const before = String(plan.merged[locale]?.[field] || "");
+          const status = after === before ? "unchanged" : before.trim() ? "overwritten" : "added";
+          plan.counts[status] += 1;
+          plan.changes.push({ row, field, locale, before, after, status });
+          if (!plan.merged[locale]) plan.merged[locale] = { entry: "", title: "", content: "" };
+          plan.merged[locale][field] = after;
+        }
+      }
+      if (!plan.changes.length && !plan.errors.length) plan.errors.push("文件中没有可导入的非空文案，请填写后重新预检查。");
+      for (const field of Object.keys(IMPORT_FIELDS)) if (!String(plan.merged.en?.[field] || "").trim()) plan.errors.push(`合并后英语${IMPORT_FIELDS[field]}为空；请补齐默认英语的三项文案。`);
+      if (state.form.id && getSeries(state.form.id)?.revision !== state.form.revision) plan.errors.push("系列配置已更新，请取消导入并刷新二级分类后重试。");
+      plan.valid = plan.errors.length === 0;
+      plan.changeCount = plan.counts.added + plan.counts.overwritten;
+      return plan;
+    }
+
+    function precheckTextImport() {
+      const modal = state.modal;
+      if (modal?.type !== "textImport" || !modal.records || modal.loading || !state.form || isReadonly()) return;
+      modal.plan = inspectTextImport(modal.records); modal.actionError = ""; modal.forceStale = false;
+      renderOverlay(); renderAnnotations();
+    }
+
+    function applyTextImport() {
+      const modal = state.modal, plan = modal?.plan;
+      if (modal?.type !== "textImport" || !plan?.valid || !plan.changeCount || modal.loading || !state.form || isReadonly() || state.saveStatus === "saving") return;
+      if (modal.forceStale || state.formKey !== plan.formKey || JSON.stringify(state.form) !== plan.baseForm || (getSeries(state.form.id)?.revision ?? null) !== plan.baseRevision) {
+        modal.plan = null; modal.actionError = "预检结果已过期，当前草稿或配置版本已变化。请重新预检查；如配置版本已更新，请先刷新二级分类。";
+        renderOverlay(); renderAnnotations(); return;
+      }
+      state.form.i18n = clone(plan.merged);
+      const locale = plan.changes.find((change) => change.status !== "unchanged")?.locale || DEFAULT_LOCALE;
+      markFormDirty(); state.modal = null; state.activeLocale = locale;
+      replaceRoute(state.route.page, { lang: locale });
+      showToast(`已载入 ${plan.changeCount} 项文案到当前草稿，保存后生效`);
+    }
+
+    function downloadTextImportTemplate() {
+      if (!state.form || isReadonly()) return;
+      const csv = "\uFEFF" + IMPORT_COLUMNS.join(",") + "\r\n" + Object.keys(IMPORT_FIELDS).map((field) => [field, ...IMPORT_LOCALES.map(() => "")].join(",")).join("\r\n") + "\r\n";
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      const anchor = document.createElement("a"); anchor.href = url; anchor.download = `series-text-${state.form.id || "new-series"}.csv`; anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function textImportBody() {
+      const modal = state.modal, plan = modal.plan, form = state.form;
+      const category = getCategory(form.categoryId);
+      const report = !plan ? `<p class="muted">选择文件后点击“预检查”，核对即将新增或覆盖的文案。</p>` : `
+        <div class="import-summary"><span class="tag ${plan.valid ? "success" : "danger"}">${plan.valid ? "校验通过" : "整批不可应用"}</span><span>新增 ${plan.counts.added}</span><span>覆盖 ${plan.counts.overwritten}</span><span>不变 ${plan.counts.unchanged}</span><span>空值跳过 ${plan.counts.blank}</span></div>
+        ${plan.errors.length ? `<ul class="import-errors">${plan.errors.map((error) => `<li>${esc(error)}</li>`).join("")}</ul>` : !plan.changeCount ? `<div class="notice info">文案与当前草稿一致，无需应用。</div>` : `<div class="notice warning">将更新当前草稿的 ${plan.changeCount} 个文案单元格，其中覆盖 ${plan.counts.overwritten} 个已有值；保存二级分类后生效。</div>`}
+        ${plan.changes.length ? `<div class="import-diff-wrap"><table class="data-table import-diff"><thead><tr><th>行/条</th><th>文案字段</th><th>语言</th><th>当前草稿</th><th>导入内容</th><th>变化</th></tr></thead><tbody>${plan.changes.map((change) => `<tr><td>${change.row}</td><td>${IMPORT_FIELDS[change.field]}</td><td>${localeInfo(change.locale).label}</td><td><pre>${esc(change.before || "（空）")}</pre></td><td><pre>${esc(change.after)}</pre></td><td>${({ added: "新增", overwritten: "覆盖", unchanged: "不变" })[change.status]}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+      return `
+        <section class="import-context" data-note-target="import-context">
+          <div><strong>当前二级分类：</strong>${esc(seriesDefaultEntry(form) || "新建二级分类")} <span class="mono muted">${esc(form.id || "未保存")}</span></div>
+          <div class="muted">所属分类：${esc(category?.name || "")}。仅更新此表单的入口文案、主要标题和内容；图片与产品关联保持不变。</div>
+          <div class="import-template-row"><button class="btn" type="button" data-action="download-text-template">下载 CSV 模板</button><span>field 为 entry / title / content；按16种语言分列。</span></div>
+          <div class="field-help">空单元格跳过，非空值更新对应文案。英语合并后须完整；其他语言仍可缺译并回退英语。</div>
+        </section>
+        <section class="import-file-zone" data-note-target="import-file">
+          <div class="import-file-actions"><button class="btn" type="button" data-action="choose-text-import-file">选择 CSV / JSON 文件</button><input tabindex="-1" class="visually-hidden" id="seriesTextImportFile" type="file" accept=".csv,.json,text/csv,application/json"><span class="import-filename">${esc(modal.name || "尚未选择文件")}</span><button class="btn primary" type="button" data-action="precheck-text-import" ${!modal.records || modal.loading ? "disabled" : ""}>${modal.loading ? "读取中…" : "预检查"}</button></div>
+          <div class="field-help">UTF-8 编码；CSV可在Excel编辑后另存为UTF-8。更换文件后需重新预检查。</div>
+          ${modal.fileError ? `<div class="notice danger import-file-error">${esc(modal.fileError)}</div>` : ""}
+        </section>
+        <section class="import-result" data-note-target="import-result"><h4>预检查结果</h4>${modal.actionError ? `<div class="notice danger import-action-error">${esc(modal.actionError)}</div>` : ""}${report}</section>
+        <div class="form-demo-panel"><div class="form-demo-head"><span class="demo-kicker">原型演示</span><span>验证过期预检不会应用。</span></div><button class="btn" type="button" data-action="simulate-import-stale" ${!plan?.valid || !plan.changeCount ? "disabled" : ""}>模拟预检后配置变化</button></div>`;
+    }
+
     function renderModal() {
       const modal = state.modal;
       if (!modal) return "";
       const wrap = (title, body, footer, wide = false) => `
-        <div class="modal-scrim" data-action="modal-scrim">
-          <section class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="activeModalTitle" data-note-target="modal">
+        <div class="modal-scrim ${modal.type === "textImport" ? "import-scrim" : ""}" data-action="modal-scrim">
+          <section class="modal ${modal.type === "textImport" ? "text-import-modal" : wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="activeModalTitle" data-note-target="modal">
             <header class="modal-header">
               <h3 class="modal-title" id="activeModalTitle">${esc(title)}</h3>
               <button class="btn icon" type="button" data-action="close-modal" aria-label="关闭弹窗">×</button>
@@ -2111,6 +2309,10 @@
             <footer class="modal-footer">${footer}</footer>
           </section>
         </div>`;
+      if (modal.type === "textImport") {
+        const plan = modal.plan;
+        return wrap("导入多语言文案", textImportBody(), `<button class="btn" type="button" data-action="close-modal">取消</button><button class="btn primary" type="button" data-action="apply-text-import" ${!plan?.valid || !plan.changeCount || modal.loading ? "disabled" : ""}>应用到当前草稿</button>`, true);
+      }
       if (modal.type === "categoryForm") {
         const editing = modal.mode === "edit";
         return wrap(
@@ -2294,6 +2496,10 @@
           body: "交互：在同一选择器切换16种语言，草稿分别保存，不互相覆盖。\n校验：英语三项必填；其他15种语言可留空，查看及读取时按字段回退英语。\n共享：图片与关联产品跨语言共享。\n来源：用户已确认“默认英语，支持16种语言”；集合沿用平台现有多语言。界面使用紧凑选择器；阿拉伯语字段按输入内容自动排版方向。"
         },
         {
+          id: "form-text-import", spec: "series-text-import", title: "每个二级分类的多语言文案导入", target: '[data-note-target="text-import-entry"]', loc: "配置抽屉 > 多语言文案 > 导入",
+          body: "交互：在当前分类的新建或编辑表单点击，打开导入预检查弹窗；只读及保存中不可导入。\n范围：仅入口文案、主要标题、内容的16语言文本，英语为默认；图片、产品关联及其他二级分类不变。\n生效：确认后只载入当前草稿，原保存成功后才生效。\n路径：下载模板 → 上传 → 预检查 → 应用到当前草稿 → 保存。"
+        },
+        {
           id: "form-fields", spec: "series-copy-fields", title: "文案字段与非阻断提醒", target: '[data-note-target="form-fields"]', loc: "配置表单 > 文案字段",
           body: "字段：入口文案、主要标题、内容。入口文案用于后台识别，不设业务唯一键。\n提醒：同分类默认语言入口文案重复时显示提示，但允许继续保存。\n状态：必填错误在字段下展示，失败保留页面输入。\n待确认：字符串长度与展示行数上限不由本原型假定。"
         },
@@ -2320,6 +2526,18 @@
 
     function modalNotes() {
       const type = state.modal?.type;
+      if (type === "textImport") {
+        return [
+          { id: "import-context", spec: "import-context", title: "当前分类与导入模板", target: '[data-note-target="import-context"]', loc: "导入弹窗 > 目标与模板",
+            body: "说明：绑定当前二级分类表单，不跨系列批量写入。\n模板：UTF-8 CSV，field列固定entry/title/content三行，其余16列为语言标识；文本格留空。亦支持同结构JSON数组或rows数组。\n规则：允许部分字段行和语言列；空格/空单元格跳过，非空值覆盖对应文案，三类文案均保留换行；不支持导入清空。\n原型备注：CSV/JSON沿用既有文案导入原型范式；现网具体导入协议未实查，正式接口由技术复用确认。" },
+          { id: "import-file", spec: "import-file", title: "选择文件与预检查", target: '[data-note-target="import-file"]', loc: "导入弹窗 > 文件",
+            body: "交互：选择UTF-8 CSV/JSON后预检查。读取中禁用预检查和应用；更换文件立即清空旧预检，取消后迟到读取结果不重开弹窗。\n异常：格式、编码、列名、语种、字段、重复列/字段行、JSON非文本值或无非空文案均整批阻断；定位行/条与原因。\n规则：field必需，至少一个支持语言列；不接受产品、图片、分类或其他结构列。" },
+          { id: "import-result", spec: "import-result", title: "合并差异与英语校验", target: '[data-note-target="import-result"]', loc: "导入弹窗 > 预检查结果",
+            body: "说明：展示新增/覆盖/不变/空值跳过数量及每个非空格的旧值、新值。\n校验：与当前草稿合并后英语三项必须完整；其他15语种允许缺译，仍逐字段回退英语。新建可用同一文件补齐英语。\n状态：有任一错误不应用任何格；同内容重导显示无变化。文本按纯文本显示，不执行标签。" },
+          { id: "import-actions", spec: "import-actions", title: "应用、取消及保存边界", target: ".modal-footer", loc: "导入弹窗 > 底部操作",
+            body: "按钮：校验通过且存在变更时允许应用；原子载入当前表单全部导入文案，并提示保存后生效。\n取消：原草稿及已保存数据不变；应用后取消整个编辑仍不改保存态。\n并发：应用前检查系列、草稿快照和配置版本；过期拒绝并要求重新预检/刷新。\n保存：失败保留导入后的草稿，版本冲突沿用原流程；权限与原子性需后端复验，原型不替代真实联调。" }
+        ];
+      }
       if (type === "categoryForm") {
         return [{
           id: "modal-category-form", spec: "modal-category-crud", title: "一级分类原有表单边界", target: '[data-note-target="modal"]', loc: "产品分类弹窗",
@@ -2356,6 +2574,7 @@
     function annotationContextLabel() {
       if (state.modal) {
         const labels = {
+          textImport: "导入多语言文案",
           categoryForm: "一级分类表单弹窗",
           categoryBlocked: "父分类删除阻断",
           categoryDelete: "父分类删除确认",
@@ -2790,6 +3009,14 @@
         return;
       }
       switch (action) {
+        case "open-text-import": openTextImport(); break;
+        case "choose-text-import-file": $("#seriesTextImportFile")?.click(); break;
+        case "download-text-template": downloadTextImportTemplate(); break;
+        case "precheck-text-import": precheckTextImport(); break;
+        case "apply-text-import": applyTextImport(); break;
+        case "simulate-import-stale":
+          if (state.modal?.type === "textImport") { state.modal.forceStale = true; showToast("已模拟配置变化，旧预检不能应用", "warning"); }
+          break;
         case "open-category-create":
           openCategoryForm("create");
           break;
@@ -3026,6 +3253,7 @@
 
     document.addEventListener("change", (event) => {
       const target = event.target;
+      if (target.id === "seriesTextImportFile") { readTextImportFile(target.files?.[0]); return; }
       if (target.matches("[data-locale-select]")) {
         if (state.saveStatus === "saving") return;
         state.activeLocale = target.value;
@@ -3077,6 +3305,18 @@
         };
         reader.readAsDataURL(file);
       }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (state.modal?.type !== "textImport") return;
+      if (event.key === "Escape") { event.preventDefault(); handleAction("close-modal", null); return; }
+      if (event.key !== "Tab") return;
+      const modal = $(".text-import-modal");
+      const controls = $$("button:not(:disabled), select:not(:disabled), [tabindex='0']", modal).filter((element) => element.offsetParent !== null);
+      if (!controls.length) return;
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!modal.contains(document.activeElement) || (event.shiftKey && document.activeElement === first)) { event.preventDefault(); (event.shiftKey ? last : first).focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
     window.addEventListener("hashchange", syncFromHash);
