@@ -1,0 +1,28 @@
+{
+  "id": "product-series-secondary-category",
+  "path": "/prototypes/product-series-secondary-category/",
+  "title": "产品二级分类与系列配置",
+  "summary": "在现有产品分类内管理系列图文与同分类产品关联，覆盖唯一归属、删除保护、多语言及保存异常。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "product-series-secondary-category",
+  "version": "v1.0",
+  "status": "active",
+  "tags": [
+    "产品分类",
+    "系列配置",
+    "关联产品",
+    "多语言"
+  ],
+  "updatedAt": "2026-11-02T08:12:33Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto",
+    "waitFor": "#productCanvas",
+    "delayMs": 800
+  }
+}
