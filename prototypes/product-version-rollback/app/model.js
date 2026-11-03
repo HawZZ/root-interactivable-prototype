@@ -1,0 +1,13 @@
+const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>Array.from(p.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=x=>JSON.parse(JSON.stringify(x)),equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const nowStr=()=>new Date().toLocaleString('zh-CN',{hour12:false});
+const ST={developing:{t:'开发中',tag:'tag-info'},listing:{t:'上架中',tag:'tag-warn'},listed:{t:'已上架',tag:'tag-ok'},offline:{t:'已下架',tag:'tag-info'}};
+const DC=[{id:'na',name:'北美数据中心'},{id:'eu',name:'西欧数据中心'},{id:'ap',name:'亚太数据中心'}];
+const COUNTRIES=[{id:'US',name:'美国',dc:'na',group:'北美洲'},{id:'CA',name:'加拿大',dc:'na',group:'北美洲'},{id:'DE',name:'德国',dc:'eu',group:'欧洲'},{id:'FR',name:'法国',dc:'eu',group:'欧洲'},{id:'GB',name:'英国',dc:'eu',group:'欧洲'},{id:'IT',name:'意大利',dc:'eu',group:'欧洲'},{id:'JP',name:'日本',dc:'ap',group:'亚洲'}];
+const FIELDS=[['name','产品名称','normal'],['serviceModel','客服型号','normal'],['uniCode','产品唯一编码','restricted'],['model','产品型号','restricted'],['runtimeModel','运行时显示型号','restricted'],['productType','产品分类','immutable'],['dynamicAccessSupported','动态获取产品配置','restricted','boolean'],['communicationMethod','通讯方式','immutable'],['peripheralNameList','BLE外设名过滤','restricted'],['prefixQrCode','二维码前缀','restricted'],['broadcastType','广播类型','restricted'],['addFlowType','流程配网路由方式','restricted'],['interactionType','配网交互方式','restricted']];
+const initial={name:'W1 Lite',serviceModel:'',uniCode:'',model:'W1Lite',runtimeModel:'W1Lite',productType:'Breast Pump',dynamicAccessSupported:false,communicationMethod:'BLE',peripheralNameList:'',prefixQrCode:'',broadcastType:'',addFlowType:'',interactionType:''};
+const params=new URLSearchParams(location.search);
+const state={page:params.get('view')==='list'?'list':'detail',tab:params.get('view')==='basic'?'basic':'versions',status:'listed',range:{way:'partial',mode:'centers',centers:['na'],countries:[]},profile:clone(initial),versions:[{no:'v3',time:'2026-10-02 10:12',req:'APP-20260930-017',type:'产品基础信息变更',by:'李明',appr:'王静',profile:clone(initial)},{no:'v2',time:'2026-09-18 16:40',req:'APP-20260912-007',type:'产品基础信息变更',by:'李明',appr:'王静',profile:{...initial,serviceModel:'W1Lite'}},{no:'v1',time:'2026-09-02 09:20',req:'—',type:'产品创建初始版本',by:'系统',appr:'—',profile:{...initial,name:'W1',serviceModel:'W1Lite'}}],globalVersion:'v3',auths:[{email:'qa.eu@example.com',dc:'eu',product:true}],request:null,requests:[],serial:0,drawer:null,draft:null,editBase:null,modal:null,errors:[],activeNote:null,kw:'',countrySearch:'',demoCountry:'DE',demoUser:'white',demoResult:null,loading:false};
+
+export {$,$$,esc,clone,equal,nowStr,ST,DC,COUNTRIES,FIELDS,initial,params,state};

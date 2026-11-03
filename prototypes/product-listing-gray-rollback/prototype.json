@@ -1,8 +1,8 @@
 {
   "id": "product-listing-gray-rollback",
   "path": "/prototypes/product-listing-gray-rollback/",
-  "title": "IoT Admin 白名单与上架范围解耦及版本回滚原型",
-  "summary": "产品整体上架及公开范围与白名单体验独立管理；范围外授权用户可体验，保留历史基础信息详情、版本回滚及字段差异。",
+  "title": "IoT Admin 产品发布需求（已拆分）",
+  "summary": "历史合并入口，现为两份独立PRD及一个产品版本回滚原型的拆分导航。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -11,16 +11,11 @@
   ],
   "seriesId": "product-listing-gray-rollback",
   "version": "v1",
-  "status": "active",
+  "status": "archived",
   "tags": [
-    "上架范围",
-    "白名单体验",
-    "整体产品状态",
-    "变更审批",
-    "版本回滚"
+    "历史入口",
+    "需求拆分"
   ],
-  "updatedAt": "2026-11-02T09:49:31Z",
-  "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"
   }

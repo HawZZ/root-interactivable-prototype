@@ -1,0 +1,24 @@
+{
+  "id": "product-version-rollback",
+  "path": "/prototypes/product-version-rollback/",
+  "title": "IoT Admin 产品版本回滚原型",
+  "summary": "查看只读历史基础信息、核对逐字段差异并审批回滚；保留整体产品状态、公开范围与白名单授权。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "product-version-rollback",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "版本回滚",
+    "基础信息版本",
+    "字段差异",
+    "变更审批"
+  ],
+  "preview": {
+    "mode": "auto"
+  }
+}

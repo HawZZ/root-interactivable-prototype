@@ -1,0 +1,9 @@
+
+:root{
+  --pri:#4372ff; --pri-dark:#2b6bd9; --pri-l7:#e0ecff; --pri-l9:#ecf5ff;
+  --ok:#67c23a; --warn:#e6a23c; --danger:#f56c6c; --info:#909399;
+  --t1:#303133; --t2:#606266; --t3:#909399; --t4:#a8abb2;
+  --bd:#dcdfe6; --bdl:#e4e7ed; --bdlr:#ebeef5; --th:#fafafa;
+  --app-bg:#f9f9f9; --aside:#001529; --r:4px; --ann-w:380px;
+  --sans:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+}
