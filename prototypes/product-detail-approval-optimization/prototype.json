@@ -1,0 +1,26 @@
+{
+  "id": "product-detail-approval-optimization",
+  "path": "/prototypes/product-detail-approval-optimization/",
+  "title": "产品详情审批优化原型",
+  "summary": "按产品状态简化审批；开发中和已下架直接保存，上架产品允许字段送审，审批单展示变更字段前后值。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "product-detail-change-approval",
+  "version": "v2",
+  "status": "active",
+  "tags": [
+    "产品详情",
+    "审批优化",
+    "变更对比"
+  ],
+  "updatedAt": "2026-11-04T03:20:54Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto",
+    "waitFor": "#base-info"
+  }
+}
