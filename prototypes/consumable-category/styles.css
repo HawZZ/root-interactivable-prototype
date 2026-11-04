@@ -2584,3 +2584,24 @@ textarea:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Review scope sits outside the actual product canvas. */
+.review-scope { padding: 9px 14px; background: #edf5ff; border-bottom: 1px solid #c8dcf8; color: #244568; font-size: 12px; line-height: 1.6; }
+.review-scope strong { color: #1257b8; margin-right: 8px; }
+.review-scope span { display: block; color: #52667d; }
+.change-mark { display: inline-block; padding: 1px 5px; border: 1px solid #b3d1ff; border-radius: 3px; background: #edf5ff; color: #1257b8; font-size: 10px; font-weight: 500; white-space: nowrap; }
+.change-column { background: #f3f8ff; }
+.legacy-mark { color: #6b7280; font-size: 11px; font-weight: 400; }
+.legacy-image { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px dashed #cbd1d9; border-radius: 3px; color: #8b94a2; font-size: 11px; }
+.legacy-form-grid { grid-template-columns: 1fr; }
+.legacy-form-grid .span-2 { grid-column: auto; }
+.legacy-options { padding: 6px 0; color: #6b7280; font-size: 12px; }
+.legacy-upload { padding: 18px 12px; border: 1px dashed #cbd1d9; border-radius: 4px; color: #6b7280; background: #fafbfc; line-height: 1.8; font-size: 12px; }
+.legacy-upload small { font-size: 11px; }
+.legacy-type-context { padding: 10px; background: #f4f5f7; color: #667085; font-size: 12px; line-height: 1.8; }
+.modal-backdrop:has(.consumable-drawer) { padding: 0; justify-content: flex-end; align-items: stretch; }
+.modal-dialog.consumable-drawer { width: min(680px, 100%); height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+@media (max-width: 899px) { .review-scope { padding: 7px 10px; font-size: 11px; } }
+.modal-backdrop:has(.consumable-drawer) { display: flex; }
+.modal-dialog.consumable-drawer { flex: 0 0 auto; min-width: 0; }
+.product-pane:has(.modal-dialog) .toast-root { bottom: 76px; }

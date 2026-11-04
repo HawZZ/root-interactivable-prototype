@@ -18,7 +18,7 @@
       model: 'fpctest',
       productCategoryId: '2092494966475055105',
       platform: 'ROOT云',
-      app: 'Luteos App',
+      app: 'momcozy',
       status: '开发中'
     },
     {
@@ -111,7 +111,7 @@
       title: '分类列表与稳定 ID',
       location: '耗材分类列表 > 表格',
       sections: [
-        { label: '字段', lines: ['展示分类名称、所属产品分类、耗材分类 ID、被引用耗材数、更新时间与操作。ID 由系统生成，用户不可填写或编辑。'] },
+        { label: '字段', lines: ['展示分类名称、所属产品分类、耗材分类 ID与操作；删除时检查引用，不要求列表新增引用统计或更新时间。ID 由系统生成，用户不可填写或编辑。'] },
         { label: '功能提示', lines: ['分类改名后 ID 保持不变；产品耗材通过 ID 关联，并按分类当前名称展示。', '各产品耗材记录保持独立，多个产品可引用同一个耗材分类。'] }
       ]
     },
@@ -160,9 +160,9 @@
         ,
       location: '智能产品 > 产品列表',
       sections: [
-        { label: '字段', lines: ['产品列表展示产品分类、产品名称、产品型号、产品 ID、产品状态和当前耗材引用概况。筛选只用于定位产品。'] },
+        { label: '字段', lines: ['产品列表仅作导航上下文，字段与筛选为节选，不构成产品列表改版；本期不新增耗材数量统计。'] },
         { label: '交互', lines: ['点击「查看」进入该产品详情的高级配置 → 耗材管理；耗材页始终带当前产品上下文，不提供跨产品按分类查询。'] },
-        { label: '原型假设', lines: ['产品行、分类 ID 和状态均仅用于演示；p1 的产品名称、型号、ID 与产品分类来自只读开发环境观察。'] }
+        { label: '原型假设', lines: ['仅样本212的名称、型号、ID、分类及所属App来源于开发环境；其余产品和所有耗材均为虚构样本。产品列表为导航节选，不作为整页视觉改版依据。'] }
       ]
     },
     'CON-01': {
@@ -170,7 +170,7 @@
       title: '产品与产品分类上下文',
       location: '产品详情 > 高级配置 > 耗材管理',
       sections: [
-        { label: '功能提示', lines: ['展示当前产品名称、型号、产品 ID、产品分类及分类 ID。所有耗材读取、添加与编辑均限定在当前产品。', '路径：智能产品 → 产品列表 → 产品详情 → 高级配置 → 耗材管理。'] },
+        { label: '功能提示', lines: ['沿用现有产品摘要与高级配置导航；本期不新增摘要统计或产品分类ID展示。所有耗材操作限定在当前产品。', '路径：智能产品 → 产品列表 → 产品详情 → 高级配置 → 耗材管理。'] },
         { label: '状态/差异', lines: ['产品所属产品分类是分类选项范围的上游依据；耗材分类不可跨到其他产品分类。'] }
       ]
     },
@@ -179,7 +179,7 @@
       title: '添加耗材与分类前置条件',
       location: '耗材管理 > 添加耗材',
       sections: [
-        { label: '交互', lines: ['点击「添加耗材」打开表单，分类区域位于表单开头，必须先完成单分类选择。', '分类选项从当前产品所属产品分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
+        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类单选卡片是交互示意，最终控件由设计定义。', '分类选项从当前产品所属产品分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
         { label: '状态/差异', lines: ['无分类时显示「去配置中心维护」；进入配置中心保留当前表单输入，返回后继续编辑。'] }
       ]
     },
@@ -188,7 +188,7 @@
       title: '耗材分类列与存量状态',
       location: '耗材管理 > 耗材列表',
       sections: [
-        { label: '字段', lines: ['每条耗材展示当前分类名称和分类 ID；分类改名后列表自动按 ID 关联并展示新名称。'] },
+        { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，展示当前分类名称；关联使用稳定ID，不要求列表展示ID。现有九列顺序保留，不新增「耗材类型」列。'] },
         { label: '状态/差异', lines: ['存量初始化前，尚未映射的演示记录显示「待初始化」，不能把缺失分类当作合法最终状态；初始化后展示预设分类关系。'] },
         { label: '边界', lines: ['多个产品可引用同一耗材分类，但每条产品耗材记录仍独立编辑；分类不是耗材类型。'] }
       ]
@@ -205,7 +205,7 @@
     'CON-05': {
       id: 'CON-05',
       title: '必选单分类与可选范围',
-      location: '耗材新增/编辑弹窗 > 耗材分类',
+      location: '耗材新增/编辑抽屉 > 耗材分类',
       sections: [
         { label: '校验', lines: ['分类必选且只能选择一个；选项仅包含当前产品所属产品分类下的耗材分类，空值或跨产品分类值不得保存。'] },
         { label: '状态/差异', lines: ['加载中显示占位并禁用保存；加载失败提供重试；无分类时提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新后才由用户明确清除失效选择。'] },
@@ -215,17 +215,17 @@
     'CON-06': {
       id: 'CON-06',
       title: '原有耗材字段与简化边界',
-      location: '耗材新增/编辑弹窗 > 配置字段',
+      location: '耗材新增/编辑抽屉 > 配置字段',
       sections: [
-        { label: '字段', lines: ['耗材名称沿用 30 字上限、耗材介绍沿用 300 字上限；耗材类型保留「非计数类耗材 / 云端定时耗材 / 设备计数耗材」三个现有枚举。', '原型保留展示国家、购买配置、购买链接、排序、触发条件和建议更换周期，便于验证分类变更不影响原字段。'] },
-        { label: '原型边界', lines: ['耗材图片、更换指引的图片/视频/富文本编辑器未在本原型重做，正式页面沿用现有组件与校验。购买、国家、排序的必填性和详细规则也沿用现有页面；本原型未新增新的强制业务规则。'] },
-        { label: '原型假设', lines: ['名称在本原型中作为必填项完成交互演示，真实必填判断以现有表单为准。'] }
+        { label: '字段', lines: ['耗材名称沿用 30 字上限、耗材介绍沿用 300 字上限；耗材类型保留「非计数类耗材 / 云端定时耗材 / 设备计数耗材」三个现有枚举。', '既有顺序：展示国家→购买配置→排序→名称→介绍→更换指引→耗材类型及条件项→耗材图片。触发条件和更换周期随类型配置，不是新增自由输入字段。'] },
+        { label: '原型边界', lines: ['本原型仅验证分类关系。购买配置、国家选项、上传和类型条件区为沿用现有的静态示意；正式开发保留当前组件、布局、必填性和校验。禁止按示意控件改造原有业务。'] },
+        { label: '原型假设', lines: ['2026-11-04实页核对：展示国家、名称、介绍、类型、图片有必填标记；独立站购买链接在该模式下必填。原型购买/上传控件仅示意，不代表必填性或既有规则取消。'] }
       ]
     },
     'CON-07': {
       id: 'CON-07',
       title: '保存、失效与失败重试',
-      location: '耗材新增/编辑弹窗 > 保存操作',
+      location: '耗材新增/编辑抽屉 > 保存操作',
       sections: [
         { label: '流程图', lines: ['校验分类与字段 → 保存中禁用重复提交 → 成功回显；失败保留输入 → 用户重试或取消'] },
         { label: '状态/差异', lines: ['保存失败显示具体原因，按钮变为「重试保存」，名称、分类和其他字段不清空。', '分类关系校验失败不自动改选；列表刷新后可重新选择。取消关闭不写入任何数据。'] },
@@ -256,7 +256,7 @@
       title: '父级删除 / 产品分类调整保护',
       location: '原型演示 > 父级保护检查',
       sections: [
-        { label: '业务规则', lines: ['产品分类仍有耗材分类时不得删除；产品所属分类调整若会破坏既有耗材关联必须阻止。', '分类或产品改名不得造成关联丢失；保护能力不包含自动迁移、自动改配或级联删除。'] },
+        { label: '业务规则', lines: ['父级操作不得造成悬空或跨产品分类关联；具体保护方案由研发核对，不新增产品分类调整入口。', '分类或产品改名不得造成关联丢失；保护能力不包含自动迁移、自动改配或级联删除。'] },
         { label: '状态/差异', lines: ['本原型的检查按钮只演示业务拦截结果，不修改产品分类或产品数据，也不宣称现网已实现该保护。'] },
         { label: '研发验收', lines: ['需核对既有父级删除和产品分类调整入口、接口与数据库约束，并由测试在交付前覆盖保护与并发场景。'] }
       ]
@@ -710,13 +710,13 @@
         <nav class="side-nav" aria-label="后台导航">
           <button class="nav-item" type="button" data-action="scope-notice" data-label="数据概览">
             <span class="nav-icon">${icon('dashboard')}</span>
-            <span>数据概览</span>
+            <span>概览</span>
           </button>
 
           <div class="nav-group-label"><span>智能产品</span><span>›</span></div>
           <a class="nav-sub${productPageActive ? ' is-active' : ''}" href="#page=products">产品列表</a>
           <button class="nav-sub" type="button" data-action="scope-notice" data-label="设备管理">
-            <span>设备管理</span>
+            <span>消息推送</span>
           </button>
 
           <div class="nav-group-label"><span>配置中心</span><span>›</span></div>
@@ -786,7 +786,7 @@
       <section class="demo-panel" data-note-target="DEMO-01" aria-label="原型演示工具">
         <div class="demo-summary-row">
           <span class="demo-tag">原型辅助</span>
-          <span class="demo-title">演示场景</span>
+          <span class="demo-title">评审工具 · 非交付页面</span>
           <span class="demo-status">${activeFlags.length ? `已注入：${escapeHtml(activeFlags.join('、'))}` : '当前为正常演示状态'}</span>
           <span class="demo-summary-spacer"></span>
           <button class="demo-expand" type="button" data-action="toggle-demo-panel" aria-expanded="${ui.demoOpen}">${ui.demoOpen ? '收起场景' : '展开场景'}</button>
@@ -869,8 +869,8 @@
           <td><span class="cell-strong">${escapeHtml(category.name)}</span></td>
           <td><span class="tag tag-neutral">${escapeHtml(parent ? parent.name : '分类缺失')}</span></td>
           <td><span class="cell-mono">${escapeHtml(category.id)}</span></td>
-          <td><span class="reference-count">${references.length}</span><span class="cell-secondary">条耗材引用</span></td>
-          <td>${escapeHtml(formatDate(category.updatedAt))}</td>
+          
+          
           <td class="operation-cell" data-note-target="CAT-04">
             ${index === 0 ? noteAnchor('CAT-04') : ''}
             <button class="text-button" type="button" data-action="edit-category" data-id="${escapeHtml(category.id)}">编辑</button>
@@ -948,8 +948,8 @@
                 <th scope="col">分类名称</th>
                 <th scope="col">所属产品分类</th>
                 <th scope="col">耗材分类 ID</th>
-                <th scope="col">引用概况</th>
-                <th scope="col">更新时间</th>
+                
+                
                 <th scope="col">操作</th>
               </tr>
             </thead>
@@ -984,7 +984,7 @@
           <td><span class="cell-mono">${escapeHtml(product.model)}</span></td>
           <td><span class="cell-mono">${escapeHtml(product.id)}</span></td>
           <td><span class="tag ${product.status === '已上架' ? 'tag-green' : 'tag-blue'}">${escapeHtml(product.status)}</span></td>
-          <td><span class="reference-count">${consumableCount}</span><span class="cell-secondary">条耗材配置</span></td>
+          
           <td class="operation-cell">
             <a class="text-button" href="${buildHash('consumables', product.id, null, null)}" aria-label="查看 ${escapeHtml(product.name)} 的耗材管理">查看 ${icon('arrowRight')}</a>
           </td>
@@ -1041,7 +1041,7 @@
                 <th scope="col">产品型号</th>
                 <th scope="col">产品 ID</th>
                 <th scope="col">产品状态</th>
-                <th scope="col">耗材配置</th>
+                
                 <th scope="col">操作</th>
               </tr>
             </thead>
@@ -1071,7 +1071,7 @@
       return `<span class="category-cell"><span class="tag tag-amber">待初始化</span><span class="category-id">分类关系尚未映射</span></span>`;
     }
     const category = categoryById(record.categoryId);
-    return `<span class="category-cell"><span class="tag tag-blue">${escapeHtml(category ? category.name : '分类失效')}</span><span class="category-id">${escapeHtml(category ? category.id : '未找到分类')}</span></span>`;
+    return `<span class="category-cell"><span class="tag tag-blue">${escapeHtml(category ? category.name : '分类失效')}</span></span>`;
   }
 
   function renderConsumablePage() {
@@ -1096,16 +1096,15 @@
       const categoryInvalid = !pending && (!category || category.productCategoryId !== product.productCategoryId);
       return `
         <tr class="${record.id === ui.highlightConsumableId ? 'is-highlighted' : ''}">
-          <td>${renderConsumableCategoryCell(record)}</td>
-          <td class="consumable-name">
-            <span class="cell-strong">${escapeHtml(record.name)}</span>
-            <span class="cell-secondary" title="${escapeHtml(record.intro)}">${escapeHtml(truncate(record.intro || '暂无介绍', 42))}</span>
-          </td>
-          <td><span class="tag tag-neutral">${escapeHtml(typeLabel(record.type))}</span></td>
+          <td class="change-column">${renderConsumableCategoryCell(record)}</td>
+          <td class="consumable-name"><span class="cell-strong">${escapeHtml(record.name)}</span></td>
+          <td><span class="legacy-image" aria-label="既有耗材图片示意">图片</span></td>
           <td>${escapeHtml(record.trigger || '—')}</td>
           <td>${escapeHtml(record.replacementCycle || '—')}</td>
-          <td>${escapeHtml(purchaseLabel(record.purchaseType))}<span class="cell-secondary">${escapeHtml(countryLabel(record.country))}</span></td>
+          <td title="${escapeHtml(record.intro || '')}">${escapeHtml(truncate(record.intro || '—', 24))}</td>
+          <td><span class="cell-secondary">原有指引</span></td>
           <td>${escapeHtml(String(record.sort == null ? 0 : record.sort))}</td>
+          <td>${escapeHtml(purchaseLabel(record.purchaseType))}</td>
           <td class="operation-cell" data-note-target="CON-04">
             ${index === 0 ? noteAnchor('CON-04') : ''}
             <button class="text-button" type="button" data-action="edit-consumable" data-id="${escapeHtml(record.id)}"${categoryInvalid ? ' data-invalid-category="true"' : ''}>编辑</button>
@@ -1143,13 +1142,15 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th scope="col">耗材分类</th>
+                <th scope="col" class="change-column">耗材分类 <span class="change-mark">新增</span></th>
                 <th scope="col">耗材名称</th>
-                <th scope="col">耗材类型</th>
+                <th scope="col">耗材图片</th>
                 <th scope="col">触发条件</th>
                 <th scope="col">建议更换周期</th>
-                <th scope="col">购买入口</th>
+                <th scope="col">耗材介绍</th>
+                <th scope="col">更换指引</th>
                 <th scope="col">排序</th>
+                <th scope="col">购买入口</th>
                 <th scope="col">操作</th>
               </tr>
             </thead>
@@ -1191,8 +1192,8 @@
             <div class="product-meta">
               <span><b>产品型号</b> ${escapeHtml(product.model)}</span>
               <span><b>产品 ID</b> <span class="cell-mono">${escapeHtml(product.id)}</span></span>
-              <span><b>产品分类</b> ${escapeHtml(parent ? parent.name : '—')} / <span class="cell-mono">${escapeHtml(parent ? parent.id : '—')}</span></span>
-              <span><b>耗材分类</b> ${availableCategories.length} 个</span>
+              <span><b>产品分类</b> ${escapeHtml(parent ? parent.name : '—')}</span>
+              
             </div>
           </div>
         </div>
@@ -1256,7 +1257,7 @@
   }
 
   function renderDemoPanelHost() {
-    document.getElementById('demoHost').innerHTML = renderDemoPanel();
+    document.getElementById('demoHost').innerHTML = `<div class="review-scope"><strong>本期变更</strong> 配置中心新增耗材分类；耗材列表加分类列；新增/编辑加分类选择。<span>既有页面与字段沿用；带“新增”标签为本期变化，导航与其余布局为上下文示意。</span></div>` + renderDemoPanel();
   }
 
   function renderAnnotations() {
@@ -1832,7 +1833,7 @@
 
     return `
       <div class="modal-backdrop">
-        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="consumableDialogTitle" tabindex="-1">
+        <div class="modal-dialog consumable-drawer" role="dialog" aria-modal="true" aria-labelledby="consumableDialogTitle" tabindex="-1">
           <div class="modal-header">
             <div>
               <div class="modal-kicker">${escapeHtml(product.name)} / 高级配置 / 耗材管理</div>
@@ -1844,21 +1845,48 @@
             <div class="modal-body">
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CON-05">
-                <div class="modal-section-title"><span>耗材分类 <span class="required">*</span></span>${noteAnchor('CON-05')}</div>
+                <div class="modal-section-title"><span>耗材分类 <span class="required">*</span> <span class="change-mark">本期新增 / 可更换</span></span>${noteAnchor('CON-05')}</div>
                 <div class="field-help">仅可选择「${escapeHtml(parent ? parent.name : '当前产品分类')}」下的一个耗材分类；耗材类型与耗材分类是两个独立字段。</div>
                 ${renderCategoryOptionsForDialog()}
                 ${fieldErrorMarkup('categoryId')}
               </section>
 
               <section class="modal-section" data-note-target="CON-06">
-                <div class="modal-section-title"><span>耗材配置</span>${noteAnchor('CON-06')}</div>
-                <div class="form-grid">
+                <div class="modal-section-title"><span>耗材配置 <span class="legacy-mark">沿用现有 · 以下控件为示意</span></span>${noteAnchor('CON-06')}</div>
+                <div class="form-grid legacy-form-grid">
+                  <label class="form-field">
+                    <span>耗材展示国家 <span class="required-mark">*</span></span>
+                    <select id="consumableCountrySelect" name="country" ${disabled}>
+                      ${selectOptions(COUNTRIES, draft.country || '')}
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span>购买配置</span>
+                    <select id="consumablePurchaseTypeSelect" name="purchaseType" ${disabled}>
+                      ${selectOptions(PURCHASE_TYPES, draft.purchaseType || 'none')}
+                    </select>
+                  </label>
+                  <label class="form-field span-2">
+                    <span>购买链接</span>
+                    <input type="url" id="consumablePurchaseUrlInput" name="purchaseUrl" value="${escapeHtml(draft.purchaseUrl || '')}" placeholder="独立站购买链接（完整配置沿用现有）" ${fieldState('purchaseUrl')} ${disabled}>
+                    ${fieldErrorMarkup('purchaseUrl')}
+                  </label>
+                  <label class="form-field">
+                    <span>排序</span>
+                    <input type="number" id="consumableSortInput" name="sort" min="0" step="1" value="${escapeHtml(draft.sort)}" ${fieldState('sort')} ${disabled}>
+                    ${fieldErrorMarkup('sort')}
+                  </label>
                   <label class="form-field span-2">
                     <span class="field-label-row"><span>耗材名称 <span class="required-mark">*</span></span><span class="counter${nameLength >= 28 ? ' is-near-limit' : ''}" id="consumableNameCounter">${nameLength} / 30</span></span>
                     <input type="text" id="consumableNameInput" name="name" maxlength="30" value="${escapeHtml(draft.name)}" placeholder="请输入耗材名称" autocomplete="off" ${fieldState('name')} ${disabled}>
                     ${fieldErrorMarkup('name')}
                   </label>
-
+                  <label class="form-field span-2">
+                    <span class="field-label-row"><span>耗材介绍 <span class="required-mark">*</span></span><span class="counter${introLength >= 285 ? ' is-near-limit' : ''}" id="consumableIntroCounter">${introLength} / 300</span></span>
+                    <textarea id="consumableIntroInput" name="intro" maxlength="300" placeholder="请输入耗材介绍" ${fieldState('intro')} ${disabled}>${escapeHtml(draft.intro || '')}</textarea>
+                    ${fieldErrorMarkup('intro')}
+                  </label>
+                  <div class="form-field"><span>更换指引</span><div class="legacy-options">◉ 图片　○ 视频　○ 富文本</div><div class="legacy-upload">＋ 图片 / 视频 / 富文本编辑区<br><small>沿用当前组件与校验，原型不上传</small></div></div>
                   <label class="form-field">
                     <span>耗材类型 <span class="required-mark">*</span></span>
                     <select id="consumableTypeSelect" name="type" ${fieldState('type')} ${disabled}>
@@ -1866,51 +1894,11 @@
                     </select>
                     ${fieldErrorMarkup('type')}
                   </label>
-
-                  <label class="form-field">
-                    <span>排序</span>
-                    <input type="number" id="consumableSortInput" name="sort" min="0" step="1" value="${escapeHtml(draft.sort)}" ${fieldState('sort')} ${disabled}>
-                    ${fieldErrorMarkup('sort')}
-                  </label>
-
-                  <label class="form-field">
-                    <span>触发条件</span>
-                    <input type="text" id="consumableTriggerInput" name="trigger" value="${escapeHtml(draft.trigger || '')}" placeholder="如：设备计数剩余 10%" ${disabled}>
-                  </label>
-
-                  <label class="form-field">
-                    <span>建议更换周期</span>
-                    <input type="text" id="consumableCycleInput" name="replacementCycle" value="${escapeHtml(draft.replacementCycle || '')}" placeholder="如：90 天" ${disabled}>
-                  </label>
-
-                  <label class="form-field">
-                    <span>展示国家</span>
-                    <select id="consumableCountrySelect" name="country" ${disabled}>
-                      ${selectOptions(COUNTRIES, draft.country || '')}
-                    </select>
-                  </label>
-
-                  <label class="form-field">
-                    <span>购买配置</span>
-                    <select id="consumablePurchaseTypeSelect" name="purchaseType" ${disabled}>
-                      ${selectOptions(PURCHASE_TYPES, draft.purchaseType || 'none')}
-                    </select>
-                  </label>
-
-                  <label class="form-field span-2">
-                    <span>购买链接</span>
-                    <input type="url" id="consumablePurchaseUrlInput" name="purchaseUrl" value="${escapeHtml(draft.purchaseUrl || '')}" placeholder="可选，填写时须为 http:// 或 https:// 链接" ${fieldState('purchaseUrl')} ${disabled}>
-                    ${fieldErrorMarkup('purchaseUrl')}
-                  </label>
-
-                  <label class="form-field span-2">
-                    <span class="field-label-row"><span>耗材介绍</span><span class="counter${introLength >= 285 ? ' is-near-limit' : ''}" id="consumableIntroCounter">${introLength} / 300</span></span>
-                    <textarea id="consumableIntroInput" name="intro" maxlength="300" placeholder="请输入耗材介绍" ${fieldState('intro')} ${disabled}>${escapeHtml(draft.intro || '')}</textarea>
-                    ${fieldErrorMarkup('intro')}
-                  </label>
+                  <div class="legacy-type-context">${draft.type === 'non-count' ? '非计数类耗材：沿用现有配置。' : '沿用现有类型条件：取值类型、固定值/范围值、推荐更换周期与单位、不足及耗尽状态值。此处不定义新配置规则。'}<span class="cell-secondary">原记录示意：${escapeHtml(draft.trigger || '—')} / ${escapeHtml(draft.replacementCycle || '—')}</span></div>
+                  <div class="form-field"><span>耗材图片 <span class="required-mark">*</span></span><div class="legacy-upload">＋ 请上传图片<br><small>既有：建议100×100px，≤20M，png/jpg/jpeg；原型仅占位</small></div></div>
                 </div>
                 <div class="legacy-placeholder">
-                  耗材图片与更换指引的图片、视频、富文本编辑器不在本次交互原型中复刻；正式页面沿用现有组件。国家、购买与排序字段只用于验证原有字段可继续保留。
+                  灰色区域用于呈现既有字段位置，不是新增、精简或改版要求。购买配置、国家、类型条件、上传及校验继续使用当前系统实现。
                 </div>
               </section>
             </div>
@@ -2335,18 +2323,6 @@
     if (Array.from(name).length > 30) errors.name = '耗材名称不得超过 30 字。';
     if (Array.from(intro).length > 300) errors.intro = '耗材介绍不得超过 300 字。';
     if (!CONSUMABLE_TYPES.some((item) => item.value === ui.formDraft.type)) errors.type = '请选择有效的耗材类型。';
-    if (ui.formDraft.sort !== '' && ui.formDraft.sort != null) {
-      const sort = Number(ui.formDraft.sort);
-      if (!Number.isInteger(sort) || sort < 0) errors.sort = '排序需为不小于 0 的整数。';
-    }
-    if (ui.formDraft.purchaseUrl) {
-      try {
-        const url = new URL(ui.formDraft.purchaseUrl);
-        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('invalid protocol');
-      } catch (_error) {
-        errors.purchaseUrl = '请输入以 http:// 或 https:// 开头的有效链接。';
-      }
-    }
     ui.fieldErrors = errors;
     return { valid: Object.keys(errors).length === 0, name, intro };
   }
