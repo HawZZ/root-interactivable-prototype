@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="按产品分类维护耗材分类，演示分类增删改查、产品耗材必选关联、编辑更换及存量初始化规则。">
+  <meta name="keywords" content="耗材分类,产品耗材,分类关联,配置中心">
+  <meta name="prototype:surface" content="web">
+  <meta name="prototype:product-line" content="IoT Admin">
+  <meta name="prototype:business-area" content="配置中心">
+  <title>Luteos IoT Admin · 耗材分类原型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-mobile-view="product">
+  <div class="app-shell">
+    <nav class="mobile-switch" aria-label="原型视图切换">
+      <button type="button" class="mobile-tab is-active" data-mobile-target="product" aria-selected="true">产品页面</button>
+      <button type="button" class="mobile-tab" data-mobile-target="notes" aria-selected="false">原型批注</button>
+    </nav>
+
+    <div class="workspace">
+      <section class="product-pane" id="productPane" aria-label="可交互 Web 后台产品页面">
+        <div class="demo-host" id="demoHost"></div>
+        <div class="product-viewport" id="productViewport" tabindex="0" aria-label="固定 1440px 后台画布，可横向滚动">
+          <div class="admin-canvas" id="adminCanvas"></div>
+        </div>
+        <div id="modalRoot"></div>
+        <div class="toast-root" id="toastRoot" aria-live="polite" aria-atomic="true"></div>
+      </section>
+
+      <aside class="annotation-pane" id="annotationPane" aria-label="原型批注">
+        <header class="annotation-head">
+          <div class="annotation-eyebrow">PROTOTYPE SPEC</div>
+          <div class="annotation-heading-row">
+            <div>
+              <h2>原型批注</h2>
+              <p>页面级交互、规则与状态说明</p>
+            </div>
+            <span class="annotation-count" id="annotationCount">0</span>
+          </div>
+          <div class="annotation-context" id="annotationContext">耗材分类</div>
+          <p class="annotation-legend"><span class="legend-anchor">CAT-01</span> 黄色编号是原型辅助锚点，不属于真实 IoT Admin 页面。点击卡片或编号可联动定位。</p>
+        </header>
+        <div class="annotation-list" id="annotationList"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="sr-only" id="liveStatus" aria-live="polite" aria-atomic="true"></div>
+  <noscript>
+    <div class="noscript">该原型需要启用 JavaScript 才能运行。</div>
+  </noscript>
+  <script src="app.js" defer></script>
+</body>
+</html>
