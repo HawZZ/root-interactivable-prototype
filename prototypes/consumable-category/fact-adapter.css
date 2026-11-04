@@ -1,0 +1,115 @@
+/* Only containing the existing app inside the review canvas and wiring demo controls. */
+.fact-host { width: 1440px; height: max(900px, calc(100vh - 118px)); min-height: 900px; position:relative; contain:layout paint; background:#fff; color:#606266; font:16px/24px PingFangSC-Regular,"PingFang SC",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif; }
+.product-viewport { padding:0; background:#f5f7fa; }
+#adminCanvas { min-height:100%; }
+.fact-host .layout-container {height:100%;min-height:100%;}
+.fact-host .sidebar-wrapper {height:100%;}
+.fact-host .nav-header {height:54px;}
+.fact-host .layout-page-content {height:100%;}
+.fact-host .layout-custom-card-body {background:#fff;}
+.fact-host .fact-table {width:1300px;min-width:1300px;table-layout:fixed;border-collapse:collapse;font-size:14px;color:#606266;}
+.fact-host .fact-table th {background:#fafafa;color:#606266;font-weight:500;height:48px;}
+.fact-host .fact-table td {height:64px;border-bottom:1px solid #ebeef5;}
+.fact-host .fact-table th,.fact-host .fact-table td {padding:12px 0;text-align:left;vertical-align:middle;}
+.fact-host .fact-table .cell {padding:0 12px;line-height:23px;word-break:break-word;}
+.fact-host .fact-table th:nth-child(1){width:120px}.fact-host .fact-table th:nth-child(2){width:80px}.fact-host .fact-table th:nth-child(3){width:120px}.fact-host .fact-table th:nth-child(4){width:260px}.fact-host .fact-table th:nth-child(5),.fact-host .fact-table th:nth-child(6),.fact-host .fact-table th:nth-child(7),.fact-host .fact-table th:nth-child(8){width:80px}.fact-host .fact-table th:nth-child(9){width:250px}.fact-host .fact-table th:nth-child(10){width:150px}
+.fact-host .config-content {overflow:auto;min-height:480px;}
+.fact-host .table-wrap {border:0;overflow:auto;}
+.fact-host .cell-strong {font-weight:400;color:#606266;}
+.fact-host .config-header .title-bar__btn >span {display:inline-flex;align-items:center;gap:8px;}
+.fact-host [data-action] {cursor:pointer;}
+.fact-host .fact-config-page {padding:24px;}
+.fact-host .fact-config-page .surface-card {border:0;border-radius:0;box-shadow:none;}
+.fact-host .fact-config-page .page-heading {margin-bottom:24px;}
+.fact-host .fact-config-page .page-title {font-size:20px;font-weight:500;}
+.fact-host .fact-config-page .page-eyebrow,.fact-host .fact-config-page .page-description {display:none;}
+.fact-host .fact-config-page .btn {border-radius:4px;font-size:14px;min-height:32px;}
+.fact-host .fact-config-page .btn-primary {background:#466bff;border-color:#466bff;}
+.fact-host .fact-config-page .data-table {font-size:14px;}
+.fact-host .fact-config-page .data-table th {background:#fafafa;font-weight:500;}
+.fact-host .info-cover-img img {object-fit:contain;}
+.fact-overlay {position:absolute;inset:0;width:100%;height:100%;min-height:0;z-index:1;}
+#modalRoot .fact-overlay .el-overlay {position:absolute;inset:0;display:block;padding:0;background:rgba(0,0,0,.5);backdrop-filter:none;animation:none;}
+#modalRoot .fact-overlay .el-drawer {position:absolute;top:0;right:0;bottom:0;left:auto;width:min(720px,100%) !important;height:100%;max-height:100%;border:0;border-radius:0;margin:0;transform:none;animation:none;box-shadow:none;display:flex;flex-direction:column;font-size:14px;}
+#modalRoot .fact-overlay .el-drawer__header {padding:16px 24px;margin:0;border-bottom:1px solid #ebeef5;flex-shrink:0;}
+#modalRoot .fact-overlay .el-drawer__body {padding:24px;flex:1;overflow:auto;min-height:0;}
+#modalRoot .fact-overlay .el-drawer__footer {padding:16px 24px;display:flex;justify-content:flex-end;align-items:center;gap:12px;border-top:1px solid #ebeef5;flex-shrink:0;}
+#modalRoot .fact-overlay .el-drawer__title {font-size:14px;font-weight:400;line-height:22px;color:#303133;}
+#modalRoot .fact-overlay .modal-body {background:#fff;}
+.fact-category-field .fact-category-body {width:100%;padding:8px;border:1px solid #d9e5ff;background:#f8faff;}
+.fact-overlay .category-option {padding:6px 9px;border-radius:4px;min-height:0;font-size:14px;}
+.fact-overlay .category-options {gap:6px;margin-top:8px;}
+.fact-overlay .category-option-id {display:none;}
+.fact-overlay .category-option-name {font-size:14px;font-weight:400;}
+.fact-overlay .el-form-item__content {min-width:0;}
+.fact-overlay .el-radio {margin-right:20px;}
+@media(max-width:899px){#modalRoot .fact-overlay .el-drawer__body {padding:16px;} #modalRoot .fact-overlay .el-drawer__header,#modalRoot .fact-overlay .el-drawer__footer {padding:12px 16px;} .fact-overlay .el-form-item__label {width:100px !important;} }
+/* Higher specificity isolates legacy review-shell form rules from captured controls. */
+#modalRoot .fact-overlay {background:transparent;height:100%;min-height:0;}
+#modalRoot .fact-overlay .el-drawer {min-width:0 !important;}
+#modalRoot .fact-overlay .el-input__inner {border:0;box-shadow:none;padding:0;min-height:0;background:transparent;border-radius:0;}
+#modalRoot .fact-overlay .el-textarea__inner {min-height:inherit;}
+#modalRoot .fact-overlay .el-select__wrapper {min-height:32px;}
+#modalRoot .fact-overlay .el-button {border:1px solid var(--el-button-border-color);box-shadow:none;}
+#modalRoot .fact-overlay .el-drawer__body {font-family:var(--font-family);}
+.fact-host .fact-table th {height:48px;}
+.fact-host .fact-table td {height:64px;}
+.fact-host .fact-table td .cell {max-height:46px;overflow:hidden;}
+.fact-host .fact-table th:nth-child(2){width:120px}
+.fact-host .fact-table .change-column {background:transparent;}
+.fact-host .el-button {box-shadow:none;border:1px solid var(--el-button-border-color);}
+/* New category page follows the real product-category list's table layout. */
+.fact-host .fact-category-page .lu-search-bar-wrapper {display:flex;justify-content:space-between;gap:16px;}
+.fact-host .fact-category-page .sb-wrap__left {display:flex;align-items:center;gap:12px;}
+.fact-host .fact-category-page .sb-wrap__right {display:flex;align-items:center;gap:8px;}
+.fact-host .fact-category-page .filter-row {padding:0;display:flex;align-items:center;gap:16px;flex-wrap:nowrap;}
+.fact-host .fact-category-page .filter-item {display:flex;flex-direction:row;align-items:center;gap:8px;min-width:0;}
+.fact-host .fact-category-page .filter-label {white-space:nowrap;font-size:14px;color:#606266;}
+.fact-host .fact-category-page select,.fact-host .fact-category-page .input-with-icon {width:180px;min-height:32px;height:32px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;}
+.fact-host .fact-category-page .input-with-icon input {min-width:0;min-height:0;height:30px;border:0;padding:0 8px;background:transparent;}
+.fact-host .fact-category-page .input-with-icon svg {display:none;}
+.fact-host .fact-category-page .filter-actions {margin:0;display:flex;gap:8px;}
+.fact-host .fact-category-page .btn {height:32px;min-height:32px;border-radius:4px;font-weight:400;font-size:14px;box-shadow:none;}
+.fact-host .fact-category-table {position:relative;flex:1;overflow:auto;border:0;}
+.fact-host .fact-category-table .data-table {min-width:0;table-layout:fixed;font-size:14px;}
+.fact-host .fact-category-table th {height:48px;background:#fafafa;color:#606266;font-weight:500;padding:12px;}
+.fact-host .fact-category-table td {height:48px;padding:12px;border-bottom:1px solid #ebeef5;}
+.fact-host .fact-category-table th:nth-child(1){width:28%}.fact-host .fact-category-table th:nth-child(2){width:25%}.fact-host .fact-category-table th:nth-child(3){width:32%}.fact-host .fact-category-table th:nth-child(4){width:15%}
+.fact-host .fact-category-table .tag {border:0;background:transparent;padding:0;font-weight:400;font-size:14px;}
+.fact-host .fact-category-table .cell-strong {font-weight:400;}
+.fact-host .fact-category-table .cell-mono {font-family:inherit;font-size:14px;}
+.fact-host .fact-category-table .operation-cell {text-align:right;}
+.fact-host .fact-category-page .table-content__center {display:flex;flex-direction:column;}
+.fact-host .fact-category-page .table-footer {background:#fff;border:0;}
+.fact-host .fact-category-page .fact-link {font-weight:400;color:#4372ff;}
+#adminCanvas > .fact-host {height:max(900px, calc(100vh - 118px));min-height:900px;}
+.fact-host #factRealApp {height:100%;}
+.fact-host .sidebar-wrapper {min-height:0;overflow:hidden;}
+.fact-host .sidebar-wrapper .menu-scrollbar {min-height:0;flex:1;}
+#modalRoot .fact-overlay {height:100%;}
+#modalRoot .modal-backdrop {background:rgba(0,0,0,.5);backdrop-filter:none;}
+#modalRoot .category-dialog {width:min(600px,100%);border:0;border-radius:4px;font-size:14px;box-shadow:none;}
+#modalRoot .category-dialog .modal-kicker,#modalRoot .category-dialog .modal-section-title,#modalRoot .category-dialog .field-help {display:none;}
+#modalRoot .category-dialog .modal-header {padding:16px 24px;}
+#modalRoot .category-dialog .modal-header h2 {font-size:18px;font-weight:400;}
+#modalRoot .category-dialog .modal-body {padding:24px;}
+#modalRoot .category-dialog .modal-section {padding:0;border:0;background:#fff;}
+#modalRoot .category-dialog .form-field {display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;column-gap:12px;margin-bottom:18px;}
+#modalRoot .category-dialog .field-error {grid-column:2;}
+#modalRoot .category-dialog .readonly-block {padding:12px;background:#fafafa;border:0;box-shadow:none;}
+#modalRoot .category-dialog .readonly-lock {display:none;}
+#modalRoot .category-dialog .readonly-main strong {font-weight:400;}
+#modalRoot .category-dialog .modal-footer {padding:16px 24px;}
+#modalRoot .category-dialog .modal-footer-note {font-size:0;}
+#modalRoot .category-dialog .btn {font-weight:400;border-radius:4px;height:32px;box-shadow:none;}
+#modalRoot .fact-overlay .el-select__input {padding:0;border:0;background:transparent;box-shadow:none;min-height:0;height:24px;line-height:24px;border-radius:0;}
+#modalRoot .fact-overlay .el-select__placeholder {color:#a8abb2;}
+#modalRoot .fact-overlay .el-drawer {max-width:100%;}
+#adminCanvas .fact-host .config-content {min-height:480px;}
+.fact-host .layout-table-wrapper .lu-table__table {height:100% !important;min-height:300px;}
+/* Review-only narrow-screen access to the unchanged desktop purchase controls. */
+@media(max-width:559px){
+ #modalRoot .fact-overlay .el-form-item__label {width:120px !important;}
+ #modalRoot .fact-overlay .purchase-config {overflow-x:auto;}
+ #modalRoot .fact-overlay .purchase-tabs {min-width:630px;}
+}

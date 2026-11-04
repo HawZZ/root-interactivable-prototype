@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  document.addEventListener('click', event => { const target=event.target.closest('[data-action]'); if(target?.dataset.action==='fact-products'||target?.dataset.action==='fact-categories'){event.preventDefault();window.location.hash=target.dataset.action==='fact-products'?'#page=products':'#page=categories';} });
+
   const STORAGE_KEY = 'luteos.consumable-category.prototype.v1';
   const DRAFT_KEY = 'luteos.consumable-category.prototype.draft.v1';
   const SCHEMA_VERSION = 1;
@@ -794,6 +796,7 @@
         </div>
         ${ui.demoOpen ? `
           <div class="demo-body">
+            <div class="demo-row"><label class="demo-row-label" for="demoProductSelect">演示产品</label><select id="demoProductSelect" aria-label="仅原型演示：切换产品">${PRODUCTS.map(p=>`<option value="${escapeHtml(p.id)}" ${p.id===ui.productId?'selected':''}>${escapeHtml(p.name)} · ${p.id.startsWith('DEMO-')?'虚构演示产品':'事实样本'}</option>`).join('')}</select><span class="demo-status">仅切换评审样本，不属于后台功能。</span></div>
             <div class="demo-row">
               <span class="demo-row-label">存量状态</span>
               <div class="demo-note-wrap">
@@ -1245,19 +1248,79 @@
     else if (ui.page === 'consumables') pageContent = renderConsumablePage();
     else pageContent = renderCategoryPage();
 
-    document.getElementById('adminCanvas').innerHTML = `
-      <div class="admin-app">
-        ${renderSidebar()}
-        <div class="app-main">
-          ${renderTopbar()}
-          <main class="page-shell">${pageContent}</main>
-        </div>
-      </div>
-    `;
+    const host = document.getElementById('adminCanvas');
+    host.innerHTML = '<div class="fact-host">' + (ui.page === 'categories' ? window.IOT_FACT_SNAPSHOT.categoryShell : ui.page === 'products' ? window.IOT_FACT_SNAPSHOT.productShell : window.IOT_FACT_SNAPSHOT.shell) + '</div>';
+    const fact = host.querySelector('.fact-host');
+    fact.querySelectorAll('button').forEach(button => { button.type = 'button'; button.dataset.action = 'scope-notice'; button.dataset.label = button.textContent.trim() || '沿用现有入口'; });
+    fact.querySelectorAll('[data-item-name]').forEach(item => {
+      item.dataset.action = item.dataset.itemName === '产品列表' ? 'fact-products' : 'scope-notice';
+      item.dataset.label = item.dataset.itemName;
+    });
+    const productEntry = fact.querySelector('[data-item-name="产品分类"]');
+    if (productEntry) {
+      const entry = productEntry.cloneNode(true); entry.dataset.itemName = '耗材分类'; entry.dataset.action = 'fact-categories'; entry.innerHTML = '<span>耗材分类</span>'; entry.dataset.itemValue='/consumable-category';
+      productEntry.after(entry); entry.classList.toggle('is-active', ui.page === 'categories');
+    }
+    const card = fact.querySelector('.layout-custom-card-body');
+    if (ui.page === 'consumables') {
+      const product = productById(ui.productId) || PRODUCTS[0];
+      const parent = productCategoryById(product.productCategoryId);
+      fact.querySelector('.text-tit').textContent = product.name;
+      fact.querySelectorAll('.text-desc').forEach(e => {
+        if (e.textContent.startsWith('产品分类：')) e.textContent = '产品分类：' + parent.name;
+        if (e.textContent.startsWith('产品型号：')) e.textContent = '产品型号：' + product.model;
+        if (e.textContent.startsWith('产品ID：')) e.textContent = '产品ID：' + product.id;
+        if (product.id !== PRODUCTS[0].id && e.textContent.startsWith('产品模板ID：')) e.remove();
+      });
+      fact.querySelector('.header-info-wrap').dataset.noteTarget = 'CON-01';
+      fact.querySelector('.cover-info-name').insertAdjacentHTML('beforeend', noteAnchor('CON-01'));
+      const toolbar = fact.querySelector('.config-header .title-bar__btn');
+      toolbar.innerHTML = '<span data-note-target="CON-02">'+noteAnchor('CON-02')+'<button type="button" class="el-button el-button--primary el-button--default" data-action="open-consumable-create"><span>添加耗材</span></button></span>';
+      const temp = document.createElement('div'); temp.innerHTML = pageContent;
+      const content = fact.querySelector('.config-content');
+      content.innerHTML = temp.querySelector('.advanced-body').innerHTML;
+      const table = content.querySelector('.data-table');
+      if (table) {
+        table.classList.add('fact-table');
+        table.querySelectorAll('th,td').forEach(e => { e.classList.add('el-table__cell'); const cell=document.createElement('div'); cell.className='cell'; while(e.firstChild) cell.append(e.firstChild); e.append(cell); });
+      }
+      fact.querySelector('._bar-nav-btn').dataset.action = 'fact-products';
+    } else if (ui.page === 'categories') {
+      const temp = document.createElement('div'); temp.innerHTML = pageContent;
+      const wrapper = fact.querySelector('.layout-table-wrapper'); wrapper.classList.add('fact-category-page');
+      const filter = temp.querySelector('#categoryFilterForm');
+      filter.querySelector('.filter-item.wide .input-with-icon').classList.add('fact-search-input');
+      fact.querySelector('.sb-wrap__left').append(filter);
+      const create = fact.querySelector('.sb-wrap__right button'); create.dataset.action='open-category-create';
+      create.dataset.noteTarget='CAT-02'; create.insertAdjacentHTML('afterend',noteAnchor('CAT-02'));
+      fact.querySelector('.section-content__header-bar').dataset.noteTarget='CAT-01';
+      fact.querySelector('.sb-wrap__left').insertAdjacentHTML('afterbegin',noteAnchor('CAT-01'));
+      const tableWrap = temp.querySelector('.table-wrap');
+      tableWrap.classList.add('fact-category-table');
+      tableWrap.dataset.noteTarget='CAT-03';
+      tableWrap.insertAdjacentHTML('beforeend',noteAnchor('CAT-03'));
+      const center = fact.querySelector('.table-content__center');center.innerHTML='';center.append(tableWrap);
+      const footer = temp.querySelector('.table-footer');footer.querySelector('span').textContent='共 '+tableWrap.querySelectorAll('tbody tr').length+' 条'; center.append(footer);
+      if(ui.returnContext) wrapper.prepend(temp.querySelector('.context-banner'));
+      fact.querySelector('.page-name').textContent='耗材分类';
+      fact.querySelectorAll('.text-button').forEach(e=>e.classList.add('fact-link'));
+    } else {
+      fact.querySelector('.page-name').textContent = '产品列表';
+      fact.querySelectorAll('.el-table__body button').forEach(button => {
+        if(button.textContent.trim()==='查看') {button.removeAttribute('data-action');button.addEventListener('click',()=>{window.location.hash='#page=consumables&product=2114647612245774338';});}
+      });
+      const filters=fact.querySelector('.section-content__header-bar'); if(filters){filters.dataset.noteTarget='PRO-01';filters.insertAdjacentHTML('afterbegin',noteAnchor('PRO-01'));}
+      const table=fact.querySelector('.table-content'); if(table){table.dataset.noteTarget='PRO-01';}
+    }
+    if(ui.page==='categories') {
+      const entry=fact.querySelector('[data-item-name="耗材分类"]');
+      const scroller=fact.querySelector('.sidebar-wrapper .el-scrollbar__wrap');
+      if(entry && scroller) scroller.scrollTop += Math.max(0,entry.getBoundingClientRect().bottom-scroller.getBoundingClientRect().bottom+60);
+    }
   }
 
   function renderDemoPanelHost() {
-    document.getElementById('demoHost').innerHTML = `<div class="review-scope"><strong>本期变更</strong> 配置中心新增耗材分类；耗材列表加分类列；新增/编辑加分类选择。<span>既有页面与字段沿用；带“新增”标签为本期变化，导航与其余布局为上下文示意。</span></div>` + renderDemoPanel();
+    document.getElementById('demoHost').innerHTML = `<div class="review-scope"><strong>本期变更</strong> 配置中心新增耗材分类；耗材列表加分类列；新增/编辑加分类选择。<span>带“新增”标签为本期变化；既有页面按开发环境复核。黄色编号和评审工具不属于交付页面。</span></div>` + renderDemoPanel();
   }
 
   function renderAnnotations() {
@@ -1704,7 +1767,7 @@
     const disabled = ui.busy ? 'disabled' : '';
     return `
       <div class="modal-backdrop">
-        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="categoryDialogTitle" tabindex="-1">
+        <div class="modal-dialog category-dialog" role="dialog" aria-modal="true" aria-labelledby="categoryDialogTitle" tabindex="-1">
           <div class="modal-header">
             <div>
               <div class="modal-kicker">配置中心 / 耗材分类</div>
@@ -1821,7 +1884,7 @@
     `;
   }
 
-  function renderConsumableDialog() {
+  function renderConsumableDialogReference() {
     const product = productById(ui.modal.productId) || PRODUCTS[0];
     const parent = productCategoryById(product.productCategoryId);
     const draft = ui.formDraft;
@@ -1913,6 +1976,52 @@
         </div>
       </div>
     `;
+  }
+
+  function renderConsumableDialog() {
+    const draft = ui.formDraft;
+    const holder = document.createElement('div');
+    holder.innerHTML = window.IOT_FACT_SNAPSHOT.drawers[draft.type || 'non-count'];
+    const overlay = holder.firstElementChild;
+    overlay.classList.add('modal-backdrop');
+    const drawer = holder.querySelector('.el-drawer');
+    drawer.classList.add('modal-dialog', 'consumable-drawer'); drawer.tabIndex = -1;
+    drawer.setAttribute('aria-labelledby','consumableDialogTitle');
+    holder.querySelector('.el-drawer__title').id='consumableDialogTitle';
+    holder.querySelector('.el-drawer__title').textContent=ui.modal.type==='consumable-create'?'添加耗材':'编辑耗材';
+    holder.querySelector('.el-drawer__close-btn').dataset.action='close-modal';
+    const body = holder.querySelector('.el-drawer__body'); body.classList.add('modal-body');
+    const form = holder.querySelector('form'); form.id='consumableForm'; form.noValidate=true;
+    const fields = Array.from(form.querySelectorAll('.el-form-item'));
+    function findField(label) { return fields.find(e=>e.querySelector('.el-form-item__label')?.textContent.trim()===label); }
+    function bindField(label, selector, id, name, value) {
+      const item=findField(label); const input=item?.querySelector(selector);
+      if(input){input.id=id; input.name=name; input.value=value??'';input.setAttribute('value',value??'');item.querySelector('label')?.setAttribute('for',id); if(input.tagName==='TEXTAREA') input.textContent=value??'';const counter=item.querySelector('.el-input__count-inner,.el-input__count');if(counter){counter.id=name==='name'?'consumableNameCounter':'consumableIntroCounter';counter.textContent=Array.from(value??'').length+' / '+(name==='name'?30:300);}}
+    }
+    bindField('耗材名称','input','consumableNameInput','name',draft.name);
+    bindField('耗材介绍','textarea','consumableIntroInput','intro',draft.intro);
+    bindField('排序','input','consumableSortInput','sort',draft.sort);
+    const typeField=findField('耗材类型');
+    typeField?.querySelectorAll('input[type="radio"]').forEach((input,index)=>{
+      const type=CONSUMABLE_TYPES[index].value;input.name='legacyType';input.value=type;
+      input.checked=type===draft.type;input.toggleAttribute('checked',input.checked);
+      input.closest('label').classList.toggle('is-checked',input.checked);
+      input.closest('.el-radio__input')?.classList.toggle('is-checked',input.checked);
+    });
+    const categoryItem=document.createElement('div'); categoryItem.className='el-form-item el-form-item--default is-required asterisk-left fact-category-field'; categoryItem.dataset.noteTarget='CON-05';
+    categoryItem.innerHTML='<label class="el-form-item__label" style="width:120px">耗材分类</label><div class="el-form-item__content"><div class="fact-category-body"><span class="change-mark">本期新增 / 可更换</span>'+noteAnchor('CON-05')+renderCategoryOptionsForDialog()+fieldErrorMarkup('categoryId')+'</div></div>';
+    form.prepend(categoryItem);
+    form.dataset.noteTarget='CON-06';
+    for(const key of ['name','intro']) if(ui.fieldErrors[key]) findField(key==='name'?'耗材名称':'耗材介绍')?.insertAdjacentHTML('beforeend',fieldErrorMarkup(key));
+    if(ui.modalError) body.insertAdjacentHTML('afterbegin',modalErrorMarkup(ui.modalError));
+    const footer=holder.querySelector('.el-drawer__footer');footer.dataset.noteTarget='CON-07';
+    const cancel=footer.querySelector('[data-testid="cancel-consumable"]');cancel.dataset.action='close-modal';
+    const submit=footer.querySelector('[data-testid="submit-consumable"]');submit.type='submit';submit.setAttribute('form','consumableForm');
+    submit.disabled=ui.busy || ui.optionState!=='ready' || !categoriesForProduct(productById(ui.modal.productId)).length;
+    submit.innerHTML='<span>'+(ui.busy?'保存中…':ui.modalError?'重试保存':'确定')+'</span>';
+    footer.insertAdjacentHTML('afterbegin',noteAnchor('CON-07'));
+    if(ui.busy) holder.querySelectorAll('input,textarea,button').forEach(e=>e.disabled=true);
+    return '<div class="fact-host fact-overlay">'+holder.innerHTML+'</div>';
   }
 
   function renderParentGuardDialog() {
@@ -2804,6 +2913,7 @@
 
   function handleChange(event) {
     const target = event.target;
+    if(target.id==='demoProductSelect'){window.location.hash=buildHash('consumables',target.value,null,null);return;}
     if (target.id === 'categoryProductCategoryFilter') {
       ui.categoryFilters.productCategoryId = target.value;
       return;
@@ -2814,6 +2924,7 @@
     }
     if (!ui.modal || !ui.formDraft) return;
 
+    if (target.name === 'legacyType' && ui.formDraft) { ui.formDraft.type=target.value; renderModal(); renderAnnotations(); return; }
     if (target.id === 'categoryParentSelect') {
       ui.formDraft.productCategoryId = target.value;
       return;
