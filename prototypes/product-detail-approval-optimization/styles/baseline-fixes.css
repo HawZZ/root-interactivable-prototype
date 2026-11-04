@@ -1,0 +1,24 @@
+/* 仅修正基线演示容器可用性，不重绘产品样式。 */
+.shell{grid-template-columns:minmax(0,1fr) 390px;height:100dvh;min-height:0;overflow:hidden}
+.pane--product{height:100%;min-width:0;overflow:auto}.pane--annotation{height:100%;min-height:0;max-height:100dvh}
+#modal-root{position:fixed;inset:0 390px 0 0;z-index:10;pointer-events:none}
+#modal-root:empty{display:none}#modal-root .modal-mask,#modal-root .drawer-mask{position:absolute;inset:0;pointer-events:auto}
+#modal-root .modal-mask{grid-template-columns:minmax(0,1fr);min-width:0}
+#modal-root .drawer{max-width:100%}#modal-root .modal{max-width:calc(100% - 24px);max-height:calc(100% - 24px);display:flex;flex-direction:column;overflow:hidden}
+#modal-root .modal-body{overflow:auto;min-height:0}#modal-root .modal-foot{flex-shrink:0}
+.drawer-field .upload-row{grid-column:2}.drawer-field label{font-size:inherit}.drawer-field>.error,.drawer-field>.form-help{grid-column:2}
+.drawer-field .upload-box{padding:0;background:#fff}.upload-box img{max-width:100%;max-height:74px;object-fit:contain}
+.anno{display:block;width:100%;text-align:left;cursor:pointer}
+.anno.active{border-color:#4372ff}.highlight-static{outline:2px solid #facc15;outline-offset:4px;scroll-margin:25px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #4372ff;outline-offset:2px}
+@media(max-width:1000px){
+ .shell{display:block;height:auto;overflow:visible;min-height:100dvh}
+ .pane--product{height:72dvh;min-height:360px;overflow:auto}
+ .pane--annotation{height:auto;max-height:none;overflow:visible}
+ #modal-root{right:0}#modal-root .drawer{width:min(720px,100vw);max-width:100%}
+ .annotation-head{position:static}.drawer-form{width:100%}.drawer-field,.drawer-readonly{grid-template-columns:100px minmax(0,1fr);gap:10px}
+ .drawer-body{padding:18px 20px}.drawer .upload-row{gap:16px;flex-wrap:wrap}.drawer .upload-box{width:96px;height:96px}
+ .drawer-foot{padding:0 12px;gap:8px}.drawer-foot .el-btn{padding:0 9px;font-size:12px}
+ .modal-foot{padding:0 14px}.modal h3{flex-shrink:0}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
