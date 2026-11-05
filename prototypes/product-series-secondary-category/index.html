@@ -1397,9 +1397,34 @@
         </div>`;
     }
 
-    function seriesImageHtml(series, size = "thumb") {
-      if (series?.image) {
-        return `<img src="${esc(series.image)}" alt="系列图预览">`;
+    function directSeriesImage(source, locale = DEFAULT_LOCALE) {
+      if (locale === DEFAULT_LOCALE) return { url: source?.image || "", placeholder: Boolean(source?.imagePlaceholder), name: source?.imageName || "" };
+      return source?.localizedImages?.[locale] || { url: "", placeholder: false, name: "" };
+    }
+
+    function hasSeriesImage(image) { return Boolean(image?.url || image?.placeholder); }
+
+    function resolvedSeriesImage(source, locale = state.activeLocale) {
+      const direct = directSeriesImage(source, locale);
+      return hasSeriesImage(direct) ? { ...direct, fallback: false } : { ...directSeriesImage(source), fallback: locale !== DEFAULT_LOCALE };
+    }
+
+    function setSeriesImage(source, locale, value) {
+      if (locale === DEFAULT_LOCALE) {
+        source.image = value.url || ""; source.imagePlaceholder = Boolean(value.placeholder); source.imageName = value.name || "";
+      } else {
+        source.localizedImages ||= {};
+        if (hasSeriesImage(value)) source.localizedImages[locale] = clone(value);
+        else delete source.localizedImages[locale];
+      }
+    }
+
+    function imageReadPending() { return Object.values(state.imageReads || {}).some(Boolean); }
+
+    function seriesImageHtml(series, size = "thumb", locale = state.activeLocale) {
+      const image = resolvedSeriesImage(series, locale);
+      if (image.url) {
+        return `<img src="${esc(image.url)}" alt="${esc(localeInfo(locale).label)}系列图预览${image.fallback ? "（英语兜底）" : ""}">`;
       }
       if (size === "thumb") return `<span>示意</span>`;
       return placeholderImageHtml();
@@ -1427,6 +1452,8 @@
         return;
       }
       state.form = clone(series);
+      state.form.localizedImages ||= {};
+      state.imageReads = {}; state.imageReadTokens = {}; state.imageErrors = {};
       state.form.productIds = clone(series.productIds || []);
       state.formDirty = false;
       state.formErrors = {};
@@ -1437,12 +1464,14 @@
     }
 
     function initializeCreateForm(categoryId) {
+      state.imageReads = {}; state.imageReadTokens = {}; state.imageErrors = {};
       state.form = {
         id: "",
         categoryId,
         revision: null,
         image: "",
         imagePlaceholder: false,
+        localizedImages: {},
         createdAt: "",
         updatedAt: "",
         i18n: Object.fromEntries(LOCALES.map((locale) => [locale.id, { entry: "", title: "", content: "" }])),
@@ -1804,7 +1833,7 @@
                   <tr>
                     <td>
                       <div class="series-cell">
-                        <div class="series-thumb">${seriesImageHtml(item, "thumb")}</div>
+                        <div class="series-thumb">${seriesImageHtml(item, "thumb", DEFAULT_LOCALE)}</div>
                         <div class="series-cell-copy">
                           <strong>${esc(seriesDefaultEntry(item) || "未填写入口文案")}</strong>
                           <span class="mono">${esc(shortId(item.id))} · ${linked ? `revision ${item.revision}` : "空系列 · revision " + item.revision}</span>
@@ -1854,8 +1883,8 @@
         .map((item, index) => item.fallback && fields[index].value ? ["入口文案", "主要标题", "内容"][index] : "")
         .filter(Boolean);
       const fallbackNotice = fallbackFields.length
-        ? `<div class="notice warning" style="margin-bottom:14px"><strong>缺少${esc(locale.label)}翻译：</strong>${esc(fallbackFields.join("、"))}已回退到默认语言（英语）。系列图与关联产品跨语言共享。</div>`
-        : `<div class="notice info" style="margin-bottom:14px">当前语言三项文案均已配置。系列图与关联产品跨语言共享。</div>`;
+        ? `<div class="notice warning" style="margin-bottom:14px"><strong>缺少${esc(locale.label)}翻译：</strong>${esc(fallbackFields.join("、"))}已回退到默认语言（英语）。系列图随语言切换，未配置时使用英语图；关联产品跨语言共享。</div>`
+        : `<div class="notice info" style="margin-bottom:14px">当前语言三项文案均已配置。系列图随语言切换，未配置时使用英语图；关联产品跨语言共享。</div>`;
       const products = series.productIds.map(getProduct).filter(Boolean);
       return `
         <div class="detail-hero" data-note-target="view-hero">
@@ -1881,11 +1910,12 @@
         </div>
 
         ${fallbackNotice}
+        <div class="field-help" data-note-target="view-image-status" style="margin-bottom:14px">${resolvedSeriesImage(series).fallback ? "当前语言未配置系列图，使用英语系列图兜底。" : `${esc(locale.label)}系列图已配置。`}${resolvedSeriesImage(series).placeholder ? " 当前为辅助示意图。" : ""}</div>
 
         <div class="section-title-row">
           <div>
             <h3 class="section-title">语言配置</h3>
-            <div class="section-hint">切换语言只改变查看内容；系列图与关联产品保持不变。</div>
+            <div class="section-hint">切换语言同时查看对应文案和系列图；关联产品保持不变。</div>
           </div>
           ${languageSwitchHtml(series, "view")}
         </div>
@@ -1969,7 +1999,7 @@
           <div class="locale-panel-head">
             <div>
               <div class="locale-panel-title">多语言文案</div>
-              <div class="field-help" style="margin:0">系列图与关联产品跨语言共享</div>
+              <div class="field-help" style="margin:0">文案与系列图共用下方语言切换；关联产品跨语言共享</div>
             </div>
             <div class="import-entry-actions" data-note-target="text-import-entry"><span class="locale-status"><span class="status-dot ${currentComplete === 3 ? "complete" : ""}"></span>${esc(locale.label)} ${currentComplete}/3 已填写</span><button class="btn" type="button" data-action="open-text-import" ${locked ? "disabled" : ""}>导入多语言文案</button></div>
           </div>
@@ -2013,29 +2043,7 @@
           </div>
         </section>
 
-        <section class="form-section" data-note-target="form-image">
-          <div class="form-section-head">
-            <div>
-              <h3 class="form-section-title">系列图 <span style="color:var(--danger)">*</span></h3>
-              <p class="form-section-help">请上传用于平台配置的系列图；本地选择后可先预览。</p>
-            </div>
-          </div>
-          <div class="image-field-row">
-            <div class="image-upload ${state.formErrors?.image ? "has-error" : ""}" id="imagePreview">
-              ${form.image ? `<img src="${esc(form.image)}" alt="系列图上传预览">` : placeholderImageHtml()}
-            </div>
-            <div>
-              <div style="font-weight:500;margin-bottom:4px">${form.image ? esc(state.imageFileName || "本地图片已载入预览") : (form.imagePlaceholder ? "当前为辅助示意占位图" : "尚未选择系列图")}</div>
-              <div class="field-help">${form.imagePlaceholder && !form.image ? "当前为示意图。" : "选择本地图片后可预览、替换或移除。"}</div>
-              ${fieldError("image")}
-              <div class="upload-actions">
-                <label class="btn ${locked ? "disabled" : ""}" for="seriesImageInput" aria-disabled="${locked}">上传本地图片</label>
-                <input class="visually-hidden" id="seriesImageInput" type="file" accept="image/*" ${locked ? "disabled" : ""}>
-                <button class="btn" type="button" data-action="remove-series-image" ${locked || (!form.image && !form.imagePlaceholder) ? "disabled" : ""}>移除图片</button>
-              </div>
-            </div>
-          </div>
-        </section>
+        ${renderSeriesImageField(form, locked)}
 
         <section class="product-picker" data-note-target="form-products">
           ${renderProductPicker(form)}
@@ -2053,6 +2061,84 @@
           </div>
           ${state.simulateFailure || state.conflictVersion !== null ? `<div class="field-help" style="color:#8a6508;margin-top:7px">${state.simulateFailure ? "已启用下一次保存失败。" : ""}${state.simulateFailure && state.conflictVersion !== null ? " " : ""}${state.conflictVersion !== null ? `当前表单将按 revision ${state.conflictVersion} 提交，以演示冲突。` : ""}</div>` : ""}
         </div>`;
+    }
+
+    function renderSeriesImageField(form, locked) {
+      const locale = state.activeLocale, info = localeInfo(locale), english = locale === DEFAULT_LOCALE;
+      const direct = directSeriesImage(form, locale), image = resolvedSeriesImage(form, locale), busy = state.imageReads?.[locale];
+      const status = busy ? "正在读取图片…" : hasSeriesImage(direct) ? (english ? "英语系列图已配置" : `${info.label}独立系列图已配置`) : english ? "尚未选择英语系列图" : "未单独配置，使用英语系列图兜底";
+      return `<section class="form-section" data-note-target="form-image">
+        <div class="form-section-head"><div>
+          <h3 class="form-section-title">${esc(info.label)}系列图 ${english ? '<span style="color:var(--danger)">*</span>' : '<span class="tag">选填</span>'}</h3>
+          <p class="form-section-help">${english ? "英语系列图必填，为其他15种语言提供兜底。" : "可单独上传；移除本语言图片后恢复使用英语图。"}</p>
+        </div></div>
+        <div class="image-field-row">
+          <div class="image-upload ${state.formErrors?.image ? "has-error" : ""}" id="imagePreview">${seriesImageHtml(form, "large", locale)}</div>
+          <div>
+            <div style="font-weight:500;margin-bottom:4px" data-image-status role="status">${esc(status)}</div>
+            <div class="field-help">${esc(image.name || "")}${image.placeholder ? " 当前为辅助示意图。" : ""}${!hasSeriesImage(image) ? " 请先配置英语图片。" : ""}</div>
+            ${fieldError("image")}
+            ${state.imageErrors?.[locale] ? `<div class="field-error" role="alert">${esc(state.imageErrors[locale])}</div>` : ""}
+            <div class="upload-actions">
+              <label class="btn ${locked ? "disabled" : ""}" for="seriesImageInput" aria-disabled="${locked}">上传本地图片</label>
+              <input class="visually-hidden" id="seriesImageInput" type="file" accept="image/*" ${locked ? "disabled" : ""}>
+              <button class="btn" type="button" data-action="remove-series-image" ${locked || (!hasSeriesImage(direct) && !busy) ? "disabled" : ""}>移除图片</button>
+            </div>
+            <div class="upload-actions" data-note-target="image-sync-entry">
+              <button class="btn" type="button" data-action="sync-english-image" ${locked || imageReadPending() || !hasSeriesImage(directSeriesImage(form)) ? "disabled" : ""}>同步英语图到其他语言</button>
+            </div>
+            <div class="field-help">同步会复制当前英语图到其他15种语言，确认后应用到草稿，保存后生效。文案不变。</div>
+          </div>
+        </div>
+      </section>`;
+    }
+
+    function openImageSync() {
+      if (!state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending() || !hasSeriesImage(directSeriesImage(state.form))) return;
+      const english = directSeriesImage(state.form);
+      const targets = LOCALES.filter(x => x.id !== DEFAULT_LOCALE).map(x => ({ ...x, configured: hasSeriesImage(directSeriesImage(state.form, x.id)) }));
+      state.modal = { type: "imageSync", form: state.form, snapshot: JSON.stringify(state.form), revision: getSeries(state.form.id)?.revision ?? null, english: clone(english), targets };
+      renderOverlay(); renderAnnotations();
+      requestAnimationFrame(() => $('.modal [data-action="close-modal"]')?.focus());
+    }
+
+    function applyImageSync() {
+      const modal = state.modal;
+      if (modal?.type !== "imageSync" || !state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending()) return;
+      if (state.form !== modal.form || JSON.stringify(state.form) !== modal.snapshot || (getSeries(state.form.id)?.revision ?? null) !== modal.revision) {
+        modal.error = "当前草稿或配置版本已变化，请取消后重新同步。"; renderOverlay(); renderAnnotations(); return;
+      }
+      modal.targets.forEach(x => setSeriesImage(state.form, x.id, modal.english));
+      state.modal = null; markFormDirty(); renderAll(); showToast("英语图已同步到其他15种语言的草稿，保存后生效");
+    }
+
+    function readSeriesImage(file) {
+      if (!file || !state.form || isReadonly() || state.saveStatus === "saving") return;
+      const form = state.form, locale = state.activeLocale;
+      state.imageReads ||= {}; state.imageReadTokens ||= {}; state.imageErrors ||= {};
+      const token = (state.imageReadTokens[locale] || 0) + 1;
+      state.imageReadTokens[locale] = token;
+      const current = () => state.form === form && state.imageReadTokens?.[locale] === token;
+      const fail = () => { if (!current()) return; state.imageReads[locale] = false; state.imageErrors[locale] = "图片读取失败，请选择有效图片后重试；原图片已保留。"; renderAll(); };
+      state.imageErrors[locale] = ""; state.imageReads[locale] = true;
+      if (!file.type.startsWith("image/")) { fail(); return; }
+      renderAll();
+      const reader = new FileReader();
+      reader.onerror = fail; reader.onabort = fail;
+      reader.onload = () => {
+        if (!current()) return;
+        const image = new Image(); image.onerror = fail;
+        image.onload = () => {
+          if (!current()) return;
+          state.imageReads[locale] = false;
+          if (isReadonly() || state.saveStatus === "saving") { renderAll(); return; }
+          setSeriesImage(form, locale, { url: String(reader.result || ""), placeholder: false, name: file.name });
+          state.imageReads[locale] = false; state.imageErrors[locale] = "";
+          markFormDirty(); renderAll();
+        };
+        image.src = String(reader.result || "");
+      };
+      reader.readAsDataURL(file);
     }
 
     function renderProductPicker(form) {
@@ -2117,7 +2203,7 @@
         <span class="footer-note">${readonly ? "当前为只读权限，保存不可用。" : "保存将同时更新系列配置和全部关联产品。"}</span>
         <div class="footer-actions">
           <button class="btn" type="button" data-action="cancel-form" ${loading ? "disabled" : ""}>取消</button>
-          <button class="btn primary" type="button" data-action="save-series" ${loading || readonly ? "disabled" : ""}>
+          <button class="btn primary" type="button" data-action="save-series" ${loading || readonly || imageReadPending() ? "disabled" : ""}>
             ${loading ? `<span class="loading-label"><span class="spinner"></span>保存中…</span>` : "保存"}
           </button>
         </div>`;
@@ -2309,6 +2395,10 @@
             <footer class="modal-footer">${footer}</footer>
           </section>
         </div>`;
+      if (modal.type === "imageSync") {
+        const configured = modal.targets.filter(x => x.configured);
+        return wrap("同步英语系列图", `<p>将当前英语图复制到其他15种语言的独立配置；不会修改文案或关联产品。</p><div class="notice warning">${configured.length ? `将覆盖 ${configured.length} 种语言已配置的图片：${configured.map(x => esc(x.label)).join("、")}。` : "其他15种语言尚未配置独立图片，将全部填入英语图。"}</div><p>目标语言：${modal.targets.map(x => esc(x.label)).join("、")}。</p><p class="field-help">这是一次复制；之后替换英语图不会自动更新这些独立图片。取消不修改草稿，确认后仍须主表单保存。</p>${modal.error ? `<div class="field-error" role="alert">${esc(modal.error)}</div>` : ""}`, `<button class="btn" type="button" data-action="close-modal">取消</button><button class="btn primary" type="button" data-action="confirm-image-sync" ${modal.error ? "disabled" : ""}>确认同步到草稿</button>`);
+      }
       if (modal.type === "textImport") {
         const plan = modal.plan;
         return wrap("导入多语言文案", textImportBody(), `<button class="btn" type="button" data-action="close-modal">取消</button><button class="btn primary" type="button" data-action="apply-text-import" ${!plan?.valid || !plan.changeCount || modal.loading ? "disabled" : ""}>应用到当前草稿</button>`, true);
@@ -2463,7 +2553,7 @@
         },
         {
           id: "view-locale", spec: "view-language-fallback", title: "语言切换与缺项回退", target: '[data-note-target="language-switch"]', loc: "查看二级分类 > 语言切换",
-          body: "交互：使用语言选择器切换平台现有16种语言。\n规则：英语为默认语言，入口文案、主要标题、内容三项必填；其他15种语言缺项逐项回退英语。\n共享：系列图与关联产品不会随语言切换而变化。\n语言集合：英语、简体中文、德语、法语、繁体中文、意大利语、葡萄牙语、西班牙语、阿拉伯语、越南语、印尼语、泰语、马来语、日语、俄语、菲律宾语。"
+          body: "交互：使用语言选择器切换平台现有16种语言。\n规则：英语为默认语言，入口文案、主要标题、内容三项必填；其他15种语言缺项逐项回退英语。\n图片：随文案语言一起切换；本语言无独立图则使用英语图，明确标识来源。关联产品跨语言共享。\n语言集合：英语、简体中文、德语、法语、繁体中文、意大利语、葡萄牙语、西班牙语、阿拉伯语、越南语、印尼语、泰语、马来语、日语、俄语、菲律宾语。"
         },
         {
           id: "view-copy", spec: "view-platform-copy", title: "平台配置文案", target: '[data-note-target="view-copy"]', loc: "查看二级分类 > 配置文案",
@@ -2493,7 +2583,7 @@
         },
         {
           id: "form-locale", spec: "series-multilingual", title: "多语言配置与回退", target: '[data-note-target="form-locale"]', loc: "配置表单 > 多语言文案",
-          body: "交互：在同一选择器切换16种语言，草稿分别保存，不互相覆盖。\n校验：英语三项必填；其他15种语言可留空，查看及读取时按字段回退英语。\n共享：图片与关联产品跨语言共享。\n来源：用户已确认“默认英语，支持16种语言”；集合沿用平台现有多语言。界面使用紧凑选择器；阿拉伯语字段按输入内容自动排版方向。"
+          body: "交互：在同一选择器切换16种语言，草稿分别保存，不互相覆盖。\n校验：英语三项必填；其他15种语言可留空，查看及读取时按字段回退英语。\n图片：共用当前语言选择器，独立上传/移除，非英语未配置时使用英语兜底；只有英语图必填。关联产品跨语言共享。\n来源：用户已确认“默认英语，支持16种语言”；集合沿用平台现有多语言。界面使用紧凑选择器；阿拉伯语字段按输入内容自动排版方向。"
         },
         {
           id: "form-text-import", spec: "series-text-import", title: "每个二级分类的多语言文案导入", target: '[data-note-target="text-import-entry"]', loc: "配置抽屉 > 多语言文案 > 导入",
@@ -2504,8 +2594,8 @@
           body: "字段：入口文案、主要标题、内容。入口文案用于后台识别，不设业务唯一键。\n提醒：同分类默认语言入口文案重复时显示提示，但允许继续保存。\n状态：必填错误在字段下展示，失败保留页面输入。\n待确认：字符串长度与展示行数上限不由本原型假定。"
         },
         {
-          id: "form-image", spec: "series-image", title: "系列图与本地预览", target: '[data-note-target="form-image"]', loc: "配置表单 > 系列图",
-          body: "交互：选择本地图片后仅在前端预览，可替换或移除；系列图必填。\n状态：失败后保留已载入预览；不会在原型中上传文件。\n待确认：尺寸、比例、格式和文件大小限制待素材规范登记。\n原型备注：现有系列使用明确标注的辅助示意占位图，不虚构实物或铭牌位置。"
+          id: "form-image", spec: "series-image", title: "系列图多语言与英语兜底", target: '[data-note-target="form-image"]', loc: "配置表单 > 系列图",
+          body: "交互：共用文案语言选择器；英语图必填，其余15种语言选填。上传/替换只改当前语言；移除非英语独立图即恢复英语兜底，无独立图时移除禁用。\n英语：允许在草稿中移除，但保存被阻断并定位英语；其他语言图片不能代替英语。\n同步：从任意语言复制当前英语图到其他15语言，列明覆盖语言并确认，仅写当前草稿，主保存才生效；后续英语替换不改变已复制图。\n状态：图片读取中显示加载并阻断保存/同步；失败保留旧图可重试，语言切换或迟到结果不串语言/表单。只读与保存中禁止写图片。\n待确认：尺寸、比例、格式和文件大小限制待素材规范登记。\n原型备注：现有系列使用明确标注的辅助示意占位图，不虚构实物或铭牌位置。"
         },
         {
           id: "form-products", spec: "series-product-links", title: "同分类产品与唯一归属", target: '[data-note-target="form-products"]', loc: "配置表单 > 关联产品",
@@ -2537,6 +2627,10 @@
           { id: "import-actions", spec: "import-actions", title: "应用、取消及保存边界", target: ".modal-footer", loc: "导入弹窗 > 底部操作",
             body: "按钮：校验通过且存在变更时允许应用；原子载入当前表单全部导入文案，并提示保存后生效。\n取消：原草稿及已保存数据不变；应用后取消整个编辑仍不改保存态。\n并发：应用前检查系列、草稿快照和配置版本；过期拒绝并要求重新预检/刷新。\n保存：失败保留导入后的草稿，版本冲突沿用原流程；权限与原子性需后端复验，原型不替代真实联调。" }
         ];
+      }
+      if (type === "imageSync") {
+        return [{ id: "modal-image-sync", spec: "image-sync-confirm", title: "英语图片同步确认", target: '[data-note-target="modal"]', loc: "系列图 > 同步确认弹窗",
+          body: "触发：英语图片存在、无图片读取且有编辑权限时可同步。\n目标：其他15种语言全部填入当前英语图，列明已配置图片的覆盖语言；仅复制图片，不改文案或成员。\n交互：确认原子应用当前草稿；取消、关闭及Esc不修改。之后英语替换不自动改已复制图片，删除独立图片可恢复兜底。\n保护：草稿、系列或revision变化拒绝旧确认；主保存才生效，失败保留全部图片草稿。" }];
       }
       if (type === "categoryForm") {
         return [{
@@ -2574,6 +2668,7 @@
     function annotationContextLabel() {
       if (state.modal) {
         const labels = {
+          imageSync: "同步英语系列图",
           textImport: "导入多语言文案",
           categoryForm: "一级分类表单弹窗",
           categoryBlocked: "父分类删除阻断",
@@ -2869,10 +2964,10 @@
       if (!String(defaultCopy.entry || "").trim()) errors.entry = "请输入英语入口文案（默认语言）";
       if (!String(defaultCopy.title || "").trim()) errors.title = "请输入英语主要标题（默认语言）";
       if (!String(defaultCopy.content || "").trim()) errors.content = "请输入英语内容（默认语言）";
-      if (!state.form.image && !state.form.imagePlaceholder) errors.image = "请选择系列图";
+      if (!hasSeriesImage(directSeriesImage(state.form))) errors.image = "请选择系列图（英语为必填默认语言）";
       if (state.route.page === "create" && state.form.productIds.length < 1) errors.products = "新建二级分类时至少关联 1 个产品";
       state.formErrors = errors;
-      if (Object.keys(errors).length && (errors.entry || errors.title || errors.content)) state.activeLocale = DEFAULT_LOCALE;
+      if (Object.keys(errors).length && (errors.entry || errors.title || errors.content || errors.image)) state.activeLocale = DEFAULT_LOCALE;
       return Object.keys(errors).length === 0;
     }
 
@@ -2889,6 +2984,7 @@
 
     async function saveSeriesForm() {
       if (!state.form || state.saveStatus === "saving" || isReadonly()) return;
+      if (imageReadPending()) { showToast("图片正在读取，请完成后再保存", "warning"); return; }
       if (!validateSeriesForm()) {
         state.saveError = null;
         renderAll();
@@ -2951,6 +3047,8 @@
         Object.assign(current, {
           image: state.form.image,
           imagePlaceholder: state.form.imagePlaceholder,
+          imageName: state.form.imageName || "",
+          localizedImages: clone(state.form.localizedImages || {}),
           i18n: clone(state.form.i18n),
           productIds: clone(state.form.productIds),
           revision: nextRevision,
@@ -2964,6 +3062,8 @@
           revision: 1,
           image: state.form.image,
           imagePlaceholder: state.form.imagePlaceholder,
+          imageName: state.form.imageName || "",
+          localizedImages: clone(state.form.localizedImages || {}),
           createdAt: now,
           updatedAt: now,
           i18n: clone(state.form.i18n),
@@ -3009,6 +3109,8 @@
         return;
       }
       switch (action) {
+        case "sync-english-image": openImageSync(); break;
+        case "confirm-image-sync": applyImageSync(); break;
         case "open-text-import": openTextImport(); break;
         case "choose-text-import-file": $("#seriesTextImportFile")?.click(); break;
         case "download-text-template": downloadTextImportTemplate(); break;
@@ -3158,10 +3260,11 @@
           break;
         }
         case "remove-series-image":
-          if (isReadonly()) return;
-          state.form.image = "";
-          state.form.imagePlaceholder = false;
-          state.imageFileName = "";
+          if (!state.form || isReadonly() || state.saveStatus === "saving") return;
+          state.imageReadTokens ||= {}; state.imageReads ||= {}; state.imageErrors ||= {};
+          state.imageReadTokens[state.activeLocale] = (state.imageReadTokens[state.activeLocale] || 0) + 1;
+          state.imageReads[state.activeLocale] = false; state.imageErrors[state.activeLocale] = "";
+          setSeriesImage(state.form, state.activeLocale, { url: "", placeholder: false, name: "" });
           markFormDirty();
           renderAll();
           break;
@@ -3292,26 +3395,14 @@
         if (summary) summary.textContent = `已选 ${state.form.productIds.length} 个`;
         return;
       }
-      if (target.id === "seriesImageInput") {
-        if (!target.files || !target.files[0] || !state.form || isReadonly()) return;
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-          state.form.image = String(reader.result || "");
-          state.form.imagePlaceholder = false;
-          state.imageFileName = file.name;
-          markFormDirty();
-          renderAll();
-        };
-        reader.readAsDataURL(file);
-      }
+      if (target.id === "seriesImageInput") readSeriesImage(target.files?.[0]);
     });
 
     document.addEventListener("keydown", (event) => {
-      if (state.modal?.type !== "textImport") return;
+      if (!["textImport", "imageSync"].includes(state.modal?.type)) return;
       if (event.key === "Escape") { event.preventDefault(); handleAction("close-modal", null); return; }
       if (event.key !== "Tab") return;
-      const modal = $(".text-import-modal");
+      const modal = $(".modal");
       const controls = $$("button:not(:disabled), select:not(:disabled), [tabindex='0']", modal).filter((element) => element.offsetParent !== null);
       if (!controls.length) return;
       const first = controls[0], last = controls[controls.length - 1];

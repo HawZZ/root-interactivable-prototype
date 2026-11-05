@@ -2,7 +2,7 @@
   "id": "product-series-secondary-category",
   "path": "/prototypes/product-series-secondary-category/",
   "title": "产品二级分类与系列配置",
-  "summary": "英语默认、16语言系列文案导入；预检查差异、应用当前草稿，保存后生效，保持图片与产品关联。",
+  "summary": "英语默认、16语言图文配置；系列图独立上传/移除、英语兜底及同步覆盖确认，文案支持导入，主保存后生效。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",
@@ -17,9 +17,10 @@
     "系列配置",
     "关联产品",
     "多语言",
-    "文案导入"
+    "文案导入",
+    "图片多语言"
   ],
-  "updatedAt": "2026-11-02T09:59:42Z",
+  "updatedAt": "2026-11-05T06:55:40Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto",
