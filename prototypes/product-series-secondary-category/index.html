@@ -2084,17 +2084,17 @@
               <input class="visually-hidden" id="seriesImageInput" type="file" accept="image/*" ${locked ? "disabled" : ""}>
               <button class="btn" type="button" data-action="remove-series-image" ${locked || (!hasSeriesImage(direct) && !busy) ? "disabled" : ""}>移除图片</button>
             </div>
-            <div class="upload-actions" data-note-target="image-sync-entry">
+            ${english ? `<div class="upload-actions" data-note-target="image-sync-entry">
               <button class="btn" type="button" data-action="sync-english-image" ${locked || imageReadPending() || !hasSeriesImage(directSeriesImage(form)) ? "disabled" : ""}>同步英语图到其他语言</button>
             </div>
-            <div class="field-help">同步会复制当前英语图到其他15种语言，确认后应用到草稿，保存后生效。文案不变。</div>
+            <div class="field-help">同步会复制当前英语图到其他15种语言，确认后应用到草稿，保存后生效。文案不变。</div>` : ""}
           </div>
         </div>
       </section>`;
     }
 
     function openImageSync() {
-      if (!state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending() || !hasSeriesImage(directSeriesImage(state.form))) return;
+      if (state.activeLocale !== DEFAULT_LOCALE || !state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending() || !hasSeriesImage(directSeriesImage(state.form))) return;
       const english = directSeriesImage(state.form);
       const targets = LOCALES.filter(x => x.id !== DEFAULT_LOCALE).map(x => ({ ...x, configured: hasSeriesImage(directSeriesImage(state.form, x.id)) }));
       state.modal = { type: "imageSync", form: state.form, snapshot: JSON.stringify(state.form), revision: getSeries(state.form.id)?.revision ?? null, english: clone(english), targets };
@@ -2104,7 +2104,7 @@
 
     function applyImageSync() {
       const modal = state.modal;
-      if (modal?.type !== "imageSync" || !state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending()) return;
+      if (modal?.type !== "imageSync" || state.activeLocale !== DEFAULT_LOCALE || !state.form || isReadonly() || state.saveStatus === "saving" || imageReadPending()) return;
       if (state.form !== modal.form || JSON.stringify(state.form) !== modal.snapshot || (getSeries(state.form.id)?.revision ?? null) !== modal.revision) {
         modal.error = "当前草稿或配置版本已变化，请取消后重新同步。"; renderOverlay(); renderAnnotations(); return;
       }
@@ -2595,7 +2595,7 @@
         },
         {
           id: "form-image", spec: "series-image", title: "系列图多语言与英语兜底", target: '[data-note-target="form-image"]', loc: "配置表单 > 系列图",
-          body: "交互：共用文案语言选择器；英语图必填，其余15种语言选填。上传/替换只改当前语言；移除非英语独立图即恢复英语兜底，无独立图时移除禁用。\n英语：允许在草稿中移除，但保存被阻断并定位英语；其他语言图片不能代替英语。\n同步：从任意语言复制当前英语图到其他15语言，列明覆盖语言并确认，仅写当前草稿，主保存才生效；后续英语替换不改变已复制图。\n状态：图片读取中显示加载并阻断保存/同步；失败保留旧图可重试，语言切换或迟到结果不串语言/表单。只读与保存中禁止写图片。\n待确认：尺寸、比例、格式和文件大小限制待素材规范登记。\n原型备注：现有系列使用明确标注的辅助示意占位图，不虚构实物或铭牌位置。"
+          body: "交互：共用文案语言选择器；英语图必填，其余15种语言选填。上传/替换只改当前语言；移除非英语独立图即恢复英语兜底，无独立图时移除禁用。\n英语：允许在草稿中移除，但保存被阻断并定位英语；其他语言图片不能代替英语。\n同步：仅在英语下显示同步按钮及说明，非英语隐藏。复制当前英语图到其他15语言，列明覆盖语言并确认，仅写当前草稿，主保存才生效；后续英语替换不改变已复制图。\n状态：图片读取中显示加载并阻断保存/同步；失败保留旧图可重试，语言切换或迟到结果不串语言/表单。只读与保存中禁止写图片。\n待确认：尺寸、比例、格式和文件大小限制待素材规范登记。\n原型备注：现有系列使用明确标注的辅助示意占位图，不虚构实物或铭牌位置。"
         },
         {
           id: "form-products", spec: "series-product-links", title: "同分类产品与唯一归属", target: '[data-note-target="form-products"]', loc: "配置表单 > 关联产品",
@@ -2630,7 +2630,7 @@
       }
       if (type === "imageSync") {
         return [{ id: "modal-image-sync", spec: "image-sync-confirm", title: "英语图片同步确认", target: '[data-note-target="modal"]', loc: "系列图 > 同步确认弹窗",
-          body: "触发：英语图片存在、无图片读取且有编辑权限时可同步。\n目标：其他15种语言全部填入当前英语图，列明已配置图片的覆盖语言；仅复制图片，不改文案或成员。\n交互：确认原子应用当前草稿；取消、关闭及Esc不修改。之后英语替换不自动改已复制图片，删除独立图片可恢复兜底。\n保护：草稿、系列或revision变化拒绝旧确认；主保存才生效，失败保留全部图片草稿。" }];
+          body: "触发：仅英语下显示入口；英语图片存在、无图片读取且有编辑权限时可同步。\n目标：其他15种语言全部填入当前英语图，列明已配置图片的覆盖语言；仅复制图片，不改文案或成员。\n交互：确认原子应用当前草稿；取消、关闭及Esc不修改。之后英语替换不自动改已复制图片，删除独立图片可恢复兜底。\n保护：草稿、系列或revision变化拒绝旧确认；主保存才生效，失败保留全部图片草稿。" }];
       }
       if (type === "categoryForm") {
         return [{
