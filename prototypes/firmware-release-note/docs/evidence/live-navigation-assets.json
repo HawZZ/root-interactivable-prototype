@@ -1,0 +1,122 @@
+[
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Dashboard\"></use></svg>",
+    "text": "概览"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Appstore\"></use></svg>",
+    "text": "智能产品"
+  },
+  {
+    "svg": null,
+    "text": "产品列表"
+  },
+  {
+    "svg": null,
+    "text": "消息推送"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Desktop\"></use></svg>",
+    "text": "设备管理"
+  },
+  {
+    "svg": null,
+    "text": "设备列表"
+  },
+  {
+    "svg": null,
+    "text": "固件管理"
+  },
+  {
+    "svg": null,
+    "text": "OTA"
+  },
+  {
+    "svg": null,
+    "text": "虚拟版本配置"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Mobile\"></use></svg>",
+    "text": "App"
+  },
+  {
+    "svg": null,
+    "text": "App列表"
+  },
+  {
+    "svg": null,
+    "text": "App升级"
+  },
+  {
+    "svg": null,
+    "text": "扩展程序管理"
+  },
+  {
+    "svg": null,
+    "text": "白名单管理"
+  },
+  {
+    "svg": null,
+    "text": "白名单标签组管理"
+  },
+  {
+    "svg": null,
+    "text": "日志文件"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Control\"></use></svg>",
+    "text": "配置中心"
+  },
+  {
+    "svg": null,
+    "text": "物模型池"
+  },
+  {
+    "svg": null,
+    "text": "产品模板"
+  },
+  {
+    "svg": null,
+    "text": "产品分类"
+  },
+  {
+    "svg": null,
+    "text": "多语言"
+  },
+  {
+    "svg": null,
+    "text": "系统配置"
+  },
+  {
+    "svg": null,
+    "text": "审批管理"
+  },
+  {
+    "svg": null,
+    "text": "音源管理"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-Audit\"></use></svg>",
+    "text": "生产管理"
+  },
+  {
+    "svg": null,
+    "text": "生产凭证"
+  },
+  {
+    "svg": null,
+    "text": "生产记录"
+  },
+  {
+    "svg": "<svg data-v-df732ab5=\"\" aria-hidden=\"true\" style=\"\"><use data-v-df732ab5=\"\" xlink:href=\"#icon-CarryOut\"></use></svg>",
+    "text": "运营管理"
+  },
+  {
+    "svg": null,
+    "text": "兑换码"
+  },
+  {
+    "svg": null,
+    "text": "设备信息查询"
+  }
+]

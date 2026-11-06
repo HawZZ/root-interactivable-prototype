@@ -1,0 +1,30 @@
+{
+  "id": "firmware-release-note",
+  "path": "/prototypes/firmware-release-note/",
+  "title": "固件 Release note 及多语言配置",
+  "summary": "还原固件配置现状；列表操作列单独维护MCU、模组及虚拟版本说明。16语言、英语兜底、Markdown、Excel/CSV增量导入与发布状态门禁。",
+  "productLine": "IoT Admin",
+  "businessArea": "IoT Admin",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "firmware-release-note",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "固件配置",
+    "Release note",
+    "多语言",
+    "Markdown",
+    "导入",
+    "现状还原"
+  ],
+  "updatedAt": "2026-11-06T08:00:00Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto",
+    "waitFor": "#list",
+    "delayMs": 650
+  }
+}
