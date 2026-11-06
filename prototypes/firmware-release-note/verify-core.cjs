@@ -3,7 +3,7 @@ const fs=require('node:fs');const path=require('node:path');
 const R=require('./core.js');const X=require('./vendor/xlsx.full.min.js');
 let n=0;function check(name,fn){fn();n++;console.log('PASS '+name);}
 check('16-language exact list',()=>assert.equal(R.codes.join(','),'en,zh,de,fr,zh-Hant,it,pt,es,ar,vi,id,th,ms,ja,ru,fil'));
-check('three writable states / three readonly states / permanent lock',()=>{for(const s of ['开发中','测试中','发布中'])assert.equal(R.editable({status:s,publishedOnce:false}),true);for(const s of ['暂停发布','已发布','已停止'])assert.equal(R.editable({status:s}),false);assert.equal(R.editable({status:'发布中',publishedOnce:true}),false);});
+check('all lifecycle states remain writable before and after first publication',()=>{for(const status of ['开发中','测试中','发布中','暂停发布','已发布','已停止'])for(const publishedOnce of [false,true])assert.equal(R.editable({status,publishedOnce}),true);assert.equal(R.editable(null),false);assert.equal(R.editable({status:'unknown'}),false);});
 check('fallback follows current English',()=>{assert.equal(R.effective({en:'New',fr:' \n'},'fr').text,'New');assert.equal(R.effective({en:'New',de:'Alt'},'de').text,'Alt');});
 check('CSV multiline/quote/comma/BOM exact preservation',()=>{assert.deepEqual(R.csv('\uFEFFen,zh\r\n"# Update\n\n- Fix A, B\n- ""quote""",修复\r\n'),[['en','zh'],['# Update\n\n- Fix A, B\n- "quote"','修复']]);});
 check('invalid CSV quoting rejected',()=>{assert.throws(()=>R.csv('en\n"open'));assert.throws(()=>R.csv('en\n"closed"x'));assert.throws(()=>R.csv('en\nab"cd'));});

@@ -5,7 +5,7 @@ const langs=[['en','英语'],['zh','简体中文'],['de','德语'],['fr','法语
 const codes=langs.map(x=>x[0]), MAX_TEXT=10000,MAX_FILE=1048576;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const blank=s=>String(s??'').trim()==='';
-const editable=o=>!o.publishedOnce&&['开发中','测试中','发布中'].includes(o.status);
+const editable=o=>Boolean(o)&&['开发中','测试中','发布中','暂停发布','已发布','已停止'].includes(o.status);
 const effective=(notes,lang)=>blank(notes?.[lang])?{text:notes?.en||'',source:'en',fallback:lang!=='en'}:{text:notes[lang],source:lang,fallback:false};
 function csv(text){
  text=text.replace(/^\uFEFF/,'');if(!text.length)return [];
