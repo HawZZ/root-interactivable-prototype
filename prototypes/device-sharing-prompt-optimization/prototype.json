@@ -1,0 +1,27 @@
+{
+  "id": "device-sharing-prompt-optimization",
+  "path": "/prototypes/device-sharing-prompt-optimization/",
+  "title": "设备分享提示优化",
+  "summary": "独立需求，以分享三期为基线：常驻地区提醒、5秒短Snackbar与动态错误说明，保留未注册邀请和原渠道重发。",
+  "productLine": "Momcozy APP",
+  "businessArea": "Momcozy APP",
+  "surface": "app",
+  "systems": [
+    "mobile-common"
+  ],
+  "seriesId": "device-sharing-prompt-optimization",
+  "version": "v1.0",
+  "status": "draft",
+  "tags": [
+    "设备分享",
+    "错误提示",
+    "Snackbar",
+    "地区登录"
+  ],
+  "updatedAt": "2026-11-09T08:25:58Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto",
+    "waitFor": "[data-testid=\"phone\"]"
+  }
+}
