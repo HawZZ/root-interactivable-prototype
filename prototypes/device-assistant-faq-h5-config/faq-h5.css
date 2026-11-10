@@ -1,0 +1,24 @@
+/* Only FAQ increment and annotation typography; product shell inherits V3.2. */
+.faq-h5-increment { margin-top: 18px; border-top: 1px solid #ebeef5; padding-top: 16px; }
+.faq-editor-shell { border: 1px solid #dcdfe6; border-radius: 4px; overflow: hidden; background: white; }
+.faq-toolbar { gap: 5px; flex-wrap: wrap; padding: 8px; background: #f5f7fa; border-bottom: 1px solid #e4e7ed; }
+.faq-toolbar .btn { font-size: 12px; min-height: 28px; padding: 4px 8px; }
+.faq-toolbar select { max-width: 90px; background: white; border: 1px solid #dcdfe6; border-radius: 3px; padding: 4px; }
+.faq-rich-document { min-height: 280px; max-height: 460px; overflow-y: auto; padding: 14px; outline: none; line-height: 1.7; font-size: 14px; overflow-wrap: anywhere; }
+.faq-rich-document:focus { box-shadow: inset 0 0 0 1px #409eff; }
+.faq-rich-document p, .faq-rendered-document p { margin: 0 0 12px; min-height: 1.7em; }
+.faq-rich-document h2, .faq-rendered-document h2 { font-size: 19px; line-height: 1.45; margin: 14px 0 10px; }
+.faq-rich-document figure, .faq-rendered-document figure { margin: 12px 0; border: 1px solid #e4e7ed; border-radius: 4px; padding: 6px; cursor: pointer; }
+.faq-rich-document figure.faq-selected { outline: 2px solid #409eff; background: #ecf5ff; }
+.faq-rich-document img, .faq-rendered-document img, .faq-rich-document video, .faq-rendered-document video { display: block; max-width: 100%; max-height: 280px; object-fit: contain; margin: auto; }
+.faq-rich-document audio, .faq-rendered-document audio { max-width: 100%; }
+.faq-rich-document figcaption, .faq-rendered-document figcaption { font-size: 11px; color: #909399; padding: 4px 0 0; overflow-wrap: anywhere; }
+.faq-editor-bottom { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; font-size: 11px; border-top: 1px solid #ebeef5; color: #909399; }
+.faq-error, .faq-over { color: #f56c6c; font-size: 12px; line-height: 1.6; }
+.faq-rendered-document { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.faq-review-controls { display: grid; gap: 10px; padding: 14px; border: 1px dashed #d9b04c; border-radius: 5px; font-size: 12px; background: #fffbed; }
+.faq-review-controls select { width: 100%; padding: 8px; border: 1px solid #e3d4aa; background: white; border-radius: 4px; }
+.faq-review-controls p { margin: 0; }
+.faq-review-controls small { color: #8a7952; }
+.faq-media-failed { background: #f5f7fa; color: #909399; text-align: center; padding: 35px 10px; font-size: 12px; }
+.prototype-note-copy p { white-space: pre-line; }
