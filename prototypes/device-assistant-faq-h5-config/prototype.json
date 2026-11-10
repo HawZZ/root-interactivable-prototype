@@ -1,0 +1,27 @@
+{
+  "id": "device-assistant-faq-h5-config",
+  "path": "/prototypes/device-assistant-faq-h5-config/",
+  "title": "设备助手 FAQ PDF/H5 配置",
+  "summary": "基于设备助手 V3.2，PDF 兼容兜底与可选 H5 富文本，支持正文内媒体插入和位置调整。",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "device-assistant-faq-h5-config",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "设备助手",
+    "FAQ",
+    "H5",
+    "富文本",
+    "PDF兼容"
+  ],
+  "updatedAt": "2026-11-10T10:50:50Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
