@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>设备认证方式 · 产品详情交互原型 R4/V4</title>
+  <title>设备认证方式 · 产品详情交互原型 2026-11-10</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,19 +13,19 @@
       <div class="review-tools">
         <strong>原型演示</strong><span>以下为评审控制，不属于产品界面</span>
         <label>场景 <select id="scenario" aria-label="演示场景">
-          <option value="listed">存量 · 已上架</option><option value="new">新建 · Wi-Fi · 未配置</option><option value="developing">开发中 · BLE+Wi-Fi</option><option value="delisted">已下架 · 存在设备</option><option value="readonly">无编辑权限</option><option value="frozen">审批冻结中</option><option value="ble">纯 BLE · 不适用</option><option value="mesh">Mesh · 矩阵未确认</option><option value="thirdparty">第三方云 · 矩阵未确认</option><option value="unknown">未知认证枚举</option><option value="loading">详情加载中</option><option value="loaderror">详情加载失败</option>
+          <option value="listed">存量 · 已上架</option><option value="new">新建 · Wi-Fi · 未配置</option><option value="newble">新建 · BLE+Wi-Fi · 未配置</option><option value="newmesh">新建 · Wi-Fi+BLE Mesh · 未配置</option><option value="historywifi">历史 · Wi-Fi</option><option value="listedwifi">已上架 · Wi-Fi</option><option value="listedmesh">已上架 · Wi-Fi+BLE Mesh</option><option value="developing">开发中 · BLE+Wi-Fi</option><option value="ble">纯 BLE · 不适用</option><option value="mesh">历史 · Wi-Fi+BLE Mesh</option>
         </select></label>
         <label>请求 <select id="fault" aria-label="模拟请求结果"><option value="none">正常</option><option value="network">保存失败一次</option><option value="listed">提交时已上架</option><option value="conflict">认证版本冲突</option><option value="stale">仅其他字段：认证已更新</option></select></label>
         <label><input type="checkbox" id="baseline">仅看现状布局</label>
-        <button id="reset">重置</button><button id="chain">查看接入规格</button>
+        <button id="reset">重置</button><button id="chain">查看配置规则</button>
         <span id="approval-tools" hidden><button id="approve">模拟审批通过</button><button id="reject">模拟审批驳回</button><label><input id="approval-conflict" type="checkbox">应用前版本冲突</label></span>
       </div>
       <div class="canvas-frame" id="canvas-frame" role="region" aria-label="产品画布，可横向滚动" tabindex="0"><div class="product-canvas" id="product-canvas"></div></div>
     </main>
     <aside class="notes-pane" aria-label="原型批注">
-      <header class="notes-header"><div><small>产品增加设备认证方式配置项</small><h1>原型批注 <span>R4 / V4</span></h1></div><p>黄底编号为评审锚点，不属于产品 UI。</p><nav><a href="#detail">详情</a><a href="#editor">编辑</a><a href="#risk">风险确认</a><a href="#validation">异常</a><a href="#delivery">接入</a><a href="#review">现状依据</a></nav></header>
+      <header class="notes-header"><div><small>产品增加设备认证方式配置项</small><h1>原型批注 <span>2026-11-10</span></h1></div><p>黄底编号为评审锚点，不属于产品 UI。</p><nav><a href="#detail">详情</a><a href="#editor">编辑</a><a href="#validation">异常</a><a href="#delivery">保存结果</a><a href="#review">现状依据</a></nav></header>
       <div id="notes"></div>
-      <footer class="notes-footer"><a href="https://momcozy-in.feishu.cn/wiki/CtP3wE1qWigECykIxYncAVFtngc">PRD</a><a href="#review">现状与改动边界</a><a href="#delivery">接入实施规格</a><p>本地演示，不调用平台 API，不连接 EMQX。</p></footer>
+      <footer class="notes-footer"><a href="https://momcozy-in.feishu.cn/wiki/CtP3wE1qWigECykIxYncAVFtngc">PRD</a><a href="#review">现状与改动边界</a><a href="#delivery">配置规则</a><p>交互演示，不调用平台 API。</p></footer>
     </aside>
   </div>
   <script src="app.js"></script>

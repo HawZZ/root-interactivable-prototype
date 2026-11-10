@@ -2,7 +2,7 @@
   "id": "device-auth-method",
   "path": "/prototypes/device-auth-method/",
   "title": "设备认证方式配置原型",
-  "summary": "还原产品详情与编辑抽屉，新增三元组 / 证书认证；新建为空必填、存量初始化三元组、上架只读及下架切换风险。R4 / V4 共识版。",
+  "summary": "Wi-Fi / BLE+Wi-Fi / Wi-Fi+BLE Mesh 设备认证方式配置：新建为空必填、三元组或证书认证、历史默认三元组、上架后禁改。",
   "productLine": "IoT Admin",
   "businessArea": "IoT Admin",
   "surface": "web",
@@ -10,16 +10,15 @@
     "web"
   ],
   "seriesId": "device-auth-method",
-  "version": "v4",
+  "version": "v5",
   "status": "active",
   "tags": [
     "产品详情",
     "设备认证",
-    "三元组",
-    "证书认证",
-    "现状还原"
+    "Wi-Fi",
+    "BLE Mesh"
   ],
-  "updatedAt": "2026-11-06T07:43:19Z",
+  "updatedAt": "2026-11-10T03:22:10Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"
