@@ -71,7 +71,9 @@
   }
   const editor = () => document.getElementById('faqH5Editor');
   function contentDoc(html = localeHtml()) {
-    const node = document.createElement('div'); node.innerHTML = html; return node;
+    // Parse in the inert template document so canonical cache URLs never trigger HTTP requests.
+    const template = document.createElement('template'); template.innerHTML = '<div></div>';
+    const node = template.content.firstElementChild; node.innerHTML = html; return node;
   }
   function textCount(html) {
     const node = contentDoc(html);
@@ -483,7 +485,7 @@
       if (!media.closest('figure')) { const figure = document.createElement('figure'); media.before(figure); figure.appendChild(media); }
     });
     template.content.querySelectorAll('figure').forEach(figure => { figure.contentEditable = 'false'; figure.dataset.faqMedia ||= String(++mediaSequence); });
-    const div = document.createElement('div'); div.appendChild(template.content); return div.innerHTML;
+    return template.innerHTML;
   }
   function bindCodeMode() {
     const source = document.getElementById('faqH5Source'), button = document.getElementById('faqCodeMode');
