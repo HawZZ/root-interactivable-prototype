@@ -362,8 +362,8 @@
         </div>
         <div class="kv-toolbar">
           <div>
-            <div class="field-help">沿用基线 JSON 与 CSV/XLSX 导入导出。H5 可仅批量导入文本，再进入对应语言编辑器插入媒体；无需在批量导入时上传媒体。媒体资源如何打包、引用与迁移由技术定义。</div>
-            <div class="json-toolbar-note">原型仅演示文本导入与编辑流程，H5 媒体迁移效果以技术方案为准；schemaVersion 不兼容时整包失败。</div>
+            <div class="field-help">沿用基线 JSON 与 CSV/XLSX 导入导出。H5 值保留 HTML 标签、格式及已上传媒体 URL；回导恢复富文本。可先导入文字，再在对应语言编辑器上传媒体；导入不新增未上传媒体。资源引用校验与迁移由技术定义。</div>
+            <div class="json-toolbar-note">H5 导出包含 HTML 与已上传媒体 URL，不含媒体文件。跨环境引用以技术方案为准；schemaVersion 不兼容时整包失败。</div>
           </div>
           <div class="kv-toolbar-actions">
             <button class="btn" id="exportConfigJsonBtn" type="button">导出 JSON</button>
@@ -440,9 +440,9 @@
     originalKvBind(root);
     root.querySelectorAll('[data-faq-edit-locale]').forEach(button => button.addEventListener('click', () => openLocaleEditor(button.dataset.faqEditLocale)));
   };
-  // H5 bulk text is editable separately from its media resource references.
+  // H5 export carries the full source document; table summaries remain plain text.
   const originalKvValue = kvValue;
-  kvValue = (item, field, locale) => item === state.manualH5 && field === 'html' ? plainH5(locale) : originalKvValue(item, field, locale);
+  kvValue = (item, field, locale) => item === state.manualH5 && field === 'html' ? localeHtml(locale) : originalKvValue(item, field, locale);
   const originalRichValue = richTextKvValue, originalSetRichValue = setRichTextKvValue;
   richTextKvValue = (item, field, locale) => field === 'html' && item === state.manualH5 ? localeHtml(locale) : originalRichValue(item, field, locale);
   setRichTextKvValue = function(item, field, locale, value) {
@@ -466,7 +466,7 @@
     modal.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); closeLocaleEditor(); } });
     editor().focus();
   }
-  faqNotes.push({ id:'faq-language', target:'#noviceConfigPreview', title:'沿用基线多语言 KV', body:'功能提示：英文结构源编辑 H5，英文 KV 列只读。其他启用语言通过对应列“编辑 H5”配置文字、格式及正文内媒体，预览样式使用该语言内容。每语言纯文字最多5000字，单媒体≤5MB。每个启用语言的PDF必填（≤10MB），H5选填；空H5使用本语言PDF，已有H5超限则阻断发布。禁用语言保留内容但不阻断。\n保存与迁移：各语言内容随整套配置保存、发布和下架。批量导入支持先导文本，再进入编辑器插入媒体；不要求批量上传媒体。H5媒体打包、引用、迁移及异常处理由技术定义，原型不作为媒体迁移协议。', loc:'多语言 KV 表 > manual.h5' });
+  faqNotes.push({ id:'faq-language', target:'#noviceConfigPreview', title:'沿用基线多语言 KV', body:'功能提示：英文结构源编辑 H5，英文 KV 列只读。其他启用语言通过对应列“编辑 H5”配置文字、格式及正文内媒体，预览样式使用该语言内容。每语言纯文字最多5000字，单媒体≤5MB。每个启用语言的PDF必填（≤10MB），H5选填；空H5使用本语言PDF，已有H5超限则阻断发布。禁用语言保留内容但不阻断。\n保存与迁移：各语言内容随整套配置保存、发布和下架。CSV/XLSX与JSON的H5值导出完整HTML，保留标签、格式、媒体标记、已上传URL及顺序，不导出二进制/Base64。HTML回导还原对应语言富文本，不转义成可见标签；普通文字导入仍兼容。导入不新增未上传媒体，新增需编辑器上传。资源引用校验、跨环境迁移及异常处理由技术定义。原型备注：XLSX沿用基线分隔表格演示，不作为正式文件编码方案。', loc:'多语言 KV 表 > manual.h5' });
   const manualAnnotations = currentPrototypeAnnotations;
   currentPrototypeAnnotations = function() {
     if (!state.drawerOpen && !state.manualPdfHidden) return faqNotes.filter(n => n.id === 'faq-language');
@@ -529,18 +529,34 @@
     node.querySelectorAll('br').forEach(n=>n.replaceWith('\n')); node.querySelectorAll('p,div,h1,h2,h3,li').forEach(n=>n.append('\n'));
     return node.textContent.replace(/\n$/, '');
   }
+  const baselineExportText = exportKvText;
+  exportKvText = function(format) {
+    if (!textKvRows().some(row => row.kind === 'faq')) return baselineExportText(format);
+    const locales = enabledKvLocales().filter(locale => locale.code !== state.defaultLocale);
+    const matrix = [['Key', ...locales.map(locale => locale.label)], ...textKvRows().map(row => [row.key, ...locales.map(locale => kvValue(row.item, row.field, locale.code))])];
+    const cell = value => { const text = String(value ?? ''); return /[",\t\r\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text; };
+    const blob = new Blob([matrix.map(row => row.map(cell).join(format === 'xlsx' ? '\t' : ',')).join('\n')], { type:format === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = `device-assistant-kv-text.${format}`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    showToast(`已导出 KV ${format.toUpperCase()}，H5 值包含 HTML 标签及已上传媒体 URL`);
+  };
   const baselineImportText = importKvTextFile;
   importKvTextFile = function(file) {
     if (!file) return;
-    const reader = new FileReader(); reader.onload = () => {
+    if (!['csv','xlsx'].includes(file.name.split('.').pop()?.toLowerCase())) return baselineImportText(file);
+    const reader = new FileReader(); reader.onload = async () => {
+      await cacheReady.catch(() => {});
       const rows = parseDelimitedRows(String(reader.result||'')); const header = rows[0] || [];
       const keyIndex = header.findIndex(name=>name.trim().toLowerCase()==='key');
       if (keyIndex < 0) return baselineImportText(file);
       const h5Rows = rows.slice(1).filter(row=>row[keyIndex]==='manual.h5');
       h5Rows.forEach(row => header.forEach((name,index) => {
         const locale=state.locales.find(l=>(l.label===name.trim()||l.code===name.trim())&&l.code!==state.defaultLocale); if (!locale) return;
-        const text = row[index] || ''; const media = [...contentDoc(localeHtml(locale.code)).querySelectorAll('figure')].map(n=>n.outerHTML).join('');
-        state.manualH5.htmlI18n ||= {}; state.manualH5.htmlI18n[locale.code] = (text ? `<p>${escapeHtml(text).replace(/\n/g,'<br>')}</p>` : '') + media;
+        const value = row[index] || '';
+        const isHtml = [...contentDoc(value).querySelectorAll('*')].some(node => !(node instanceof HTMLUnknownElement));
+        const media = [...contentDoc(localeHtml(locale.code)).querySelectorAll('figure')].map(n=>n.outerHTML).join('');
+        state.manualH5.htmlI18n ||= {};
+        state.manualH5.htmlI18n[locale.code] = isHtml ? normalizeSource(value) : (value ? `<p>${escapeHtml(value).replace(/\n/g,'<br>')}</p>` : '') + media;
         state.enabledKvLocales[locale.code]=true;
       }));
       if (h5Rows.length) state.manualH5.enabled=true;
