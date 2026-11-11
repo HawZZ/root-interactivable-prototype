@@ -1,0 +1,26 @@
+{
+  "id": "firmware-checksum-method",
+  "path": "/prototypes/firmware-checksum-method/",
+  "title": "固件校验方法配置",
+  "summary": "无需校验沿用旧接口与旧桶；MD5/SHA256 使用新接口与新桶，下载验证 token，APP 下载后校验包。",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "firmware-checksum-method",
+  "version": "v5",
+  "status": "active",
+  "tags": [
+    "固件",
+    "校验方法",
+    "MD5",
+    "SHA256",
+    "OTA",
+    "存储桶"
+  ],
+  "preview": {
+    "mode": "auto"
+  }
+}

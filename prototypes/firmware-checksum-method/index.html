@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>固件校验方法 · IoT Admin 交互原型</title>
+<meta name="description" content="创建固件时配置无需校验、MD5 或 SHA256，说明对应接口、存储桶、下载验证与 APP 包校验。">
+<meta name="keywords" content="固件,校验方法,MD5,SHA256,OTA,存储桶">
+<meta name="prototype:product-line" content="IoT Admin">
+<meta name="prototype:business-area" content="AIoT Platform">
+<meta name="prototype:surface" content="web">
+<meta name="prototype:systems" content="web">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="review-header"><div><strong>固件校验方法</strong><span class="review-tag">V5 · 11/11</span><span class="muted">交互评审稿</span></div><a href="https://momcozy-in.feishu.cn/docx/Ux9AdYXX7olfGYxOI0oc4pRYnWQ">需求文档 ↗</a></header>
+<nav class="mobile-tabs" aria-label="评审面板"><button class="active" data-pane="product">产品页面</button><button data-pane="notes">原型批注</button></nav>
+<div class="review-layout">
+<section class="product-pane" aria-label="交互产品画布">
+<div class="canvas-hint"><span>IoT Admin · 产品详情</span><span>1440px 固定画布，可横向滚动查看</span></div>
+<div class="product-scroll" id="productScroll"><div class="product-canvas" id="canvas">
+<aside class="sidebar"><div class="brand"><img src="assets/logo.svg" alt="LuteOS IoT Admin"></div><div class="workspace-label">工作台</div><div class="menu-item">▦　概览</div><div class="menu-item active">◇　智能产品</div><div class="menu-sub active">产品列表</div><div class="menu-item">▤　设备管理</div><div class="menu-item">▣　App 管理</div><div class="menu-item">☷　配置中心</div><div class="sidebar-foot">测试数据中心</div></aside>
+<div class="admin-main"><header class="admin-header"><span>智能产品　/　产品列表　/　产品详情</span><span>简体中文　　<span class="avatar">张</span>　产品管理员</span></header>
+<main class="workspace"><div class="product-heading"><div class="product-icon">M9</div><div><h1>双边电动吸乳器 M9</h1><p>产品型号 M9　<span class="divider">|</span>　产品 ID 2054039271856459777　<span class="status green">已上架</span></p></div></div>
+<div class="top-tabs"><span>基本信息</span><span>功能设计</span><span>设备面板</span><span class="selected">固件配置</span><span>新手指导</span></div>
+<section class="firmware-panel"><div class="section-tabs" id="nav-tabs" data-anchor="01"><button class="selected" data-tab="firmware">固件版本</button><button data-tab="virtual">虚拟版本</button><button class="anchor" data-note="01" aria-label="批注01">01</button></div>
+<div id="pageContent"></div></section></main></div>
+<div id="overlayHost"></div><div id="toast" role="status" class="toast" hidden></div>
+</div></div></section>
+<aside class="notes-pane" id="notesPane" aria-label="原型批注"><div class="notes-heading"><div class="eyebrow">SPECIFICATION</div><h2>原型批注</h2><p id="noteContext"></p></div><div id="noteCards"></div><div class="demo-tools"><details open><summary>评审演示工具 <span>非产品功能</span></summary><p>所有控件仅用于评审；实际版本、接口、计算与异常恢复由技术方案确定。样例文件不含真实固件。</p><div id="demoTools"></div></details></div><footer class="notes-footer">交互评审原型 · 无真实发布 / 升级<br>设备 CRC、APP—设备交互不属于本需求</footer></aside>
+</div>
+<script src="assets/fixtures.js"></script><script src="app.js"></script>
+</body></html>
