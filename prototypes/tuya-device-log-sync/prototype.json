@@ -1,0 +1,25 @@
+{
+  "id": "tuya-device-log-sync",
+  "path": "/prototypes/tuya-device-log-sync/",
+  "title": "同步涂鸦设备日志",
+  "summary": "后端定时捞取涂鸦全部类型设备日志；还原既有上下线及操作日志字段，说明分类映射并验证 BM04 配网错误覆盖。",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "tuya-device-log-sync",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "设备日志",
+    "涂鸦",
+    "后端定时任务"
+  ],
+  "updatedAt": "2026-11-11T11:34:47Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}
