@@ -28,3 +28,6 @@
 .faq-locale-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .faq-locale-dialog p { color: #606266; font-size: 13px; }
 .faq-locale-dialog .faq-rich-document { min-height: 220px; }
+.faq-code-editor { width: 100%; box-sizing: border-box; min-height: 280px; max-height: 460px; resize: vertical; padding: 14px; border: 0; font: 13px/1.6 monospace; tab-size: 2; }
+.faq-rich-document[hidden], .faq-code-editor[hidden] { display: none; }
+.faq-pdf-file { max-width: 100%; width: 220px; font-size: 12px; }

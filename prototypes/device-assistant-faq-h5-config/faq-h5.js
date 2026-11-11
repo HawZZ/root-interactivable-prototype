@@ -41,11 +41,13 @@
     const html = localeHtml(locale);
     const node = contentDoc(html);
     const issues = [];
-    if (!(node.textContent || '').trim() && !node.querySelector('figure')) issues.push('已启用 H5，请编辑正文或插入媒体；也可停用 H5 后仅使用 PDF。');
+    // H5 is optional per language; an empty document uses that language's PDF.
     if (textCount(html) > 5000) issues.push('H5 纯文字超过 5000 字，请调整后发布。');
     if ([...node.querySelectorAll('figure')].some(n => Number(n.dataset.bytes) > 5 * 1024 * 1024)) issues.push('H5 存在超过 5MB 的媒体，请移除后重新插入。');
     return issues;
   }
+  const hasH5 = locale => Boolean((contentDoc(localeHtml(locale)).textContent || '').trim() || contentDoc(localeHtml(locale)).querySelector('figure,img,video,audio'));
+  const pdfAt = locale => locale === state.defaultLocale ? state.manualPdf : state.manualH5?.pdfByLocale?.[locale] || null;
   function cleanHtml() {
     const node = contentDoc(editor()?.innerHTML || '');
     node.querySelectorAll('.faq-selected').forEach(n => n.classList.remove('faq-selected'));
@@ -117,7 +119,7 @@
       <div class="field" id="faqH5SwitchField"><label class="check-row"><input id="faqH5Enabled" type="checkbox" ${h5.enabled ? 'checked' : ''} ${state.manualPdfHidden ? 'disabled' : ''}>启用 H5（可选增强）</label><div class="field-help">在此编辑英文 H5；其他语言在多语言 KV 表配置。PDF 仍必填；新版 APP 优先使用 H5，历史 APP 使用 PDF。</div></div>
       ${h5.enabled && !state.manualPdfHidden ? `<div class="field" id="faqH5ContentField"><label>H5 正文</label>
       <div class="faq-editor-shell"><div class="rich-text-toolbar faq-toolbar" role="toolbar" aria-label="H5 格式与媒体工具栏">
-        <select id="faqBlockType" aria-label="段落格式"><option value="p">正文</option><option value="h2">标题</option></select>
+        <button class="btn" type="button" id="faqCodeMode" aria-pressed="false">HTML 代码</button><select id="faqBlockType" aria-label="段落格式"><option value="p">正文</option><option value="h2">标题</option></select>
         <button class="btn" type="button" data-faq-command="bold" aria-label="加粗"><b>B</b></button>
         <button class="btn" type="button" data-faq-command="italic" aria-label="斜体"><i>I</i></button>
         <button class="btn" type="button" data-faq-command="insertUnorderedList">无序列表</button>
@@ -126,7 +128,7 @@
         <button class="btn" type="button" id="faqMediaBefore" aria-label="媒体前移">前移</button><button class="btn" type="button" id="faqMediaAfter" aria-label="媒体后移">后移</button><button class="btn text" type="button" id="faqDeleteMedia">删除媒体</button>
       </div><input id="faqMediaInput" type="file" accept="image/*,audio/*,video/*" multiple hidden>
       <div class="faq-rich-document" id="faqH5Editor" role="textbox" aria-label="H5 富文本正文" aria-multiline="true" contenteditable="true" spellcheck="false">${localeHtml() || '<p><br></p>'}</div>
-      <div class="faq-editor-bottom"><span>纯文字最多 5000 字；单个媒体 ≤ 5MB</span><span id="faqTextCount">${textCount()} / 5000</span></div></div>
+      <textarea class="faq-code-editor" id="faqH5Source" aria-label="H5 HTML 代码" spellcheck="false" hidden></textarea><div class="faq-editor-bottom"><span>纯文字最多 5000 字；单个媒体 ≤ 5MB</span><span id="faqTextCount">${textCount()} / 5000</span></div></div>
       <div class="field-help">在正文中定位光标后插入媒体。点击媒体后可前移、后移或删除。</div><div id="faqH5Errors" class="faq-error" role="status">${h5Issues().join(' ')}</div></div>` : ''}</div>`;
   };
   bindManualForm = function () {
@@ -135,6 +137,7 @@
       state.manualH5.enabled = event.target.checked; setDirty(); renderAll();
     });
     const el = editor(); if (!el) return;
+    bindCodeMode();
     el.addEventListener('input', () => { rememberRange(); commitEditor(); });
     el.addEventListener('keyup', rememberRange); el.addEventListener('mouseup', rememberRange);
     el.addEventListener('paste', event => { event.preventDefault(); document.execCommand('insertText', false, event.clipboardData.getData('text/plain')); commitEditor(); });
@@ -163,18 +166,21 @@
     });
   };
   validateConfig = function () {
-    return [...base.validate(), ...enabledKvLocales().flatMap(locale => h5Issues(locale.code).map(text => ({ level: '错误', type: 'danger', text: `${locale.label} H5：${text}` })))];
+    return [...base.validate(), ...(!state.manualPdfHidden ? enabledKvLocales().filter(locale => !pdfAt(locale.code)).map(locale => ({level:'错误', type:'danger', text:`${locale.label} 说明书 PDF 必填，请上传 PDF（≤10MB）。`})) : []), ...enabledKvLocales().flatMap(locale => h5Issues(locale.code).map(text => ({ level: '错误', type: 'danger', text: `${locale.label} H5：${text}` })))];
   };
   captureV3Config = function () { return { ...base.capture(), manualH5: cloneV3(state.manualH5 || blank()) }; };
   restoreV3Config = function (config) { base.restore(config); state.manualH5 = cloneV3(config?.manualH5 || blank()); };
   renderManualPreview = function () {
-    if (state.manualPdfHidden || reviewClient !== 'new' || !state.manualH5.enabled || h5Issues(state.activeLocale).length) return base.preview();
+    if (state.manualPdfHidden || reviewClient !== 'new' || !state.manualH5.enabled || !hasH5(state.activeLocale) || h5Issues(state.activeLocale).length) {
+      const source = state.manualPdf; state.manualPdf = pdfAt(state.activeLocale);
+      try { return base.preview(); } finally { state.manualPdf = source; }
+    }
     return `<div class="phone-status"><span>9:41</span><span>Manual</span><span>100%</span></div><div class="phone-body"><div class="phone-nav-row"><span class="phone-back">‹</span><div class="phone-title">Manual</div><span></span></div><article class="faq-rendered-document">${localeHtml(state.activeLocale)}</article></div>`;
   };
   const faqNotes = [
     { id:'faq-pdf', target:'#manualPdfInput', title:'沿用 PDF 上传与入口', body:'功能提示：说明书入口展示时 PDF 必填，原有 10MB 限制继续生效。\n变更范围：在现有说明书面板增加 H5，不增页面导航、发布入口或独立版本。',loc:'说明书 PDF > PDF 上传' },
     { id:'faq-switch', target:'#faqH5SwitchField', title:'可选 H5 与发布生效', body:'功能提示：默认关闭；打开后显示富文本编辑器。关闭保留当前编辑内容，再开启可继续编辑。\n生效规则：编辑与保存草稿均不改变正式 APP；发布后才应用新的 H5 开关及内容。隐藏说明书入口时保留内容、停用编辑。',loc:'说明书 PDF > 启用 H5' },
-    { id:'faq-format', target:'#faqH5ContentField', title:'格式与正文内媒体', body:'功能提示：正文、单级标题、加粗、斜体、有序列表、无序列表。媒体在光标处插入；选中后可调整正文内位置及删除。\n校验：可插入多个媒体；单个 ≤5MB，超限批次拒绝插入并保留正文。纯文字按Unicode码点计数，空格与显式换行各计1，CRLF归一为LF；表情按组成码点计。格式、媒体与资源名不计。5000允许，5001提示并阻断发布、不截断正文。5MB在原型中按5×1024×1024字节演示。超限或空H5可保存草稿、阻断发布。\n原型备注：工具栏样式、媒体格式支持和跨端排版由设计/前端/APP对齐；当前图片/音视频操作仅作交互演示。',loc:'说明书 PDF > H5 正文编辑器' },
+    { id:'faq-format', target:'#faqH5ContentField', title:'格式与正文内媒体', body:'功能提示：正文、单级标题、加粗、斜体、有序列表、无序列表。媒体在光标处插入；选中后可调整正文内位置及删除。\n校验：可插入多个媒体；单个 ≤5MB，超限批次拒绝插入并保留正文。纯文字按Unicode码点计数，空格与显式换行各计1，CRLF归一为LF；表情按组成码点计。格式、媒体与资源名不计。5000允许，5001提示并阻断发布、不截断正文。5MB在原型中按5×1024×1024字节演示。超限H5可保存草稿、阻断发布；空H5为选填，使用本语言PDF。支持可视化与HTML代码模式互切。\n原型备注：工具栏样式、媒体格式支持和跨端排版由设计/前端/APP对齐；当前图片/音视频操作仅作交互演示。',loc:'说明书 PDF > H5 正文编辑器' },
     { id:'faq-preview', target:'#phonePreview', title:'内容与顺序预览', body:'功能提示：新版 APP 有有效 H5 时优先 H5；历史 APP 始终 PDF；无 H5 或整页失败用同一发布内容的 PDF。单媒体失败占位，其余正文保留。\n一致性：Web与APP的文字、格式语义、媒体和先后顺序一致，不要求字体、间距及换行像素相同。\n原型备注：左侧是当前编辑内容预览，以下选择器只用于评审，不是产品新增控件，也不代表真实APP联调。',loc:'说明书 PDF > 只读预览' }
   ];
   currentPrototypeAnnotations = function () {
@@ -194,7 +200,7 @@
   };
   function updateReviewResult() {
     const output = document.getElementById('faqReviewResult'); if (!output) return;
-    output.textContent = reviewClient === 'fail' ? '模拟：H5 整页失败 → PDF。' : reviewClient === 'old' ? '历史 APP 始终 PDF。' : state.manualH5.enabled && !h5Issues().length ? '当前预览：H5 正文。' : '当前预览：PDF；未启用或未完成 H5。';
+    output.textContent = reviewClient === 'fail' ? '模拟：H5 整页失败 → PDF。' : reviewClient === 'old' ? '历史 APP 始终 PDF。' : state.manualH5.enabled && hasH5(state.activeLocale) && !h5Issues().length ? '当前预览：H5 正文。' : '当前预览：PDF；未启用或未完成 H5。';
     if (reviewClient === 'mediaFail' && state.manualH5.enabled && !h5Issues().length) {
       renderPhonePreview();
       const target = document.querySelector('#phonePreview .faq-rendered-document figure');
@@ -280,8 +286,8 @@
         </div>
         <div class="kv-toolbar">
           <div>
-            <div class="field-help">V2 新增：整包 JSON 导入导出用于环境迁移，包含结构、文本 Value、媒体引用和 metadata，全量覆盖当前草稿；媒体二进制不随 JSON 导出。V1 基线：CSV / XLSX 仅支持非英文语言文本 Key 导入导出。</div>
-            <div class="json-toolbar-note">JSON 包含结构、顺序、文本 Value、多语言媒体引用和 metadata；schemaVersion 不兼容时整包失败。</div>
+            <div class="field-help">沿用基线 JSON 与 CSV/XLSX 导入导出。H5 可仅批量导入文本，再进入对应语言编辑器插入媒体；无需在批量导入时上传媒体。媒体资源如何打包、引用与迁移由技术定义。</div>
+            <div class="json-toolbar-note">原型仅演示文本导入与编辑流程，H5 媒体迁移效果以技术方案为准；schemaVersion 不兼容时整包失败。</div>
           </div>
           <div class="kv-toolbar-actions">
             <button class="btn" id="exportConfigJsonBtn" type="button">导出 JSON</button>
@@ -322,26 +328,45 @@
   const originalRows = buildKvRows;
   buildKvRows = function () {
     const rows = originalRows();
-    if (!state.manualPdfHidden && state.manualH5.enabled) rows.unshift({ key: 'manual.h5', item: state.manualH5, field: 'html', label: '说明书 H5 图文正文', kind: 'faq' });
+    if (!state.manualPdfHidden) rows.unshift({ key: 'manual.pdf', item: state.manualH5, field: 'faqPdf', label:'说明书 PDF（必填）', kind:'media', mediaType:'pdf', mediaIndex:0 });
+    if (!state.manualPdfHidden && state.manualH5.enabled) rows.splice(1, 0, { key: 'manual.h5', item: state.manualH5, field: 'html', label: '说明书 H5 图文正文', kind: 'faq' });
     return rows;
+  };
+  const baselineKvTable = renderKvTable;
+  renderKvTable = function(maxRows) {
+    const node = document.createElement('div'); node.innerHTML = baselineKvTable(maxRows);
+    node.querySelectorAll('tbody tr').forEach(row => {
+      const cell=row.querySelector('td'), type=cell?.querySelector('.kv-row-type');
+      if (type && cell.textContent.includes('manual.pdf')) type.textContent='PDF（必填）';
+      if (type && cell.textContent.includes('manual.h5')) type.textContent='H5（选填）';
+    });
+    return node.innerHTML;
   };
   const originalCell = renderKvTextCell;
   renderKvTextCell = function(row, locale) {
     if (row.kind !== 'faq') return originalCell(row, locale);
     const html = localeHtml(locale.code);
     const node = contentDoc(html); const summary = (node.textContent || '').trim();
-    return `<td class="kv-value-cell"><strong>H5 富文本与媒体</strong><div class="faq-kv-summary">${escapeHtml(summary.slice(0, 90) || (node.querySelector('figure') ? '已配置媒体' : '待配置'))}</div>${locale.code === state.defaultLocale ? '<small>只读｜在“编辑英文结构源”中修改</small>' : `<button class="btn" type="button" data-faq-edit-locale="${escapeHtml(locale.code)}">编辑 H5</button>`}</td>`;
+    return `<td class="kv-value-cell"><strong>H5 富文本与媒体（选填）</strong><div class="faq-kv-summary">${escapeHtml(summary.slice(0, 90) || (node.querySelector('figure') ? '已配置媒体' : '未配置，使用本语言 PDF'))}</div>${locale.code === state.defaultLocale ? '<small>只读｜在“编辑英文结构源”中修改</small>' : `<button class="btn" type="button" data-faq-edit-locale="${escapeHtml(locale.code)}">编辑 H5</button>`}</td>`;
   };
-  const originalLocaleMissing = localeHasMissing;
-  localeHasMissing = locale => originalLocaleMissing(locale) || (enabledKvLocales().some(item => item.code === locale) && h5Issues(locale).length > 0);
+  const originalCompleteness = validateEnabledKvCompleteness;
+  validateEnabledKvCompleteness = function(issues) {
+    const allRows = buildKvRows;
+    buildKvRows = () => allRows().filter(row => row.kind !== 'faq');
+    try { originalCompleteness(issues); } finally { buildKvRows = allRows; }
+  };
+  localeHasMissing = function(locale) {
+    if (!enabledKvLocales().some(item => item.code === locale)) return false;
+    return originalRows().some(row => row.kind === 'media' ? !kvMediaValueAt(row.item,row.field,locale,row.mediaIndex??0) : isRichTextField(row.item,row.field) ? !stripHtmlTags(richTextKvValue(row.item,row.field,locale)).trim() : !kvValue(row.item,row.field,locale).trim()) || (!state.manualPdfHidden && (!pdfAt(locale) || h5Issues(locale).length > 0));
+  };
   const originalKvBind = bindKvTableInputs;
   bindKvTableInputs = function(root = document) {
     originalKvBind(root);
     root.querySelectorAll('[data-faq-edit-locale]').forEach(button => button.addEventListener('click', () => openLocaleEditor(button.dataset.faqEditLocale)));
   };
-  // Mixed documents travel with the existing whole-config JSON, not the text-only CSV/XLSX.
-  const originalTextRows = textKvRows;
-  textKvRows = () => originalTextRows().filter(row => row.kind !== 'faq');
+  // H5 bulk text is editable separately from its media resource references.
+  const originalKvValue = kvValue;
+  kvValue = (item, field, locale) => item === state.manualH5 && field === 'html' ? plainH5(locale) : originalKvValue(item, field, locale);
   const originalRichValue = richTextKvValue, originalSetRichValue = setRichTextKvValue;
   richTextKvValue = (item, field, locale) => field === 'html' && item === state.manualH5 ? localeHtml(locale) : originalRichValue(item, field, locale);
   setRichTextKvValue = function(item, field, locale, value) {
@@ -365,11 +390,82 @@
     modal.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); closeLocaleEditor(); } });
     editor().focus();
   }
-  faqNotes.push({ id:'faq-language', target:'#noviceConfigPreview', title:'沿用基线多语言 KV', body:'功能提示：英文结构源编辑 H5，英文 KV 列只读。其他启用语言通过对应列“编辑 H5”配置文字、格式及正文内媒体，预览样式使用该语言内容。每语言纯文字最多5000字，单媒体≤5MB。已启用语言缺内容或超限阻断发布，草稿可保留；禁用语言保留内容但不阻断。\n保存与迁移：各语言内容随整套配置保存、发布、下架和 JSON 迁移；CSV/XLSX仍用于普通文本Key，不承载H5图文整页。', loc:'多语言 KV 表 > manual.h5' });
+  faqNotes.push({ id:'faq-language', target:'#noviceConfigPreview', title:'沿用基线多语言 KV', body:'功能提示：英文结构源编辑 H5，英文 KV 列只读。其他启用语言通过对应列“编辑 H5”配置文字、格式及正文内媒体，预览样式使用该语言内容。每语言纯文字最多5000字，单媒体≤5MB。每个启用语言的PDF必填（≤10MB），H5选填；空H5使用本语言PDF，已有H5超限则阻断发布。禁用语言保留内容但不阻断。\n保存与迁移：各语言内容随整套配置保存、发布和下架。批量导入支持先导文本，再进入编辑器插入媒体；不要求批量上传媒体。H5媒体打包、引用、迁移及异常处理由技术定义，原型不作为媒体迁移协议。', loc:'多语言 KV 表 > manual.h5' });
   const manualAnnotations = currentPrototypeAnnotations;
   currentPrototypeAnnotations = function() {
-    if (!state.drawerOpen && state.manualH5.enabled && !state.manualPdfHidden) return faqNotes.filter(n => n.id === 'faq-language');
+    if (!state.drawerOpen && !state.manualPdfHidden) return faqNotes.filter(n => n.id === 'faq-language');
     return manualAnnotations().filter(n => n.id !== 'faq-language');
+  };
+  function normalizeSource(html) {
+    const template = document.createElement('template'); template.innerHTML = html;
+    template.content.querySelectorAll('script,iframe,object,embed,link,meta').forEach(node => node.remove());
+    template.content.querySelectorAll('*').forEach(node => [...node.attributes].forEach(attr => { if (/^on/i.test(attr.name) || /^(href|src)$/i.test(attr.name) && /^javascript:/i.test(attr.value.trim())) node.removeAttribute(attr.name); }));
+    template.content.querySelectorAll('img,video,audio').forEach(media => {
+      if (!media.closest('figure')) { const figure = document.createElement('figure'); media.before(figure); figure.appendChild(media); }
+    });
+    template.content.querySelectorAll('figure').forEach(figure => { figure.contentEditable = 'false'; figure.dataset.faqMedia ||= String(++mediaSequence); });
+    const div = document.createElement('div'); div.appendChild(template.content); return div.innerHTML;
+  }
+  function bindCodeMode() {
+    const source = document.getElementById('faqH5Source'), button = document.getElementById('faqCodeMode');
+    let codeMode = false;
+    source.addEventListener('input', () => { editor().innerHTML = normalizeSource(source.value); savedRange = null; selectedMedia = null; commitEditor(); });
+    button.addEventListener('click', () => {
+      codeMode = !codeMode;
+      if (codeMode) source.value = cleanHtml();
+      else { editor().innerHTML = normalizeSource(source.value); commitEditor(); }
+      source.hidden = !codeMode; editor().hidden = codeMode;
+      document.querySelectorAll('.faq-toolbar button:not(#faqCodeMode), .faq-toolbar select').forEach(control => control.disabled = codeMode);
+      button.textContent = codeMode ? '可视化编辑' : 'HTML 代码'; button.setAttribute('aria-pressed', String(codeMode));
+      (codeMode ? source : editor()).focus();
+    });
+  }
+  const baselineMediaSource = kvMediaSource, baselineMediaAt = kvMediaValueAt, baselineMediaSet = setKvMediaValueAt;
+  kvMediaSource = (item, field) => field === 'faqPdf' ? (state.manualPdf ? [state.manualPdf] : []) : baselineMediaSource(item,field);
+  kvMediaValueAt = (item, field, locale, index) => field === 'faqPdf' ? pdfAt(locale) : baselineMediaAt(item,field,locale,index);
+  setKvMediaValueAt = function(item, field, locale, index, resource) {
+    if (field !== 'faqPdf') return baselineMediaSet(item,field,locale,index,resource);
+    if (locale === state.defaultLocale) state.manualPdf = resource;
+    else { state.manualH5.pdfByLocale ||= {}; state.manualH5.pdfByLocale[locale] = resource; }
+  };
+  const baselineMediaCell = renderKvMediaCell, baselineMediaBind = bindKvMediaControls;
+  renderKvMediaCell = function(row, locale) {
+    if (row.field !== 'faqPdf') return baselineMediaCell(row,locale);
+    const resource = pdfAt(locale.code);
+    return `<td class="kv-value-cell"><strong>PDF（必填）</strong><div class="faq-kv-summary">${escapeHtml(resourceName(resource,'未上传 PDF'))}</div>${locale.code === state.defaultLocale ? '<small>只读｜在“编辑英文结构源”中上传，≤10MB</small>' : `<input type="file" class="faq-pdf-file" accept="application/pdf,.pdf" data-faq-pdf-locale="${escapeHtml(locale.code)}" aria-label="${escapeHtml(locale.label)} PDF 上传"><small>仅PDF，≤10MB</small>`}</td>`;
+  };
+  bindKvMediaControls = function(root = document) {
+    baselineMediaBind(root);
+    root.querySelectorAll('[data-faq-pdf-locale]').forEach(input => input.addEventListener('change', () => {
+      const file = input.files?.[0]; if (!file) return;
+      const result = validateFile(file,['pdf'],10); if (!result.ok) { showToast(result.message); input.value = ''; return; }
+      setKvMediaValueAt(state.manualH5,'faqPdf',input.dataset.faqPdfLocale,0,fileResource(file)); setDirty(); renderEntry();
+    }));
+  };
+  function plainH5(locale) {
+    const node = contentDoc(localeHtml(locale)); node.querySelectorAll('figure,img,audio,video').forEach(n=>n.remove());
+    node.querySelectorAll('br').forEach(n=>n.replaceWith('\n')); node.querySelectorAll('p,div,h1,h2,h3,li').forEach(n=>n.append('\n'));
+    return node.textContent.replace(/\n$/, '');
+  }
+  const baselineImportText = importKvTextFile;
+  importKvTextFile = function(file) {
+    if (!file) return;
+    const reader = new FileReader(); reader.onload = () => {
+      const rows = parseDelimitedRows(String(reader.result||'')); const header = rows[0] || [];
+      const keyIndex = header.findIndex(name=>name.trim().toLowerCase()==='key');
+      if (keyIndex < 0) return baselineImportText(file);
+      const h5Rows = rows.slice(1).filter(row=>row[keyIndex]==='manual.h5');
+      h5Rows.forEach(row => header.forEach((name,index) => {
+        const locale=state.locales.find(l=>(l.label===name.trim()||l.code===name.trim())&&l.code!==state.defaultLocale); if (!locale) return;
+        const text = row[index] || ''; const media = [...contentDoc(localeHtml(locale.code)).querySelectorAll('figure')].map(n=>n.outerHTML).join('');
+        state.manualH5.htmlI18n ||= {}; state.manualH5.htmlI18n[locale.code] = (text ? `<p>${escapeHtml(text).replace(/\n/g,'<br>')}</p>` : '') + media;
+        state.enabledKvLocales[locale.code]=true;
+      }));
+      if (h5Rows.length) state.manualH5.enabled=true;
+      const filtered=[header,...rows.slice(1).filter(row=>row[keyIndex]!=='manual.h5')];
+      const content=filtered.map(row=>row.map(csvEscape).join(',')).join('\n');
+      baselineImportText(new File([content],file.name,{type:file.type}));
+    }; reader.readAsText(file);
   };
   // Existing published sample remains PDF/hidden; H5 defaults absent in that snapshot.
   if (state.publishedConfigSnapshot) state.publishedConfigSnapshot.manualH5 = blank();
