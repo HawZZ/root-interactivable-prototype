@@ -22,3 +22,9 @@
 .faq-review-controls small { color: #8a7952; }
 .faq-media-failed { background: #f5f7fa; color: #909399; text-align: center; padding: 35px 10px; font-size: 12px; }
 .prototype-note-copy p { white-space: pre-line; }
+.faq-kv-summary { max-height: 80px; overflow: auto; overflow-wrap: anywhere; margin: 8px 0; font-size: 12px; }
+.faq-locale-overlay { position: fixed; inset: 0; z-index: 500; background: #0006; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.faq-locale-dialog { background: white; border-radius: 6px; padding: 20px; width: min(780px, 100%); max-height: 90vh; overflow: auto; }
+.faq-locale-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.faq-locale-dialog p { color: #606266; font-size: 13px; }
+.faq-locale-dialog .faq-rich-document { min-height: 220px; }
