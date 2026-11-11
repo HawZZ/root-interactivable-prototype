@@ -16,6 +16,59 @@
   let savedRange = null;
   let selectedMedia = null;
   let mediaSequence = 0;
+  // Local demo adapter: binary resources live in IndexedDB, never in H5/config JSON.
+  // These stable same-origin references are resolved locally; production upload/CDN is a technical dependency.
+  const resources = new Map();
+  const cacheReady = new Promise((resolve, reject) => {
+    const request = indexedDB.open('faq-h5-media-cache', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('media', { keyPath: 'url' });
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const read = db.transaction('media').objectStore('media').getAll();
+      read.onerror = () => reject(read.error);
+      read.onsuccess = () => { read.result.forEach(item => resources.set(item.url, { ...item, displayUrl: URL.createObjectURL(item.blob) })); resolve(db); };
+    };
+  });
+  cacheReady.catch(() => {}); // Upload reports cache failures and keeps the document unchanged.
+  async function cacheFiles(files) {
+    const db = await cacheReady;
+    const rows = files.map(file => ({ url: new URL(`./faq-media/${crypto.randomUUID()}`, location.href).href, blob: file, size: file.size, type: file.type }));
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('media', 'readwrite');
+      rows.forEach(row => tx.objectStore('media').put(row));
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    rows.forEach(row => resources.set(row.url, { ...row, displayUrl: URL.createObjectURL(row.blob) }));
+    return rows;
+  }
+  function canonicalMedia(node) {
+    node.querySelectorAll('[data-faq-url]').forEach(media => { media.setAttribute('src', media.dataset.faqUrl); media.removeAttribute('data-faq-url'); });
+    return node;
+  }
+  function displayHtml(html) {
+    const node = contentDoc(html);
+    node.querySelectorAll('img,video,audio').forEach(media => {
+      const url = media.getAttribute('src'), resource = resources.get(url);
+      if (!resource) { media.removeAttribute('src'); media.closest('figure')?.classList.add('faq-cache-missing'); return; }
+      media.dataset.faqUrl = url; media.src = resource.displayUrl;
+    });
+    return node.innerHTML;
+  }
+  function mediaMarkup(resource, label) {
+    const tag = resource.type.startsWith('image/') ? 'img' : resource.type.startsWith('video/') ? 'video' : 'audio';
+    return `<figure contenteditable="false" data-faq-media="${++mediaSequence}"><${tag} src="${escapeHtml(resource.url)}" ${tag === 'img' ? `alt="${escapeHtml(label)}"` : 'controls'}></${tag}><figcaption>${escapeHtml(label)}</figcaption></figure>`;
+  }
+  function updateMediaDetails() {
+    const panel = document.getElementById('faqMediaDetails'); if (!panel) return;
+    const valid = selectedMedia && editor()?.contains(selectedMedia);
+    panel.hidden = !valid;
+    if (valid) {
+      const media = selectedMedia.querySelector('img,video,audio');
+      document.getElementById('faqMediaLabel').value = selectedMedia.querySelector('figcaption')?.textContent || media?.getAttribute('alt') || '';
+      document.getElementById('faqMediaUrl').value = media?.dataset.faqUrl || media?.getAttribute('src') || '';
+    }
+  }
   const editor = () => document.getElementById('faqH5Editor');
   function contentDoc(html = localeHtml()) {
     const node = document.createElement('div'); node.innerHTML = html; return node;
@@ -49,7 +102,7 @@
   const hasH5 = locale => Boolean((contentDoc(localeHtml(locale)).textContent || '').trim() || contentDoc(localeHtml(locale)).querySelector('figure,img,video,audio'));
   const pdfAt = locale => locale === state.defaultLocale ? state.manualPdf : state.manualH5?.pdfByLocale?.[locale] || null;
   function cleanHtml() {
-    const node = contentDoc(editor()?.innerHTML || '');
+    const node = canonicalMedia(contentDoc(editor()?.innerHTML || ''));
     node.querySelectorAll('.faq-selected').forEach(n => n.classList.remove('faq-selected'));
     return node.innerHTML;
   }
@@ -101,16 +154,12 @@
     if (invalid) return showToast(`${invalid.name} 超过 5MB，未插入；原正文已保留`);
     const unsupported = list.find(file => !/^(image|audio|video)\//.test(file.type));
     if (unsupported) return showToast('请选择图片、音频或视频；原正文已保留');
-    const rows = await Promise.all(list.map(file => new Promise((resolve, reject) => {
-      const reader = new FileReader(); reader.onerror = reject;
-      reader.onload = () => resolve({ file, url: reader.result }); reader.readAsDataURL(file);
-    })));
+    const targetEditor = editor(), targetLocale = editLocale();
+    const rows = await cacheFiles(list);
+    if (editor() !== targetEditor || editLocale() !== targetLocale) return;
     focusRange();
-    const markup = rows.map(({ file, url }) => {
-      const tag = file.type.startsWith('image/') ? 'img' : file.type.startsWith('video/') ? 'video' : 'audio';
-      return `<figure contenteditable="false" data-faq-media="${++mediaSequence}" data-bytes="${file.size}" data-name="${escapeHtml(file.name)}"><${tag} src="${escapeHtml(url)}" ${tag === 'img' ? 'alt="' + escapeHtml(file.name) + '"' : 'controls'}></${tag}><figcaption>${escapeHtml(file.name)}</figcaption></figure>`;
-    }).join('');
-    document.execCommand('insertHTML', false, markup + '<p><br></p>');
+    const markup = rows.map((row, index) => mediaMarkup(row, `媒体 ${mediaSequence + 1}`)).join('');
+    document.execCommand('insertHTML', false, displayHtml(markup) + '<p><br></p>');
     rememberRange(); commitEditor(); showToast('媒体已插入当前光标位置');
   }
   renderManualForm = function () {
@@ -125,11 +174,13 @@
         <button class="btn" type="button" data-faq-command="insertUnorderedList">无序列表</button>
         <button class="btn" type="button" data-faq-command="insertOrderedList">有序列表</button>
         <button class="btn" type="button" id="faqInsertMedia">插入媒体</button>
-        <button class="btn" type="button" id="faqMediaBefore" aria-label="媒体前移">前移</button><button class="btn" type="button" id="faqMediaAfter" aria-label="媒体后移">后移</button><button class="btn text" type="button" id="faqDeleteMedia">删除媒体</button>
+        <button class="btn" type="button" id="faqReplaceMedia">替换媒体</button><button class="btn" type="button" id="faqMediaBefore" aria-label="媒体前移">前移</button><button class="btn" type="button" id="faqMediaAfter" aria-label="媒体后移">后移</button><button class="btn text" type="button" id="faqDeleteMedia">删除媒体</button>
       </div><input id="faqMediaInput" type="file" accept="image/*,audio/*,video/*" multiple hidden>
-      <div class="faq-rich-document" id="faqH5Editor" role="textbox" aria-label="H5 富文本正文" aria-multiline="true" contenteditable="true" spellcheck="false">${localeHtml() || '<p><br></p>'}</div>
+      <input id="faqReplaceInput" type="file" accept="image/*,audio/*,video/*" hidden>
+      <div class="faq-media-details" id="faqMediaDetails" hidden><label>媒体标记<input id="faqMediaLabel" type="text" maxlength="100" aria-label="媒体标记"></label><label>媒体 URL<input id="faqMediaUrl" type="text" readonly aria-label="媒体 URL"></label></div>
+      <div class="faq-rich-document" id="faqH5Editor" role="textbox" aria-label="H5 富文本正文" aria-multiline="true" contenteditable="true" spellcheck="false">${displayHtml(localeHtml()) || '<p><br></p>'}</div>
       <textarea class="faq-code-editor" id="faqH5Source" aria-label="H5 HTML 代码" spellcheck="false" hidden></textarea><div class="faq-editor-bottom"><span>纯文字最多 5000 字；单个媒体 ≤ 5MB</span><span id="faqTextCount">${textCount()} / 5000</span></div></div>
-      <div class="field-help">在正文中定位光标后插入媒体。点击媒体后可前移、后移或删除。</div><div id="faqH5Errors" class="faq-error" role="status">${h5Issues().join(' ')}</div></div>` : ''}</div>`;
+      <div class="field-help">在正文中定位光标后插入媒体。新增媒体需上传；点击媒体可修改标记、查看 URL、替换、移动或删除。</div><div id="faqH5Errors" class="faq-error" role="status">${h5Issues().join(' ')}</div></div>` : ''}</div>`;
   };
   bindManualForm = function () {
     base.bind(); savedRange = null; selectedMedia = null;
@@ -145,7 +196,7 @@
     el.addEventListener('click', event => {
       el.querySelectorAll('.faq-selected').forEach(n => n.classList.remove('faq-selected'));
       selectedMedia = event.target.closest('figure'); if (selectedMedia) selectedMedia.classList.add('faq-selected');
-      rememberRange();
+      updateMediaDetails(); rememberRange();
     });
     document.querySelectorAll('.faq-toolbar button').forEach(button => button.addEventListener('mousedown', event => { event.preventDefault(); rememberRange(); }));
     document.querySelectorAll('[data-faq-command]').forEach(button => button.addEventListener('click', () => {
@@ -159,10 +210,33 @@
     document.getElementById('faqMediaInput').addEventListener('change', async event => {
       try { await insertFiles(event.target.files); } catch { showToast('媒体读取失败，原正文已保留，请重试'); } event.target.value = '';
     });
+    document.getElementById('faqMediaLabel').addEventListener('input', event => {
+      if (!selectedMedia || !el.contains(selectedMedia)) return;
+      let caption = selectedMedia.querySelector('figcaption');
+      if (!caption) { caption = document.createElement('figcaption'); selectedMedia.appendChild(caption); }
+      caption.textContent = event.target.value;
+      selectedMedia.querySelector('img')?.setAttribute('alt', event.target.value); commitEditor();
+    });
+    document.getElementById('faqReplaceMedia').addEventListener('click', () => {
+      if (!selectedMedia || !el.contains(selectedMedia)) return showToast('先点击正文中需要替换的媒体');
+      document.getElementById('faqReplaceInput').click();
+    });
+    document.getElementById('faqReplaceInput').addEventListener('change', async event => {
+      const file = event.target.files?.[0], target = selectedMedia; event.target.value = '';
+      if (!file || !target || !el.contains(target)) return;
+      if (file.size > 5 * 1024 * 1024 || !/^(image|audio|video)\//.test(file.type)) return showToast('请选择不超过 5MB 的图片、音频或视频；原媒体已保留');
+      try {
+        const [row] = await cacheFiles([file]);
+        if (editor() !== el || !el.contains(target)) return;
+        const temp = contentDoc(displayHtml(mediaMarkup(row, target.querySelector('figcaption')?.textContent || '媒体')));
+        const replacement = temp.firstElementChild; target.replaceWith(replacement); selectedMedia = replacement; replacement.classList.add('faq-selected');
+        savedRange = null; updateMediaDetails(); commitEditor(); showToast('媒体已替换，位置与标记保留');
+      } catch { showToast('媒体上传失败，原媒体已保留，请重试'); }
+    });
     document.getElementById('faqMediaBefore').addEventListener('click', () => moveMedia(-1));
     document.getElementById('faqMediaAfter').addEventListener('click', () => moveMedia(1));
     document.getElementById('faqDeleteMedia').addEventListener('click', () => {
-      if (!selectedMedia) return showToast('先点击正文中需要删除的媒体'); selectedMedia.remove(); selectedMedia = null; savedRange = null; commitEditor();
+      if (!selectedMedia) return showToast('先点击正文中需要删除的媒体'); selectedMedia.remove(); selectedMedia = null; savedRange = null; updateMediaDetails(); commitEditor();
     });
   };
   validateConfig = function () {
@@ -175,12 +249,12 @@
       const source = state.manualPdf; state.manualPdf = pdfAt(state.activeLocale);
       try { return base.preview(); } finally { state.manualPdf = source; }
     }
-    return `<div class="phone-status"><span>9:41</span><span>Manual</span><span>100%</span></div><div class="phone-body"><div class="phone-nav-row"><span class="phone-back">‹</span><div class="phone-title">Manual</div><span></span></div><article class="faq-rendered-document">${localeHtml(state.activeLocale)}</article></div>`;
+    return `<div class="phone-status"><span>9:41</span><span>Manual</span><span>100%</span></div><div class="phone-body"><div class="phone-nav-row"><span class="phone-back">‹</span><div class="phone-title">Manual</div><span></span></div><article class="faq-rendered-document">${displayHtml(localeHtml(state.activeLocale))}</article></div>`;
   };
   const faqNotes = [
     { id:'faq-pdf', target:'#manualPdfInput', title:'沿用 PDF 上传与入口', body:'功能提示：说明书入口展示时 PDF 必填，原有 10MB 限制继续生效。\n变更范围：在现有说明书面板增加 H5，不增页面导航、发布入口或独立版本。',loc:'说明书 PDF > PDF 上传' },
     { id:'faq-switch', target:'#faqH5SwitchField', title:'可选 H5 与发布生效', body:'功能提示：默认关闭；打开后显示富文本编辑器。关闭保留当前编辑内容，再开启可继续编辑。\n生效规则：编辑与保存草稿均不改变正式 APP；发布后才应用新的 H5 开关及内容。隐藏说明书入口时保留内容、停用编辑。',loc:'说明书 PDF > 启用 H5' },
-    { id:'faq-format', target:'#faqH5ContentField', title:'格式与正文内媒体', body:'功能提示：正文、单级标题、加粗、斜体、有序列表、无序列表。媒体在光标处插入；选中后可调整正文内位置及删除。\n校验：可插入多个媒体；单个 ≤5MB，超限批次拒绝插入并保留正文。纯文字按Unicode码点计数，空格与显式换行各计1，CRLF归一为LF；表情按组成码点计。格式、媒体与资源名不计。5000允许，5001提示并阻断发布、不截断正文。5MB在原型中按5×1024×1024字节演示。超限H5可保存草稿、阻断发布；空H5为选填，使用本语言PDF。支持可视化与HTML代码模式互切。\n原型备注：工具栏样式、媒体格式支持和跨端排版由设计/前端/APP对齐；当前图片/音视频操作仅作交互演示。',loc:'说明书 PDF > H5 正文编辑器' },
+    { id:'faq-format', target:'#faqH5ContentField', title:'格式与正文内媒体', body:'功能提示：正文、单级标题、加粗、斜体、有序列表、无序列表。媒体上传成功后以 URL 引用在光标处插入，不将文件二进制/Base64写入H5。选中后可修改标记、查看URL、上传替换、调整位置及删除；替换保留位置及标记，失败保留原媒体。多语言表摘要仅显示正文或媒体数量。导入及HTML代码不能新增未上传媒体，只保留已上传引用；新媒体需编辑器上传。\n校验：可插入多个媒体；单个 ≤5MB，超限批次拒绝插入并保留正文。纯文字按Unicode码点计数，空格与显式换行各计1，CRLF归一为LF；表情按组成码点计。格式、媒体与资源名不计。5000允许，5001提示并阻断发布、不截断正文。5MB在原型中按5×1024×1024字节演示。超限H5可保存草稿、阻断发布；空H5为选填，使用本语言PDF。支持可视化与HTML代码模式互切。\n原型备注：工具栏样式、媒体格式支持和跨端排版由设计/前端/APP对齐；当前通过浏览器IndexedDB缓存文件并解析本地引用URL，同浏览器同来源可恢复；清理缓存或跨浏览器需重新上传。正式上传、URL可访问性与生命周期由技术定义，原型不提供生产媒体服务。',loc:'说明书 PDF > H5 正文编辑器' },
     { id:'faq-preview', target:'#phonePreview', title:'内容与顺序预览', body:'功能提示：新版 APP 有有效 H5 时优先 H5；历史 APP 始终 PDF；无 H5 或整页失败用同一发布内容的 PDF。单媒体失败占位，其余正文保留。\n一致性：Web与APP的文字、格式语义、媒体和先后顺序一致，不要求字体、间距及换行像素相同。\n原型备注：左侧是当前编辑内容预览，以下选择器只用于评审，不是产品新增控件，也不代表真实APP联调。',loc:'说明书 PDF > 只读预览' }
   ];
   currentPrototypeAnnotations = function () {
@@ -346,8 +420,8 @@
   renderKvTextCell = function(row, locale) {
     if (row.kind !== 'faq') return originalCell(row, locale);
     const html = localeHtml(locale.code);
-    const node = contentDoc(html); const summary = (node.textContent || '').trim();
-    return `<td class="kv-value-cell"><strong>H5 富文本与媒体（选填）</strong><div class="faq-kv-summary">${escapeHtml(summary.slice(0, 90) || (node.querySelector('figure') ? '已配置媒体' : '未配置，使用本语言 PDF'))}</div>${locale.code === state.defaultLocale ? '<small>只读｜在“编辑英文结构源”中修改</small>' : `<button class="btn" type="button" data-faq-edit-locale="${escapeHtml(locale.code)}">编辑 H5</button>`}</td>`;
+    const node = contentDoc(html); const summary = plainH5(locale.code).trim();
+    return `<td class="kv-value-cell"><strong>H5 富文本与媒体（选填）</strong><div class="faq-kv-summary">${escapeHtml(summary.slice(0, 90) || (node.querySelector('figure') ? `已配置 ${node.querySelectorAll('figure').length} 个媒体` : '未配置，使用本语言 PDF'))}</div>${locale.code === state.defaultLocale ? '<small>只读｜在“编辑英文结构源”中修改</small>' : `<button class="btn" type="button" data-faq-edit-locale="${escapeHtml(locale.code)}">编辑 H5</button>`}</td>`;
   };
   const originalCompleteness = validateEnabledKvCompleteness;
   validateEnabledKvCompleteness = function(issues) {
@@ -398,8 +472,13 @@
   };
   function normalizeSource(html) {
     const template = document.createElement('template'); template.innerHTML = html;
+    canonicalMedia(template.content);
+    let rejected = false;
+    template.content.querySelectorAll('img,video,audio,source').forEach(media => { if (!resources.has(media.getAttribute('src'))) { media.closest('figure')?.remove(); media.remove(); rejected = true; } });
+    if (rejected) showToast('未导入未上传的媒体；请通过编辑器上传后插入，文本已保留');
     template.content.querySelectorAll('script,iframe,object,embed,link,meta').forEach(node => node.remove());
     template.content.querySelectorAll('*').forEach(node => [...node.attributes].forEach(attr => { if (/^on/i.test(attr.name) || /^(href|src)$/i.test(attr.name) && /^javascript:/i.test(attr.value.trim())) node.removeAttribute(attr.name); }));
+    template.content.querySelectorAll('[srcset],[poster]').forEach(media => { media.removeAttribute('srcset'); media.removeAttribute('poster'); });
     template.content.querySelectorAll('img,video,audio').forEach(media => {
       if (!media.closest('figure')) { const figure = document.createElement('figure'); media.before(figure); figure.appendChild(media); }
     });
@@ -409,12 +488,13 @@
   function bindCodeMode() {
     const source = document.getElementById('faqH5Source'), button = document.getElementById('faqCodeMode');
     let codeMode = false;
-    source.addEventListener('input', () => { editor().innerHTML = normalizeSource(source.value); savedRange = null; selectedMedia = null; commitEditor(); });
+    source.addEventListener('input', () => { editor().innerHTML = displayHtml(normalizeSource(source.value)); savedRange = null; selectedMedia = null; commitEditor(); });
     button.addEventListener('click', () => {
       codeMode = !codeMode;
       if (codeMode) source.value = cleanHtml();
-      else { editor().innerHTML = normalizeSource(source.value); commitEditor(); }
+      else { editor().innerHTML = displayHtml(normalizeSource(source.value)); commitEditor(); }
       source.hidden = !codeMode; editor().hidden = codeMode;
+      if (codeMode) { selectedMedia = null; updateMediaDetails(); }
       document.querySelectorAll('.faq-toolbar button:not(#faqCodeMode), .faq-toolbar select').forEach(control => control.disabled = codeMode);
       button.textContent = codeMode ? '可视化编辑' : 'HTML 代码'; button.setAttribute('aria-pressed', String(codeMode));
       (codeMode ? source : editor()).focus();
@@ -467,7 +547,20 @@
       baselineImportText(new File([content],file.name,{type:file.type}));
     }; reader.readAsText(file);
   };
+  const baselineJsonImport = importCurrentLocaleConfig;
+  importCurrentLocaleConfig = async function(file) {
+    if (!file) return;
+    try {
+      await cacheReady;
+      const payload = JSON.parse(await file.text());
+      const h5 = payload.metadata?.manualH5;
+      if (h5) { h5.html = normalizeSource(h5.html || ''); Object.keys(h5.htmlI18n || {}).forEach(locale => { h5.htmlI18n[locale] = normalizeSource(h5.htmlI18n[locale]); }); }
+      (payload.kv || []).filter(row => row.key === 'manual.h5').forEach(row => Object.keys(row.values || {}).forEach(locale => { row.values[locale] = normalizeSource(row.values[locale]); }));
+      baselineJsonImport(new File([JSON.stringify(payload)], file.name, {type:'application/json'}));
+    } catch { showToast('导入失败：文件或本地媒体缓存不可用，原配置保留'); }
+  };
   // Existing published sample remains PDF/hidden; H5 defaults absent in that snapshot.
   if (state.publishedConfigSnapshot) state.publishedConfigSnapshot.manualH5 = blank();
   renderAll();
+  cacheReady.then(() => renderPreviewSurfaces()).catch(() => {});
 })();
