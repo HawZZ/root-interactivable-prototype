@@ -2,7 +2,7 @@
   "id": "tuya-device-log-sync",
   "path": "/prototypes/tuya-device-log-sync/",
   "title": "同步涂鸦设备日志",
-  "summary": "后端定时捞取涂鸦全部类型设备日志；还原既有上下线及操作日志字段，说明分类映射并验证 BM04 配网错误覆盖。",
+  "summary": "后端定时捞取北美、欧洲、亚太、中国四地区涂鸦且含 Wi-Fi 的设备日志；沿用既有日志字段，验证 BM04 日志捞取和查看，不保证配网错误覆盖。",
   "productLine": "IoT Admin",
   "businessArea": "AIoT Platform",
   "surface": "web",
@@ -17,7 +17,7 @@
     "涂鸦",
     "后端定时任务"
   ],
-  "updatedAt": "2026-11-11T11:34:47Z",
+  "updatedAt": "2026-11-12T02:45:38Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"
