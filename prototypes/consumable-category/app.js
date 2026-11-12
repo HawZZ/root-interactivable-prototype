@@ -3,9 +3,9 @@
 
   document.addEventListener('click', event => { const target=event.target.closest('[data-action]'); if(target?.dataset.action==='fact-products'||target?.dataset.action==='fact-categories'){event.preventDefault();window.location.hash=target.dataset.action==='fact-products'?'#page=products':'#page=categories';} });
 
-  const STORAGE_KEY = 'luteos.consumable-category.prototype.v1';
-  const DRAFT_KEY = 'luteos.consumable-category.prototype.draft.v1';
-  const SCHEMA_VERSION = 1;
+  const STORAGE_KEY = 'luteos.consumable-category.prototype.v2';
+  const DRAFT_KEY = 'luteos.consumable-category.prototype.draft.v2';
+  const SCHEMA_VERSION = 2;
 
   const PRODUCT_CATEGORIES = [
     { id: '2092494966475055105', name: 'BM04S' },
@@ -91,11 +91,11 @@
   const NOTES = {
     'CAT-01': {
       id: 'CAT-01',
-      title: '所属产品分类与筛选',
+      title: '全局分类名称筛选',
       location: '耗材分类列表 > 筛选栏',
       sections: [
-        { label: '功能提示', lines: ['按所属产品分类和分类名称查询耗材分类。产品分类来自现有产品分类主数据，耗材分类只在其所属产品分类范围内筛选。', '重置恢复「全部产品分类」与空关键词，列表回到完整演示数据。'] },
-        { label: '状态/差异', lines: ['查询无结果时展示空状态，不改变底层分类；筛选不改变新增分类的默认归属。'] },
+        { label: '功能提示', lines: ['按分类名称查询全局耗材分类；分类不绑定产品或产品分类，所有产品共享同一套分类。', '重置清空名称关键词，列表回到全部演示分类。'] },
+        { label: '状态/差异', lines: ['查询无结果时展示空状态，不改变底层分类；筛选不改变分类的全局共享范围。'] },
         { label: '原型假设', lines: ['名称查询使用包含匹配；长度、排序和是否模糊匹配待设计/研发核对。原型未提供按耗材分类跨产品查询。'] }
       ]
     },
@@ -104,8 +104,8 @@
       title: '新增耗材分类入口',
       location: '耗材分类列表 > 列表工具栏',
       sections: [
-        { label: '交互', lines: ['点击「新增分类」打开页面内弹窗。新增时必须选择一个产品分类，分类名称只能在弹窗内填写，保存成功后系统自动生成唯一 ID。', '从产品耗材表单的「先去维护分类」进入时，归属产品分类默认取当前产品所属分类；创建成功后自动返回原耗材表单并保留输入。'] },
-        { label: '状态/差异', lines: ['当前产品分类没有耗材分类时仍可新增，不提供停用或预建空分类。'] }
+        { label: '交互', lines: ['点击「新增分类」打开页面内弹窗。新增时只填写分类名称，保存成功后系统自动生成唯一 ID。', '从产品耗材表单的「先去维护分类」进入时，分类面向所有产品；创建成功后自动返回原耗材表单并保留输入。'] },
+        { label: '状态/差异', lines: ['全局暂无耗材分类时仍可新增，不提供停用或预建空分类。'] }
       ]
     },
     'CAT-03': {
@@ -113,7 +113,7 @@
       title: '分类列表与稳定 ID',
       location: '耗材分类列表 > 表格',
       sections: [
-        { label: '字段', lines: ['展示分类名称、所属产品分类、耗材分类 ID与操作；删除时检查引用，不要求列表新增引用统计或更新时间。ID 由系统生成，用户不可填写或编辑。'] },
+        { label: '字段', lines: ['展示分类名称、耗材分类 ID与操作；删除时检查引用，不要求列表新增引用统计或更新时间。ID 由系统生成，用户不可填写或编辑。'] },
         { label: '功能提示', lines: ['分类改名后 ID 保持不变；产品耗材通过 ID 关联，并按分类当前名称展示。', '各产品耗材记录保持独立，多个产品可引用同一个耗材分类。'] }
       ]
     },
@@ -122,18 +122,18 @@
       title: '改名、删除与引用保护',
       location: '耗材分类列表 > 行操作',
       sections: [
-        { label: '交互', lines: ['编辑只允许改名，不允许更换所属产品分类；改名后既有关联不变。', '删除仅在分类没有任何产品耗材引用时可确认；分类已被引用时阻止删除并显示引用信息。'] },
+        { label: '交互', lines: ['编辑只允许改名，ID保持不变；改名后既有关联不变。', '删除仅在分类没有任何产品耗材引用时可确认；分类已被引用时阻止删除并显示引用信息。'] },
         { label: '状态/差异', lines: ['删除确认提交时再次检查引用。演示中的「删除前加引用」会先写入一条合法演示引用，再让本次删除因引用变化被拦截，不产生孤儿关系。'] },
         { label: 'PRD 边界', lines: ['不提供停用能力，不级联删除产品耗材，也不把删除动作变成批量迁移。'] }
       ]
     },
     'CAT-05': {
       id: 'CAT-05',
-      title: '名称、归属与只读 ID',
+      title: '名称与只读 ID',
       location: '分类新增/编辑弹窗 > 基础字段',
       sections: [
-        { label: '字段', lines: ['分类名称必填，保存前去除首尾空格。新增时选择所属产品分类；编辑时归属产品分类、分类 ID 均为只读。', '新增弹窗在保存前显示「保存后自动生成」，成功后才产生稳定 ID。'] },
-        { label: '校验', lines: ['同一产品分类内名称不可重复，不把编辑中的当前记录算作重复；不同产品分类可同名。', '原型暂按去首尾空格、区分大小写判断重名，真实规范化规则待研发记录并由产品核对。'] },
+        { label: '字段', lines: ['分类名称必填，保存前去除首尾空格。分类不设置所属产品或产品分类；分类 ID 为只读。', '新增弹窗在保存前显示「保存后自动生成」，成功后才产生稳定 ID。'] },
+        { label: '校验', lines: ['分类名称全局不可重复，不把编辑中的当前记录算作重复。', '原型暂按去首尾空格、区分大小写判断重名，真实规范化规则待研发记录并由产品核对。'] },
         { label: '原型假设', lines: ['演示 ID 为 CCAT-DEMO-* 格式，仅用于表达稳定性；正式 ID 格式和生成方式由研发定义。'] }
       ]
     },
@@ -142,7 +142,7 @@
       title: '保存校验、加载与失败恢复',
       location: '分类新增/编辑弹窗 > 校验与底部操作',
       sections: [
-        { label: '校验', lines: ['空名称、未选择产品分类、同产品分类重名均在提交时显示字段或表单错误并聚焦首个错误。', '保存时不提交归属产品分类变更；编辑请求只更新名称。'] },
+        { label: '校验', lines: ['空名称、全局名称重名均在提交时显示字段或表单错误并聚焦首个错误。', '编辑请求只更新名称，分类 ID 与既有关联不变。'] },
         { label: '状态/差异', lines: ['保存中按钮进入 loading，字段和关闭操作暂时禁用，防止重复提交。', '保存失败保留全部输入、显示失败原因，并将主按钮变为「重试保存」；重试仅提交同一份表单。取消或关闭不写入数据。'] }
       ]
     },
@@ -173,7 +173,7 @@
       location: '产品详情 > 高级配置 > 耗材管理',
       sections: [
         { label: '功能提示', lines: ['沿用现有产品摘要与高级配置导航；本期不新增摘要统计或产品分类ID展示。所有耗材操作限定在当前产品。', '路径：智能产品 → 产品列表 → 产品详情 → 高级配置 → 耗材管理。'] },
-        { label: '状态/差异', lines: ['产品所属产品分类是分类选项范围的上游依据；耗材分类不可跨到其他产品分类。'] }
+        { label: '状态/差异', lines: ['所有产品均可选择全局耗材分类；产品所属分类不限制耗材分类选项。'] }
       ]
     },
     'CON-02': {
@@ -181,7 +181,7 @@
       title: '添加耗材与分类前置条件',
       location: '耗材管理 > 添加耗材',
       sections: [
-        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类单选卡片是交互示意，最终控件由设计定义。', '分类选项从当前产品所属产品分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
+        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类单选卡片是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
         { label: '状态/差异', lines: ['无分类时显示「去配置中心维护」；进入配置中心保留当前表单输入，返回后继续编辑。'] }
       ]
     },
@@ -200,7 +200,7 @@
       title: '编辑耗材与更换分类',
       location: '耗材管理 > 行操作',
       sections: [
-        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可在当前产品所属产品分类内改选，保存后正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
+        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中改选，保存后正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
         { label: '异常处理', lines: ['若提交时分类已删除、失效或越界，保存被阻止并提示刷新重选，不静默改选或写入孤儿关系。'] }
       ]
     },
@@ -209,7 +209,7 @@
       title: '必选单分类与可选范围',
       location: '耗材新增/编辑抽屉 > 耗材分类',
       sections: [
-        { label: '校验', lines: ['分类必选且只能选择一个；选项仅包含当前产品所属产品分类下的耗材分类，空值或跨产品分类值不得保存。'] },
+        { label: '校验', lines: ['分类必选且只能选择一个；选项包含全部全局耗材分类，空值或已失效分类不得保存。'] },
         { label: '状态/差异', lines: ['加载中显示占位并禁用保存；加载失败提供重试；无分类时提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新后才由用户明确清除失效选择。'] },
         { label: 'PRD 边界', lines: ['耗材类型枚举与耗材分类是两个字段，不用类型代替分类，也不新增 APP 分类展示。'] }
       ]
@@ -249,25 +249,15 @@
       title: '存量初始化前后演示',
       location: '原型演示 > 存量状态；耗材列表',
       sections: [
-        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」，编辑时必须重新选择合法分类，保存空分类会被拦截。', '初始化后：展示预置的合法同产品分类关系。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
+        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」，编辑时必须重新选择合法分类，保存空分类会被拦截。', '初始化后：展示预置的合法全局分类关系。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
         { label: 'PRD 边界', lines: ['交付前由业务提供全量清单并核对归类，研发负责稳定键、幂等、失败恢复、执行窗口和强制校验时点；未完成全量合法映射不可交付。'] }
       ]
     },
-    'REL-01': {
-      id: 'REL-01',
-      title: '父级删除 / 产品分类调整保护',
-      location: '原型演示 > 父级保护检查',
-      sections: [
-        { label: '业务规则', lines: ['父级操作不得造成悬空或跨产品分类关联；具体保护方案由研发核对，不新增产品分类调整入口。', '分类或产品改名不得造成关联丢失；保护能力不包含自动迁移、自动改配或级联删除。'] },
-        { label: '状态/差异', lines: ['本原型的检查按钮只演示业务拦截结果，不修改产品分类或产品数据，也不宣称现网已实现该保护。'] },
-        { label: '研发验收', lines: ['需核对既有父级删除和产品分类调整入口、接口与数据库约束，并由测试在交付前覆盖保护与并发场景。'] }
-      ]
-    }
   };
 
   const PAGE_NOTE_IDS = {
-    categories: ['CAT-01', 'CAT-02', 'CAT-03', 'CAT-04', 'DEMO-01', 'MIG-01', 'REL-01'],
-    products: ['PRO-01', 'DEMO-01', 'REL-01'],
+    categories: ['CAT-01', 'CAT-02', 'CAT-03', 'CAT-04', 'DEMO-01', 'MIG-01'],
+    products: ['PRO-01', 'DEMO-01'],
     consumables: ['CON-01', 'CON-02', 'CON-03', 'CON-04', 'DEMO-01', 'MIG-01']
   };
 
@@ -277,7 +267,6 @@
     'category-delete': ['CAT-07'],
     'consumable-create': ['CON-05', 'CON-06', 'CON-07'],
     'consumable-edit': ['CON-05', 'CON-06', 'CON-07'],
-    'parent-guard': ['REL-01'],
     'reset-demo': []
   };
 
@@ -287,7 +276,6 @@
     'category-delete': '删除耗材分类',
     'consumable-create': '添加耗材',
     'consumable-edit': '编辑耗材',
-    'parent-guard': '父级保护检查',
     'reset-demo': '重置演示数据'
   };
 
@@ -308,35 +296,24 @@
       categories: [
         {
           id: 'CCAT-DEMO-1001',
-          productCategoryId: '2092494966475055105',
           name: '滤芯',
           createdAt: '2026-11-03T01:10:00.000Z',
           updatedAt: '2026-11-03T01:10:00.000Z'
         },
         {
           id: 'CCAT-DEMO-1002',
-          productCategoryId: '2092494966475055105',
           name: '清洁刷',
           createdAt: '2026-11-03T01:12:00.000Z',
           updatedAt: '2026-11-03T01:12:00.000Z'
         },
         {
           id: 'CCAT-DEMO-1003',
-          productCategoryId: '2092494966475055105',
           name: '水箱',
           createdAt: '2026-11-03T01:15:00.000Z',
           updatedAt: '2026-11-03T01:15:00.000Z'
         },
         {
-          id: 'CCAT-DEMO-1004',
-          productCategoryId: 'DEMO-PC-002',
-          name: '滤芯',
-          createdAt: '2026-11-03T01:20:00.000Z',
-          updatedAt: '2026-11-03T01:20:00.000Z'
-        },
-        {
           id: 'CCAT-DEMO-1005',
-          productCategoryId: 'DEMO-PC-002',
           name: '母乳收集容器',
           createdAt: '2026-11-03T01:23:00.000Z',
           updatedAt: '2026-11-03T01:23:00.000Z'
@@ -348,7 +325,7 @@
           productId: '2114647612245774338',
           categoryId: 'CCAT-DEMO-1001',
           name: '复合滤芯 Pro',
-          intro: '用于演示同产品分类内多条独立耗材记录，可展示分类和原字段的组合。',
+          intro: '用于演示多个产品的独立耗材记录共享全局分类。',
           type: 'device-count',
           trigger: '设备计数剩余 10%',
           replacementCycle: '90 天',
@@ -400,9 +377,9 @@
         {
           id: 'CONS-DEMO-1004',
           productId: 'DEMO-P-0003',
-          categoryId: 'CCAT-DEMO-1004',
+          categoryId: 'CCAT-DEMO-1001',
           name: '吸乳器滤芯',
-          intro: '演示另一产品分类下与「滤芯」同名但独立归属的分类。',
+          intro: '演示不同产品分类的产品共同引用全局「滤芯」分类。',
           type: 'non-count',
           trigger: '手动更换',
           replacementCycle: '按需',
@@ -426,7 +403,7 @@
     page: 'categories',
     productId: '2114647612245774338',
     note: null,
-    categoryFilters: { productCategoryId: 'all', query: '' },
+    categoryFilters: { query: '' },
     productFilters: { productCategoryId: 'all', query: '' },
     demoOpen: false,
     mobileView: 'product',
@@ -569,7 +546,6 @@
   function categoriesForProduct(product) {
     if (!product) return [];
     return data.categories
-      .filter((category) => category.productCategoryId === product.productCategoryId)
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
   }
@@ -774,7 +750,6 @@
   function renderDemoPanel() {
     const initialized = data.initialized;
     const pageHasMig = ui.page === 'categories' || ui.page === 'consumables';
-    const pageHasRel = ui.page === 'categories' || ui.page === 'products';
     const showBasicAnchors = !ui.modal;
     const activeFlags = [
       ui.demo.failNextSave ? '下次保存失败' : '',
@@ -821,10 +796,6 @@
             <div class="demo-row">
               <span class="demo-row-label">完整性检查</span>
               <div class="demo-group">
-                <span class="demo-note-wrap">
-                  <button class="demo-action" type="button" data-action="open-parent-guard" title="原型辅助：只演示父级保护结果">父级保护检查</button>
-                  ${showBasicAnchors && pageHasRel ? noteAnchor('REL-01') : ''}
-                </span>
                 <button class="demo-action is-danger" type="button" data-action="open-reset-demo" title="原型辅助：恢复预置演示数据">重置演示数据</button>
               </div>
               <span class="demo-storage${storageAvailable ? '' : ' is-warning'}">${storageAvailable ? '本地演示数据可持久化' : '本地存储不可用：修改仅在本次会话有效'}</span>
@@ -839,15 +810,9 @@
     const filter = ui.categoryFilters;
     const query = filter.query.trim().toLocaleLowerCase('zh-CN');
     const filtered = data.categories
-      .filter((category) => filter.productCategoryId === 'all' || category.productCategoryId === filter.productCategoryId)
       .filter((category) => !query || category.name.toLocaleLowerCase('zh-CN').includes(query))
       .slice()
-      .sort((a, b) => {
-        const ai = PRODUCT_CATEGORIES.findIndex((item) => item.id === a.productCategoryId);
-        const bi = PRODUCT_CATEGORIES.findIndex((item) => item.id === b.productCategoryId);
-        if (ai !== bi) return ai - bi;
-        return a.name.localeCompare(b.name, 'zh-CN');
-      });
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 
     const returnBanner = ui.returnContext ? (() => {
       const product = productById(ui.returnContext.productId);
@@ -857,7 +822,7 @@
           <span class="context-banner-icon">${icon('info')}</span>
           <div class="context-banner-copy">
             <strong>正在为「${escapeHtml(product ? product.name : '当前产品')}」维护耗材分类</strong>
-            <span>归属产品分类：${escapeHtml(parent ? parent.name : '—')}。创建成功后会自动返回耗材表单并保留输入。</span>
+            <span>全局分类供所有产品共用。创建成功后会自动返回耗材表单并保留输入。</span>
           </div>
           <button class="btn" type="button" data-action="return-to-consumable">返回耗材表单</button>
         </div>
@@ -865,12 +830,10 @@
     })() : '';
 
     const rows = filtered.map((category, index) => {
-      const parent = productCategoryById(category.productCategoryId);
       const references = referencesForCategory(category.id);
       return `
         <tr>
           <td><span class="cell-strong">${escapeHtml(category.name)}</span></td>
-          <td><span class="tag tag-neutral">${escapeHtml(parent ? parent.name : '分类缺失')}</span></td>
           <td><span class="cell-mono">${escapeHtml(category.id)}</span></td>
           
           
@@ -888,7 +851,7 @@
         <div>
           <div class="empty-icon">${icon('box')}</div>
           <p class="empty-title">没有匹配的耗材分类</p>
-          <p class="empty-copy">调整产品分类或名称关键词后重新查询。筛选不会删除或修改任何分类。</p>
+          <p class="empty-copy">调整名称关键词后重新查询。筛选不会删除或修改任何分类。</p>
           <button class="btn" type="button" data-action="reset-category-filter">清除筛选</button>
         </div>
       </div>
@@ -899,7 +862,7 @@
         <div>
           <span class="page-eyebrow">配置中心</span>
           <h1 class="page-title">耗材分类</h1>
-          <p class="page-description">按产品分类维护耗材的业务归类；分类 ID 自动生成并用于稳定关联。</p>
+          <p class="page-description">统一维护全局耗材分类，供所有产品共用；分类 ID 自动生成并用于稳定关联。</p>
         </div>
         <div class="page-heading-side"><span class="demo-data-tag">演示数据</span></div>
       </div>
@@ -910,12 +873,6 @@
           ${noteAnchor('CAT-01')}
         </div>
         <form class="filter-row" id="categoryFilterForm">
-          <label class="filter-item">
-            <span class="filter-label">所属产品分类</span>
-            <select name="productCategoryId" id="categoryProductCategoryFilter">
-              ${productCategoryOptionMarkup(filter.productCategoryId, true)}
-            </select>
-          </label>
           <label class="filter-item wide">
             <span class="filter-label">耗材分类名称</span>
             <span class="input-with-icon">
@@ -949,7 +906,6 @@
             <thead>
               <tr>
                 <th scope="col">分类名称</th>
-                <th scope="col">所属产品分类</th>
                 <th scope="col">耗材分类 ID</th>
                 
                 
@@ -961,7 +917,7 @@
           ${filtered.length ? '' : empty}
         </div>
         <div class="table-footer">
-          <span>演示数据 · 同产品分类内名称唯一，不同产品分类允许同名</span>
+          <span>演示数据 · 分类名称全局唯一，所有产品共享</span>
           <span class="pager"><button type="button" disabled>上一页</button><button type="button" class="is-current">1</button><button type="button" disabled>下一页</button></span>
         </div>
       </section>
@@ -1096,7 +1052,7 @@
     const rows = records.map((record, index) => {
       const pending = isRecordPending(record);
       const category = categoryById(record.categoryId);
-      const categoryInvalid = !pending && (!category || category.productCategoryId !== product.productCategoryId);
+      const categoryInvalid = !pending && (!category);
       return `
         <tr class="${record.id === ui.highlightConsumableId ? 'is-highlighted' : ''}">
           <td class="change-column">${renderConsumableCategoryCell(record)}</td>
@@ -1122,8 +1078,8 @@
         <div class="empty-state">
           <div>
             <div class="empty-icon">${icon('box')}</div>
-            <p class="empty-title">当前产品分类暂无耗材分类</p>
-            <p class="empty-copy">「${escapeHtml(parent ? parent.name : '当前产品分类')}」还没有可用的耗材分类。添加耗材前需要先在配置中心维护分类。</p>
+            <p class="empty-title">暂无耗材分类</p>
+            <p class="empty-copy">全局尚无可用的耗材分类。添加耗材前需要先在配置中心维护分类。</p>
             <button class="btn btn-primary" type="button" data-action="go-maintain-empty">去配置中心维护</button>
           </div>
         </div>
@@ -1134,7 +1090,7 @@
           <div>
             <div class="empty-icon">${icon('box')}</div>
             <p class="empty-title">还没有耗材配置</p>
-            <p class="empty-copy">添加第一条耗材，并选择一个属于「${escapeHtml(parent ? parent.name : '当前产品分类')}」的耗材分类。</p>
+            <p class="empty-copy">添加第一条耗材，并选择一个全局耗材分类。</p>
             <button class="btn btn-primary" type="button" data-action="open-consumable-create">${icon('plus')}添加耗材</button>
           </div>
         </div>
@@ -1220,7 +1176,7 @@
           <div class="advanced-section-head">
             <div>
               <h3 id="consumableSectionTitle">耗材管理</h3>
-              <p>当前产品共 ${records.length} 条耗材记录；分类仅限「${escapeHtml(parent ? parent.name : '当前产品分类')}」。</p>
+              <p>当前产品共 ${records.length} 条耗材记录；分类从全局统一选择。</p>
             </div>
             <div class="advanced-section-actions">
               <span class="note-inline" data-note-target="CON-02">
@@ -1301,7 +1257,7 @@
       tableWrap.insertAdjacentHTML('beforeend',noteAnchor('CAT-03'));
       const center = fact.querySelector('.table-content__center');center.innerHTML='';center.append(tableWrap);
       const footer = temp.querySelector('.table-footer');footer.querySelector('span').textContent='共 '+tableWrap.querySelectorAll('tbody tr').length+' 条'; center.append(footer);
-      if(ui.returnContext) wrapper.prepend(temp.querySelector('.context-banner'));
+      if(ui.returnContext) wrapper.querySelector('.section-content').prepend(temp.querySelector('.context-banner'));
       fact.querySelector('.page-name').textContent='耗材分类';
       fact.querySelectorAll('.text-button').forEach(e=>e.classList.add('fact-link'));
     } else {
@@ -1394,7 +1350,7 @@
   function locateNote(id, options = {}) {
     const { updateHash = true, scroll = true, origin = 'card' } = options;
     if (!getVisibleNoteIds().includes(id)) return;
-    if (!ui.modal && (id === 'MIG-01' || id === 'REL-01') && !ui.demoOpen) {
+    if (!ui.modal && id === 'MIG-01' && !ui.demoOpen) {
       ui.demoOpen = true;
       renderDemoPanelHost();
     }
@@ -1515,25 +1471,14 @@
       return;
     }
 
-    let defaultParentId = PRODUCT_CATEGORIES[0].id;
-    if (ui.returnContext) {
-      const sourceProduct = productById(ui.returnContext.productId);
-      if (sourceProduct) defaultParentId = sourceProduct.productCategoryId;
-    } else if (ui.categoryFilters.productCategoryId !== 'all') {
-      defaultParentId = ui.categoryFilters.productCategoryId;
-    }
-    if (options.productCategoryId) defaultParentId = options.productCategoryId;
-
     ui.dialogTrigger = options.trigger || document.activeElement;
     ui.modal = {
       type: mode === 'create' ? 'category-create' : 'category-edit',
       categoryId: existing ? existing.id : null,
-      productCategoryId: existing ? existing.productCategoryId : defaultParentId,
       mode
     };
     ui.formDraft = {
-      name: existing ? existing.name : '',
-      productCategoryId: existing ? existing.productCategoryId : defaultParentId
+      name: existing ? existing.name : ''
     };
     ui.fieldErrors = {};
     ui.modalError = '';
@@ -1546,7 +1491,7 @@
     renderAnnotations();
     syncHash(ui.note, true);
     locateNote(ui.note, { updateHash: false, scroll: false, origin: 'render' });
-    setFocusAfterRender(existing ? '#categoryNameInput' : '#categoryParentSelect');
+    setFocusAfterRender('#categoryNameInput');
     applyFocusAfterRender();
   }
 
@@ -1560,8 +1505,7 @@
     ui.modal = {
       type: 'category-delete',
       categoryId,
-      categoryName: category.name,
-      productCategoryId: category.productCategoryId
+      categoryName: category.name
     };
     ui.fieldErrors = {};
     ui.modalError = '';
@@ -1644,27 +1588,6 @@
     loadConsumableOptions();
   }
 
-  function openParentGuardDialog(trigger) {
-    const parent = productCategoryById('2092494966475055105');
-    const product = productById('DEMO-P-0002');
-    ui.dialogTrigger = trigger || document.activeElement;
-    ui.modal = {
-      type: 'parent-guard',
-      productCategoryId: parent.id,
-      productId: product.id,
-      guardResult: null
-    };
-    ui.busy = false;
-    ui.note = 'REL-01';
-    setMobileView('product');
-    renderModal();
-    renderAnnotations();
-    syncHash(ui.note, true);
-    locateNote(ui.note, { updateHash: false, scroll: false, origin: 'render' });
-    setFocusAfterRender('.modal-dialog');
-    applyFocusAfterRender();
-  }
-
   function openResetDemoDialog(trigger) {
     ui.dialogTrigger = trigger || document.activeElement;
     ui.modal = { type: 'reset-demo' };
@@ -1716,7 +1639,7 @@
           <div class="skeleton-line"></div>
           <div class="skeleton-line"></div>
           <div class="skeleton-line"></div>
-          <span class="field-help">正在加载「${escapeHtml(productCategoryById(product.productCategoryId)?.name || '当前产品分类')}」下的耗材分类…</span>
+          <span class="field-help">正在加载全局耗材分类…</span>
         </div>
       `;
     }
@@ -1737,7 +1660,7 @@
     if (!categories.length) {
       return `
         <div class="option-message">
-          <strong>当前产品分类暂无耗材分类</strong>
+          <strong>暂无耗材分类</strong>
           先在配置中心新增分类，再返回此处添加或编辑耗材。表单输入会在跳转期间保留。
           <button class="btn" type="button" data-action="go-maintain-category">去配置中心维护</button>
         </div>
@@ -1751,7 +1674,7 @@
             <input type="radio" name="categoryId" value="${escapeHtml(category.id)}"${selectedId === category.id ? ' checked' : ''}${ui.busy ? ' disabled' : ''}>
             <span class="category-option-copy">
               <span class="category-option-name">${escapeHtml(category.name)}</span>
-              <span class="category-option-id">${escapeHtml(category.id)} · ${escapeHtml(productCategoryById(category.productCategoryId)?.name || '')}</span>
+              <span class="category-option-id">${escapeHtml(category.id)}</span>
             </span>
           </label>
         `).join('')}
@@ -1762,7 +1685,6 @@
 
   function renderCategoryDialog() {
     const isCreate = ui.modal.type === 'category-create';
-    const parent = productCategoryById(ui.modal.productCategoryId);
     const draft = ui.formDraft;
     const disabled = ui.busy ? 'disabled' : '';
     return `
@@ -1780,28 +1702,10 @@
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CAT-05">
                 <div class="modal-section-title"><span>分类信息</span>${noteAnchor('CAT-05')}</div>
-                ${isCreate ? `
-                  <label class="form-field">
-                    <span>所属产品分类 <span class="required-mark">*</span></span>
-                    <select id="categoryParentSelect" name="productCategoryId" ${fieldState('productCategoryId')} ${disabled}>
-                      ${productCategoryOptionMarkup(draft.productCategoryId, false)}
-                    </select>
-                    <span class="field-help">耗材分类只在所属产品分类内供产品选择，保存后不可更换归属。</span>
-                    ${fieldErrorMarkup('productCategoryId')}
-                  </label>
-                ` : `
-                  <div class="readonly-block">
-                    <div class="readonly-main">
-                      <strong>${escapeHtml(parent ? parent.name : '产品分类缺失')}</strong>
-                      <span>所属产品分类 · 编辑时只读，不允许更换</span>
-                    </div>
-                    <span class="readonly-lock" title="归属不可编辑">${icon('lock')}</span>
-                  </div>
-                `}
                 <label class="form-field">
                   <span>耗材分类名称 <span class="required-mark">*</span></span>
                   <input type="text" id="categoryNameInput" name="name" value="${escapeHtml(draft.name)}" placeholder="请输入耗材分类名称" autocomplete="off" ${fieldState('name')} ${disabled}>
-                  <span class="field-help">同一产品分类内名称不可重复；保存时忽略首尾空格，区分大小写。</span>
+                  <span class="field-help">分类名称全局不可重复；保存时忽略首尾空格，区分大小写。</span>
                   ${fieldErrorMarkup('name')}
                 </label>
                 <div class="readonly-block">
@@ -1828,7 +1732,6 @@
 
   function renderDeleteCategoryDialog() {
     const category = categoryById(ui.modal.categoryId);
-    const parent = productCategoryById(ui.modal.productCategoryId);
     const references = referencesForCategory(ui.modal.categoryId);
     const hasReferences = references.length > 0;
     const disabled = ui.busy ? 'disabled' : '';
@@ -1847,7 +1750,6 @@
             <div class="dialog-summary" data-note-target="CAT-07">
               <div class="modal-section-title"><span>待删除分类</span>${noteAnchor('CAT-07')}</div>
               <div class="dialog-summary-row"><span>分类名称</span><strong>${escapeHtml(category ? category.name : ui.modal.categoryName)}</strong></div>
-              <div class="dialog-summary-row"><span>所属产品分类</span><strong>${escapeHtml(parent ? parent.name : '—')}</strong></div>
               <div class="dialog-summary-row"><span>耗材分类 ID</span><strong class="cell-mono">${escapeHtml(ui.modal.categoryId)}</strong></div>
               <div class="dialog-summary-row"><span>当前引用</span><strong>${references.length} 条耗材</strong></div>
               ${hasReferences ? `
@@ -1909,7 +1811,7 @@
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CON-05">
                 <div class="modal-section-title"><span>耗材分类 <span class="required">*</span> <span class="change-mark">本期新增 / 可更换</span></span>${noteAnchor('CON-05')}</div>
-                <div class="field-help">仅可选择「${escapeHtml(parent ? parent.name : '当前产品分类')}」下的一个耗材分类；耗材类型与耗材分类是两个独立字段。</div>
+                <div class="field-help">可从全局耗材分类中选择一个；耗材类型与耗材分类是两个独立字段。</div>
                 ${renderCategoryOptionsForDialog()}
                 ${fieldErrorMarkup('categoryId')}
               </section>
@@ -2024,52 +1926,6 @@
     return '<div class="fact-host fact-overlay">'+holder.innerHTML+'</div>';
   }
 
-  function renderParentGuardDialog() {
-    const parent = productCategoryById(ui.modal.productCategoryId);
-    const product = productById(ui.modal.productId);
-    const categoryCount = data.categories.filter((category) => category.productCategoryId === ui.modal.productCategoryId).length;
-    const consumableCount = data.consumables.filter((record) => {
-      const category = categoryById(record.categoryId);
-      return category && category.productCategoryId === ui.modal.productCategoryId;
-    }).length;
-    const result = ui.modal.guardResult;
-    return `
-      <div class="modal-backdrop">
-        <div class="modal-dialog is-narrow" role="dialog" aria-modal="true" aria-labelledby="parentGuardTitle" tabindex="-1">
-          <div class="modal-header">
-            <div>
-              <div class="modal-kicker">原型辅助 / 完整性检查</div>
-              <div class="modal-title-row"><h2 id="parentGuardTitle">父级变更保护</h2><span class="tag tag-amber">原型演示</span></div>
-            </div>
-            <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭弹窗"${ui.busy ? ' disabled' : ''}>×</button>
-          </div>
-          <div class="modal-body" data-note-target="REL-01">
-            <div class="modal-section-title"><span>检查上下文</span>${noteAnchor('REL-01')}</div>
-            <div class="dialog-summary">
-              <div class="dialog-summary-row"><span>产品分类</span><strong>${escapeHtml(parent ? parent.name : '—')} / ${escapeHtml(parent ? parent.id : '—')}</strong></div>
-              <div class="dialog-summary-row"><span>关联耗材分类</span><strong>${categoryCount} 个</strong></div>
-              <div class="dialog-summary-row"><span>关联耗材记录</span><strong>${consumableCount} 条</strong></div>
-              <div class="dialog-summary-row"><span>调整测试产品</span><strong>${escapeHtml(product ? product.name : '—')}</strong></div>
-            </div>
-            <p class="field-help">以下操作只执行演示校验：不会删除产品分类、修改产品归属或写入真实环境。</p>
-            ${result ? `
-              <div class="inline-alert ${result.blocked ? 'is-error' : 'is-warning'}" role="alert">
-                <span class="inline-alert-icon">!</span>
-                <div class="inline-alert-copy"><strong>${result.blocked ? '操作被业务规则阻止' : '需要研发进一步核对'}</strong><span>${escapeHtml(result.message)}</span></div>
-              </div>
-            ` : ''}
-          </div>
-          <div class="modal-footer">
-            <span class="modal-footer-note">保留此结果供 PRD / 验证记录引用</span>
-            <button class="btn" type="button" data-action="close-modal">关闭</button>
-            <button class="btn" type="button" data-action="check-parent-delete"${ui.busy ? ' disabled' : ''}>尝试删除产品分类</button>
-            <button class="btn" type="button" data-action="check-parent-move"${ui.busy ? ' disabled' : ''}>尝试调整产品分类</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
   function renderResetDemoDialog() {
     return `
       <div class="modal-backdrop">
@@ -2112,7 +1968,6 @@
     if (ui.modal.type === 'category-create' || ui.modal.type === 'category-edit') root.innerHTML = renderCategoryDialog();
     else if (ui.modal.type === 'category-delete') root.innerHTML = renderDeleteCategoryDialog();
     else if (ui.modal.type === 'consumable-create' || ui.modal.type === 'consumable-edit') root.innerHTML = renderConsumableDialog();
-    else if (ui.modal.type === 'parent-guard') root.innerHTML = renderParentGuardDialog();
     else if (ui.modal.type === 'reset-demo') root.innerHTML = renderResetDemoDialog();
 
     if (ui.focusAfterRender) {
@@ -2204,7 +2059,6 @@
       openConsumableDialog('create', null, { noteId, productId: ui.productId });
       return;
     }
-    if (noteId === 'REL-01') openParentGuardDialog(document.activeElement);
   }
 
   function setInitState(nextInitialized) {
@@ -2295,9 +2149,7 @@
   }
 
   function filterCategoryList() {
-    const parentSelect = document.getElementById('categoryProductCategoryFilter');
     const queryInput = document.getElementById('categoryNameFilter');
-    if (parentSelect) ui.categoryFilters.productCategoryId = parentSelect.value;
     if (queryInput) ui.categoryFilters.query = queryInput.value;
     renderAdmin();
     renderAnnotations();
@@ -2318,16 +2170,12 @@
     const errors = {};
     const name = String(ui.formDraft.name || '').trim();
     if (!name) errors.name = '请输入耗材分类名称。';
-    if (ui.modal.type === 'category-create') {
-      if (!productCategoryById(ui.formDraft.productCategoryId)) errors.productCategoryId = '请选择有效的产品分类。';
-    }
-    if (!errors.name && ui.formDraft.productCategoryId) {
+    if (!errors.name) {
       const duplicate = data.categories.some((category) =>
-        category.productCategoryId === ui.formDraft.productCategoryId &&
         category.name.trim() === name &&
         category.id !== ui.modal.categoryId
       );
-      if (duplicate) errors.name = `同一产品分类下已存在名称「${name}」。`;
+      if (duplicate) errors.name = `已存在耗材分类名称「${name}」。`;
     }
     ui.fieldErrors = errors;
     return { valid: Object.keys(errors).length === 0, name };
@@ -2337,13 +2185,11 @@
     event.preventDefault();
     if (!ui.modal || !['category-create', 'category-edit'].includes(ui.modal.type) || ui.busy) return;
     const nameInput = document.getElementById('categoryNameInput');
-    const parentSelect = document.getElementById('categoryParentSelect');
     if (nameInput) ui.formDraft.name = nameInput.value;
-    if (parentSelect) ui.formDraft.productCategoryId = parentSelect.value;
     ui.modalError = '';
     const validation = validateCategoryDraft();
     if (!validation.valid) {
-      const firstError = ui.fieldErrors.name ? '#categoryNameInput' : '#categoryParentSelect';
+      const firstError = '#categoryNameInput';
       setFocusAfterRender(firstError);
       renderModal();
       renderAnnotations();
@@ -2386,7 +2232,6 @@
       const id = nextCategoryId();
       data.categories.push({
         id,
-        productCategoryId: ui.formDraft.productCategoryId,
         name: validation.name,
         createdAt: nowIso(),
         updatedAt: nowIso()
@@ -2394,7 +2239,7 @@
     }
 
     persistData();
-    const createdCategoryId = data.categories.find((category) => category.name === validation.name && category.productCategoryId === ui.formDraft.productCategoryId)?.id || null;
+    const createdCategoryId = data.categories.find((category) => category.name === validation.name)?.id || null;
     closeModal({ restoreFocus: false, force: true });
     ui.busy = false;
 
@@ -2426,7 +2271,7 @@
     if (!ui.formDraft.categoryId) {
       errors.categoryId = '请先选择一个耗材分类。';
     } else if (!category || !availableCategories.some((item) => item.id === category.id)) {
-      errors.categoryId = '所选分类已失效或不属于当前产品分类，请刷新后重新选择。';
+      errors.categoryId = '所选分类已失效，请刷新后重新选择。';
     }
     if (!name) errors.name = '请输入耗材名称。';
     if (Array.from(name).length > 30) errors.name = '耗材名称不得超过 30 字。';
@@ -2487,7 +2332,7 @@
     if (ui.demo.invalidRelationNextSave) {
       ui.demo.invalidRelationNextSave = false;
       ui.busy = false;
-      ui.fieldErrors = { categoryId: '分类关系校验失败：所选分类已失效或不属于当前产品分类。' };
+      ui.fieldErrors = { categoryId: '分类关系校验失败：所选分类已失效。' };
       ui.modalError = '保存被阻止：提交时分类关系不合法，其他字段与当前选择已保留。请刷新分类后重选。';
       renderDemoPanelHost();
       renderModal();
@@ -2498,7 +2343,7 @@
 
     const product = productById(ui.modal.productId) || PRODUCTS[0];
     const category = categoryById(ui.formDraft.categoryId);
-    if (!category || category.productCategoryId !== product.productCategoryId) {
+    if (!category) {
       ui.busy = false;
       ui.fieldErrors = { categoryId: '所选分类在保存前已失效，请刷新分类后重新选择。' };
       ui.modalError = '保存被阻止：分类关系已变化，未写入任何数据。';
@@ -2578,7 +2423,7 @@
     await sleep(560);
 
     if (ui.demo.injectDeleteReference && category) {
-      const targetProduct = PRODUCTS.find((product) => product.productCategoryId === category.productCategoryId);
+      const targetProduct = PRODUCTS[0];
       if (targetProduct) {
         data.consumables.push({
           id: nextConsumableId(),
@@ -2628,38 +2473,6 @@
     showToast('耗材分类已删除；删除前引用检查通过。', 'success');
   }
 
-  async function checkParentGuard(type) {
-    if (!ui.modal || ui.modal.type !== 'parent-guard' || ui.busy) return;
-    ui.busy = true;
-    ui.modal.guardResult = null;
-    renderModal();
-    renderAnnotations();
-    await sleep(320);
-    const parentId = ui.modal.productCategoryId;
-    const relatedCategories = data.categories.filter((category) => category.productCategoryId === parentId);
-    const product = productById(ui.modal.productId);
-    const relatedConsumables = data.consumables.filter((record) => {
-      const category = categoryById(record.categoryId);
-      return category && category.productCategoryId === parentId;
-    });
-    let result;
-    if (type === 'delete') {
-      result = relatedCategories.length
-        ? { blocked: true, message: `产品分类下仍有 ${relatedCategories.length} 个耗材分类，删除会造成悬空关系，操作已阻止。` }
-        : { blocked: false, message: '当前没有耗材分类；仍需由既有接口和数据库约束完成真实保护验证。' };
-    } else {
-      const productReferences = relatedConsumables.filter((record) => record.productId === product?.id);
-      result = productReferences.length
-        ? { blocked: true, message: `产品「${product?.name || ''}」仍有 ${productReferences.length} 条耗材关联，调整所属产品分类会造成越界或悬空关系，操作已阻止。` }
-        : { blocked: false, message: '仅依据当前演示数据未发现阻止条件；不能据此宣称现网保护已通过。' };
-    }
-    ui.modal.guardResult = result;
-    ui.busy = false;
-    renderModal();
-    renderAnnotations();
-    locateNote('REL-01', { updateHash: false, scroll: false, origin: 'render' });
-  }
-
   async function confirmResetDemo() {
     if (!ui.modal || ui.modal.type !== 'reset-demo' || ui.busy) return;
     ui.busy = true;
@@ -2674,7 +2487,7 @@
       injectDeleteReference: false,
       invalidRelationNextSave: false
     };
-    ui.categoryFilters = { productCategoryId: 'all', query: '' };
+    ui.categoryFilters = { query: '' };
     ui.productFilters = { productCategoryId: 'all', query: '' };
     ui.returnContext = null;
     ui.pendingConsumableDraft = null;
@@ -2758,10 +2571,6 @@
       returnToConsumableForm();
       return;
     }
-    if (action === 'open-parent-guard') {
-      openParentGuardDialog(element);
-      return;
-    }
     if (action === 'open-reset-demo') {
       openResetDemoDialog(element);
       return;
@@ -2774,20 +2583,12 @@
       confirmDeleteCategory();
       return;
     }
-    if (action === 'check-parent-delete') {
-      checkParentGuard('delete');
-      return;
-    }
-    if (action === 'check-parent-move') {
-      checkParentGuard('move');
-      return;
-    }
     if (action === 'close-modal') {
       closeModal();
       return;
     }
     if (action === 'reset-category-filter') {
-      ui.categoryFilters = { productCategoryId: 'all', query: '' };
+      ui.categoryFilters = { query: '' };
       renderAdmin();
       renderAnnotations();
       if (ui.note) locateNote(ui.note, { updateHash: false, scroll: false, origin: 'render' });
@@ -2914,10 +2715,6 @@
   function handleChange(event) {
     const target = event.target;
     if(target.id==='demoProductSelect'){window.location.hash=buildHash('consumables',target.value,null,null);return;}
-    if (target.id === 'categoryProductCategoryFilter') {
-      ui.categoryFilters.productCategoryId = target.value;
-      return;
-    }
     if (target.id === 'productProductCategoryFilter') {
       ui.productFilters.productCategoryId = target.value;
       return;
@@ -2925,10 +2722,6 @@
     if (!ui.modal || !ui.formDraft) return;
 
     if (target.name === 'legacyType' && ui.formDraft) { ui.formDraft.type=target.value; renderModal(); renderAnnotations(); return; }
-    if (target.id === 'categoryParentSelect') {
-      ui.formDraft.productCategoryId = target.value;
-      return;
-    }
     const consumableSelectKeys = {
       consumableTypeSelect: 'type',
       consumableCountrySelect: 'country',

@@ -74,7 +74,7 @@
 .fact-host .fact-category-table .data-table {min-width:0;table-layout:fixed;font-size:14px;}
 .fact-host .fact-category-table th {height:48px;background:#fafafa;color:#606266;font-weight:500;padding:12px;}
 .fact-host .fact-category-table td {height:48px;padding:12px;border-bottom:1px solid #ebeef5;}
-.fact-host .fact-category-table th:nth-child(1){width:28%}.fact-host .fact-category-table th:nth-child(2){width:25%}.fact-host .fact-category-table th:nth-child(3){width:32%}.fact-host .fact-category-table th:nth-child(4){width:15%}
+.fact-host .fact-category-table th:nth-child(1){width:40%}.fact-host .fact-category-table th:nth-child(2){width:40%}.fact-host .fact-category-table th:nth-child(3){width:20%}
 .fact-host .fact-category-table .tag {border:0;background:transparent;padding:0;font-weight:400;font-size:14px;}
 .fact-host .fact-category-table .cell-strong {font-weight:400;}
 .fact-host .fact-category-table .cell-mono {font-family:inherit;font-size:14px;}
