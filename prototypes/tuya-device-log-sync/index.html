@@ -36,7 +36,7 @@
    </div>
   </div></div>
  </main>
- <aside class="spec" aria-label="原型批注"><h2>原型批注</h2><p class="intro" id="noteContext"></p><div class="boundary"><strong>本次需求：后端定时捞取</strong>全部事件类型 + 单条 JSON + BM04 覆盖验证。<br>前端不提供主动捞取能力。<br>画布沿用现有页面结构，查询或同步外发由技术侧决定。BM04 覆盖结论写入验收报告。</div><div id="notes"></div><div class="assumption"><strong>原型备注 / 事实边界</strong><br>2026-11-11 实际核对开发环境设备详情两个日志页，所看页面均为空表。页面框架、筛选、表头和分页依据实际页面；BM04 摘要、标识和非空 JSON 均为虚构示例。未核实非空详情交互，因此不添加 JSON 抽屉。<br>基础信息、推送日志和侧栏仅保留位置关系，非本期页面改动。</div></aside>
+ <aside class="spec" aria-label="原型批注"><h2>原型批注</h2><p class="intro" id="noteContext"></p><div class="boundary"><strong>本次需求：后端定时捞取</strong>北美、欧洲、亚太、中国四地区。<br>设备范围：所属平台=涂鸦，且通讯方式包含 Wi-Fi（含 Wi-Fi+蓝牙）。<br>全部事件类型 + 单条 JSON；BM04 验证日志正常捞取和查看，不保证配网错误覆盖。<br>前端不提供主动捞取能力，查询或外发由技术侧决定。</div><div id="notes"></div><div class="assumption"><strong>原型备注 / 事实边界</strong><br>需求说明更新：2026-11-12（R12/V12 共识）。<br>2026-11-11 实际核对开发环境设备详情两个日志页，所看页面均为空表。页面框架、筛选、表头和分页依据实际页面；BM04 摘要、标识和非空 JSON 均为虚构示例。未核实非空详情交互，因此不添加 JSON 抽屉。<br>基础信息、推送日志和侧栏仅保留位置关系，非本期页面改动。</div></aside>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -49,11 +49,11 @@ const examples=types.map((type,i)=>({id:i+1,type,dataType:dataTypeForEvent(i+1),
 let activeTab='online',scene='empty',selectedNote=1,query={type:'',start:'',end:'',user:''},toastTimer;
 const escapeHTML=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notes=[
- {n:1,title:'设备详情上下文',loc:'产品摘要 / 既有页面',target:'summary',body:'<p><b>说明：</b>只还原设备详情所在位置；产品摘要为虚构 BM04 演示值。</p><p><b>范围：</b>本期不增加独立捞取工作台、任务状态区或 BM04 验证页面。</p>'},
+ {n:1,title:'设备详情上下文',loc:'产品摘要 / 既有页面',target:'summary',body:'<p><b>说明：</b>只还原设备详情所在位置；产品摘要为虚构 BM04 演示值，目标设备不限 BM04。</p><p><b>同步范围：</b>北美、欧洲、亚太、中国；平台配置同时满足所属平台=涂鸦、通讯方式包含 Wi-Fi，含 Wi-Fi+蓝牙等组合。不额外按型号或在线状态排除。</p><p><b>边界：</b>设备筛选由后端按平台配置确定，不在既有日志页增加地区、通讯方式或捞取控件。</p>'},
  {n:2,title:'既有日志页签',loc:'设备详情 > 日志页签',target:'tabs',body:'<p><b>交互：</b>切换两个已存在的日志页签，批注与表头随之更新。</p><p><b>数据关系：</b>事件 1/2 对应上下线日志；事件 3～10 对应操作日志数据。该关系用于整理数据，最终消费载体由技术侧确定。</p><p><b>event_id 映射（涂鸦文档）：</b>1=上线；2=下线；3=设备激活；4=设备重置；5=指令下发；6=固件升级；7=数据点上报；8=设备信号量；9=设备重启；10=定时信息。</p><p><b>范围：</b>基础信息、设备推送日志只作背景，不展开或设计其改动。</p>'},
  {n:3,title:'查询读取已有数据',loc:'既有筛选区 > 查询 / 重置',target:'filters',body:'<p><b>说明：</b>筛选布局、查询和重置均为既有界面。原型仅模拟对已有样例的本地检索。操作日志的数据类型选项沿用数据上报、指令下发、事件、服务响应；筛选按平台分类匹配。</p><p><b>交互：</b>查询应用条件；重置清空条件。演示日期输入格式为 YYYY-MM-DD HH:mm:ss。</p><p><b>边界：</b>查询、重置、切换页签均不触发涂鸦 API，不执行日志捞取、重试或调度。</p><p><b>异常：</b>查询异常不表示后端捞取失败；两者不能混淆。</p>'},
  {n:4,title:'既有表格与字段承接',loc:'日志表格 > 当前页签',target:'tableTarget',body:''},
- {n:5,title:'BM04 覆盖验证交付',loc:'需求验收报告 / 非前端页面',target:null,body:'<p><b>验证：</b>分别核对配网失败、失败后最终联网、失败但未最终联网的真实样例。</p><p><b>交付：</b>已覆盖 / 部分覆盖 / 未覆盖 / 无法判断，并附样例范围和限制。当前没有真实证据，结论为无法判断。</p><p><b>边界：</b>通用事件类型与虚构 JSON 不能证明配网错误覆盖；不增加覆盖验证管理页。</p>'}
+ {n:5,title:'BM04 日志捞取与查看验证',loc:'需求验收记录 / 非前端页面',target:null,body:'<p><b>验证：</b>使用符合配置条件的真实 BM04，取得非空日志，并经技术侧确定的方式查看；核对设备、原始 event_id、事件时间及单条 JSON 与捞取记录一致。</p><p><b>地区：</b>按实际 BM04 分布记录已验证、尚未验证或无适用设备；无设备不制造样例，有设备但未取得非空日志或未查看成功时不记为通过。</p><p><b>边界：</b>只验证日志正常捞取和查看，不保证这些日志覆盖配网错误；不新增验证管理页或前端捞取入口。</p><p><b>当前事实：</b>原型非空日志均为虚构样例；尚无真实 BM04 捞取及查看联调证据，不能用演示结果代替验收。</p>'}
 ];
 function renderTypes(){const options=activeTab==='online'?[1,2].map(id=>({value:String(id),label:types[id-1]})):platformDataTypes.map(type=>({value:type,label:type}));$('typeFilter').innerHTML='<option value="">'+(activeTab==='online'?'事件类型':'数据类型')+'</option>'+options.map(x=>`<option value="${x.value}">${x.label}</option>`).join('');$('typeFilter').setAttribute('aria-label',activeTab==='online'?'事件类型':'数据类型');}
 function rows(){if(scene!=='sample')return[];return examples.filter(x=>(activeTab==='online'?x.id<3:x.id>2)&&(!query.type||(activeTab==='online'?x.id===Number(query.type):x.dataType===query.type))&&(!query.start||x.time>=query.start)&&(!query.end||x.time<=query.end)&&!query.user);}
