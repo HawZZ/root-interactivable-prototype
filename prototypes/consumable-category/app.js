@@ -5,7 +5,7 @@
 
   const STORAGE_KEY = 'luteos.consumable-category.prototype.v2';
   const DRAFT_KEY = 'luteos.consumable-category.prototype.draft.v2';
-  const SCHEMA_VERSION = 2;
+  const SCHEMA_VERSION = 3;
 
   const PRODUCT_CATEGORIES = [
     { id: '2092494966475055105', name: 'BM04S' },
@@ -181,7 +181,7 @@
       title: '添加耗材与分类前置条件',
       location: '耗材管理 > 添加耗材',
       sections: [
-        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类单选卡片是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
+        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类多选控件是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
         { label: '状态/差异', lines: ['无分类时显示「去配置中心维护」；进入配置中心保留当前表单输入，返回后继续编辑。'] }
       ]
     },
@@ -190,7 +190,7 @@
       title: '耗材分类列与存量状态',
       location: '耗材管理 > 耗材列表',
       sections: [
-        { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，展示当前分类名称；关联使用稳定ID，不要求列表展示ID。现有九列顺序保留，不新增「耗材类型」列。'] },
+        { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，完整展示全部已关联分类的当前名称；关联使用稳定ID，不要求列表展示ID。现有九列顺序保留，不新增「耗材类型」列。'] },
         { label: '状态/差异', lines: ['存量初始化前，尚未映射的演示记录显示「待初始化」，不能把缺失分类当作合法最终状态；初始化后展示预设分类关系。'] },
         { label: '边界', lines: ['多个产品可引用同一耗材分类，但每条产品耗材记录仍独立编辑；分类不是耗材类型。'] }
       ]
@@ -200,17 +200,17 @@
       title: '编辑耗材与更换分类',
       location: '耗材管理 > 行操作',
       sections: [
-        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中改选，保存后正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
-        { label: '异常处理', lines: ['若提交时分类已删除、失效或越界，保存被阻止并提示刷新重选，不静默改选或写入孤儿关系。'] }
+        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中增加或取消选择，至少保留一个，不设数量上限；保存后全部正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
+        { label: '异常处理', lines: ['若提交时任一所选分类已删除或失效，保存被阻止并提示刷新重选，不静默改选或写入孤儿关系。'] }
       ]
     },
     'CON-05': {
       id: 'CON-05',
-      title: '必选单分类与可选范围',
+      title: '必选多分类与可选范围',
       location: '耗材新增/编辑抽屉 > 耗材分类',
       sections: [
-        { label: '校验', lines: ['分类必选且只能选择一个；选项包含全部全局耗材分类，空值或已失效分类不得保存。'] },
-        { label: '状态/差异', lines: ['加载中显示占位并禁用保存；加载失败提供重试；无分类时提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新后才由用户明确清除失效选择。'] },
+        { label: '校验', lines: ['至少选择一个分类，可同时选择多个，关联数量不设上限；选项包含全部全局耗材分类，空集合或任一失效分类均不得保存。'] },
+        { label: '状态/差异', lines: ['加载中显示占位并禁用保存；加载失败提供重试；无分类时提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新保留全部选择并单独标明失效项，由用户明确取消；有效选择不清空。'] },
         { label: 'PRD 边界', lines: ['耗材类型枚举与耗材分类是两个字段，不用类型代替分类，也不新增 APP 分类展示。'] }
       ]
     },
@@ -323,7 +323,7 @@
         {
           id: 'CONS-DEMO-1001',
           productId: '2114647612245774338',
-          categoryId: 'CCAT-DEMO-1001',
+          categoryIds: ['CCAT-DEMO-1001'],
           name: '复合滤芯 Pro',
           intro: '用于演示多个产品的独立耗材记录共享全局分类。',
           type: 'device-count',
@@ -341,7 +341,7 @@
         {
           id: 'CONS-DEMO-1002',
           productId: '2114647612245774338',
-          categoryId: 'CCAT-DEMO-1003',
+          categoryIds: ['CCAT-DEMO-1003', 'CCAT-DEMO-1001'],
           name: '可拆洗水箱',
           intro: '演示同一产品下的另一类耗材配置。',
           type: 'cloud-timer',
@@ -359,7 +359,7 @@
         {
           id: 'CONS-DEMO-1003',
           productId: 'DEMO-P-0002',
-          categoryId: 'CCAT-DEMO-1001',
+          categoryIds: ['CCAT-DEMO-1001'],
           name: '复合滤芯 标准版',
           intro: '与 p1 引用同一耗材分类，但记录独立。',
           type: 'device-count',
@@ -377,7 +377,7 @@
         {
           id: 'CONS-DEMO-1004',
           productId: 'DEMO-P-0003',
-          categoryId: 'CCAT-DEMO-1001',
+          categoryIds: ['CCAT-DEMO-1001'],
           name: '吸乳器滤芯',
           intro: '演示不同产品分类的产品共同引用全局「滤芯」分类。',
           type: 'non-count',
@@ -439,11 +439,13 @@
       const parsed = JSON.parse(raw);
       if (
         parsed &&
-        parsed.schemaVersion === SCHEMA_VERSION &&
+        [2, SCHEMA_VERSION].includes(parsed.schemaVersion) &&
         Array.isArray(parsed.categories) &&
         Array.isArray(parsed.consumables) &&
         parsed.meta
       ) {
+        parsed.schemaVersion = SCHEMA_VERSION;
+        parsed.consumables = parsed.consumables.map(({ categoryId, ...item }) => ({ ...item, categoryIds: categoryIdsFor({ ...item, categoryId }) }));
         return parsed;
       }
       return createSeedData();
@@ -554,9 +556,13 @@
     return data.consumables.filter((item) => item.productId === productId);
   }
 
+  function categoryIdsFor(record) {
+    return [...new Set(Array.isArray(record?.categoryIds) ? record.categoryIds : (record?.categoryId ? [record.categoryId] : []))];
+  }
+
   function referencesForCategory(categoryId) {
     return data.consumables
-      .filter((item) => item.categoryId === categoryId)
+      .filter((item) => categoryIdsFor(item).includes(categoryId))
       .map((item) => ({ consumable: item, product: productById(item.productId) }))
       .filter((item) => item.product);
   }
@@ -1029,8 +1035,8 @@
     if (isRecordPending(record)) {
       return `<span class="category-cell"><span class="tag tag-amber">待初始化</span><span class="category-id">分类关系尚未映射</span></span>`;
     }
-    const category = categoryById(record.categoryId);
-    return `<span class="category-cell"><span class="tag tag-blue">${escapeHtml(category ? category.name : '分类失效')}</span></span>`;
+    const ids = categoryIdsFor(record);
+    return `<span class="category-cell">${ids.length ? ids.map(id => `<span class="tag tag-blue">${escapeHtml(categoryById(id)?.name || '分类失效')}</span>`).join('') : '<span class="tag tag-amber">未选择分类</span>'}</span>`;
   }
 
   function renderConsumablePage() {
@@ -1051,8 +1057,8 @@
 
     const rows = records.map((record, index) => {
       const pending = isRecordPending(record);
-      const category = categoryById(record.categoryId);
-      const categoryInvalid = !pending && (!category);
+      const ids = categoryIdsFor(record);
+      const categoryInvalid = !pending && (!ids.length || ids.some(id => !categoryById(id)));
       return `
         <tr class="${record.id === ui.highlightConsumableId ? 'is-highlighted' : ''}">
           <td class="change-column">${renderConsumableCategoryCell(record)}</td>
@@ -1532,10 +1538,10 @@
 
     let draft;
     if (options.draft) {
-      draft = { ...options.draft };
+      draft = { ...options.draft, categoryIds: categoryIdsFor(options.draft) };
     } else if (existing) {
       draft = {
-        categoryId: isRecordPending(existing) ? '' : existing.categoryId,
+        categoryIds: isRecordPending(existing) ? [] : categoryIdsFor(existing),
         name: existing.name,
         type: existing.type,
         trigger: existing.trigger,
@@ -1548,7 +1554,7 @@
       };
     } else {
       draft = {
-        categoryId: '',
+        categoryIds: [],
         name: '',
         type: 'non-count',
         trigger: '',
@@ -1630,8 +1636,8 @@
   function renderCategoryOptionsForDialog() {
     const product = productById(ui.modal.productId);
     const categories = categoriesForProduct(product);
-    const selectedId = ui.formDraft?.categoryId || '';
-    const categoryError = ui.fieldErrors.categoryId;
+    const selectedIds = categoryIdsFor(ui.formDraft);
+    const categoryError = ui.fieldErrors.categoryIds;
 
     if (ui.optionState === 'loading') {
       return `
@@ -1657,7 +1663,7 @@
       `;
     }
 
-    if (!categories.length) {
+    if (!categories.length && !selectedIds.length) {
       return `
         <div class="option-message">
           <strong>暂无耗材分类</strong>
@@ -1668,17 +1674,25 @@
     }
 
     return `
-      <div class="category-options" role="radiogroup" aria-label="耗材分类">
+      <p class="field-help category-selection-help">可多选，至少选择一个，关联数量不限。</p>
+      <div class="category-options" role="group" aria-label="耗材分类">
         ${categories.map((category) => `
-          <label class="category-option${categoryError ? ' has-error' : ''}">
-            <input type="radio" name="categoryId" value="${escapeHtml(category.id)}"${selectedId === category.id ? ' checked' : ''}${ui.busy ? ' disabled' : ''}>
+          <label class="category-option">
+            <input type="checkbox" name="categoryIds" value="${escapeHtml(category.id)}"${selectedIds.includes(category.id) ? ' checked' : ''}${ui.busy ? ' disabled' : ''}>
             <span class="category-option-copy">
               <span class="category-option-name">${escapeHtml(category.name)}</span>
               <span class="category-option-id">${escapeHtml(category.id)}</span>
             </span>
           </label>
         `).join('')}
+        ${selectedIds.filter(id => !categories.some(category => category.id === id)).map(id => `
+          <label class="category-option has-error">
+            <input type="checkbox" name="categoryIds" value="${escapeHtml(id)}" checked${ui.busy ? ' disabled' : ''}>
+            <span class="category-option-copy"><span class="category-option-name">已失效分类（请取消选择）</span><span>${escapeHtml(id)}</span></span>
+          </label>
+        `).join('')}
       </div>
+      <button class="link-button" type="button" data-action="go-maintain-category"${ui.busy ? ' disabled' : ''}>维护耗材分类</button>
       ${categoryError ? `<button class="link-button" type="button" data-action="refresh-consumable-categories">刷新可选分类</button>` : ''}
     `;
   }
@@ -1811,9 +1825,9 @@
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CON-05">
                 <div class="modal-section-title"><span>耗材分类 <span class="required">*</span> <span class="change-mark">本期新增 / 可更换</span></span>${noteAnchor('CON-05')}</div>
-                <div class="field-help">可从全局耗材分类中选择一个；耗材类型与耗材分类是两个独立字段。</div>
+                <div class="field-help">可从全局耗材分类中选择一个或多个，至少一个，数量不限；耗材类型与耗材分类是两个独立字段。</div>
                 ${renderCategoryOptionsForDialog()}
-                ${fieldErrorMarkup('categoryId')}
+                ${fieldErrorMarkup('categoryIds')}
               </section>
 
               <section class="modal-section" data-note-target="CON-06">
@@ -1911,7 +1925,7 @@
       input.closest('.el-radio__input')?.classList.toggle('is-checked',input.checked);
     });
     const categoryItem=document.createElement('div'); categoryItem.className='el-form-item el-form-item--default is-required asterisk-left fact-category-field'; categoryItem.dataset.noteTarget='CON-05';
-    categoryItem.innerHTML='<label class="el-form-item__label" style="width:120px">耗材分类</label><div class="el-form-item__content"><div class="fact-category-body"><span class="change-mark">本期新增 / 可更换</span>'+noteAnchor('CON-05')+renderCategoryOptionsForDialog()+fieldErrorMarkup('categoryId')+'</div></div>';
+    categoryItem.innerHTML='<label class="el-form-item__label" style="width:120px">耗材分类</label><div class="el-form-item__content"><div class="fact-category-body"><span class="change-mark">本期新增 / 可更换</span>'+noteAnchor('CON-05')+renderCategoryOptionsForDialog()+fieldErrorMarkup('categoryIds')+'</div></div>';
     form.prepend(categoryItem);
     form.dataset.noteTarget='CON-06';
     for(const key of ['name','intro']) if(ui.fieldErrors[key]) findField(key==='name'?'耗材名称':'耗材介绍')?.insertAdjacentHTML('beforeend',fieldErrorMarkup(key));
@@ -1963,7 +1977,7 @@
     const hadModalFocus = root.contains(active);
     const activeId = hadModalFocus ? active?.id || '' : '';
     const activeName = hadModalFocus ? active?.name || '' : '';
-    const activeRadioValue = hadModalFocus && active?.type === 'radio' ? active.value : '';
+    const activeRadioValue = hadModalFocus && ['radio', 'checkbox'].includes(active?.type) ? active.value : '';
 
     if (ui.modal.type === 'category-create' || ui.modal.type === 'category-edit') root.innerHTML = renderCategoryDialog();
     else if (ui.modal.type === 'category-delete') root.innerHTML = renderDeleteCategoryDialog();
@@ -2082,7 +2096,7 @@
       productId: product.id,
       mode: draft?.mode || 'create',
       consumableId: draft?.consumableId || null,
-      categoryId: draft?.categoryId || '',
+      categoryIds: categoryIdsFor(draft),
       name: draft?.name || '',
       type: draft?.type || 'non-count',
       trigger: draft?.trigger || '',
@@ -2114,7 +2128,7 @@
     startMaintenanceFlow({
       productId: product.id,
       mode: 'create',
-      categoryId: '',
+      categoryIds: [],
       name: '',
       type: 'non-count',
       trigger: '',
@@ -2246,7 +2260,7 @@
     if (wasCreate && returnContext) {
       const draft = readDraftSession();
       if (draft && createdCategoryId) {
-        draft.categoryId = createdCategoryId;
+        draft.categoryIds = [...new Set([...categoryIdsFor(draft), createdCategoryId])];
         writeDraftSession(draft);
         ui.pendingConsumableDraft = { ...draft };
         ui.returnContext = null;
@@ -2265,13 +2279,13 @@
     const product = productById(ui.modal.productId) || PRODUCTS[0];
     const name = String(ui.formDraft.name || '').trim();
     const intro = String(ui.formDraft.intro || '');
-    const category = categoryById(ui.formDraft.categoryId);
+    const selectedIds = categoryIdsFor(ui.formDraft);
     const availableCategories = categoriesForProduct(product);
 
-    if (!ui.formDraft.categoryId) {
-      errors.categoryId = '请先选择一个耗材分类。';
-    } else if (!category || !availableCategories.some((item) => item.id === category.id)) {
-      errors.categoryId = '所选分类已失效，请刷新后重新选择。';
+    if (!selectedIds.length) {
+      errors.categoryIds = '请至少选择一个耗材分类。';
+    } else if (selectedIds.some(id => !availableCategories.some(item => item.id === id))) {
+      errors.categoryIds = '部分所选分类已失效，请刷新分类并取消失效项后重试。';
     }
     if (!name) errors.name = '请输入耗材名称。';
     if (Array.from(name).length > 30) errors.name = '耗材名称不得超过 30 字。';
@@ -2293,10 +2307,10 @@
     ui.modalError = '';
     const validation = validateConsumableDraft();
     if (!validation.valid) {
-      const order = ['categoryId', 'name', 'type', 'sort', 'purchaseUrl', 'intro'];
+      const order = ['categoryIds', 'name', 'type', 'sort', 'purchaseUrl', 'intro'];
       const first = order.find((key) => ui.fieldErrors[key]);
       const selectors = {
-        categoryId: 'input[name="categoryId"]',
+        categoryIds: 'input[name="categoryIds"]',
         name: '#consumableNameInput',
         type: '#consumableTypeSelect',
         sort: '#consumableSortInput',
@@ -2332,7 +2346,7 @@
     if (ui.demo.invalidRelationNextSave) {
       ui.demo.invalidRelationNextSave = false;
       ui.busy = false;
-      ui.fieldErrors = { categoryId: '分类关系校验失败：所选分类已失效。' };
+      ui.fieldErrors = { categoryIds: '分类关系校验失败：部分所选分类已失效。' };
       ui.modalError = '保存被阻止：提交时分类关系不合法，其他字段与当前选择已保留。请刷新分类后重选。';
       renderDemoPanelHost();
       renderModal();
@@ -2342,10 +2356,10 @@
     }
 
     const product = productById(ui.modal.productId) || PRODUCTS[0];
-    const category = categoryById(ui.formDraft.categoryId);
-    if (!category) {
+    const selectedIds = categoryIdsFor(ui.formDraft);
+    if (!selectedIds.length || selectedIds.some(id => !categoryById(id))) {
       ui.busy = false;
-      ui.fieldErrors = { categoryId: '所选分类在保存前已失效，请刷新分类后重新选择。' };
+      ui.fieldErrors = { categoryIds: '部分所选分类在保存前已失效，请刷新分类并取消失效项后重试。' };
       ui.modalError = '保存被阻止：分类关系已变化，未写入任何数据。';
       renderModal();
       renderAnnotations();
@@ -2358,7 +2372,7 @@
       data.consumables.push({
         id: savedId,
         productId: product.id,
-        categoryId: ui.formDraft.categoryId,
+        categoryIds: [...selectedIds],
         name: validation.name,
         intro: validation.intro,
         type: ui.formDraft.type,
@@ -2383,7 +2397,7 @@
         return;
       }
       Object.assign(current, {
-        categoryId: ui.formDraft.categoryId,
+        categoryIds: [...selectedIds],
         name: validation.name,
         intro: validation.intro,
         type: ui.formDraft.type,
@@ -2428,7 +2442,7 @@
         data.consumables.push({
           id: nextConsumableId(),
           productId: targetProduct.id,
-          categoryId: category.id,
+          categoryIds: [category.id],
           name: '并发新增引用（原型）',
           intro: '原型演示：删除确认期间新增的合法引用。',
           type: 'non-count',
@@ -2548,8 +2562,8 @@
     }
     if (action === 'retry-consumable-options' || action === 'refresh-consumable-categories') {
       if (action === 'refresh-consumable-categories') {
-        ui.formDraft.categoryId = '';
-        delete ui.fieldErrors.categoryId;
+        // Preserve every selection on refresh; invalid selections remain visible until explicitly unchecked.
+        delete ui.fieldErrors.categoryIds;
       }
       ui.demo.failOptions = false;
       ui.optionState = 'loading';
@@ -2732,11 +2746,12 @@
       ui.formDraft[key] = target.value;
       return;
     }
-    if (target.name === 'categoryId' && target.type === 'radio') {
-      ui.formDraft.categoryId = target.value;
-      if (ui.fieldErrors.categoryId) {
-        delete ui.fieldErrors.categoryId;
-        setFocusAfterRender(`input[name="categoryId"][value="${target.value.replace(/"/g, '\\"')}"]`);
+    if (target.name === 'categoryIds' && target.type === 'checkbox') {
+      const ids = categoryIdsFor(ui.formDraft);
+      ui.formDraft.categoryIds = target.checked ? [...new Set([...ids, target.value])] : ids.filter(id => id !== target.value);
+      if (ui.fieldErrors.categoryIds) {
+        delete ui.fieldErrors.categoryIds;
+        setFocusAfterRender(`input[name="categoryIds"][value="${target.value.replace(/"/g, '\\"')}"]`);
         renderModal();
         renderAnnotations();
       }

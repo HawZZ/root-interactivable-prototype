@@ -113,3 +113,14 @@
  #modalRoot .fact-overlay .purchase-config {overflow-x:auto;}
  #modalRoot .fact-overlay .purchase-tabs {min-width:630px;}
 }
+
+/* Only the new category column expands for multiple associated categories. */
+.fact-host .fact-table td.change-column .cell {max-height:none;overflow:visible;}
+.fact-host .fact-table .category-cell {white-space:normal;}
+.fact-host .fact-table .category-cell .tag {max-width:100%;height:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.5;}
+.fact-overlay .category-option-name {overflow-wrap:anywhere;}
+.fact-overlay .category-selection-help {margin:8px 0 0;}
+
+.fact-overlay .category-option.has-error:has(input:checked) {border-color:#f56c6c;background:#fef0f0;box-shadow:none;}
+.fact-overlay .fact-category-body .field-error {display:block;margin-top:8px;}
+.fact-overlay .fact-category-body > .link-button + .link-button {margin-left:12px;}
