@@ -70,6 +70,19 @@
     { value: 'native', label: '原生购买' }
   ];
 
+  const INIT_CATEGORY_MAP = [
+    { type: '法兰', id: 'Flange' },
+    { type: '硅胶塞', id: 'Insert' },
+    { type: '防尘盖', id: 'Cover' },
+    { type: '集奶碗', id: 'Milk_Collector' },
+    { type: '全套配件', id: 'Overall' },
+    { type: '鸭嘴阀', id: 'Duckbill_Valve' },
+    { type: '单向阀', id: 'Diaphragm' },
+    { type: '法兰&集奶碗', id: 'Flange&Milk_Collector' },
+    { type: '集奶碗&储奶盖', id: 'Milk_Collector&Storage_Lid' },
+    { type: '储奶盖', id: 'Storage_Lid' }
+  ];
+
   const ICONS = {
     logo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h8a4 4 0 0 1 4 4v12H10a4 4 0 0 1-4-4V4Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h5M9 12h6M9 16h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     dashboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>',
@@ -181,7 +194,7 @@
       title: '添加耗材与分类前置条件',
       location: '耗材管理 > 添加耗材',
       sections: [
-        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增可选分类；分类多选控件是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
+        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增可选分类下拉框；空值表示不选择分类。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
         { label: '状态/差异', lines: ['无分类时仍可保存耗材；如需分类可进入配置中心维护。进入配置中心保留当前表单输入，返回后继续编辑。'] }
       ]
     },
@@ -190,7 +203,7 @@
       title: '耗材分类列与存量状态',
       location: '耗材管理 > 耗材列表',
       sections: [
-        { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，完整展示全部已关联分类的当前名称；关联使用稳定ID，不要求列表展示ID。现有九列顺序保留，不新增「耗材类型」列。'] },
+        { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，展示当前已关联分类名称；关联使用稳定ID，不要求列表展示ID。未关联时展示「未选择分类」。现有九列顺序保留，不新增「耗材类型」列。'] },
         { label: '状态/差异', lines: ['存量初始化前，尚未映射的演示记录显示「待初始化」；无分类的耗材可合法保存并显示「未选择分类」。初始化后按业务映射展示分类关系。'] },
         { label: '边界', lines: ['多个产品可引用同一耗材分类，但每条产品耗材记录仍独立编辑；分类不是耗材类型。'] }
       ]
@@ -200,17 +213,17 @@
       title: '编辑耗材与更换分类',
       location: '耗材管理 > 行操作',
       sections: [
-        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中增加或取消选择，可不选择且不设数量上限；保存后全部正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
+        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。通过下拉框选择一个分类或清空，可不选择且最多一个；保存后正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
         { label: '异常处理', lines: ['若提交时任一所选分类已删除或失效，保存被阻止并提示刷新重选，不静默改选或写入孤儿关系。'] }
       ]
     },
     'CON-05': {
       id: 'CON-05',
-      title: '可选多分类与可选范围',
+      title: '可选单分类与可选范围',
       location: '耗材新增/编辑抽屉 > 耗材分类',
       sections: [
-        { label: '校验', lines: ['分类为可选字段，可同时选择多个，关联数量不设上限；选项包含全部全局耗材分类，空集合允许保存，已选择但任一失效分类时不得保存。'] },
-        { label: '状态/差异', lines: ['加载中显示占位；加载失败提供重试；无分类时允许直接保存，也提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新保留全部选择并单独标明失效项，由用户明确取消；有效选择不清空。'] },
+        { label: '校验', lines: ['分类为可选字段，使用下拉框最多选择一个；选项包含全部全局耗材分类，空值允许保存，已选择但分类失效时不得保存。'] },
+        { label: '状态/差异', lines: ['加载中显示占位；加载失败提供重试；无分类时允许直接保存，也提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新保留当前选择并标明失效项，由用户改选或清空；有效选择不清空。'] },
         { label: 'PRD 边界', lines: ['耗材类型枚举与耗材分类是两个字段，不用类型代替分类，也不新增 APP 分类展示。'] }
       ]
     },
@@ -249,7 +262,7 @@
       title: '存量初始化前后演示',
       location: '原型演示 > 存量状态；耗材列表',
       sections: [
-        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」；耗材可以保存为空分类，已选择的失效分类仍需显式取消。', '初始化后：按业务映射展示预置的全局分类关系。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
+        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」；耗材可以保存为空分类，已选择的失效分类仍需改选或清空。', '初始化后：按类型+ID映射展示预置的全局分类关系；每条耗材最多一个分类。映射表：法兰→Flange、硅胶塞→Insert、防尘盖→Cover、集奶碗→Milk_Collector、全套配件→Overall、鸭嘴阀→Duckbill_Valve、单向阀→Diaphragm、法兰&集奶碗→Flange&Milk_Collector、集奶碗&储奶盖→Milk_Collector&Storage_Lid、储奶盖→Storage_Lid。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
         { label: 'PRD 边界', lines: ['交付前由业务提供全量清单并核对归类，研发负责稳定键、幂等、失败恢复、执行窗口和强制校验时点；未完成全量合法映射不可交付。'] }
       ]
     },
@@ -294,36 +307,22 @@
         nextConsumable: 1005
       },
       categories: [
-        {
-          id: 'CCAT-DEMO-1001',
-          name: '滤芯',
-          createdAt: '2026-11-03T01:10:00.000Z',
-          updatedAt: '2026-11-03T01:10:00.000Z'
-        },
-        {
-          id: 'CCAT-DEMO-1002',
-          name: '清洁刷',
-          createdAt: '2026-11-03T01:12:00.000Z',
-          updatedAt: '2026-11-03T01:12:00.000Z'
-        },
-        {
-          id: 'CCAT-DEMO-1003',
-          name: '水箱',
-          createdAt: '2026-11-03T01:15:00.000Z',
-          updatedAt: '2026-11-03T01:15:00.000Z'
-        },
-        {
-          id: 'CCAT-DEMO-1005',
-          name: '母乳收集容器',
-          createdAt: '2026-11-03T01:23:00.000Z',
-          updatedAt: '2026-11-03T01:23:00.000Z'
-        }
+        { id: 'Flange', name: '法兰', createdAt: '2026-11-03T01:10:00.000Z', updatedAt: '2026-11-03T01:10:00.000Z' },
+        { id: 'Insert', name: '硅胶塞', createdAt: '2026-11-03T01:12:00.000Z', updatedAt: '2026-11-03T01:12:00.000Z' },
+        { id: 'Cover', name: '防尘盖', createdAt: '2026-11-03T01:14:00.000Z', updatedAt: '2026-11-03T01:14:00.000Z' },
+        { id: 'Milk_Collector', name: '集奶碗', createdAt: '2026-11-03T01:15:00.000Z', updatedAt: '2026-11-03T01:15:00.000Z' },
+        { id: 'Overall', name: '全套配件', createdAt: '2026-11-03T01:16:00.000Z', updatedAt: '2026-11-03T01:16:00.000Z' },
+        { id: 'Duckbill_Valve', name: '鸭嘴阀', createdAt: '2026-11-03T01:17:00.000Z', updatedAt: '2026-11-03T01:17:00.000Z' },
+        { id: 'Diaphragm', name: '单向阀', createdAt: '2026-11-03T01:18:00.000Z', updatedAt: '2026-11-03T01:18:00.000Z' },
+        { id: 'Flange&Milk_Collector', name: '法兰&集奶碗', createdAt: '2026-11-03T01:19:00.000Z', updatedAt: '2026-11-03T01:19:00.000Z' },
+        { id: 'Milk_Collector&Storage_Lid', name: '集奶碗&储奶盖', createdAt: '2026-11-03T01:20:00.000Z', updatedAt: '2026-11-03T01:20:00.000Z' },
+        { id: 'Storage_Lid', name: '储奶盖', createdAt: '2026-11-03T01:21:00.000Z', updatedAt: '2026-11-03T01:21:00.000Z' }
       ],
       consumables: [
         {
           id: 'CONS-DEMO-1001',
           productId: '2114647612245774338',
-          categoryIds: ['CCAT-DEMO-1001'],
+          categoryIds: ['Flange'],
           name: '复合滤芯 Pro',
           intro: '用于演示多个产品的独立耗材记录共享全局分类。',
           type: 'device-count',
@@ -341,7 +340,7 @@
         {
           id: 'CONS-DEMO-1002',
           productId: '2114647612245774338',
-          categoryIds: ['CCAT-DEMO-1003', 'CCAT-DEMO-1001'],
+          categoryIds: ['Milk_Collector'],
           name: '可拆洗水箱',
           intro: '演示同一产品下的另一类耗材配置。',
           type: 'cloud-timer',
@@ -359,7 +358,7 @@
         {
           id: 'CONS-DEMO-1003',
           productId: 'DEMO-P-0002',
-          categoryIds: ['CCAT-DEMO-1001'],
+          categoryIds: ['Flange'],
           name: '复合滤芯 标准版',
           intro: '与 p1 引用同一耗材分类，但记录独立。',
           type: 'device-count',
@@ -377,7 +376,7 @@
         {
           id: 'CONS-DEMO-1004',
           productId: 'DEMO-P-0003',
-          categoryIds: ['CCAT-DEMO-1001'],
+          categoryIds: ['Flange'],
           name: '吸乳器滤芯',
           intro: '演示不同产品分类的产品共同引用全局「滤芯」分类。',
           type: 'non-count',
@@ -557,7 +556,7 @@
   }
 
   function categoryIdsFor(record) {
-    return [...new Set(Array.isArray(record?.categoryIds) ? record.categoryIds : (record?.categoryId ? [record.categoryId] : []))];
+    return [...new Set(Array.isArray(record?.categoryIds) ? record.categoryIds : (record?.categoryId ? [record.categoryId] : []))].slice(0, 1);
   }
 
   function referencesForCategory(categoryId) {
@@ -788,6 +787,13 @@
                 ${showBasicAnchors && pageHasMig ? noteAnchor('MIG-01') : ''}
               </div>
               <span class="demo-status">只切换演示呈现，不执行数据迁移</span>
+            </div>
+            <div class="demo-row">
+              <span class="demo-row-label">初始化类型 + ID</span>
+              <div class="demo-init-map" aria-label="初始化耗材类型与分类 ID">
+                ${INIT_CATEGORY_MAP.map(item => `<span class="demo-init-map-item"><b>${escapeHtml(item.type)}</b><code>${escapeHtml(item.id)}</code></span>`).join('')}
+              </div>
+              <span class="demo-status">按业务映射初始化；每条耗材最多一个分类</span>
             </div>
             <div class="demo-row">
               <span class="demo-row-label">异常注入</span>
@@ -1675,24 +1681,14 @@
     }
 
     return `
-      <p class="field-help category-selection-help">耗材分类为可选项，可多选，关联数量不限。</p>
-      <div class="category-options" role="group" aria-label="耗材分类">
-        ${categories.map((category) => `
-          <label class="category-option">
-            <input type="checkbox" name="categoryIds" value="${escapeHtml(category.id)}"${selectedIds.includes(category.id) ? ' checked' : ''}${ui.busy ? ' disabled' : ''}>
-            <span class="category-option-copy">
-              <span class="category-option-name">${escapeHtml(category.name)}</span>
-              <span class="category-option-id">${escapeHtml(category.id)}</span>
-            </span>
-          </label>
-        `).join('')}
-        ${selectedIds.filter(id => !categories.some(category => category.id === id)).map(id => `
-          <label class="category-option has-error">
-            <input type="checkbox" name="categoryIds" value="${escapeHtml(id)}" checked${ui.busy ? ' disabled' : ''}>
-            <span class="category-option-copy"><span class="category-option-name">已失效分类（请取消选择）</span><span>${escapeHtml(id)}</span></span>
-          </label>
-        `).join('')}
-      </div>
+      <label class="form-field category-select-field">
+        <span>耗材分类</span>
+        <select id="consumableCategorySelect" name="categoryIds" aria-label="耗材分类"${ui.busy ? ' disabled' : ''}>
+          <option value=""${selectedIds.length === 0 ? ' selected' : ''}>不选择分类</option>
+          ${categories.map((category) => `<option value="${escapeHtml(category.id)}"${selectedIds.includes(category.id) ? ' selected' : ''}>${escapeHtml(category.name)}（${escapeHtml(category.id)}）</option>`).join('')}
+          ${selectedIds.filter(id => !categories.some(category => category.id === id)).map(id => `<option value="${escapeHtml(id)}" selected>已失效分类：${escapeHtml(id)}（请改选或清空）</option>`).join('')}
+        </select>
+      </label>
       <button class="link-button" type="button" data-action="go-maintain-category"${ui.busy ? ' disabled' : ''}>维护耗材分类</button>
       ${categoryError ? `<button class="link-button" type="button" data-action="refresh-consumable-categories">刷新可选分类</button>` : ''}
     `;
@@ -1827,7 +1823,7 @@
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CON-05">
                 <div class="modal-section-title"><span>耗材分类 <span class="change-mark">本期新增 / 可更换 / 可选</span></span>${noteAnchor('CON-05')}</div>
-                <div class="field-help">可从全局耗材分类中选择一个或多个，也可以不选择，关联数量不限；耗材类型与耗材分类是两个独立字段。</div>
+                <div class="field-help">可从全局耗材分类中选择一个，也可以不选择；耗材类型与耗材分类是两个独立字段。</div>
                 ${renderCategoryOptionsForDialog()}
                 ${fieldErrorMarkup('categoryIds')}
               </section>
@@ -2269,7 +2265,7 @@
     if (wasCreate && returnContext) {
       const draft = readDraftSession();
       if (draft && createdCategoryId) {
-        draft.categoryIds = [...new Set([...categoryIdsFor(draft), createdCategoryId])];
+        draft.categoryIds = [createdCategoryId];
         writeDraftSession(draft);
         ui.pendingConsumableDraft = { ...draft };
         ui.returnContext = null;
@@ -2317,7 +2313,7 @@
       const order = ['categoryIds', 'name', 'type', 'sort', 'purchaseUrl', 'intro'];
       const first = order.find((key) => ui.fieldErrors[key]);
       const selectors = {
-        categoryIds: 'input[name="categoryIds"]',
+        categoryIds: 'select[name="categoryIds"]',
         name: '#consumableNameInput',
         type: '#consumableTypeSelect',
         sort: '#consumableSortInput',
@@ -2754,12 +2750,11 @@
       ui.formDraft[key] = target.value;
       return;
     }
-    if (target.name === 'categoryIds' && target.type === 'checkbox') {
-      const ids = categoryIdsFor(ui.formDraft);
-      ui.formDraft.categoryIds = target.checked ? [...new Set([...ids, target.value])] : ids.filter(id => id !== target.value);
+    if (target.name === 'categoryIds' && target.tagName === 'SELECT') {
+      ui.formDraft.categoryIds = target.value ? [target.value] : [];
       if (ui.fieldErrors.categoryIds) {
         delete ui.fieldErrors.categoryIds;
-        setFocusAfterRender(`input[name="categoryIds"][value="${target.value.replace(/"/g, '\\"')}"]`);
+        setFocusAfterRender('select[name="categoryIds"]');
         renderModal();
         renderAnnotations();
       }

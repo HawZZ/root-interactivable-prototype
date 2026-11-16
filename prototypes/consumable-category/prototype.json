@@ -2,7 +2,7 @@
   "id": "consumable-category",
   "path": "/prototypes/consumable-category/",
   "title": "Luteos IoT Admin · 耗材分类原型",
-  "summary": "统一维护全局耗材分类，支持用户录入分类ID、耗材可选关联多个分类且数量不限，演示增删改查、编辑及存量初始化。",
+  "summary": "统一维护全局耗材分类，支持用户录入分类ID、耗材可选关联一个分类，演示增删改查、单分类更换及初始化映射。",
   "productLine": "IoT Admin",
   "businessArea": "配置中心",
   "surface": "web",

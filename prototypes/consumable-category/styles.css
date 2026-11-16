@@ -362,6 +362,31 @@ a {
   font-weight: 650;
 }
 
+.demo-init-map {
+  display: flex;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demo-init-map-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #e8dfc4;
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #5d543c;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.demo-init-map-item code {
+  color: #7c6a39;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .demo-note-wrap {
   position: relative;
   display: inline-flex;
