@@ -104,7 +104,7 @@
       title: '新增耗材分类入口',
       location: '耗材分类列表 > 列表工具栏',
       sections: [
-        { label: '交互', lines: ['点击「新增分类」打开页面内弹窗。新增时只填写分类名称，保存成功后系统自动生成唯一 ID。', '从产品耗材表单的「先去维护分类」进入时，分类面向所有产品；创建成功后自动返回原耗材表单并保留输入。'] },
+        { label: '交互', lines: ['点击「新增分类」打开页面内弹窗。新增时填写必填的分类 ID和分类名称，保存成功后按用户录入的 ID建立分类。', '从产品耗材表单的「先去维护分类」进入时，分类面向所有产品；创建成功后自动返回原耗材表单并保留输入。'] },
         { label: '状态/差异', lines: ['全局暂无耗材分类时仍可新增，不提供停用或预建空分类。'] }
       ]
     },
@@ -113,7 +113,7 @@
       title: '分类列表与稳定 ID',
       location: '耗材分类列表 > 表格',
       sections: [
-        { label: '字段', lines: ['展示分类名称、耗材分类 ID与操作；删除时检查引用，不要求列表新增引用统计或更新时间。ID 由系统生成，用户不可填写或编辑。'] },
+        { label: '字段', lines: ['展示分类名称、耗材分类 ID与操作；删除时检查引用，不要求列表新增引用统计或更新时间。ID 创建时由用户录入，编辑时不可修改。'] },
         { label: '功能提示', lines: ['分类改名后 ID 保持不变；产品耗材通过 ID 关联，并按分类当前名称展示。', '各产品耗材记录保持独立，多个产品可引用同一个耗材分类。'] }
       ]
     },
@@ -129,12 +129,12 @@
     },
     'CAT-05': {
       id: 'CAT-05',
-      title: '名称与只读 ID',
+      title: '名称、ID与唯一性',
       location: '分类新增/编辑弹窗 > 基础字段',
       sections: [
-        { label: '字段', lines: ['分类名称必填，保存前去除首尾空格。分类不设置所属产品或产品分类；分类 ID 为只读。', '新增弹窗在保存前显示「保存后自动生成」，成功后才产生稳定 ID。'] },
-        { label: '校验', lines: ['分类名称全局不可重复，不把编辑中的当前记录算作重复。', '原型暂按去首尾空格、区分大小写判断重名，真实规范化规则待研发记录并由产品核对。'] },
-        { label: '原型假设', lines: ['演示 ID 为 CCAT-DEMO-* 格式，仅用于表达稳定性；正式 ID 格式和生成方式由研发定义。'] }
+        { label: '字段', lines: ['新增时分类 ID和分类名称均必填，保存前去除两者首尾空格；分类不设置所属产品或产品分类。编辑时只允许改名，ID只读。', '创建后分类 ID保持稳定，改名不改变ID及既有关联。'] },
+        { label: '校验', lines: ['分类 ID和分类名称均全局不可重复；不把编辑中的当前记录算作重复。', '原型暂按去首尾空格、区分大小写判断重复，真实规范化规则待研发记录并由产品核对。'] },
+        { label: '原型假设', lines: ['演示 ID 为 CCAT-DEMO-* 格式；正式 ID 的格式和长度规则待研发定义，创建时必须由用户录入。'] }
       ]
     },
     'CAT-06': {
@@ -142,7 +142,7 @@
       title: '保存校验、加载与失败恢复',
       location: '分类新增/编辑弹窗 > 校验与底部操作',
       sections: [
-        { label: '校验', lines: ['空名称、全局名称重名均在提交时显示字段或表单错误并聚焦首个错误。', '编辑请求只更新名称，分类 ID 与既有关联不变。'] },
+        { label: '校验', lines: ['空 ID、空名称、全局 ID重复或名称重名均在提交时显示字段或表单错误并聚焦首个错误。', '编辑请求只更新名称，分类 ID 与既有关联不变。'] },
         { label: '状态/差异', lines: ['保存中按钮进入 loading，字段和关闭操作暂时禁用，防止重复提交。', '保存失败保留全部输入、显示失败原因，并将主按钮变为「重试保存」；重试仅提交同一份表单。取消或关闭不写入数据。'] }
       ]
     },
@@ -181,8 +181,8 @@
       title: '添加耗材与分类前置条件',
       location: '耗材管理 > 添加耗材',
       sections: [
-        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增必选分类；分类多选控件是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
-        { label: '状态/差异', lines: ['无分类时显示「去配置中心维护」；进入配置中心保留当前表单输入，返回后继续编辑。'] }
+        { label: '交互', lines: ['沿用现有右侧添加耗材抽屉，在原有字段前新增可选分类；分类多选控件是交互示意，最终控件由设计定义。', '分类选项从全局耗材分类读取；加载中、加载失败、无可用分类和提交时失效都要有明确反馈。'] },
+        { label: '状态/差异', lines: ['无分类时仍可保存耗材；如需分类可进入配置中心维护。进入配置中心保留当前表单输入，返回后继续编辑。'] }
       ]
     },
     'CON-03': {
@@ -191,7 +191,7 @@
       location: '耗材管理 > 耗材列表',
       sections: [
         { label: '字段', lines: ['仅在现有耗材列表新增「耗材分类」列，完整展示全部已关联分类的当前名称；关联使用稳定ID，不要求列表展示ID。现有九列顺序保留，不新增「耗材类型」列。'] },
-        { label: '状态/差异', lines: ['存量初始化前，尚未映射的演示记录显示「待初始化」，不能把缺失分类当作合法最终状态；初始化后展示预设分类关系。'] },
+        { label: '状态/差异', lines: ['存量初始化前，尚未映射的演示记录显示「待初始化」；无分类的耗材可合法保存并显示「未选择分类」。初始化后按业务映射展示分类关系。'] },
         { label: '边界', lines: ['多个产品可引用同一耗材分类，但每条产品耗材记录仍独立编辑；分类不是耗材类型。'] }
       ]
     },
@@ -200,17 +200,17 @@
       title: '编辑耗材与更换分类',
       location: '耗材管理 > 行操作',
       sections: [
-        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中增加或取消选择，至少保留一个，不设数量上限；保存后全部正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
+        { label: '交互', lines: ['点击编辑只修改当前产品下的当前耗材记录。分类可从全部全局耗材分类中增加或取消选择，可不选择且不设数量上限；保存后全部正确回显。', '更换分类不修改其他产品、其他耗材的关联；分类改名不需要修改任何耗材记录。'] },
         { label: '异常处理', lines: ['若提交时任一所选分类已删除或失效，保存被阻止并提示刷新重选，不静默改选或写入孤儿关系。'] }
       ]
     },
     'CON-05': {
       id: 'CON-05',
-      title: '必选多分类与可选范围',
+      title: '可选多分类与可选范围',
       location: '耗材新增/编辑抽屉 > 耗材分类',
       sections: [
-        { label: '校验', lines: ['至少选择一个分类，可同时选择多个，关联数量不设上限；选项包含全部全局耗材分类，空集合或任一失效分类均不得保存。'] },
-        { label: '状态/差异', lines: ['加载中显示占位并禁用保存；加载失败提供重试；无分类时提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新保留全部选择并单独标明失效项，由用户明确取消；有效选择不清空。'] },
+        { label: '校验', lines: ['分类为可选字段，可同时选择多个，关联数量不设上限；选项包含全部全局耗材分类，空集合允许保存，已选择但任一失效分类时不得保存。'] },
+        { label: '状态/差异', lines: ['加载中显示占位；加载失败提供重试；无分类时允许直接保存，也提供「去配置中心维护」。', '提交时选项失效会保留其他字段和当前选择，提示刷新重选；刷新保留全部选择并单独标明失效项，由用户明确取消；有效选择不清空。'] },
         { label: 'PRD 边界', lines: ['耗材类型枚举与耗材分类是两个字段，不用类型代替分类，也不新增 APP 分类展示。'] }
       ]
     },
@@ -249,7 +249,7 @@
       title: '存量初始化前后演示',
       location: '原型演示 > 存量状态；耗材列表',
       sections: [
-        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」，编辑时必须重新选择合法分类，保存空分类会被拦截。', '初始化后：展示预置的合法全局分类关系。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
+        { label: '状态/差异', lines: ['初始化前：尚未映射的存量耗材显示「待初始化」；耗材可以保存为空分类，已选择的失效分类仍需显式取消。', '初始化后：按业务映射展示预置的全局分类关系。该切换只改变演示呈现，不执行迁移，也不改写真实环境。'] },
         { label: 'PRD 边界', lines: ['交付前由业务提供全量清单并核对归类，研发负责稳定键、幂等、失败恢复、执行窗口和强制校验时点；未完成全量合法映射不可交付。'] }
       ]
     },
@@ -868,7 +868,7 @@
         <div>
           <span class="page-eyebrow">配置中心</span>
           <h1 class="page-title">耗材分类</h1>
-          <p class="page-description">统一维护全局耗材分类，供所有产品共用；分类 ID 自动生成并用于稳定关联。</p>
+          <p class="page-description">统一维护全局耗材分类，供所有产品共用；分类 ID 创建时由用户录入并用于稳定关联。</p>
         </div>
         <div class="page-heading-side"><span class="demo-data-tag">演示数据</span></div>
       </div>
@@ -1036,7 +1036,7 @@
       return `<span class="category-cell"><span class="tag tag-amber">待初始化</span><span class="category-id">分类关系尚未映射</span></span>`;
     }
     const ids = categoryIdsFor(record);
-    return `<span class="category-cell">${ids.length ? ids.map(id => `<span class="tag tag-blue">${escapeHtml(categoryById(id)?.name || '分类失效')}</span>`).join('') : '<span class="tag tag-amber">未选择分类</span>'}</span>`;
+      return `<span class="category-cell">${ids.length ? ids.map(id => `<span class="tag tag-blue">${escapeHtml(categoryById(id)?.name || '分类失效')}</span>`).join('') : '<span class="tag tag-neutral">未选择分类</span>'}</span>`;
   }
 
   function renderConsumablePage() {
@@ -1058,7 +1058,7 @@
     const rows = records.map((record, index) => {
       const pending = isRecordPending(record);
       const ids = categoryIdsFor(record);
-      const categoryInvalid = !pending && (!ids.length || ids.some(id => !categoryById(id)));
+      const categoryInvalid = !pending && ids.some(id => !categoryById(id));
       return `
         <tr class="${record.id === ui.highlightConsumableId ? 'is-highlighted' : ''}">
           <td class="change-column">${renderConsumableCategoryCell(record)}</td>
@@ -1130,7 +1130,7 @@
         <span class="inline-alert-icon">!</span>
         <div class="inline-alert-copy">
           <strong>存量分类关系待初始化</strong>
-          <span>演示视图中，尚未映射的存量耗材显示为「待初始化」。编辑时必须选择合法分类；缺失分类不能保存。${noteAnchor('MIG-01')}</span>
+          <span>演示视图中，尚未映射的存量耗材显示为「待初始化」；耗材分类可为空，已选择的失效分类不能保存。${noteAnchor('MIG-01')}</span>
         </div>
       </div>
     ` : '';
@@ -1484,6 +1484,7 @@
       mode
     };
     ui.formDraft = {
+      id: existing ? existing.id : '',
       name: existing ? existing.name : ''
     };
     ui.fieldErrors = {};
@@ -1497,7 +1498,7 @@
     renderAnnotations();
     syncHash(ui.note, true);
     locateNote(ui.note, { updateHash: false, scroll: false, origin: 'render' });
-    setFocusAfterRender('#categoryNameInput');
+    setFocusAfterRender(mode === 'create' ? '#categoryIdInput' : '#categoryNameInput');
     applyFocusAfterRender();
   }
 
@@ -1656,7 +1657,7 @@
           <span class="inline-alert-icon">!</span>
           <div class="inline-alert-copy">
             <strong>耗材分类加载失败</strong>
-            <span>当前无法获取可选分类，保存已禁用。请检查连接后重试。</span>
+            <span>当前无法获取可选分类；不选择分类仍可保存，已有分类选择需在刷新后校验。请检查连接后重试。</span>
             <button class="btn" type="button" data-action="retry-consumable-options">重试加载</button>
           </div>
         </div>
@@ -1666,15 +1667,15 @@
     if (!categories.length && !selectedIds.length) {
       return `
         <div class="option-message">
-          <strong>暂无耗材分类</strong>
-          先在配置中心新增分类，再返回此处添加或编辑耗材。表单输入会在跳转期间保留。
+          <strong>暂无耗材分类（可选）</strong>
+          当前没有可选分类；不选择分类也可以保存耗材。如需添加分类，可前往配置中心维护，表单输入会在跳转期间保留。
           <button class="btn" type="button" data-action="go-maintain-category">去配置中心维护</button>
         </div>
       `;
     }
 
     return `
-      <p class="field-help category-selection-help">可多选，至少选择一个，关联数量不限。</p>
+      <p class="field-help category-selection-help">耗材分类为可选项，可多选，关联数量不限。</p>
       <div class="category-options" role="group" aria-label="耗材分类">
         ${categories.map((category) => `
           <label class="category-option">
@@ -1717,18 +1718,18 @@
               <section class="modal-section" data-note-target="CAT-05">
                 <div class="modal-section-title"><span>分类信息</span>${noteAnchor('CAT-05')}</div>
                 <label class="form-field">
+                  ${isCreate ? '<span>耗材分类 ID <span class="required-mark">*</span></span>' : '<span>耗材分类 ID</span>'}
+                  ${isCreate ? `<input type="text" id="categoryIdInput" name="categoryId" value="${escapeHtml(draft.id)}" placeholder="请输入耗材分类 ID" autocomplete="off" ${fieldState('id')} ${disabled}>
+                  <span class="field-help">分类 ID 必填且全局不可重复，创建后保持不变。</span>
+                  ${fieldErrorMarkup('id')}` : `<div class="readonly-block compact"><div class="readonly-main"><strong class="cell-mono">${escapeHtml(ui.modal.categoryId)}</strong><span>耗材分类 ID · 编辑时不可修改</span></div><span class="readonly-lock" title="分类 ID 不可编辑">${icon('lock')}</span></div>`}
+                </label>
+                <label class="form-field">
                   <span>耗材分类名称 <span class="required-mark">*</span></span>
                   <input type="text" id="categoryNameInput" name="name" value="${escapeHtml(draft.name)}" placeholder="请输入耗材分类名称" autocomplete="off" ${fieldState('name')} ${disabled}>
                   <span class="field-help">分类名称全局不可重复；保存时忽略首尾空格，区分大小写。</span>
                   ${fieldErrorMarkup('name')}
                 </label>
-                <div class="readonly-block">
-                  <div class="readonly-main">
-                    <strong>${isCreate ? '保存后自动生成' : escapeHtml(ui.modal.categoryId)}</strong>
-                    <span>耗材分类 ID · 稳定用于产品耗材关联，不随改名变化</span>
-                  </div>
-                  <span class="readonly-lock" title="分类 ID 不可编辑">${icon('lock')}</span>
-                </div>
+                ${isCreate ? '' : '<span class="field-help">改名不会改变分类 ID及已有耗材关联。</span>'}
               </section>
             </div>
             <div class="modal-footer" data-note-target="CAT-06">
@@ -1806,7 +1807,8 @@
     const draft = ui.formDraft;
     const isCreate = ui.modal.type === 'consumable-create';
     const disabled = ui.busy ? 'disabled' : '';
-    const saveBlockedByOptions = ['loading', 'error'].includes(ui.optionState) || categoriesForProduct(product).length === 0;
+    const selectedIds = categoryIdsFor(ui.formDraft);
+    const saveBlockedByOptions = ui.optionState === 'loading' || (ui.optionState === 'error' && selectedIds.length > 0);
     const nameLength = Array.from(String(draft.name || '')).length;
     const introLength = Array.from(String(draft.intro || '')).length;
 
@@ -1824,8 +1826,8 @@
             <div class="modal-body">
               ${modalErrorMarkup(ui.modalError)}
               <section class="modal-section" data-note-target="CON-05">
-                <div class="modal-section-title"><span>耗材分类 <span class="required">*</span> <span class="change-mark">本期新增 / 可更换</span></span>${noteAnchor('CON-05')}</div>
-                <div class="field-help">可从全局耗材分类中选择一个或多个，至少一个，数量不限；耗材类型与耗材分类是两个独立字段。</div>
+                <div class="modal-section-title"><span>耗材分类 <span class="change-mark">本期新增 / 可更换 / 可选</span></span>${noteAnchor('CON-05')}</div>
+                <div class="field-help">可从全局耗材分类中选择一个或多个，也可以不选择，关联数量不限；耗材类型与耗材分类是两个独立字段。</div>
                 ${renderCategoryOptionsForDialog()}
                 ${fieldErrorMarkup('categoryIds')}
               </section>
@@ -1884,7 +1886,7 @@
             <div class="modal-footer" data-note-target="CON-07">
               <span class="modal-footer-note">${noteAnchor('CON-07')} ${ui.modalError ? '已保留全部输入，可直接重试。' : '保存中防重复；取消不写入。'}</span>
               <button class="btn" type="button" data-action="close-modal"${ui.busy ? ' disabled' : ''}>取消</button>
-              <button class="btn btn-primary${ui.busy ? ' is-loading' : ''}" type="submit" ${ui.busy || saveBlockedByOptions ? 'disabled' : ''} title="${saveBlockedByOptions && !ui.busy ? '请先完成分类加载并选择耗材分类' : ''}">
+              <button class="btn btn-primary${ui.busy ? ' is-loading' : ''}" type="submit" ${ui.busy || saveBlockedByOptions ? 'disabled' : ''} title="${saveBlockedByOptions && !ui.busy ? (selectedIds.length ? '请先完成分类加载并校验已选分类' : '正在加载分类选项') : ''}">
                 ${ui.busy ? '<span class="mini-spinner"></span>保存中…' : (ui.modalError ? '重试保存' : (isCreate ? '添加耗材' : '保存修改'))}
               </button>
             </div>
@@ -1924,8 +1926,8 @@
       input.closest('label').classList.toggle('is-checked',input.checked);
       input.closest('.el-radio__input')?.classList.toggle('is-checked',input.checked);
     });
-    const categoryItem=document.createElement('div'); categoryItem.className='el-form-item el-form-item--default is-required asterisk-left fact-category-field'; categoryItem.dataset.noteTarget='CON-05';
-    categoryItem.innerHTML='<label class="el-form-item__label" style="width:120px">耗材分类</label><div class="el-form-item__content"><div class="fact-category-body"><span class="change-mark">本期新增 / 可更换</span>'+noteAnchor('CON-05')+renderCategoryOptionsForDialog()+fieldErrorMarkup('categoryIds')+'</div></div>';
+    const categoryItem=document.createElement('div'); categoryItem.className='el-form-item el-form-item--default asterisk-left fact-category-field'; categoryItem.dataset.noteTarget='CON-05';
+    categoryItem.innerHTML='<label class="el-form-item__label" style="width:120px">耗材分类</label><div class="el-form-item__content"><div class="fact-category-body"><span class="change-mark">本期新增 / 可更换 / 可选</span>'+noteAnchor('CON-05')+renderCategoryOptionsForDialog()+fieldErrorMarkup('categoryIds')+'</div></div>';
     form.prepend(categoryItem);
     form.dataset.noteTarget='CON-06';
     for(const key of ['name','intro']) if(ui.fieldErrors[key]) findField(key==='name'?'耗材名称':'耗材介绍')?.insertAdjacentHTML('beforeend',fieldErrorMarkup(key));
@@ -1933,7 +1935,7 @@
     const footer=holder.querySelector('.el-drawer__footer');footer.dataset.noteTarget='CON-07';
     const cancel=footer.querySelector('[data-testid="cancel-consumable"]');cancel.dataset.action='close-modal';
     const submit=footer.querySelector('[data-testid="submit-consumable"]');submit.type='submit';submit.setAttribute('form','consumableForm');
-    submit.disabled=ui.busy || ui.optionState!=='ready' || !categoriesForProduct(productById(ui.modal.productId)).length;
+    submit.disabled=ui.busy || ui.optionState==='loading' || (ui.optionState==='error' && categoryIdsFor(ui.formDraft).length>0);
     submit.innerHTML='<span>'+(ui.busy?'保存中…':ui.modalError?'重试保存':'确定')+'</span>';
     footer.insertAdjacentHTML('afterbegin',noteAnchor('CON-07'));
     if(ui.busy) holder.querySelectorAll('input,textarea,button').forEach(e=>e.disabled=true);
@@ -2182,7 +2184,13 @@
 
   function validateCategoryDraft() {
     const errors = {};
+    const id = String(ui.formDraft.id || '').trim();
     const name = String(ui.formDraft.name || '').trim();
+    if (ui.modal.type === 'category-create' && !id) errors.id = '请输入耗材分类 ID。';
+    if (ui.modal.type === 'category-create' && !errors.id) {
+      const duplicateId = data.categories.some((category) => category.id.trim() === id);
+      if (duplicateId) errors.id = `已存在耗材分类 ID「${id}」。`;
+    }
     if (!name) errors.name = '请输入耗材分类名称。';
     if (!errors.name) {
       const duplicate = data.categories.some((category) =>
@@ -2192,18 +2200,20 @@
       if (duplicate) errors.name = `已存在耗材分类名称「${name}」。`;
     }
     ui.fieldErrors = errors;
-    return { valid: Object.keys(errors).length === 0, name };
+    return { valid: Object.keys(errors).length === 0, id, name };
   }
 
   async function handleCategorySubmit(event) {
     event.preventDefault();
     if (!ui.modal || !['category-create', 'category-edit'].includes(ui.modal.type) || ui.busy) return;
     const nameInput = document.getElementById('categoryNameInput');
+    const idInput = document.getElementById('categoryIdInput');
     if (nameInput) ui.formDraft.name = nameInput.value;
+    if (idInput) ui.formDraft.id = idInput.value;
     ui.modalError = '';
     const validation = validateCategoryDraft();
     if (!validation.valid) {
-      const firstError = '#categoryNameInput';
+      const firstError = ui.fieldErrors.id ? '#categoryIdInput' : '#categoryNameInput';
       setFocusAfterRender(firstError);
       renderModal();
       renderAnnotations();
@@ -2243,9 +2253,8 @@
       current.name = validation.name;
       current.updatedAt = nowIso();
     } else {
-      const id = nextCategoryId();
       data.categories.push({
-        id,
+        id: validation.id,
         name: validation.name,
         createdAt: nowIso(),
         updatedAt: nowIso()
@@ -2253,7 +2262,7 @@
     }
 
     persistData();
-    const createdCategoryId = data.categories.find((category) => category.name === validation.name)?.id || null;
+    const createdCategoryId = wasCreate ? validation.id : null;
     closeModal({ restoreFocus: false, force: true });
     ui.busy = false;
 
@@ -2271,7 +2280,7 @@
     }
 
     refreshPageUI();
-    showToast(wasCreate ? '耗材分类已新增，系统已自动生成稳定 ID。' : '耗材分类已改名，分类 ID 与既有关联保持不变。', 'success');
+    showToast(wasCreate ? '耗材分类已新增，分类 ID 按录入值保存。' : '耗材分类已改名，分类 ID 与既有关联保持不变。', 'success');
   }
 
   function validateConsumableDraft() {
@@ -2282,9 +2291,7 @@
     const selectedIds = categoryIdsFor(ui.formDraft);
     const availableCategories = categoriesForProduct(product);
 
-    if (!selectedIds.length) {
-      errors.categoryIds = '请至少选择一个耗材分类。';
-    } else if (selectedIds.some(id => !availableCategories.some(item => item.id === id))) {
+    if (selectedIds.some(id => !availableCategories.some(item => item.id === id))) {
       errors.categoryIds = '部分所选分类已失效，请刷新分类并取消失效项后重试。';
     }
     if (!name) errors.name = '请输入耗材名称。';
@@ -2298,7 +2305,7 @@
   async function handleConsumableSubmit(event) {
     event.preventDefault();
     if (!ui.modal || !ui.modal.type.startsWith('consumable') || ui.busy) return;
-    if (ui.optionState !== 'ready') return;
+    if (ui.optionState === 'loading' || (ui.optionState === 'error' && categoryIdsFor(ui.formDraft).length > 0)) return;
 
     const nameInput = document.getElementById('consumableNameInput');
     const introInput = document.getElementById('consumableIntroInput');
@@ -2357,7 +2364,7 @@
 
     const product = productById(ui.modal.productId) || PRODUCTS[0];
     const selectedIds = categoryIdsFor(ui.formDraft);
-    if (!selectedIds.length || selectedIds.some(id => !categoryById(id))) {
+    if (selectedIds.some(id => !categoryById(id))) {
       ui.busy = false;
       ui.fieldErrors = { categoryIds: '部分所选分类在保存前已失效，请刷新分类并取消失效项后重试。' };
       ui.modalError = '保存被阻止：分类关系已变化，未写入任何数据。';
@@ -2417,7 +2424,7 @@
     ui.busy = false;
     ui.highlightConsumableId = savedId;
     refreshPageUI();
-    showToast(isCreate ? '耗材已添加，并关联到所选耗材分类。' : '耗材已保存；本次只更新当前产品这一条记录。', 'success');
+    showToast(isCreate ? (selectedIds.length ? '耗材已添加，并关联到所选耗材分类。' : '耗材已添加，当前未关联耗材分类。') : '耗材已保存；本次只更新当前产品这一条记录。', 'success');
     window.setTimeout(() => {
       const row = document.querySelector('.data-table tr.is-highlighted');
       row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -2696,6 +2703,7 @@
     if (target.id === 'productQueryFilter') ui.productFilters.query = target.value;
     if (!ui.modal) return;
 
+    if (target.id === 'categoryIdInput' && ui.formDraft) ui.formDraft.id = target.value;
     if (target.id === 'categoryNameInput' && ui.formDraft) ui.formDraft.name = target.value;
     const consumableKeys = {
       consumableNameInput: 'name',
