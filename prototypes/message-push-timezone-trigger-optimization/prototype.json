@@ -1,0 +1,27 @@
+{
+  "id": "message-push-timezone-trigger-optimization",
+  "path": "/prototypes/message-push-timezone-trigger-optimization/",
+  "title": "消息推送触发时间与时区矫正 · IoT Admin 原型",
+  "summary": "IoT Admin 消息推送普通推送与汇总推送入口，以及设备触发、云计时器、耗材提醒的触发时间配置原型。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "message-push-timezone-trigger-optimization",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "IoT Admin",
+    "消息推送",
+    "时区",
+    "云计时器",
+    "耗材提醒"
+  ],
+  "updatedAt": "2026-11-18T01:12:50.453Z",
+  "lastPublisher": "待确认",
+  "preview": {
+    "mode": "auto"
+  }
+}

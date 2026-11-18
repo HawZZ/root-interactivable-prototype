@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="IoT Admin 消息推送普通推送与汇总推送入口，以及设备触发、云计时器、耗材提醒的触发时间配置原型。">
+  <meta name="keywords" content="IoT Admin,消息推送,时区,云计时器,耗材提醒">
+  <meta name="prototype:product-line" content="IoT Admin">
+  <meta name="prototype:business-area" content="配置中心">
+  <meta name="prototype:surface" content="web">
+  <meta name="prototype:systems" content="web">
+  <title>消息推送触发时间与时区矫正 · IoT Admin 原型</title>
+  <style>
+    :root {
+      --aside: #001529;
+      --aside-active: #0b2a4a;
+      --bg: #f9f9f9;
+      --panel: #fff;
+      --primary: #4372ff;
+      --primary-light: #ecf5ff;
+      --success: #67c23a;
+      --warning: #e6a23c;
+      --danger: #f56c6c;
+      --info: #909399;
+      --text: #303133;
+      --regular: #606266;
+      --muted: #909399;
+      --placeholder: #a8abb2;
+      --border: #dcdfe6;
+      --border-light: #e4e7ed;
+      --border-lighter: #ebeef5;
+      --head: #fafafa;
+      --yellow: #facc15;
+      --radius: 4px;
+      --font: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+    body { --notes-width: 380px; overflow-x: hidden; display: grid; grid-template-columns: minmax(720px, 1fr) var(--notes-width); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; min-width: 0; overflow: hidden; display: grid; grid-template-columns: 208px minmax(0, 1fr); }
+    .aside { background: var(--aside); color: rgba(255,255,255,.78); min-height: 100vh; position: sticky; top: 0; align-self: start; }
+    .brand { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.08); color: #fff; font-weight: 700; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 4px; background: #85b436; font-size: 12px; font-weight: 800; }
+    .brand small { display: block; color: rgba(255,255,255,.52); font-size: 11px; font-weight: 400; }
+    .menu { padding: 8px 0 24px; }
+    .menu-group { color: rgba(255,255,255,.38); font-size: 12px; padding: 14px 18px 6px; }
+    .menu-item { height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-left: 3px solid transparent; color: rgba(255,255,255,.76); white-space: nowrap; }
+    .menu-item.active { background: var(--aside-active); border-left-color: var(--primary); color: #fff; }
+    .menu-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .74; }
+    .shell { min-width: 0; display: grid; grid-template-rows: 54px minmax(0, 1fr); }
+    .header { height: 54px; background: var(--panel); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: rgba(0,0,0,.06) 0 -1px 0 0 inset; position: sticky; top: 0; z-index: 10; }
+    .breadcrumb { color: var(--muted); font-size: 12px; display: flex; gap: 7px; align-items: center; }
+    .breadcrumb strong { color: var(--text); font-weight: 500; }
+    .userbar { display: flex; align-items: center; gap: 12px; color: var(--regular); font-size: 13px; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--primary); background: var(--primary-light); font-weight: 700; }
+    .content { padding: 24px; min-width: 0; overflow: auto; }
+    .screen { width: 1440px; max-width: none; margin: 0 auto; position: relative; }
+    .summary, .table-panel { background: var(--panel); border: 1px solid var(--border-light); border-radius: var(--radius); }
+    .summary { padding: 18px 20px; margin-bottom: 16px; }
+    .title-row, .panel-title, .filter-row, .drawer-header, .drawer-footer, .modal-footer, .execution-head, .drawer-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .title-row { align-items: flex-start; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 20px; line-height: 30px; font-weight: 600; }
+    h2 { font-size: 16px; line-height: 24px; font-weight: 600; }
+    h3 { font-size: 14px; line-height: 22px; font-weight: 600; }
+    .muted { color: var(--muted); }
+    .subline { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 16px 24px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-lighter); }
+    .meta-label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .meta-value { color: var(--regular); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tag { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; line-height: 22px; }
+    .tag.blue { color: #2563eb; background: var(--primary-light); }
+    .tag.green { color: #3f8f23; background: #f0f9eb; }
+    .tag.gray { color: var(--regular); background: #f4f4f5; }
+    .tag.orange { color: #a86200; background: #fdf6ec; }
+    .btn { min-height: 32px; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--regular); }
+    .btn:hover { border-color: #a3c5ff; color: var(--primary); }
+    .btn.primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .btn.primary:hover { background: #2b6bd9; }
+    .btn.danger { color: var(--danger); border-color: #fbc4c4; }
+    .link-btn { border: 0; padding: 0; background: transparent; color: var(--primary); cursor: pointer; }
+    .link-btn.danger { color: var(--danger); }
+    .anchor { display: inline-grid; width: 21px; height: 21px; place-items: center; border-radius: 50%; background: var(--yellow); color: #713f12; font-size: 11px; font-weight: 800; vertical-align: middle; margin-right: 6px; box-shadow: 0 0 0 2px rgba(250,204,21,.14); }
+    .anchor.highlight { outline: 3px solid rgba(67,114,255,.32); outline-offset: 2px; }
+    .table-panel { overflow: hidden; }
+    .panel-title { padding: 16px 20px; border-bottom: 1px solid var(--border-lighter); }
+    .filter-row { justify-content: flex-start; padding: 16px 20px; border-bottom: 1px solid var(--border-lighter); }
+    .field-inline { display: flex; align-items: center; gap: 8px; }
+    .field-inline label { color: var(--regular); font-size: 13px; }
+    select, input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--regular); }
+    .filter-input { width: 220px; }
+    .filter-select { width: 140px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { height: 52px; padding: 10px 14px; border-bottom: 1px solid var(--border-lighter); text-align: left; vertical-align: middle; white-space: nowrap; }
+    th { background: var(--head); color: var(--muted); font-size: 13px; font-weight: 600; }
+    td { color: var(--regular); font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    .rule-name { color: var(--text); font-weight: 500; }
+    .rule-id { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .condition { color: var(--regular); max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+    .actions { display: flex; gap: 12px; align-items: center; }
+    .pagination { height: 64px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 20px; border-top: 1px solid var(--border-lighter); color: var(--muted); }
+    .pager { min-width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--primary); border-radius: 4px; color: var(--primary); background: var(--primary-light); }
+    .toast { position: fixed; right: calc(var(--notes-width) + 16px); top: 70px; z-index: 60; min-width: 260px; padding: 11px 14px; border: 1px solid #b3e19d; border-radius: 4px; color: #3f8f23; background: #f0f9eb; box-shadow: 0 8px 24px rgba(0,0,0,.1); display: none; }
+    .toast.show { display: block; animation: toast-in .18s ease-out; }
+    @keyframes toast-in { from { transform: translateY(-6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .backdrop { position: fixed; inset: 0 var(--notes-width) 0 0; background: rgba(0,0,0,.42); z-index: 40; display: none; }
+    .backdrop.open { display: block; }
+    .drawer { position: fixed; top: 0; right: var(--notes-width); z-index: 50; width: min(720px, calc(100vw - var(--notes-width))); max-width: calc(100vw - var(--notes-width)); height: 100vh; background: #fff; box-shadow: -8px 0 24px rgba(0,0,0,.14); transform: translateX(100%); transition: transform .18s ease-out; display: grid; grid-template-rows: 64px minmax(0, 1fr) 64px; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 0 20px; border-bottom: 1px solid var(--border-lighter); }
+    .step-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 0 18px; margin-bottom: 18px; border-bottom: 1px solid var(--border-lighter); }
+    .step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .step.current { color: var(--primary); }
+    .step-no { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; }
+    .step.current .step-no { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .source-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .source-card { min-height: 62px; padding: 9px; text-align: left; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--regular); }
+    .source-card strong, .source-card span { display: block; }
+    .source-card span { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .source-card.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .source-card.empty { color: var(--muted); }
+    .source-detail { margin-top: 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: 4px; background: #fafcff; }
+    .empty-cell { height: 180px; text-align: center; color: var(--muted); }
+    .drawer-close { border: 0; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; padding: 6px; }
+    .drawer-body { overflow: auto; padding: 20px; }
+    .drawer-section { padding: 0 0 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-lighter); }
+    .drawer-section:last-child { border-bottom: 0; margin-bottom: 0; }
+    .drawer-section-head { margin-bottom: 14px; }
+    .section-hint { color: var(--muted); font-size: 12px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: var(--regular); font-size: 13px; }
+    .required::before { content: "*"; color: var(--danger); margin-right: 4px; }
+    .helper { color: var(--muted); font-size: 12px; }
+    .time-mode { display: flex; gap: 8px; }
+    .choice { position: relative; }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice span { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: 4px; color: var(--regular); background: #fff; cursor: pointer; }
+    .choice input:checked + span { color: var(--primary); border-color: #a3c5ff; background: var(--primary-light); }
+    .execution-card { padding: 14px; border: 1px solid var(--border-light); border-radius: 4px; background: #fafcff; }
+    .execution-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .execution-item { padding: 10px; border: 1px solid var(--border-lighter); border-radius: 4px; background: #fff; }
+    .execution-label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .execution-value { color: var(--text); font-weight: 500; }
+    .scenario-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .scenario-btn { min-height: 30px; padding: 0 10px; border: 1px dashed #b8c8e8; border-radius: 4px; color: #365b9b; background: #f8fbff; }
+    .scenario-btn.active { border-style: solid; border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .simulation-note { margin-top: 10px; color: #946200; font-size: 12px; }
+    .decision { margin-top: 12px; padding: 12px; border-radius: 4px; border: 1px solid var(--border-light); }
+    .decision.success { color: #3f8f23; border-color: #b3e19d; background: #f0f9eb; }
+    .decision.warning { color: #946200; border-color: #f3d19e; background: #fdf6ec; }
+    .decision.danger { color: #a8071a; border-color: #fab6b6; background: #fef0f0; }
+    .drawer-footer { padding: 0 20px; border-top: 1px solid var(--border-lighter); justify-content: flex-end; }
+    .modal { position: fixed; z-index: 70; top: 50%; left: 50%; width: 420px; max-width: calc(100vw - 32px); transform: translate(-50%, -50%); background: #fff; border-radius: 4px; box-shadow: 0 16px 48px rgba(0,0,0,.2); display: none; }
+    .modal.open { display: block; }
+    .modal-head, .modal-body, .modal-footer { padding: 16px 20px; }
+    .modal-head { border-bottom: 1px solid var(--border-lighter); }
+    .modal-body { color: var(--regular); line-height: 1.7; }
+    .type-options { display: grid; gap: 10px; margin-top: 14px; }
+    .type-option { display: grid; gap: 4px; padding: 12px; text-align: left; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--regular); }
+    .type-option:hover { border-color: #a3c5ff; background: var(--primary-light); }
+    .type-option strong { color: var(--text); }
+    .type-option span { font-size: 12px; color: var(--muted); }
+    .modal-footer { border-top: 1px solid var(--border-lighter); justify-content: flex-end; }
+    .right { grid-column: 2; grid-row: 1; background: #fff; border-left: 1px solid var(--border); min-width: 360px; min-height: 100vh; overflow: auto; }
+    .right-header { position: sticky; top: 0; z-index: 4; padding: 16px; background: #fff; border-bottom: 1px solid var(--border); }
+    .right-header h2 { font-size: 14px; }
+    .right-header p { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .doc { padding: 16px; }
+    .doc-intro { padding: 12px; border: 1px solid var(--border-light); border-radius: 4px; background: #fafcff; color: var(--regular); font-size: 12px; line-height: 1.6; margin-bottom: 12px; }
+    .note-stack { display: grid; gap: 10px; }
+    .note-card { display: grid; grid-template-columns: 28px 1fr; gap: 9px; padding: 12px; border: 1px solid var(--border-light); border-radius: 4px; background: #fff; cursor: pointer; }
+    .note-card:hover, .note-card.selected { border-color: #a3c5ff; background: #f8fbff; }
+    .note-number { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--yellow); color: #713f12; font-size: 11px; font-weight: 800; }
+    .note-title { color: var(--text); font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+    .note-location { color: var(--primary); font-size: 11px; margin-bottom: 6px; }
+    .note-line { color: var(--regular); font-size: 12px; line-height: 1.6; margin: 2px 0; }
+    .note-line strong { color: var(--text); font-weight: 600; }
+    .assumption { color: #946200; }
+    .hidden { display: none !important; }
+    @media (max-width: 1100px) { .app { grid-template-columns: 64px minmax(0,1fr); } .brand { justify-content: center; padding: 0; } .brand > div:not(.brand-mark), .menu-group, .menu-item span:not(.menu-dot) { display: none; } .menu-item { justify-content: center; padding: 0; } }
+    @media (max-width: 900px) { body { --notes-width: 300px; min-width: 640px; overflow-x: auto; grid-template-columns: minmax(340px, 1fr) var(--notes-width); } .app { display: block; } .aside { display: none; } .shell { display: block; } .header { position: static; } .content { padding: 12px; } .right { grid-column: 2; grid-row: 1; border-left: 1px solid var(--border); border-top: 0; min-height: 100vh; } .meta-grid { grid-template-columns: repeat(2, minmax(130px,1fr)); } .toast { right: calc(var(--notes-width) + 16px); top: 64px; } .drawer { right: var(--notes-width); width: calc(100vw - var(--notes-width)); max-width: calc(100vw - var(--notes-width)); } .backdrop { right: var(--notes-width); } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="aside" aria-label="IoT Admin导航">
+      <div class="brand"><div class="brand-mark">AIoT</div><div>IoT Platform<small>Luteos Admin</small></div></div>
+      <nav class="menu">
+        <div class="menu-group">智能产品</div>
+        <div class="menu-item"><span class="menu-dot"></span><span>产品列表</span></div>
+        <div class="menu-item active"><span class="menu-dot"></span><span>消息推送</span></div>
+        <div class="menu-item"><span class="menu-dot"></span><span>产品详情</span></div>
+        <div class="menu-group">设备管理</div>
+        <div class="menu-item"><span class="menu-dot"></span><span>设备列表</span></div>
+        <div class="menu-item"><span class="menu-dot"></span><span>固件管理</span></div>
+        <div class="menu-item"><span class="menu-dot"></span><span>OTA</span></div>
+        <div class="menu-group">配置中心</div>
+        <div class="menu-item"><span class="menu-dot"></span><span>物模型池</span></div>
+        <div class="menu-item"><span class="menu-dot"></span><span>产品模板</span></div>
+      </nav>
+    </aside>
+    <section class="shell">
+      <header class="header">
+        <div class="breadcrumb"><span>智能产品</span><span>/</span><strong>消息推送</strong><span>/</span><strong>吸奶器V4</strong></div>
+        <div class="userbar"><span>ROOT云</span><span class="avatar">R</span></div>
+      </header>
+      <main class="content">
+        <section class="screen" id="productScreen">
+          <section class="summary" data-anchor="1">
+            <div class="title-row">
+              <div>
+                <h1><span class="anchor">1</span>吸奶器V4 <span class="tag green">已上架</span> <span class="tag gray">BLE</span></h1>
+                <p class="subline">消息推送 / 智能产品 · 现状快照：当前页面事实</p>
+              </div>
+              <div class="field-inline"><span class="tag gray">产品上下文已锁定</span></div>
+            </div>
+            <div class="meta-grid">
+              <div><div class="meta-label">产品分类</div><div class="meta-value">Breast Pump</div></div>
+              <div><div class="meta-label">产品型号</div><div class="meta-value">V4</div></div>
+              <div><div class="meta-label">产品代码</div><div class="meta-value">--</div></div>
+              <div><div class="meta-label">产品ID</div><div class="meta-value">2122283118597607426</div></div>
+              <div><div class="meta-label">产品模板ID</div><div class="meta-value">1907328212561108993</div></div>
+            </div>
+          </section>
+          <section class="table-panel">
+            <div class="panel-title" data-anchor="2">
+              <div><h2><span class="anchor">2</span>消息推送</h2><div class="subline">配置普通推送规则；汇总推送保持既有产品自然日语义</div></div>
+              <button class="btn primary" id="newRuleBtn" data-anchor="4"><span class="anchor">4</span>新增消息推送</button>
+            </div>
+            <div class="filter-row" data-anchor="3">
+              <span class="anchor">3</span>
+              <div class="field-inline"><label for="ruleSearch">规则 ID/名称</label><input class="filter-input" id="ruleSearch" placeholder="请输入规则 ID/名称"></div>
+              <div class="field-inline"><label for="typeFilter">规则类型</label><select class="filter-select" id="typeFilter"><option>全部</option><option>普通推送</option><option>汇总推送</option></select></div>
+              <div class="field-inline"><label for="statusFilter">状态</label><select class="filter-select" id="statusFilter"><option>全部</option><option>启用</option><option>停用</option></select></div>
+              <button class="btn primary" id="queryBtn">查询</button><button class="btn" id="resetBtn">重置</button>
+            </div>
+            <table aria-label="消息推送规则列表"><thead><tr><th>规则</th><th>规则类型</th><th>触发条件 / 汇总范围</th><th>推送消息</th><th>多语言</th><th>投递方式</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+              <tbody id="ruleRows"><tr><td colspan="9" class="empty-cell">暂无数据</td></tr>
+            </table>
+            <div class="pagination"><span id="totalText">共 0 条</span><button class="btn" disabled>上一页</button><span class="pager">1</span><button class="btn" disabled>下一页</button><select><option>10条/页</option></select></div>
+          </section>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <aside class="right" aria-label="原型批注">
+    <div class="right-header"><h2>原型批注</h2><p id="contextLabel">消息推送列表 · 现状基线与入口</p></div>
+    <div class="doc">
+      <div class="doc-intro">本原型演示普通推送与汇总推送的真实入口边界。当前列表样本来自 IoT Admin 现状观察；时区来源、时间段外结果、执行记录和重复规则语义仅在 PRD 与原型批注中说明，不新增模拟控件。</div>
+      <div class="note-stack" id="notes"></div>
+    </div>
+  </aside>
+
+  <div class="backdrop" id="backdrop"></div>
+  <section class="drawer" id="drawer" aria-label="消息推送配置抽屉">
+    <header class="drawer-header"><div><h2 id="drawerTitle">新增消息推送</h2><div class="subline" id="drawerSubline">普通推送 · 产品：吸奶器V4</div></div><button class="drawer-close" id="drawerClose" aria-label="关闭">×</button></header>
+    <div class="drawer-body">
+      <div class="step-strip"><div class="step current"><span class="step-no">1</span><span>消息内容<br><small>名称、文案和跳转</small></span></div><div class="step"><span class="step-no">2</span><span>触发条件<br><small>来源、条件与提醒时间</small></span></div><div class="step"><span class="step-no">3</span><span>投递设置<br><small>目标与发送方式</small></span></div></div>
+      <p class="helper" style="margin:-6px 0 16px">原型预填示例值用于查看后续字段；线上新建初始必填项为空，未完成当前步骤时「下一步」禁用。</p>
+      <section class="drawer-section ordinary-only existing-fields">
+        <div class="drawer-section-head"><div><h3>消息内容</h3><div class="section-hint">现状字段保留；本期只新增触发时间判断范围</div></div><span class="tag gray">现有字段</span></div>
+        <div class="form-grid">
+          <div class="field full"><label class="required" for="messageTitle">English 推送标题</label><input id="messageTitle" value="Message title"><span class="helper">沿用现有标题字段与长度校验。</span></div>
+          <div class="field full"><label class="required" for="messageBody">English 推送内容</label><input id="messageBody" value="Message body"><span class="helper">沿用现有内容字段与占位符能力。</span></div>
+          <div class="field full"><label for="jumpPage">跳转页面</label><select id="jumpPage"><option>请选择链接地址</option></select></div>
+        </div>
+      </section>
+      <section class="drawer-section ordinary-only" data-anchor="6">
+        <div class="drawer-section-head"><div><h3><span class="anchor">6</span>触发条件</h3></div><span class="tag blue">普通推送</span></div>
+        <div class="form-grid">
+          <div class="field full"><label class="required" for="ruleName">规则名称</label><input id="ruleName" value="全球触发时段示例"><span class="helper">仅在管理端识别，不展示给 App 用户。</span></div>
+          <div class="field full"><label class="required">触发来源</label><div class="source-cards"><button class="source-card active" data-source="device"><strong>设备触发</strong><span>物模型属性变化或事件上报时触发</span></button><button class="source-card" data-source="timer"><strong>云计时器</strong><span>剩余时长达到设定阈值时触发</span></button><button class="source-card" data-source="consumable"><strong>耗材提醒</strong><span>耗材不足或耗尽时触发；提醒时间依耗材类型而定</span></button></div><div class="source-detail" id="sourceDetail">* 触发条件：选择物模型<br><span class="helper">接收人为触发设备当前绑定的全部用户；无绑定用户时不发送。</span></div></div>
+        </div>
+      </section>
+      <section class="drawer-section ordinary-only" data-anchor="7" id="reminderSection">
+        <div class="drawer-section-head"><div><h3><span class="anchor">7</span>触发时间</h3></div></div>
+        <div class="field"><label>时间段</label><div class="time-mode"><label class="choice"><input type="radio" name="timeMode" value="all" checked><span>全天</span></label><label class="choice"><input type="radio" name="timeMode" value="window"><span>指定时段</span></label></div></div>
+        <div class="form-grid" id="windowFields" hidden><div class="field"><label for="startTime">开始时间</label><input type="time" id="startTime" value="09:00"></div><div class="field"><label for="endTime">结束时间</label><input type="time" id="endTime" value="21:00"></div></div>
+      </section>
+      <section class="drawer-section summary-only hidden" data-anchor="5" id="summarySection">
+        <div class="drawer-section-head"><div><h3><span class="anchor">5</span>汇总推送配置</h3><div class="section-hint">该路由保留既有产品自然日和汇总条件语义</div></div><span class="tag gray">现有入口</span></div>
+        <div class="form-grid">
+          <div class="field full"><label class="required" for="summaryTitle">推送标题</label><input id="summaryTitle" value="耗材提醒汇总"><span class="helper">页面示意：汇总推送的标题与内容沿用现有字段。</span></div>
+          <div class="field full"><label class="required" for="summaryBody">推送内容</label><input id="summaryBody" value="今日有需要关注的维护事项"><span class="helper">本期不在汇总路由新增动态时区时间段配置。</span></div>
+        </div>
+        <div class="execution-card"><div class="execution-head"><strong>汇总条件</strong><span class="tag blue">现有语义</span></div><p class="helper" style="margin-top:10px">云计时器、云端定时耗材等既有汇总条件继续按产品自然日首个真实命中处理。</p></div>
+      </section>
+    </div>
+    <footer class="drawer-footer"><button class="btn" id="drawerCancel">取消</button><button class="btn primary" id="drawerSave">下一步</button></footer>
+  </section>
+
+  <section class="modal" id="typeModal" role="dialog" aria-modal="true" aria-labelledby="typeTitle">
+    <div class="modal-head"><h3 id="typeTitle">选择推送规则类型</h3></div>
+    <div class="modal-body"><p>类型创建后不能直接切换，避免丢失配置。</p><div class="type-options"><button class="type-option" data-type="normal"><strong>普通推送</strong><span>一个触发条件生成一条独立消息，可选逐条发送或仅发送首条。</span></button><button class="type-option" data-type="summary"><strong>汇总推送</strong><span>当天首个汇总条件命中时立即发送，同设备当天最多一次。</span></button></div></div>
+    <div class="modal-footer"><button class="btn" id="typeCancel">取消</button></div>
+  </section>
+
+  <section class="modal" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <div class="modal-head"><h3 id="deleteTitle">删除消息推送</h3></div><div class="modal-body">确定删除这条普通推送规则吗？删除后该规则不再参与触发判断。</div><div class="modal-footer"><button class="btn" id="deleteCancel">取消</button><button class="btn danger" id="deleteConfirm">确认删除</button></div>
+  </section>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const state = { drawer: false, mode: 'create', editingRule: null, timeMode: 'all', source: 'device', deleteRule: null };
+    const notesList = [
+      { n: 1, title: '产品上下文', loc: '产品摘要 > 产品信息', lines: [['说明','还原当前 IoT Admin 吸奶器V4页面的产品上下文和现状样本。'],['状态/差异','现状样本，不新增产品字段。'],['原型备注','页面数据来自当前只读观察。']] },
+      { n: 2, title: '消息推送列表', loc: '消息推送 > 列表容器', lines: [['说明','保留现状列表、规则类型、触发条件 / 汇总范围、投递方式和操作列。'],['交互','查看、编辑打开配置抽屉；删除打开站内确认。']] },
+      { n: 3, title: '筛选区', loc: '消息推送 > 查询筛选', lines: [['说明','还原规则 ID/名称、规则类型、状态、查询和重置。'],['功能提示','查询和重置仅改变列表状态，不改变规则配置。']] },
+      { n: 4, title: '新建类型入口', loc: '消息推送 > 新增消息推送 > 类型选择', lines: [['交互','新建先选择普通推送或汇总推送。'],['事实边界','普通推送进入本期时间配置；汇总推送保留既有产品自然日与汇总条件语义。']] },
+      { n: 5, title: '汇总推送路由', loc: '类型选择 > 汇总推送', lines: [['说明','该路由用于还原现有汇总推送入口。'],['范围','本期不在汇总推送路由新增动态时区时间段配置。'],['原型备注','汇总条件的完整现有字段不在本期普通推送优化抽屉中重复展示。']] },
+      { n: 6, title: '普通推送触发条件', loc: '类型选择 > 普通推送 > 触发条件', lines: [['说明','设备触发、云计时器、耗材提醒进入各自既有触发判断。'],['触发时点','设备上报后、云计时器剩余时长达到设定阈值或耗材既有不足/耗尽判断时执行。']] },
+      { n: 7, title: '普通推送触发时间', loc: '普通推送 > 触发时间', lines: [['交互','配置区只保留「全天 / 指定时段」和开始 / 结束时间控件；设备触发、云计时器、耗材提醒三类来源均适用。'],['现状','当前页面只有设备触发直接展示提醒时间；当前产品云计时器和耗材项为空，因此未观察到对应现状控件。'],['本期范围','云计时器和耗材提醒补齐同一时间段配置，属于需求新增设计，不代表现状页面已有字段。'],['边界','时间配置只在实际触发判断时生效，不新增统一调度或延迟补发。']] },
+      { n: 8, title: '时区优先级与无时区处理', loc: '普通推送 > 触发判断规则', lines: [['功能规则','设备上报时区优先，App 上报时区次优先；两者都无时记录 NO_ZONE_TEMPORARY_BYPASS，继续既有频控与投递。'],['非交互说明','该规则写入 PRD 和本批注，不放入配置抽屉模拟。']] },
+      { n: 9, title: '时间段外结果', loc: '普通推送 > 触发判断规则', lines: [['功能规则','有效时区且判断在指定时段外时记录 OUTSIDE_TIME_WINDOW，不投递、不补发。'],['非交互说明','该结果写入 PRD 和本批注，不放入配置抽屉模拟。']] },
+      { n: 10, title: '执行记录边界', loc: '普通推送 > 触发判断规则', lines: [['数据边界','平台只保存转换后的时区及必要元数据，不保存原始 IP。'],['非交互说明','记录字段属于 PRD / 技术实施依赖，不在配置抽屉展示。']] },
+      { n: 11, title: '重复规则与兼容边界', loc: '普通推送 / 汇总推送边界', lines: [['规则','相同触发条件的多个普通推送规则允许并存，按 ruleId 独立频控与投递。'],['兼容','普通推送时间窗统一使用新契约；汇总推送保持既有产品自然日语义。'],['非交互说明','该规则写入 PRD 和本批注，不放入配置抽屉。']] }
+    ];    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => [...document.querySelectorAll(s)];
+    function showToast(text){ const el=$('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(window.__toast); window.__toast=setTimeout(()=>el.classList.remove('show'),2200); }
+    function renderNotes(context='list', onlyNumbers=null){
+      const list=onlyNumbers ? notesList.filter(n=>onlyNumbers.includes(n.n)) : context==='list' ? notesList.filter(n=>n.n<=4) : context==='type' ? notesList.filter(n=>[4,5].includes(n.n)) : notesList.filter(n=>n.n>=5);
+      $('#contextLabel').textContent=context==='list'?'消息推送列表 · 现状基线与入口':context==='type'?'新建消息推送 · 类型选择':'消息推送配置 · 交互字段与边界批注';
+      $('#notes').innerHTML=list.map(n=>`<section class="note-card" data-note="${n.n}"><span class="note-number">${n.n}</span><div><h3 class="note-title">${n.title}</h3><div class="note-location">关联位置：${n.loc}</div>${n.lines.map(x=>`<p class="note-line ${x[0]==='原型备注'?'assumption':''}"><strong>${x[0]}：</strong>${x[1]}</p>`).join('')}</div></section>`).join('');
+      $$('.note-card').forEach(card=>card.addEventListener('click',()=>focusAnchor(Number(card.dataset.note))));
+    }
+    function focusAnchor(n){ $$('.note-card').forEach(c=>c.classList.toggle('selected',Number(c.dataset.note)===n)); $$('.anchor').forEach(a=>a.classList.remove('highlight')); const target=document.querySelector(`[data-anchor="${n}"]`); if(target){target.scrollIntoView({behavior:'smooth',block:'center'}); target.classList.add('highlight'); setTimeout(()=>target.classList.remove('highlight'),1200);} }
+    function openTypeModal(){ $('#typeModal').classList.add('open'); $('#backdrop').classList.add('open'); renderNotes('type'); }
+    function closeTypeModal(){ $('#typeModal').classList.remove('open'); if(!state.drawer) { $('#backdrop').classList.remove('open'); renderNotes('list'); } }
+    function openDrawer(mode='create', rule=null){ state.drawer=true; state.mode=mode; state.editingRule=rule; state.source='device'; $('#drawerTitle').textContent=mode==='view'?'查看消息推送':mode==='edit'?'编辑消息推送':'新增普通推送'; $('#drawerSubline').textContent='普通推送 · 产品：吸奶器V4'; $('#drawerSave').textContent=mode==='view'?'关闭':'下一步'; $('#drawerSave').disabled=mode==='view'; $('#summarySection').classList.add('hidden'); $$('.ordinary-only').forEach(el=>el.classList.remove('hidden')); if(rule){ $('#ruleName').value=rule.name||'123123'; } else { $('#ruleName').value='全球触发时段示例'; } $('#drawer').classList.add('open'); $('#backdrop').classList.add('open'); renderNotes('drawer',[6,7,8,9,10,11]); updateSourceHint(); }
+    function openSummaryDrawer(){ state.drawer=true; state.mode='summary'; $('#drawerTitle').textContent='新建汇总推送'; $('#drawerSubline').textContent='汇总推送 · 产品：吸奶器V4'; $('#drawerSave').textContent='保存草稿'; $('#drawerSave').disabled=false; $$('.ordinary-only').forEach(el=>el.classList.add('hidden')); $('#summarySection').classList.remove('hidden'); $('#drawer').classList.add('open'); $('#backdrop').classList.add('open'); renderNotes('drawer',[5,11]); }
+    function closeDrawer(){ state.drawer=false; $('#drawer').classList.remove('open'); $('#backdrop').classList.remove('open'); renderNotes('list'); }
+    function updateSourceHint(){ const v=state.source; const detail={device:'* 触发条件：选择物模型<br><span class="helper">接收人为触发设备当前绑定的全部用户；无绑定用户时不发送。</span>',timer:'',consumable:''}; $('#sourceDetail').innerHTML=detail[v]; $('#sourceDetail').classList.toggle('hidden',v!=='device'); $$('.source-card').forEach(b=>b.classList.toggle('active',b.dataset.source===v)); }
+    function saveRule(){ if(state.mode==='view'){closeDrawer();return;} if(state.mode==='summary'){showToast('汇总推送草稿已保存');closeDrawer();return;} const name=$('#ruleName').value.trim(); if(!name){showToast('请填写规则名称');$('#ruleName').focus();return;} showToast(state.mode==='edit'?'消息推送草稿已更新':'普通推送草稿已保存'); closeDrawer(); }
+    function openDelete(rule){ state.deleteRule=rule; $('#deleteModal').classList.add('open'); $('#backdrop').classList.add('open'); }
+    function closeDelete(){ $('#deleteModal').classList.remove('open'); if(!state.drawer) $('#backdrop').classList.remove('open'); state.deleteRule=null; }
+    function resetFilters(){ $('#ruleSearch').value=''; $('#typeFilter').value='全部'; $('#statusFilter').value='全部'; showToast('筛选条件已重置'); }
+    $('#newRuleBtn').addEventListener('click',openTypeModal);
+    $('#drawerClose').addEventListener('click',closeDrawer); $('#drawerCancel').addEventListener('click',closeDrawer); $('#drawerSave').addEventListener('click',saveRule); $('#typeCancel').addEventListener('click',closeTypeModal); $('#backdrop').addEventListener('click',()=>{ if(state.drawer) closeDrawer(); else if($('#typeModal').classList.contains('open')) closeTypeModal(); else closeDelete(); });
+    $$('.type-option').forEach(b=>b.addEventListener('click',()=>{ closeTypeModal(); if(b.dataset.type==='summary') openSummaryDrawer(); else openDrawer('create'); }));
+    $$('.source-card').forEach(b=>b.addEventListener('click',()=>{state.source=b.dataset.source;updateSourceHint();}));
+    $$('input[name="timeMode"]').forEach(r=>r.addEventListener('change',()=>{ $('#windowFields').hidden=r.value!=='window'; state.timeMode=r.value; }));
+    $('#resetBtn').addEventListener('click',resetFilters); $('#queryBtn').addEventListener('click',()=>showToast('已按当前条件查询'));
+    $('#deleteCancel').addEventListener('click',closeDelete); $('#deleteConfirm').addEventListener('click',()=>{closeDelete();showToast('消息推送已删除（原型模拟）');});
+    $('#ruleRows').addEventListener('click',(e)=>{ const b=e.target.closest('[data-action]'); if(!b)return; const row=b.closest('tr'); const name=row?.dataset.rule||''; const rule={name:name==='123123'?'123123':'--',condition:name==='123123'?'cSwitch = 0':'c_eid ='}; if(b.dataset.action==='delete') openDelete(rule); else openDrawer(b.dataset.action==='edit'?'edit':'view',rule); });
+    renderNotes('list'); updateSourceHint();
+  </script>
+</body>
+</html>
