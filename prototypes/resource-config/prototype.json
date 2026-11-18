@@ -1,0 +1,27 @@
+{
+  "id": "resource-config",
+  "path": "/prototypes/resource-config/",
+  "title": "IoT Admin · 资源配置原型",
+  "summary": "以资源 ID管理图片、动图和视频媒体，配置产品与语言应用范围，支持资源矩阵、同步和批量导入。",
+  "productLine": "IoT Admin",
+  "businessArea": "配置中心",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "resource-config",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "资源配置",
+    "资源 ID",
+    "媒体资源",
+    "资源矩阵",
+    "批量导入"
+  ],
+  "updatedAt": "2026-11-18T07:12:05.451Z",
+  "lastPublisher": "待确认",
+  "preview": {
+    "mode": "auto"
+  }
+}
