@@ -2,7 +2,7 @@
   "id": "device-sharing-prompt-optimization",
   "path": "/prototypes/device-sharing-prompt-optimization/",
   "title": "设备分享邀请状态优化",
-  "summary": "独立需求，以分享三期为基线：失败邀请记录持续占额，支持原位重试、重新邀请、取消和待注册/待接受说明。",
+  "summary": "独立需求，以分享三期为基线：失败邀请记录持续占额，仅 10004501 进入失败卡，其他错误码不落失败记录。",
   "productLine": "Momcozy APP",
   "businessArea": "Momcozy APP",
   "surface": "app",
@@ -10,7 +10,7 @@
     "mobile-common"
   ],
   "seriesId": "device-sharing-prompt-optimization",
-  "version": "v1.1",
+  "version": "v1.2",
   "status": "active",
   "tags": [
     "设备分享",
@@ -19,7 +19,7 @@
     "名额",
     "三期基线"
   ],
-  "updatedAt": "2026-11-13T10:00:15Z",
+  "updatedAt": "2026-11-18T10:15:41Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto",
