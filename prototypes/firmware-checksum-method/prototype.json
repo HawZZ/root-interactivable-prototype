@@ -1,8 +1,8 @@
 {
   "id": "firmware-checksum-method",
   "path": "/prototypes/firmware-checksum-method/",
-  "title": "固件校验方法配置",
-  "summary": "无需校验沿用旧接口与旧桶；MD5/SHA256 使用新接口与新桶，下载验证 token，APP 下载后校验包。",
+  "title": "固件校验方法与下载校验配置",
+  "summary": "校验方法决定 APP 下载后的摘要比对；下载校验独立决定公有桶/私有桶及 token。支持 6 种组合，创建流程不变。",
   "productLine": "IoT Admin",
   "businessArea": "AIoT Platform",
   "surface": "web",
@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "firmware-checksum-method",
-  "version": "v5",
+  "version": "v6",
   "status": "active",
   "tags": [
     "固件",
@@ -18,7 +18,9 @@
     "MD5",
     "SHA256",
     "OTA",
-    "存储桶"
+    "存储桶",
+    "下载校验",
+    "公有桶"
   ],
   "updatedAt": "2026-11-11T02:09:08Z",
   "lastPublisher": "HawZZ",
