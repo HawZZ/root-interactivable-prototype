@@ -1,0 +1,25 @@
+{
+  "id": "triplet-verification",
+  "path": "/prototypes/triplet-verification/",
+  "title": "产测平台 · 三元组校验日志",
+  "summary": "按请求时间和批次追溯逐次校验，查看输入、响应及异常，演示首次成功、重复校验和导出。",
+  "productLine": "产测平台",
+  "businessArea": "审计日志",
+  "surface": "web",
+  "systems": [
+    "web"
+  ],
+  "seriesId": "triplet-verification",
+  "version": "v1",
+  "status": "active",
+  "tags": [
+    "产测",
+    "三元组",
+    "校验日志"
+  ],
+  "updatedAt": "2026-11-24T00:00:00Z",
+  "lastPublisher": "HawZZ",
+  "preview": {
+    "mode": "auto"
+  }
+}

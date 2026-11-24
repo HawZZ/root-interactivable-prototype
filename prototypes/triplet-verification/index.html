@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三元组校验日志 · 路特产测平台</title>
+<link rel="stylesheet" href="style.css"><script defer src="app.js"></script>
+</head>
+<body>
+<div class="mobile-tabs"><button data-view="work" aria-pressed="true">产测平台</button><button data-view="notes">原型批注</button></div>
+<div class="shell">
+  <main id="viewport" aria-label="产测平台产品画布">
+    <div class="canvas" id="canvas">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-symbol" aria-hidden="true">路</span><b>路特产测平台</b></div>
+        <nav aria-label="平台导航"><div class="nav-current"><span class="nav-icon">▤</span>审计日志</div><div class="nav-sub" aria-current="page">三元组校验日志</div>
+        <div><span class="nav-icon">▣</span>设备管理</div><div><span class="nav-icon">▦</span>批次管理</div><div><span class="nav-icon">⇩</span>批次下载管理</div><div><span class="nav-icon">▧</span>烧录申请管理</div><div><span class="nav-icon">▥</span>产品配置管理</div><div><span class="nav-icon">♙</span>用户管理</div></nav>
+      </aside>
+      <div class="product">
+        <header class="bar"><span>审计日志 <i>/</i> <strong>三元组校验日志</strong></span><span class="account"><b>QA</b><span id="identity"></span></span></header>
+        <div class="workspace">
+          <header class="page-title"><h1>三元组校验日志</h1></header>
+          <form id="filters" class="panel filter-box">
+            <div class="section-title"><h2>查询条件</h2><button type="button" class="anchor" data-anchor="1">1</button></div>
+            <div class="fields"><label>请求时间<div class="range"><input id="start" aria-label="开始时间" type="datetime-local" step="1"><span>至</span><input id="end" aria-label="结束时间" type="datetime-local" step="1"></div></label>
+            <label>批次号<input id="batch" placeholder="请输入批次号" autocomplete="off"></label>
+            <div class="buttons"><button class="primary" id="query">查询</button><button type="button" id="reset">重置</button></div></div>
+            <div id="filter-error" role="alert" class="error" hidden></div>
+          </form>
+          <section class="panel list-box">
+            <header class="list-head"><div class="section-title" id="record-title"><h2>请求记录</h2><span id="total"></span><button class="anchor" data-anchor="2">2</button></div>
+              <div class="buttons" id="export-group"><button class="anchor" data-anchor="3">3</button><button id="export" disabled><span aria-hidden="true">↓</span> 导出 CSV</button></div></header>
+            <div id="list" aria-live="polite"></div><footer id="pager"></footer>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <aside class="review"><div class="review-head"><h2>原型批注</h2><button id="size" class="small" title="切换画布显示比例">原始大小</button></div>
+    <div class="review-tabs"><button data-tab="spec" aria-selected="true">页面规格</button><button data-tab="demo" aria-selected="false">接口演示</button></div>
+    <section id="spec"><div id="notes"></div><details class="review-controls"><summary>演示视角与异常</summary><label>日志访问范围<select id="scope"><option value="all">管理范围 · 两个工厂</option><option value="A">工厂 A 范围</option><option value="none">无日志访问权限</option></select></label><button id="fault">模拟查询失败</button></details></section>
+    <section id="demo" hidden>
+      <h3>模拟工位请求</h3><p>在本地试发校验请求。每次调用都会生成独立日志，刷新页面可恢复初始样例。</p>
+      <label>样例设备<select id="device"></select></label>
+      <div class="pair"><label>SN<input id="sn" spellcheck="false"></label><label>MAC<input id="mac" spellcheck="false"></label></div>
+      <label>批次号<input id="sim-batch" value="B261123-01"></label>
+      <label>三元组校验摘要<textarea id="digest" rows="3" spellcheck="false"></textarea></label>
+      <div class="presets"><button data-fill="valid">正确样例</button><button data-fill="wrong">不匹配样例</button><button data-fill="invalid">格式非法</button></div>
+      <label>调用场景<select id="scene"><option value="normal">普通调用</option><option value="pair">两工位跨批次并发</option><option value="lost">客户端未收到响应</option><option value="denied">鉴权拒绝</option><option value="broken">平台记录异常</option><option value="persist">首次登记失败</option><option value="unsent">技术异常且未发出响应</option></select></label>
+      <button class="primary wide" id="send">发送请求</button><div id="outcome" role="status"></div>
+      <details class="review-controls"><summary>样例协议与前提</summary><p>演示采用虚构设备资料。摘要样例由本地工位与平台分别计算，示例约定为 UTF-8 编码的三字段 JSON 数组、SHA-256、64 位小写十六进制。实际字段序列化、摘要规范与标识格式待双方联调确定。</p><p>选择设备还原工位输入。设备 A 可切换平台三元组版本，保留历史成功登记。判重以平台计算值为准。</p><button id="rotate">切换设备 A 平台三元组版本</button></details>
+    </section>
+  </aside>
+</div>
+<div id="overlay" hidden><div id="scrim"></div><section class="drawer" role="dialog" aria-modal="false" aria-labelledby="detail-heading"><header><div><small>三元组校验日志</small><h2 id="detail-heading">请求详情</h2></div><button id="close" aria-label="关闭详情">关闭</button></header><div id="detail"></div></section></div>
+<div id="toast" role="status" hidden></div>
+</body></html>
