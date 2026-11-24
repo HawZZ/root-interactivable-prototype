@@ -3,8 +3,8 @@
   "path": "/prototypes/triplet-verification/",
   "title": "产测平台 · 三元组校验日志",
   "summary": "按请求时间和批次追溯逐次校验，查看输入、响应及异常，演示首次成功、重复校验和导出。",
-  "productLine": "产测平台",
-  "businessArea": "审计日志",
+  "productLine": "IoT Admin",
+  "businessArea": "AIoT Platform",
   "surface": "web",
   "systems": [
     "web"
@@ -13,7 +13,7 @@
   "version": "v1",
   "status": "active",
   "tags": [
-    "产测",
+    "产测平台",
     "三元组",
     "校验日志"
   ],
