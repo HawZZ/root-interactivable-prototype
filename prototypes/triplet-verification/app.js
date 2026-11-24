@@ -145,19 +145,40 @@ $('reset').onclick=()=>{
 };
 $('scope').onchange=()=>{closeDetail();scope=$('scope').value;page=1;++listGeneration;listMode='ready';renderList();};
 $('fault').onclick=()=>queryRows(true);
-function csvCell(value) {
-  const v=String(value??'');
-  return '"'+(/^[=+@\-\t\r]/.test(v)?"'":'')+v.replace(/"/g,'""')+'"';
+const resultColumns = ['成功','未找到SN/MAC','校验失败','重复校验','参数错误','鉴权拒绝','技术异常'];
+function macStatistics(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    const value = row.input.MAC;
+    const mac = validMac(value) ? compactMac(value).match(/../g).join(':') : 'MAC 缺失或无效';
+    if (!groups.has(mac)) groups.set(mac, new Map());
+    const counts = groups.get(mac);
+    counts.set(row.result, (counts.get(row.result) || 0) + 1);
+  }
+  const table = [['MAC','请求总次数',...resultColumns]];
+  for (const mac of [...groups.keys()].sort()) {
+    const counts = groups.get(mac);
+    const distribution = resultColumns.map(result => counts.get(result) || 0);
+    table.push([mac, distribution.reduce((sum,count) => sum + count, 0), ...distribution]);
+  }
+  return table;
+}
+function addSheet(book, name, values, widths) {
+  const sheet = XLSX.utils.aoa_to_sheet(values);
+  sheet['!cols'] = widths.map(wch => ({wch}));
+  sheet['!autofilter'] = {ref:sheet['!ref']};
+  XLSX.utils.book_append_sheet(book, sheet, name);
 }
 function exportRows() {
   const rows=visibleRows();
   if(!rows.length||scope==='none'||listMode!=='ready') return;
   const head=['请求编号','请求时间','校验结果 / 异常',...inputFields.map(f=>'入参·'+f),'响应状态','出参·校验结果','出参·校验时间',...inputFields.map(f=>'出参·'+f),'错误类型','错误信息'];
   const data=rows.map(r=>[r.id,r.received,r.result,...inputFields.map(k=>r.input[k]),r.delivery,r.output?.校验结果,r.output?.校验时间,...inputFields.map(k=>r.output?.[k]),r.output?.错误类型,r.output?.错误信息]);
-  const file=new Blob(['\uFEFF',[head,...data].map(line=>line.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(file),link=document.createElement('a');
-  link.href=url;link.download='三元组校验日志.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-  toast('已导出 '+rows.length+' 条请求记录');
+  const book = XLSX.utils.book_new();
+  addSheet(book, '日志记录', [head,...data], [16,23,18,18,22,20,68,13,18,23,18,22,20,68,16,36]);
+  addSheet(book, 'MAC 统计', macStatistics(rows), [23,16,12,20,14,14,14,14,14]);
+  XLSX.writeFile(book, '三元组校验日志.xlsx', {compression:true});
+  toast('已导出 '+rows.length+' 条请求记录及 MAC 统计');
 }
 $('export').onclick=exportRows;
 let toastTimer;
@@ -184,7 +205,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
 const annotations={
   1:['查询条件','日志列表 › 筛选区','按服务端接收时间或请求批次号查询；两项同时填写时取交集。起止时间均包含边界，允许仅填一端。','原型备注 · 时区示例为 UTC+8，批次按完整值匹配。'],
   2:['请求记录','日志列表 › 表格','每次调用单独一行，按接收时间倒序。四种校验结果与参数、鉴权、技术异常均保留；缺少批次号显示为横杠。','数据范围由可信调用归属或管理授权决定。无权限显示受限态；查询失败可重试。'],
-  3:['导出 CSV','日志列表 › 导出','沿用产测平台 CSV 形式，每个请求一行。导出当前查询命中的全部授权记录，包含完整合法入参、实际出参或异常。','列表为空、加载中、查询失败或无权限时，导出不可用。'],
+  3:['导出 Excel','日志列表 › 导出','「日志记录」保存本次筛选和权限下的全部请求，一次一行；「MAC 统计」按规范化入参 MAC 汇总请求总次数和各业务结果、异常的次数。重试单独计数。','无有效 MAC 的请求合并列为“MAC 缺失或无效”。所有统计行的总次数之和等于日志条数。列表为空、加载中、查询失败或无权限时不可导出。'],
   4:['查看详情','日志列表 › 操作列','打开本次请求的详情。关闭后返回原筛选条件与页码，可对照首次成功及后续重试。','原型备注 · 入口位于审计日志下，详情采用侧栏展示。'],
   5:['请求概况','请求详情 › 概况','请求编号用于区分当次调用。请求时间取平台接收时刻，校验时间见业务出参。','响应状态只描述平台是否发出响应；客户端仍可能超时。'],
   6:['请求入参','请求详情 › 入参','展示本次 SN、MAC、批次号和提交摘要。缺失字段留空，非法值只显示省略标记。','平台计算的期望摘要、明文三元组和认证头均不进入详情或导出。'],

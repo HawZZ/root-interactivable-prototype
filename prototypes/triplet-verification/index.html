@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>三元组校验日志 · 路特产测平台</title>
-<link rel="stylesheet" href="style.css"><script defer src="app.js"></script>
+<link rel="stylesheet" href="style.css"><script defer src="vendor/xlsx.full.min.js"></script><script defer src="app.js"></script>
 </head>
 <body>
 <div class="mobile-tabs"><button data-view="work" aria-pressed="true">产测平台</button><button data-view="notes">原型批注</button></div>
@@ -28,7 +28,7 @@
           </form>
           <section class="panel list-box">
             <header class="list-head"><div class="section-title" id="record-title"><h2>请求记录</h2><span id="total"></span><button class="anchor" data-anchor="2">2</button></div>
-              <div class="buttons" id="export-group"><button class="anchor" data-anchor="3">3</button><button id="export" disabled><span aria-hidden="true">↓</span> 导出 CSV</button></div></header>
+              <div class="buttons" id="export-group"><button class="anchor" data-anchor="3">3</button><button id="export" disabled><span aria-hidden="true">↓</span> 导出 Excel</button></div></header>
             <div id="list" aria-live="polite"></div><footer id="pager"></footer>
           </section>
         </div>
