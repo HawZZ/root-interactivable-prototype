@@ -4,10 +4,12 @@ const logs = [];
 const occupied = new Set();
 const devices = Array.from({length:18}, (_,i) => ({
   sn:'LT26' + String(41001+i), mac:'02:3A:61:20:08:' + (32+i).toString(16).toUpperCase(),
+  batchNumber:i%2===0?'B261123-01':'B261123-02',
   owner:i%3===1?'B':'A', version:1
 }));
 const A = devices[0];
-const inputFields = ['SN','MAC','批次号','三元组校验摘要'];
+const inputFields = ['SN','MAC','三元组校验摘要'];
+const responseFields = ['校验结果','校验时间','SN','MAC','批次号','三元组校验摘要'];
 const omitted = '格式非法，已省略';
 const pageSize = 8;
 const startClock = Date.UTC(2026,10,23,1,30,0);
@@ -31,17 +33,20 @@ async function calculateSample(device) {
 async function verify(raw, caller, scene='normal', at=null) {
   const seq = ++serial;
   const ms = at ?? (startClock + seq*59000);
-  const check = [validCode, validMac, validCode, validDigest];
+  const check = [validCode, validMac, validDigest];
   const safe = {};
   inputFields.forEach((key,i) => {
     const value = raw[key];
     safe[key] = value == null || value==='' ? null : check[i](value) ? value : omitted;
   });
-  const row = {id:'VFY-'+String(seq).padStart(5,'0'), owner:caller, received:dateString(ms),
+  const snRecords = scene!=='denied' && validCode(raw.SN ?? '') ? devices.filter(d=>d.owner===caller && d.sn===raw.SN) : [];
+  const batches = new Set(snRecords.map(d=>d.batchNumber));
+  const batchNumber = batches.size===1 ? snRecords[0].batchNumber || null : null;
+  const row = {batchNumber,id:'VFY-'+String(seq).padStart(5,'0'), owner:caller, received:dateString(ms),
     input:safe, output:null, result:'', delivery:'已发出', sentAt:null};
   function error(kind,message) {
     row.result=kind;
-    row.output={错误类型:kind,错误信息:message};
+    row.output={错误类型:kind,错误信息:message,批次号:batchNumber};
   }
   if(scene==='denied') {
     row.owner=null;
@@ -49,8 +54,9 @@ async function verify(raw, caller, scene='normal', at=null) {
   } else if(Object.values(safe).some(value=>value===null || value===omitted)) {
     error('参数错误','请检查必填字段及字段格式');
   } else {
-    const device=devices.find(d=>d.sn===raw.SN && compactMac(d.mac)===compactMac(raw.MAC) && d.owner===caller);
-    if(scene==='broken' || scene==='unsent') {
+    const matches=snRecords.filter(d=>compactMac(d.mac)===compactMac(raw.MAC));
+    const device=matches[0];
+    if(scene==='broken' || scene==='unsent' || matches.length>1) {
       error('技术异常','设备记录无法完成校验');
     } else if(!device) {
       row.result='未找到SN/MAC';
@@ -65,23 +71,23 @@ async function verify(raw, caller, scene='normal', at=null) {
         row.result='成功';
       }
     }
-    if(!row.output) row.output={校验结果:row.result,校验时间:dateString(ms+1000),...safe};
+    if(!row.output) row.output={校验结果:row.result,校验时间:dateString(ms+1000),...safe,批次号:batchNumber};
   }
   if(scene==='unsent') {row.delivery='未发出';row.output=null;}
   else row.sentAt=dateString(ms+1000);
   logs.push(row);
   return row;
 }
-function rawFor(d,digest,batch) {return {SN:d.sn,MAC:d.mac,批次号:batch,三元组校验摘要:digest};}
+function rawFor(d,digest) {return {SN:d.sn,MAC:d.mac,三元组校验摘要:digest};}
 async function seed() {
   for(let i=1;i<=24;i++){
     const d=devices[i===24?17:1+(i%16)];
     const digest=await calculateSample(d);
-    const raw=rawFor(d,digest,i%4===0?'B261123-02':'B261123-01');
+    const raw=rawFor(d,digest);
     let scene='normal';
     if(i%9===0) raw['三元组校验摘要']='0'.repeat(64);
     else if(i%11===0) raw.SN='LT2699999';
-    else if(i===6) raw['批次号']='';
+    else if(i===6) raw.SN='';
     else if(i===14 || i===20) scene='unsent';
     else if(i===13) scene='denied';
     await verify(raw,d.owner,scene);
@@ -93,7 +99,7 @@ function visibleRows() {
   return logs.filter(row => (scope==='all'||row.owner===scope)
     && (!applied.start||row.received>=applied.start)
     && (!applied.end||row.received<=applied.end)
-    && (!applied.batch||row.input['批次号']===applied.batch))
+    && (!applied.batch||row.batchNumber===applied.batch))
     .sort((a,b)=>b.received.localeCompare(a.received)||b.id.localeCompare(a.id));
 }
 const tones={'成功':'ok','重复校验':'repeat','校验失败':'bad','参数错误':'tech','技术异常':'tech','鉴权拒绝':'tech'};
@@ -114,7 +120,7 @@ function renderList() {
   else if(!count) $('list').innerHTML=stateBox('暂无匹配记录','请调整请求时间或批次号。');
   else {
     const slice=rows.slice((page-1)*pageSize,page*pageSize);
-    $('list').innerHTML='<table><thead><tr><th>请求时间</th><th>批次号</th><th>SN</th><th>MAC 地址</th><th>校验结果 / 异常</th><th>操作 <button class="anchor" data-anchor="4">4</button></th></tr></thead><tbody>'+slice.map(r=>'<tr><td class="numeric">'+r.received+'</td><td class="mono">'+enc(display(r.input['批次号']))+'</td><td class="mono">'+enc(display(r.input.SN))+'</td><td class="mono">'+enc(display(r.input.MAC))+'</td><td>'+badge(r.result)+'</td><td><button class="link" data-detail="'+r.id+'">查看详情</button></td></tr>').join('')+'</tbody></table>';
+    $('list').innerHTML='<table><thead><tr><th>请求时间</th><th>批次号</th><th>SN</th><th>MAC 地址</th><th>校验结果 / 异常</th><th>操作 <button class="anchor" data-anchor="4">4</button></th></tr></thead><tbody>'+slice.map(r=>'<tr><td class="numeric">'+r.received+'</td><td class="mono">'+enc(display(r.batchNumber))+'</td><td class="mono">'+enc(display(r.input.SN))+'</td><td class="mono">'+enc(display(r.input.MAC))+'</td><td>'+badge(r.result)+'</td><td><button class="link" data-detail="'+r.id+'">查看详情</button></td></tr>').join('')+'</tbody></table>';
     $('pager').innerHTML='<span>第 '+((page-1)*pageSize+1)+'–'+Math.min(page*pageSize,count)+' 条，共 '+count+' 条</span><div class="pages"><button id="prev" '+(page===1?'disabled':'')+'>上一页</button><span>'+page+' / '+pages+'</span><button id="next" '+(page===pages?'disabled':'')+'>下一页</button></div>';
   }
   renderNotes();
@@ -172,10 +178,10 @@ function addSheet(book, name, values, widths) {
 function exportRows() {
   const rows=visibleRows();
   if(!rows.length||scope==='none'||listMode!=='ready') return;
-  const head=['请求编号','请求时间','校验结果 / 异常',...inputFields.map(f=>'入参·'+f),'响应状态','出参·校验结果','出参·校验时间',...inputFields.map(f=>'出参·'+f),'错误类型','错误信息'];
-  const data=rows.map(r=>[r.id,r.received,r.result,...inputFields.map(k=>r.input[k]),r.delivery,r.output?.校验结果,r.output?.校验时间,...inputFields.map(k=>r.output?.[k]),r.output?.错误类型,r.output?.错误信息]);
+  const head=['请求编号','请求时间','校验结果 / 异常','反查批次号',...inputFields.map(f=>'入参·'+f),'响应状态',...responseFields.map(f=>'出参·'+f),'错误类型','错误信息'];
+  const data=rows.map(r=>[r.id,r.received,r.result,r.batchNumber,...inputFields.map(k=>r.input[k]),r.delivery,...responseFields.map(k=>r.output?.[k]),r.output?.错误类型,r.output?.错误信息]);
   const book = XLSX.utils.book_new();
-  addSheet(book, '日志记录', [head,...data], [16,23,18,18,22,20,68,13,18,23,18,22,20,68,16,36]);
+  addSheet(book, '日志记录', [head,...data], [16,23,18,20,18,22,68,13,18,23,18,22,20,68,16,36]);
   addSheet(book, 'MAC 统计', macStatistics(rows), [23,16,12,20,14,14,14,14,14]);
   XLSX.writeFile(book, '三元组校验日志.xlsx', {compression:true});
   toast('已导出 '+rows.length+' 条请求记录及 MAC 统计');
@@ -191,7 +197,7 @@ function openDetail(id) {
   const row=visibleRows().find(r=>r.id===id);
   if(!row)return;
   lastDetailButton=document.activeElement;detailId=id;
-  $('detail').innerHTML=badge(row.result)+section('请求概况',5,{'请求编号':row.id,'请求时间':row.received,'响应状态':row.delivery})+
+  $('detail').innerHTML=badge(row.result)+section('请求概况',5,{'请求编号':row.id,'请求时间':row.received,'反查批次号':row.batchNumber,'响应状态':row.delivery})+
     section('请求入参',6,row.input)+section('实际出参',7,row.output||{'响应状态':'未发出'});
   $('overlay').hidden=false;selectTab('spec');renderNotes();$('close').focus();
 }
@@ -203,13 +209,13 @@ $('close').onclick=closeDetail;$('scrim').onclick=closeDetail;
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
 
 const annotations={
-  1:['查询条件','日志列表 › 筛选区','按服务端接收时间或请求批次号查询；两项同时填写时取交集。起止时间均包含边界，允许仅填一端。','原型备注 · 时区示例为 UTC+8，批次按完整值匹配。'],
-  2:['请求记录','日志列表 › 表格','每次调用单独一行，按接收时间倒序。四种校验结果与参数、鉴权、技术异常均保留；缺少批次号显示为横杠。','数据范围由可信调用归属或管理授权决定。无权限显示受限态；查询失败可重试。'],
+  1:['查询条件','日志列表 › 筛选区','按服务端接收时间或平台按 SN 反查并留存的批次号查询；两项同时填写时取交集。起止时间均包含边界，允许仅填一端。','原型备注 · 时区示例为 UTC+8，批次按完整值匹配。'],
+  2:['请求记录','日志列表 › 表格','每次调用单独一行，按接收时间倒序。四种校验结果与参数、鉴权、技术异常均保留；未查到唯一批次时显示为横杠，可按时间检索。','数据范围由可信调用归属或管理授权决定。无权限显示受限态；查询失败可重试。'],
   3:['导出 Excel','日志列表 › 导出','「日志记录」保存本次筛选和权限下的全部请求，一次一行；「MAC 统计」按规范化入参 MAC 汇总请求总次数和各业务结果、异常的次数。重试单独计数。','无有效 MAC 的请求合并列为“MAC 缺失或无效”。所有统计行的总次数之和等于日志条数。列表为空、加载中、查询失败或无权限时不可导出。'],
   4:['查看详情','日志列表 › 操作列','打开本次请求的详情。关闭后返回原筛选条件与页码，可对照首次成功及后续重试。','原型备注 · 入口位于审计日志下，详情采用侧栏展示。'],
   5:['请求概况','请求详情 › 概况','请求编号用于区分当次调用。请求时间取平台接收时刻，校验时间见业务出参。','响应状态只描述平台是否发出响应；客户端仍可能超时。'],
-  6:['请求入参','请求详情 › 入参','展示本次 SN、MAC、批次号和提交摘要。缺失字段留空，非法值只显示省略标记。','平台计算的期望摘要、明文三元组和认证头均不进入详情或导出。'],
-  7:['实际出参','请求详情 › 出参','四类业务响应均展示结果、校验时间及本次提交的四项。异常显示实际错误，未发出时显示响应状态。','重复校验表示该键曾成功；工位须暂停并核查首次请求与重试记录。']
+  6:['请求入参','请求详情 › 入参','展示工位提交的 SN、MAC 和三元组校验摘要。缺失字段留空，非法值只显示省略标记。','平台计算的期望摘要、明文三元组和认证头均不进入详情或导出。'],
+  7:['实际出参','请求详情 › 出参','四类业务响应均展示结果、校验时间、三项入参和平台按 SN 反查的批次号。已发出的错误响应也带批次字段，无法确定时为空；未发出时仅记录状态。','重复校验表示该键曾成功；工位须暂停并核查首次请求与重试记录。']
 };
 function renderNotes() {
   const ids=detailId?[5,6,7]:[1,2,3,...(document.querySelector('[data-detail]')?[4]:[])];
@@ -274,12 +280,12 @@ $('rotate').onclick=async()=>{
 $('send').onclick=async()=>{
   const button=$('send');button.disabled=true;
   try {
-    const raw={SN:$('sn').value,MAC:$('mac').value,批次号:$('sim-batch').value,三元组校验摘要:$('digest').value};
+    const raw={SN:$('sn').value,MAC:$('mac').value,三元组校验摘要:$('digest').value};
     const scene=$('scene').value,caller=selectedDevice().owner;
     let requests;
     if(scene==='pair'){
       const at=startClock+(serial+1)*59000;
-      requests=await Promise.all([verify(raw,caller,'normal',at),verify({...raw,批次号:raw['批次号']+'-B'},caller,'normal',at)]);
+      requests=await Promise.all([verify(raw,caller,'normal',at),verify(raw,caller,'normal',at)]);
     } else requests=[await verify(raw,caller,scene)];
     $('outcome').replaceChildren();
     requests.forEach(row=>{

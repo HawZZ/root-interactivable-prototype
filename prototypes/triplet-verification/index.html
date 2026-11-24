@@ -39,13 +39,12 @@
     <div class="review-tabs"><button data-tab="spec" aria-selected="true">页面规格</button><button data-tab="demo" aria-selected="false">接口演示</button></div>
     <section id="spec"><div id="notes"></div><details class="review-controls"><summary>演示视角与异常</summary><label>日志访问范围<select id="scope"><option value="all">管理范围 · 两个工厂</option><option value="A">工厂 A 范围</option><option value="none">无日志访问权限</option></select></label><button id="fault">模拟查询失败</button></details></section>
     <section id="demo" hidden>
-      <h3>模拟工位请求</h3><p>在本地试发校验请求。每次调用都会生成独立日志，刷新页面可恢复初始样例。</p>
+      <h3>模拟工位请求</h3><p>平台根据 SN 反查批次号。每次调用都会生成独立日志，刷新页面可恢复初始样例。</p>
       <label>样例设备<select id="device"></select></label>
       <div class="pair"><label>SN<input id="sn" spellcheck="false"></label><label>MAC<input id="mac" spellcheck="false"></label></div>
-      <label>批次号<input id="sim-batch" value="B261123-01"></label>
       <label>三元组校验摘要<textarea id="digest" rows="3" spellcheck="false"></textarea></label>
       <div class="presets"><button data-fill="valid">正确样例</button><button data-fill="wrong">不匹配样例</button><button data-fill="invalid">格式非法</button></div>
-      <label>调用场景<select id="scene"><option value="normal">普通调用</option><option value="pair">两工位跨批次并发</option><option value="lost">客户端未收到响应</option><option value="denied">鉴权拒绝</option><option value="broken">平台记录异常</option><option value="persist">首次登记失败</option><option value="unsent">技术异常且未发出响应</option></select></label>
+      <label>调用场景<select id="scene"><option value="normal">普通调用</option><option value="pair">两工位并发</option><option value="lost">客户端未收到响应</option><option value="denied">鉴权拒绝</option><option value="broken">平台记录异常</option><option value="persist">首次登记失败</option><option value="unsent">技术异常且未发出响应</option></select></label>
       <button class="primary wide" id="send">发送请求</button><div id="outcome" role="status"></div>
       <details class="review-controls"><summary>样例协议与前提</summary><p>演示采用虚构设备资料。摘要样例由本地工位与平台分别计算，示例约定为 UTF-8 编码的三字段 JSON 数组、SHA-256、64 位小写十六进制。实际字段序列化、摘要规范与标识格式待双方联调确定。</p><p>选择设备还原工位输入。设备 A 可切换平台三元组版本，保留历史成功登记。判重以平台计算值为准。</p><button id="rotate">切换设备 A 平台三元组版本</button></details>
     </section>
