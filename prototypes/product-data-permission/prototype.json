@@ -2,7 +2,7 @@
   "id": "product-data-permission",
   "path": "/prototypes/product-data-permission/",
   "title": "IoT 平台产品数据权限管理原型",
-  "summary": "覆盖 ERP 功能权限与产品数据权限联动、用户直授、数据角色、临时全量账号及产品反向授权核查。",
+  "summary": "演示用户批量直授、产品授权范围、未授权与空数据页面，以及审批、虚拟版本、设备查询等业务权限。",
   "productLine": "IoT Admin",
   "businessArea": "AIoT Platform",
   "surface": "web",
@@ -10,14 +10,14 @@
     "web"
   ],
   "seriesId": "product-data-permission",
-  "version": "v1",
+  "version": "R15/V5",
   "status": "active",
   "tags": [
     "RBAC",
     "产品授权",
     "数据角色"
   ],
-  "updatedAt": "2026-08-20T06:10:58Z",
+  "updatedAt": "2026-11-27T10:31:08Z",
   "lastPublisher": "HawZZ",
   "preview": {
     "mode": "auto"

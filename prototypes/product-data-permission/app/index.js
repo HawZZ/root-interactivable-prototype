@@ -1,6 +1,7 @@
 const users = [
   { name: "陈薇", mail: "chen.wei@momcozy.com", erp: "产品经理", direct: ["W1 Lite"], roles: ["北美泵产品组"] },
   { name: "王琳", mail: "wang.lin@momcozy.com", erp: "运营专员", direct: [], roles: ["欧洲运营组"] },
+  { name: "张静", mail: "zhang.jing@momcozy.com", erp: "运营专员", direct: [], roles: [] },
   { name: "赵敏", mail: "zhao.min@momcozy.com", erp: "历史账号", direct: [], roles: ["系统临时全量角色"] }
 ];
 
@@ -31,7 +32,7 @@ const notes = {
   users: [
     ["页面可见范围", "仅 IoT 平台管理员可见；管理员资格由 ERP 配置的数据权限管理页面/动作功能授权决定，本页不修改 ERP 权限。"],
     ["有效范围", "用户直授产品与所属数据角色产品取并集；任一来源为“全部产品（动态）”时，有效范围即为动态全部产品。"],
-    ["用户授权", "授权入口仅在用户列表的“管理授权”。指定产品通过搜索添加；全部产品会自动覆盖后续新建产品。"],
+    ["用户授权", "单个账号可管理直授与角色。勾选多个账号可批量追加指定产品直授；动态全部产品由角色提供。"],
     ["系统临时全量角色", "历史全量账号作为“系统临时全量角色”在数据角色页管理，不再作为用户状态展示。"]
   ],
   roles: [
@@ -60,6 +61,7 @@ const scenarios = {
   }
 };
 
+const selectedAccounts = new Set();
 let current = users[0];
 let drawerMode = "grant";
 let activeRole = null;
@@ -88,16 +90,22 @@ function directProductLabel(user) {
   return user.direct.length ? user.direct.join("、") : "—";
 }
 
-function calculateScope(user) {
+function scopeProducts(user) {
   const roles = user.roles.map(name => dataRoles.find(role => role.name === name)).filter(role => role && role.enabled);
-  if (roles.some(role => role.dynamicAll)) return "全部产品（动态）";
-  return [...new Set([...user.direct, ...roles.flatMap(role => role.products)])].join("、") || "—";
+  return roles.some(role => role.dynamicAll) ? productCatalog.map(p => p.name) : [...new Set([...user.direct, ...roles.flatMap(role => role.products)])];
+}
+
+function calculateScope(user) {
+  if (dataRoles.some(r => r.enabled && r.dynamicAll && user.roles.includes(r.name))) return "全部产品（动态）";
+  return scopeProducts(user).join("、") || "—";
 }
 
 function renderNotes(tab, context) {
   const label = { users: "用户授权 · 页面态", roles: "数据角色 · 页面态", drawer: "操作抽屉 · 当前状态" };
   document.querySelector("#noteContext").textContent = context || label[tab];
-  const scenarioNote = ["当前原型场景 · " + scenarios[activeScenario].label, scenarios[activeScenario].scope];
+  const scenarioNote = ["business","domain"].includes(tab)
+    ? ["业务访问身份 · " + viewer.name, "页面按此账号的产品直授与启用的数据角色读取数据。"]
+    : ["当前原型场景 · " + scenarios[activeScenario].label, scenarios[activeScenario].scope];
   document.querySelector("#notes").innerHTML = [scenarioNote, ...notes[tab]].map((note, index) =>
     "<article class='note'><span class='num'>" + (index + 1) + "</span><b>" + note[0] + "</b><span>" + note[1] + "</span></article>"
   ).join("");
@@ -105,7 +113,7 @@ function renderNotes(tab, context) {
 
 function renderRows() {
   document.querySelector("#userRows").innerHTML = users.map((user, index) =>
-    "<tr><td><b>" + user.name + "</b><br><small>" + user.mail + "</small></td><td>" + user.erp +
+    "<tr><td><input type='checkbox' aria-label='选择" + user.name + "' data-select-account='" + user.mail + "'" + (selectedAccounts.has(user.mail) ? " checked" : "") + "></td><td><b>" + user.name + "</b><br><small>" + user.mail + "</small></td><td>" + user.erp +
     "</td><td>" + directProductLabel(user) + "</td><td>" + user.roles.join("、") + "</td><td>" +
     calculateScope(user) + "</td><td><button class='op' data-user='" + index + "'>管理授权</button></td></tr>"
   ).join("");
@@ -116,6 +124,8 @@ function renderRows() {
 
 function setDrawer(title, body, confirmText, mode) {
   drawerMode = mode;
+  document.querySelector("#confirm").disabled = false;
+  document.querySelector("#cancel").hidden = false;
   document.querySelector("#drawerTitle").textContent = title;
   document.querySelector("#drawerBody").innerHTML = body;
   document.querySelector("#confirm").textContent = confirmText;
@@ -163,6 +173,7 @@ function renderGrantProductPicker() {
   host.innerHTML = "<input class='el-input' id='productSearch' placeholder='搜索产品名称或产品 ID（共 " +
     productCatalog.length + " 个产品）'><div class='account-suggestions' id='productSuggestions'></div><div class='scope' id='selectedProducts'>" +
     (grantDraft.direct.length ? grantDraft.direct.map(name => "<span class='chip'>" + name + " <button class='op danger' data-remove-product='" + name + "'>×</button></span>").join("") : "尚未选择指定产品") + "</div>";
+  if (drawerMode === "batch") updateBatchPreview();
   const input = document.querySelector("#productSearch");
   const list = document.querySelector("#productSuggestions");
   const render = () => {
@@ -226,7 +237,7 @@ function openGrant(user) {
   current = user;
   grantDraft = { direct: [...user.direct], roles: [...user.roles] };
   setDrawer("管理用户授权 · " + user.name,
-    "<div class='field'><label>IoT 平台账号</label><input class='el-input' value='" + user.name + "（" + user.mail +
+    (scopeProducts(user).length ? "" : "<p class='scope'>该账号暂无已授权产品，可添加直授产品或数据角色。</p>") + "<div class='field'><label>IoT 平台账号</label><input class='el-input' value='" + user.name + "（" + user.mail +
     "）' disabled><p class='help'>账号由 ERP 分配并同步至 IoT 平台；本页仅维护 IoT 产品数据授权，不修改 ERP 账号、角色或页面权限。</p></div>" +
     "<div class='field'><label>直接授权产品</label><p class='help'>用户直授仅支持指定产品，可按名称或产品 ID 检索后多选。</p><div id='grantProducts'></div></div>" +
     "<div class='field'><label>从属数据角色</label><p class='help'>可加入多个数据角色；系统临时全量角色仅由上线冻结名单管理，不能在此新增。</p><div id='grantRoles'></div></div>",
@@ -386,6 +397,7 @@ document.querySelector("#close").onclick = closeDrawer;
 document.querySelector("#cancel").onclick = closeDrawer;
 document.querySelector("#drawer .mask").onclick = closeDrawer;
 document.querySelector("#confirm").onclick = () => {
+  if (["batch","batchResult"].includes(drawerMode)) return confirmBatch();
   if (drawerMode === "grant") {
     const previousRoles = [...current.roles];
     current.direct = [...grantDraft.direct];

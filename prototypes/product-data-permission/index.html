@@ -15,15 +15,15 @@
       <div class="canvas">
         <aside class="nav">
           <div class="logo">luteos <small>IoT Admin</small></div>
-          <div class="nav-group">概览</div>
+          <button class="nav-link nav-group" data-route="/home">概览</button>
           <div class="nav-group active">智能产品</div>
-          <div class="nav-sub">产品列表</div>
+          <button class="nav-link nav-sub" data-route="/iot-product">产品列表</button>
           <div class="nav-sub">消息推送</div>
           <div class="nav-group">设备管理</div>
           <div class="nav-group">App</div>
           <div class="nav-group">配置中心</div>
           <div class="nav-group active2">系统管理</div>
-          <div class="nav-sub selected" id="permissionNav">数据权限管理</div>
+          <button class="nav-link nav-sub selected" id="permissionNav" data-route="/permissions">数据权限管理</button>
         </aside>
 
         <section class="main">
@@ -39,7 +39,7 @@
               </div>
             </div>
 
-            <div class="tabs">
+            <div id="governance"><div class="tabs">
               <button class="tab active" id="userTab" data-tab="users">用户授权</button>
               <button class="tab" id="roleTab" data-tab="roles">数据角色</button>
             </div>
@@ -60,11 +60,12 @@
                 <button class="el-btn el-btn--primary">查询</button>
                 <button class="el-btn">重置</button>
               </div>
+              <div class="batch-bar"><button class="el-btn el-btn--primary" id="batchStart" disabled>批量授权</button><span id="selectionCount">已选 0 个账号</span></div>
               <table class="el-table">
-                <thead><tr><th>用户</th><th>ERP 角色</th><th>直授产品</th><th>数据角色</th><th>有效产品范围</th><th>操作</th></tr></thead>
+                <thead><tr><th aria-label="选取账号"></th><th>用户</th><th>ERP 角色</th><th>直授产品</th><th>数据角色</th><th>有效产品范围</th><th>操作</th></tr></thead>
                 <tbody id="userRows"></tbody>
               </table>
-              <div class="pager">共 3 条　‹　<b>1</b>　›　 10条/页</div>
+              <div class="pager">共 4 条　‹　<b>1</b>　›　 10条/页</div>
             </section>
 
             <section id="roles" class="view">
@@ -82,7 +83,8 @@
                   <tr><td>系统临时全量角色</td><td>全局管理员</td><td>12</td><td>全部产品（动态）</td><td><span class="tag success">启用</span></td><td><button class="op">管理成员</button><i>|</i><button class="op">查看</button></td></tr>
                 </tbody>
               </table>
-            </section>
+            </section></div>
+            <section id="business" hidden></section>
           </div>
         </section>
       </div>
@@ -106,6 +108,24 @@
           <button class="scenario active" data-scenario="admin">IoT管理员</button>
           <button class="scenario" data-scenario="user">普通用户</button>
         </div>
+        <div id="reviewControls" class="review-controls">
+          <label>业务访问身份<select id="viewer" class="el-select"></select></label>
+          <label>业务功能权限<select id="erpAccess" class="el-select"><option value="edit">可查看和操作</option><option value="read">可查看，无编辑权限</option><option value="none">无功能权限</option></select></label>
+          <label id="approvalRoleField" hidden>审批身份<select id="approvalRole" class="el-select"><option value="user">普通用户</option><option value="approver">审批员</option><option value="admin">管理员</option></select></label>
+          <label id="downloadField" hidden><span><input id="logDownloadAllowed" type="checkbox" checked> 已具备日志下载权限</span></label>
+          <label>验收场景<select id="example" class="el-select">
+            <option value="">选择场景</option><option value="governance">数据权限管理入口</option><option value="products">授权产品列表</option><option value="denied">未授权产品直链</option><option value="empty">零产品授权</option><option value="error">权限读取失败</option><option value="mixed">混合页面 · 概览</option><option value="shared">共享产品面板详情</option><option value="shared-target">共享产品面板的越界链接</option>
+            <optgroup label="已裁定的数据范围">
+              <option value="approval">D1 审批工单</option><option value="firmware">D2 虚拟版本</option><option value="devices">设备列表（按产品过滤）</option><option value="diagnosis">D3 设备信息查询</option><option value="logs">D4 App 日志</option><option value="codes">D5 错误码</option><option value="production">D6 生产记录</option>
+            </optgroup>
+            <optgroup label="本轮权限边界">
+              <option value="productAudio">产品音源 · 目标产品 B</option><option value="audioCategory">音源类别 · 授权产品关系</option>
+              <option value="whitelist">App 白名单 · 产品关系</option><option value="redeem">兑换码管理</option><option value="certificates">生产凭证</option>
+              <option value="productLang">智能产品多语言</option><option value="templateLang">模板多语言</option><option value="appLang">App 通用多语言</option>
+            </optgroup>
+          </select></label>
+          <label class="simulate"><input type="checkbox" id="batchFailure"> 模拟下一次批量提交有一项失败</label>
+        </div>
         <p class="scenario-help">切换后即时同步左侧身份、可见入口、操作权限与批注。</p>
       </div>
       <div id="notes"></div>
@@ -113,6 +133,7 @@
   </main>
 
   <div id="toast"></div>
-  <script type="module" src="app/index.js"></script>
+  <script defer src="app/index.js"></script>
+  <script defer src="app/access.js"></script>
 </body>
 </html>
