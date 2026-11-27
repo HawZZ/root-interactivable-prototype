@@ -10,7 +10,7 @@
     "web"
   ],
   "seriesId": "product-data-permission",
-  "version": "R15/V5",
+  "version": "v5",
   "status": "active",
   "tags": [
     "RBAC",
